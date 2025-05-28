@@ -1,10 +1,10 @@
 # whatsapp.py
 
+import os
 import time
+import json
 import socket
 import subprocess
-from datetime import datetime
-from config import settings
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -21,6 +21,10 @@ from selenium.common.exceptions import (
 from logger import get_logger
 
 logger = get_logger("whatsapp_driver")
+
+def load_config():
+    with open('config.json', 'r') as file:
+        return json.load(file)
 
 def get_ui_response():
     return {"ui": "Whatsapp Web Chat Interface", "features": ["smart-compose", "modular-layout"]}
@@ -41,7 +45,8 @@ def check_and_recover_connection() -> bool:
     Check internet and attempt reconnection if disconnected.
     Logs the device's connectivity status.
     """
-    if not is_connected(host=settings.default_host, port=settings.default_port, timeout=settings.default_timeout):
+    config = load_config()
+    if not is_connected(host=config.get("default_host"), port=config.get("default_port"), timeout=config.get("default_timeout")):
         logger.warning("Internet connection lost.")
         return retry_on_internet()
     else:
@@ -52,9 +57,10 @@ def is_connected(host: str, port: int, timeout: int) -> bool:
     '''
     Checking whether the device is connected to internet of not 
     '''
-    host = settings.default_host
-    port = settings.default_port
-    timeout = settings.default_timeout
+    config = load_config()
+    host = config.get("default_host")
+    port = config.get("default_port")
+    timeout = config.get("default_timeout")
     try:
         socket.setdefaulttimeout(timeout)
         socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((host, port))
@@ -68,10 +74,11 @@ def retry_on_internet(max_attempts=5, initial_delay=3, max_delay=60) -> bool:
     Retry internet reconnection using exponential backoff.
     Logs when the device is disconnected and when reconnection is successful.
     """
+    config = load_config()
     delay = initial_delay
     logger.info("Checking internet connectivity...")
     for attempt in range(1, max_attempts + 1):
-        if is_connected(host=settings.default_host, port=settings.default_port, timeout=settings.default_timeout):
+        if is_connected(host=config.get("default_host"), port=config.get("default_port"), timeout=config.get("default_timeout")):
             logger.info("Device is connected to the internet.")
             return True
         logger.warning(f"Device not connected. Attempt {attempt}/{max_attempts}. Retrying in {delay}s...")
@@ -129,9 +136,10 @@ def initiate_logout(driver: webdriver.Chrome) -> bool:
     """
     Initiates logout process in whatsapp
     """
+    config = load_config()
     try:
         logger.info("Initiating Whatsapp Web Logout process...")
-        driver.get(settings.whatsapp_url)
+        driver.get(config.get("whatsapp_url"))
 
         profile_btn = 'button[aria-label="Settings"][role="button"][data-tab="2"]'
         sign_out_btn = '//span[text()="Log out"]'
@@ -169,10 +177,13 @@ def logout_whatsapp():
     Login from whatsapp using selenium automation
     """
     try:
+        current_dir = os.getcwd()
+        folder_name = "whatsapp_profile"
+        profile_folder_path = os.path.join(current_dir, folder_name)
         opts = Options()
         opts.add_argument("--no-sandbox"); 
-        opts.add_argument('--start-maximized')
-        opts.add_argument("user-data-dir=C:\\whatsapp_profile")         
+        opts.add_argument("--start-maximized")
+        opts.add_argument(f"user-data-dir={profile_folder_path}")         
         opts.add_experimental_option("excludeSwitches", ["enable-logging"])
 
         # Use webdriver manager to auto-resolve ChromeDriver
@@ -233,7 +244,7 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int=3):
             message_box.send_keys(prompt)
             message_box.send_keys(Keys.RETURN)
 
-            time.sleep(15)
+            time.sleep(20)
             messages_css = 'div[class*="copyable-text"]'
             messages = driver.find_elements(By.CSS_SELECTOR, messages_css)
             if messages:
@@ -257,7 +268,8 @@ def send_prompt_whatsapp(prompt: str) -> dict:
     """
     Send prompt and receieve response from Whatsapp Web
     """
-    llm_name: str=settings.whatsapp_web_model_name
+    config = load_config()
+    llm_name: str=config.get("whatsapp_web_model_name")
     # start_time = None 
     # end_time = None
     response_json = {
@@ -266,18 +278,21 @@ def send_prompt_whatsapp(prompt: str) -> dict:
     }
 
     try:
+        current_dir = os.getcwd()
+        folder_name = "whatsapp_profile"
+        profile_folder_path = os.path.join(current_dir, folder_name)
         if not check_and_recover_connection():
             return response_json
 
         opts = Options()
         opts.add_argument("--no-sandbox")
-        opts.add_argument('--start-maximized')
-        opts.add_argument("user-data-dir=./whatsapp_profile")
+        opts.add_argument("--start-maximized")
+        opts.add_argument(f"user-data-dir={profile_folder_path}")
         opts.add_experimental_option("excludeSwitches", ["enable-logging"])
         
         service = Service(ChromeDriverManager().install())
         driver = webdriver.Chrome(service=service, options=opts)
-        driver.get(settings.whatsapp_url)
+        driver.get(config.get("whatsapp_url"))
 
         if search_llm(driver=driver, llm_name=llm_name):
             # start_time = datetime.now()

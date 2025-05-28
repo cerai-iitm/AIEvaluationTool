@@ -1,17 +1,23 @@
 # routers/chat_router.py
 
 from fastapi import APIRouter
-from config import settings, AppType
 import openui
 import whatsapp
+import json
 
 router = APIRouter()
 
+def load_config():
+    with open('config.json', 'r') as file:
+        return json.load(file)
+
 @router.post("/info")
 def chat_interface():
-    if settings.application_type == AppType.WHATSAPP_WEB_BROWSER:
+    config = load_config()
+    application_type = config.get("application_type")
+    if application_type == "WHATSAPP_WEB_BROWSER":
         return whatsapp.get_ui_response()
-    elif settings.application_type == AppType.OPEN_UI_INTERFACE:
+    elif application_type == "OPEN_UI_INTERFACE":
         return openui.get_ui_response()
     else:
         return {"error": "Unknown application type"}

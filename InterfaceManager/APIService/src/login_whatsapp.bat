@@ -1,5 +1,5 @@
 @echo off
-set "profile_dir=C:\whatsapp_profile"
+set "profile_dir="%cd%\whatsapp_profile""
 
 :: Check if the folder exists
 if not exist "%profile_dir%" (

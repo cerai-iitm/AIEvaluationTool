@@ -1,11 +1,9 @@
 # openui.py
 
-import os
 import time
+import json
 import socket
 import requests
-from datetime import datetime
-from config import settings
 from selenium import webdriver
 from typing import Optional
 from selenium.webdriver.chrome.webdriver import WebDriver
@@ -28,14 +26,20 @@ driver: Optional[WebDriver] = None  # Global driver instance
 def get_ui_response():
     return {"ui": "OpenUI Interface", "features": ["smart-compose", "modular-layout"]}
 
+def load_config():
+    with open('config.json', 'r') as file:
+        return json.load(file)
+
 # helper functions
 def is_connected(host: str, port: int, timeout: int) -> bool:
     '''
     Checking whether the device is connected to internet of not 
     '''
-    host = settings.default_host
-    port = settings.default_port
-    timeout = settings.default_timeout
+    config = load_config()
+
+    host = config.get("default_host")
+    port = config.get("default_port")
+    timeout = config.get("default_timeout")
     try:
         socket.setdefaulttimeout(timeout)
         socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((host, port))
@@ -44,12 +48,14 @@ def is_connected(host: str, port: int, timeout: int) -> bool:
         logger.error(f"Network down: {ex}")
         return False
 
-def is_server_running(url: str, timeout: int=settings.server_timeout) -> bool:
+def is_server_running(url: str, timeout: int) -> bool:
     '''
     Checking whether the server is running or not
     '''
-    url = settings.server_url
-    timeout = settings.server_timeout
+    config = load_config()
+
+    url = config.get("server_url")
+    timeout = config.get("server_timeout")
     try:
         response = requests.get(url)
         return response.status_code == 200
@@ -61,14 +67,16 @@ def wait_for_server(url: str, retries: int, delay: int, max_delay=None, on_retry
     '''
     Retry the automation function if server is down or a runtime exception occurs.
     '''
-    url = settings.server_url
-    retries = retries if retries is not None else settings.retries
-    delay = delay if delay is not None else settings.retry_delay
-    max_delay = max_delay if max_delay is not None else settings.max_retry_delay
+    config = load_config()
+
+    url = config.get("server_url")
+    retries = retries if retries is not None else config.get("retries")
+    delay = delay if delay is not None else config.get("retry_delay")
+    max_delay = max_delay if max_delay is not None else config.get("max_retry_delay")
 
     current_delay = delay
     for attempt in range(1, retries + 1):
-        if is_server_running(url=url):
+        if is_server_running(url=url, timeout=config.get("default_timeout")):
             logger.info(f"Server at {url} is up.")
             return True
         logger.warning(f"Attempt {attempt}/{retries}: Server not responding. Retrying in {current_delay}s...")
@@ -87,11 +95,13 @@ def initiate_login(driver: webdriver.Chrome) -> bool:
     """
     Login initiation using email and password stored in environment variable
     """
+    config = load_config()
+
     status: bool = False
     try:
         logger.info("Initiating OpenUI Login process..")
-        EMAIL = settings.openui_email
-        PASSWORD = settings.openui_password
+        EMAIL = config.get("openui_email")
+        PASSWORD = config.get("openui_password")
 
         """
         Sending email and password to the site for login
@@ -120,16 +130,17 @@ def login_openui(driver: Optional[WebDriver]= None) -> bool:
     """
     Login with OpenUI using Selenium automation
     """
+    config = load_config()
     driver = driver
     status: bool = False
     try:
-        if not wait_for_server(url=settings.ollama_server_url, retries=5, delay=3, max_delay=10):
+        if not wait_for_server(url=config.get("ollama_server_url"), retries=5, delay=3, max_delay=10):
             logger.error("Ollama server is not reachable after multiple attempts")
             raise ConnectionError("Ollama server is not reachable after multiple attempts.")
 
         if driver is None:
             driver = webdriver.Chrome()
-            driver.get(settings.server_url)
+            driver.get(config.get("server_url"))
 
         if initiate_login(driver):
             status = True
@@ -251,10 +262,11 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int=3):
     """
     Send prompt to the Ollama model using OpenUI Interface
     """
+    config = load_config()
     attempt = 0
     while attempt < max_retries:
         try:
-            if not is_server_running(url=settings.ollama_server_url, timeout=settings.server_timeout):
+            if not is_server_running(url=config.get("ollama_server_url"), timeout=config.get("server_timeout")):
                 return "[Failed: Server unavailable]"
             
             logger.info(f"Sending prompt: {prompt}")
@@ -283,7 +295,8 @@ def send_prompt_openui(prompt: str) -> dict:
     """
     Send prompt and receive response from Ollama Server using OpenUI Interface
     """
-    llm_name: str=settings.ollama_model_name
+    config = load_config()
+    llm_name: str=config.get("ollama_model_name")
     # start_time = None 
     # end_time = None
     response_json = {
@@ -292,13 +305,13 @@ def send_prompt_openui(prompt: str) -> dict:
     }
 
     try:
-        if not is_server_running(url=settings.ollama_server_url, timeout=settings.server_timeout):
+        if not is_server_running(url=config.get("ollama_server_url"), timeout=config.get("server_timeout")):
             return response_json
         
         opts = Options()
         opts.add_argument('--start-maximized')
         driver = webdriver.Chrome(options=opts)
-        driver.get(settings.server_url)
+        driver.get(config.get("server_url"))
 
         if search_llm(driver=driver, llm_name=llm_name):
             # start_time = datetime.now()
