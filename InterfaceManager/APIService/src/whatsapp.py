@@ -20,6 +20,8 @@ from selenium.common.exceptions import (
 )
 from logger import get_logger
 
+from typing import List
+
 logger = get_logger("whatsapp_driver")
 
 def load_config():
@@ -200,10 +202,13 @@ def logout_whatsapp():
         logger.error(f"Error during Whatsapp Web logout: {e}")
         return False
 
-def search_llm(driver: webdriver.Chrome, llm_name: str) -> bool:
+def search_llm(driver: webdriver.Chrome) -> bool:
     """
     Search for the particular LLM in whatsapp web application
     """
+    config = load_config()
+    llm_name = config.get("model_name")
+
     try:
         logger.info(f"Searching for contact: {llm_name}")
         search_input_xpath = '//*[@id="side"]/div[1]/div/div[2]/div/div/div/p'
@@ -224,11 +229,24 @@ def search_llm(driver: webdriver.Chrome, llm_name: str) -> bool:
         return False
     return True
 
-def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int=3):
+
+def split_message(message, max_length=1000):
+    return [message[i:i + max_length] for i in range(0, len(message), max_length)]
+
+def extract_text(msg_element):
+    try:
+        time.sleep(20)
+        elements = msg_element.find_elements(By.CLASS_NAME, 'copyable-text')
+        for element in elements:
+            print(element.text)
+        return " ".join(el.text for el in elements if el.text.strip() != "")
+    except:
+        return ""
+
+def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int = 3):
     """
-    Sends prompts to the Whatsapp Web application 
+    Sends a prompt to WhatsApp Web and retrieves responses after the last sent message.
     """
-    response: str
     attempt = 0
     while attempt < max_retries:
         try:
@@ -236,24 +254,71 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int=3):
                 return "[Failed: Internet unavailable]"
 
             logger.info(f"Sending prompt: {prompt}")
-            message_box_xpath = '//*[@id="main"]/footer/div[1]/div/span/div/div[2]/div[1]/div[2]/div[1]/p'
+            message_box_xpath = (
+                '//*[@id="main"]/footer/div[1]/div/span/div/div[2]/div[1]/div[2]/div[1]/p'
+            )
             message_box = WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.XPATH, message_box_xpath))
             )
+            message_box.clear()
             message_box.click()
-            message_box.send_keys(prompt)
+            chunks = split_message(prompt)
+
+            for chunk in chunks:
+                message_box.send_keys(chunk)
+                message_box.send_keys(Keys.SHIFT + Keys.ENTER)
+                time.sleep(2)
             message_box.send_keys(Keys.RETURN)
 
-            time.sleep(20)
-            messages_css = 'div[class*="copyable-text"]'
-            messages = driver.find_elements(By.CSS_SELECTOR, messages_css)
-            if messages:
-                response = messages[-1].text
-                logger.info(f"Received response: {response}")
-                return response
+            time.sleep(30)
+
+            wait = WebDriverWait(driver, 50)
+            all_messages = wait.until(
+                EC.presence_of_all_elements_located(
+                    (By.CSS_SELECTOR, "div.message-in, div.message-out")
+                )
+            )
+
+            outgoing_msgs = driver.find_elements(By.CSS_SELECTOR, "div.message-out")
+            if not outgoing_msgs:
+                raise Exception("No outgoing messages found.")
+
+            last_outgoing = outgoing_msgs[-1]
+
+            try:
+                last_index = next(
+                    i for i, msg in enumerate(all_messages) if msg == last_outgoing
+                )
+            except StopIteration:
+                raise Exception(
+                    "Last outgoing message not found in all_messages list."
+                )
+
+            responses_after = all_messages[last_index + 1:]
+            responses = [
+                msg
+                for msg in responses_after
+                if "message-in" in str(msg.get_attribute("class"))
+            ]
+
+            response_texts = []
+            for msg in responses:
+                try:
+                    text_elem = msg.find_element(By.CSS_SELECTOR, "span.selectable-text")
+                    text = text_elem.text.strip()
+                    if text:
+                        response_texts.append(text)
+                        logger.info("Received response: %s", text)
+                except Exception as e:
+                    logger.debug("Could not read response message: %s", e)
+                    continue
+
+            if response_texts:
+                combined_response = " ".join(response_texts)
+                return combined_response
             else:
                 logger.warning("No response message found.")
-                return "[No response received]"
+                return ["[No response received]"]
 
         except Exception as e:
             attempt += 1
@@ -262,54 +327,88 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int=3):
                 logger.info("Retrying chat...")
                 time.sleep(2)
             else:
-                return "[Error during chat after retries]"
+                return ["[Error during chat after retries]"]
 
-def send_prompt_whatsapp(prompt: str) -> dict:
-    """
-    Send prompt and receieve response from Whatsapp Web
-    """
-    config = load_config()
-    llm_name: str=config.get("whatsapp_web_model_name")
-    # start_time = None 
-    # end_time = None
-    response_json = {
-        "prompt": prompt,
-        "response": "Not available"
-    }
+def send_prompt_whatsapp(chat_id: int, prompt_list: List[str], mode: str = "single_window") -> list[dict]:
+    results = []
 
-    try:
+    if mode == "single_window":
         current_dir = os.getcwd()
         folder_name = "whatsapp_profile"
         profile_folder_path = os.path.join(current_dir, folder_name)
-        if not check_and_recover_connection():
-            return response_json
 
         opts = Options()
         opts.add_argument("--no-sandbox")
         opts.add_argument("--start-maximized")
         opts.add_argument(f"user-data-dir={profile_folder_path}")
         opts.add_experimental_option("excludeSwitches", ["enable-logging"])
-        
+
         service = Service(ChromeDriverManager().install())
         driver = webdriver.Chrome(service=service, options=opts)
-        driver.get(config.get("whatsapp_url"))
+        
+        try:
+            driver.get(load_config().get("whatsapp_url"))
+            time.sleep(5)
 
-        if search_llm(driver=driver, llm_name=llm_name):
-            # start_time = datetime.now()
-            response_str = send_message(driver=driver, prompt=prompt)
-            # end_time = datetime.now()
-            # response_json['start_time'] = str(start_time)
-            # response_json['end_time'] = str(end_time)
-            response_json["prompt"] = prompt
-            response_json["response"] = str(response_str)
+            # Search for chat only once
+            chat_found = search_llm(driver=driver)
+            
+            for i, prompt in enumerate(prompt_list):
+                result = {"chat_id": chat_id, "prompt": prompt, "response": "Not available"}
 
-        close(driver=driver)
+                try:
+                    if chat_found:
+                        response_str = send_message(driver=driver, prompt=prompt)
+                        result["response"] = str(response_str)
+                    else:
+                        result["response"] = "Chat not found"
+                except Exception as e:
+                    logger.error(f"Prompt failed for chat '{chat_id}': {e}")
+                    result['response'] = f"Error: {e}"
+                
+                results.append(result)
+        
+        finally:
+            driver.quit()
 
-    except Exception as e:
-        logger.error(f"Chat failed: {e}")
+    elif mode == "multi_window":
+        for i, prompt in enumerate(prompt_list):
+            current_dir = os.getcwd()
+            folder_name = "whatsapp_profile"
+            profile_folder_path = os.path.join(current_dir, folder_name)
 
-    return response_json
+            opts = Options()
+            opts.add_argument("--no-sandbox")
+            opts.add_argument("--start-maximized")
+            opts.add_argument(f"user-data-dir={profile_folder_path}")
+            opts.add_experimental_option("excludeSwitches", ["enable-logging"])
 
+            service = Service(ChromeDriverManager().install())
+            driver = webdriver.Chrome(service=service, options=opts)
+            
+            try:
+                driver.get(load_config().get("whatsapp_url"))
+                time.sleep(5)
+
+                result = {"chat_id": chat_id, "prompt": prompt, "response": "Not available"}
+
+                try:
+                    if search_llm(driver):
+                        result["response"] = send_message(driver, prompt)
+                    else:
+                        result["response"] = "Chat not found"
+                except Exception as e:
+                    result["response"] = f"Error: {e}"
+                
+                results.append(result)
+            
+            finally:
+                driver.quit()
+
+    else:
+        raise ValueError("Invalid mode: choose 'single_window' or 'multi_window'.")
+
+    return results
 
 def close(driver: webdriver.Chrome):
     """
@@ -320,3 +419,4 @@ def close(driver: webdriver.Chrome):
         logger.info("Browser session closed.")
     except Exception as e:
         logger.warning(f"Error closing browser: {e}")
+
