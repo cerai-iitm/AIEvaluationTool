@@ -157,7 +157,6 @@ def safe_click(driver, selector: str, retries: int = 3, wait_time: int = 10) -> 
     """
     Safely clicks an element located by either XPath or CSS selector.
     """
-    # Determine selector type
     if selector.strip().startswith('/') or selector.strip().startswith('('):
         by_type = By.XPATH
     else:
@@ -191,23 +190,20 @@ def initiate_logout(driver: webdriver.Chrome) -> bool:
         profile_btn = 'button[aria-label="User Menu"]'
         sign_out_btn = '//button[.//div[text()="Sign Out"]]'
         
-        # Click profile button
         if not safe_click(driver, profile_btn):
             logger.error("Failed to click profile button.")
             return False
 
-        # Click sign out button
         if not safe_click(driver, sign_out_btn):
             logger.error("Failed to click sign-out button.")
             return False
 
-        # Optional: wait until redirected or URL change
         WebDriverWait(driver, 5).until(EC.url_contains("/auth"))
         logger.info(f"Logout successful. Current URL: {driver.current_url}")
         return True
     except TimeoutException:
         logger.warning(f"Logout click sequence completed but no redirect detected. Current URL: {driver.current_url}")
-        return True  # Still return True if actions succeeded but URL check failed
+        return True  
     except Exception as e:
         logger.error(f"Logout failed: {e}")
         return False
@@ -286,13 +282,9 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int=3):
             
             time.sleep(15)
             
-            # elements = driver.find_elements(By.CSS_SELECTOR, "div#response-content-container")
             wait = WebDriverWait(driver, 50)
             element = wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="response-content-container"]')))
             
-            # messages = wait.until(EC.presence_of_element_located((By.XPATH, '/html[1]/body[1]/div[1]/div[1]/div[1]/div[4]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]/div[2]/div[2]/div[2]/div[2]/div[1]/div[1]/div[1]/div[1]')))
-
-            # Get all visible text inside the container
             if element:
                 response = element.text
                 logger.info(f"Received response: {response}")
@@ -319,7 +311,6 @@ def send_prompt_openui(chat_id: int, prompt_list: List[str], mode: str = "single
             driver.get(load_config().get("server_url"))
             time.sleep(5)
 
-            # Search for chat only once
             chat_found = search_llm(driver=driver)
             
             for i, prompt in enumerate(prompt_list):
