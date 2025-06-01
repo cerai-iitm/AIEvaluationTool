@@ -57,7 +57,7 @@ def check_and_recover_connection() -> bool:
 
 def is_connected(host: str, port: int, timeout: int) -> bool:
     '''
-    Checking whether the device is connected to internet of not 
+    Checking whether the device is connected to internet or not 
     '''
     config = load_config()
     host = config.get("default_host")
