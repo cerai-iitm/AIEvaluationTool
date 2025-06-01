@@ -110,7 +110,6 @@ def login_whatsapp():
 # retry safe click logout helper
 def safe_click(driver, selector: str, retries: int = 3, wait_time: int = 10) -> bool:
     """Safely clicks an element located by either XPath or CSS selector."""
-    # Determine selector type
     if selector.strip().startswith('/') or selector.strip().startswith('('):
         by_type = By.XPATH
     else:
@@ -147,22 +146,18 @@ def initiate_logout(driver: webdriver.Chrome) -> bool:
         sign_out_btn = '//span[text()="Log out"]'
         log_out_btn = '//button[.//div[text()="Log out"]]'
 
-        # Check presence of profile button
         if not safe_click(driver, profile_btn):
             logger.warning("Profile button not found. Possibly already logged out.")
             return True
-
-        # Check presence of sign out option
+            
         if not safe_click(driver, sign_out_btn):
             logger.warning("Sign-out option not found. Possibly already logged out.")
             return True
 
-        # Final logout confirmation
         if not safe_click(driver, log_out_btn):
             logger.warning("Final logout button not found. Possibly already logged out.")
             return True
 
-        # Wait for a possible redirect or confirmation
         WebDriverWait(driver, 2)
         logger.info(f"Logout successful. Current URL: {driver.current_url}")
         return True
@@ -188,7 +183,6 @@ def logout_whatsapp():
         opts.add_argument(f"user-data-dir={profile_folder_path}")         
         opts.add_experimental_option("excludeSwitches", ["enable-logging"])
 
-        # Use webdriver manager to auto-resolve ChromeDriver
         service = Service(ChromeDriverManager().install())
         driver = webdriver.Chrome(service=service, options=opts)
 
@@ -350,7 +344,6 @@ def send_prompt_whatsapp(chat_id: int, prompt_list: List[str], mode: str = "sing
             driver.get(load_config().get("whatsapp_url"))
             time.sleep(5)
 
-            # Search for chat only once
             chat_found = search_llm(driver=driver)
             
             for i, prompt in enumerate(prompt_list):
