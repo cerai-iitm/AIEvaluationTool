@@ -133,14 +133,11 @@ class TestCaseExecutionManager:
             } for chat_id, prompt in zip(chat_id_list, prompt_list)]
         
         try:
-            # Send all prompts in one call to client.chat
             response = self.client.chat(chat_id=chat_id_list[0], prompt_list=prompt_list)
             data = response.json()
 
-            # Extract the list of responses
             response_list = data.get("response", [])
 
-            # Process responses
             for i, (chat_id, prompt) in enumerate(zip(chat_id_list, prompt_list)):
                 if isinstance(response_list, list) and len(response_list) > i and isinstance(response_list[i], dict):
                     response_text = response_list[i].get("response", "")
@@ -152,7 +149,6 @@ class TestCaseExecutionManager:
                     "response": response_text
                 })
         except Exception as e:
-            # Handle errors for all prompts
             results = [{
                 "chat_id": chat_id,
                 "prompt": prompt,
@@ -171,7 +167,7 @@ client_args = {
         "run_mode": args.run_mode
     }
 
-# Initialize InterfaceManagerClient)
+# Initialize InterfaceManagerClient
 client = InterfaceManagerClient(**client_args)
 
 manager = TestCaseExecutionManager(
