@@ -36,7 +36,7 @@ def load_config():
 # helper functions
 def is_connected(host: str, port: int, timeout: int) -> bool:
     '''
-    Checking whether the device is connected to internet of not 
+    Checking whether the device is connected to internet or not 
     '''
     config = load_config()
 
