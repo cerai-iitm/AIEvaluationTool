@@ -339,9 +339,6 @@ def send_prompt_openui(chat_id: int, prompt_list: List[str], mode: str = "single
 
             service = Service(ChromeDriverManager().install())
             driver = webdriver.Chrome(service=service, options=opts)
-
-            service = Service(ChromeDriverManager().install())
-            driver = webdriver.Chrome(service=service, options=opts)
             
             try:
                 driver.get(load_config().get("server_url"))
