@@ -1,7 +1,7 @@
 {
     "base_url": "http://localhost:8000",
-    "application_type": "OPENUI",
-    "model_name": "gemma3:1b",
+    "application_type": "WHATSAPP_WEB",
+    "model_name": "Gooey",
     "openui_email": "OPENUI_EMAIL",
     "openui_password": "OPENUI_PASSWORD",
     "debug": "True",
@@ -15,9 +15,9 @@
     "retry_delay": 3,
     "max_retry_delay": 60,
     "whatsapp_url": "https://web.whatsapp.com",
-    "test_plan_name": "Response Out of Scope",
+    "test_plan_name": "Inappropriate Content Detection",
     "n": 2,
     "action": "send_all_prompts",
     "test_plan_file": "test.json",
-    "run_mode": "single_window"
+    "run_mode": "single"
 }
