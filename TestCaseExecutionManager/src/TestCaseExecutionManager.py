@@ -3,18 +3,17 @@ import argparse
 from typing import List, Dict, Union
 import sys, os
 
-sys.path.append(os.path.abspath("AIEvaluationTool"))
-
-from AIEvaluationTool.InterfaceManager.ClientLibrary.src.InterfaceManagerClient import InterfaceManagerClient
+sys.path.append(os.path.relpath("../.."))
+from InterfaceManager import InterfaceManagerClient
 
 parser = argparse.ArgumentParser(description="LLM Evaluation Suite - A comprehensive evaluation tool for verifying conversational AI applications.")
 
 parser.add_argument("--base_url", type=str, default="http://localhost:8000", help="Base URL of the server (Default: 'http://localhost:8000')")
-parser.add_argument("--application_type", type=str.upper, required=True, help="Application type: required for LLM evaluation (e.g., WHATSAPP_WEB or OPENUI)")
-parser.add_argument("--model_name", type=str, required=True, default="Gooey AI", help="Model name for the application (Default set to Gooey AI)")
+parser.add_argument("--application_type", type=str.upper, default="WHATSAPP_WEB", help="Application type: required for LLM evaluation (e.g., WHATSAPP_WEB or OPENUI)")
+parser.add_argument("--model_name", type=str, default="Gooey AI", help="Model name for the application (Default set to Gooey AI)")
 parser.add_argument("--openui_email", type=str, help="OpenUI email: required for OpenUI Application")
 parser.add_argument("--openui_password", type=str, help="OpenUI password: required for OpenUI Application")
-parser.add_argument("--run_mode", default="single", required=True, type=str, help="How to handle prompt session", choices=["single_window", "multiple_window"])
+parser.add_argument("--run_mode", default="single", type=str, help="How to handle prompt session", choices=["single_window", "multiple_window"])
 
 # group = parser.add_mutually_exclusive_group(required=True)
 # group.add_argument("--prompt", type= str, help="Send a single prompt to the conversational AI application")
@@ -22,8 +21,8 @@ parser.add_argument("--run_mode", default="single", required=True, type=str, hel
 # group.add_argument("--data", default="test.json", help="Default json file")
 
 parser.add_argument("--test_plan_name", required=True, choices=["Inappropriate Content Detection", "Response Out of Scope"], help="Selection of Test Plan")
-parser.add_argument("--n", type=int, help="Number of Prompts to run in a Test Plan")
-parser.add_argument("--action", type=str, help="Send all Prompts")
+parser.add_argument("--n", type=int, help="Number of Prompts to run in a Test Plan", default=2)
+parser.add_argument("--action", type=str, help="Send all Prompts", default="send_all_prompts")
 parser.add_argument("--test_plan_file", default="test.json", help="Default json file")
 
 args = parser.parse_args()
