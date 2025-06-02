@@ -280,13 +280,15 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int=3):
             time.sleep(2)
             message_box.send_keys(Keys.RETURN)
             
-            time.sleep(15)
+            time.sleep(20)
             
             wait = WebDriverWait(driver, 50)
-            element = wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="response-content-container"]')))
+            wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="response-content-container"]')))
             
-            if element:
-                response = element.text
+            elements = driver.find_elements(By.XPATH, '//*[@id="response-content-container"]')
+            
+            if elements:
+                response = elements[-1].text
                 logger.info(f"Received response: {response}")
                 return response
         except Exception as e:
