@@ -1,0 +1,8 @@
+python-dotenv
+pandas
+googletrans
+sentence-transformers
+language_tool_python
+langchain_ollama
+langchain
+opik

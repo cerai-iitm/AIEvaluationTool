@@ -1,6 +1,0 @@
-sqlalchemy
-psycopg2-binary
-python-dotenv
-pandas
-googletrans==4.0.0rc1
-sentence-transformers
