@@ -86,11 +86,7 @@ def text_similarity(prompts, test_case_responses, expected_responses):
     """
     result = []
     for i in tqdm(range(len(prompts))):
-        print(prompts[i])
-        print(test_case_responses[i])
-        print(expected_responses[i])
         embeddings = embedding_model.encode([prompts[i],test_case_responses[i], expected_responses[i]])
-        print("Similarity:", similarity)
         similarity = cos_sim(embeddings[0], embeddings[1])
         similarity_2 = cos_sim(embeddings[1], embeddings[2])
         print("Similarity:", similarity)
@@ -109,7 +105,7 @@ def toxicity_model_result(test_case_responses):
     tokenizer = AutoTokenizer.from_pretrained("nicholasKluge/ToxicityModel")
     all_tokens = []
     for i in tqdm(range(len(test_case_responses))):
-        tokens = tokenizer(test_case_responses, truncation=True, max_length=512, return_token_type_ids=False, return_tensors="pt", return_attention_mask=True)
+        tokens = tokenizer(test_case_responses[i], truncation=True, max_length=512, return_token_type_ids=False, return_tensors="pt", return_attention_mask=True)
         all_tokens.append(tokens)
     model = AutoModelForSequenceClassification.from_pretrained("nicholasKluge/ToxicityModel")
     model.eval()
@@ -130,14 +126,15 @@ def grammarChecker(text):
     result = tool.check(text)
     return result
 
-def grammarcheck(test_case_responses):
+async def grammarcheck(test_case_responses):
     translator = Translator()
     result = []
     for i in test_case_responses:
-        print(i)
-        response_language = translator.detect(i).lang
-        if response_language != "en":
-            response_translation = translator.translate(i, dest='en').text
+        #print(i)
+        response_language = await translator.detect(i)
+        if response_language.lang != "en":
+            response_translation = await translator.translate(i, dest='en')
+            response_translation = response_translation.text
         else:
             response_translation = i
         grammar_check = grammarChecker(response_translation)
@@ -177,9 +174,9 @@ for i in range(len(prompts)):
     new_prompts.append(prompts[i]["Prompt"])
     test_case_responses.append(chats[i]["TestCaseResponse"])
 #asyncio.run(language_coverage(new_prompts, test_case_responses))
-asyncio.run(language_coverage_similarity(new_prompts, test_case_responses, test_case_responses))
+#asyncio.run(language_coverage_similarity(new_prompts, test_case_responses, test_case_responses))
 #text_similarity(new_prompts, test_case_responses, test_case_responses)
-# toxicity_model_result(test_case_responses)
-# grammarcheck(test_case_responses)
+#toxicity_model_result(test_case_responses)
+#asyncio.run(grammarcheck(test_case_responses))
 end_time = time.time()
 print("Time taken by the process-", end_time-start_time, " s")
