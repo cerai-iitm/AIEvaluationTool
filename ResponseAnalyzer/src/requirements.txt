@@ -7,3 +7,6 @@ langchain_ollama
 langchain
 opik
 lexical-diversity
+evaluate
+nltk
+rouge_score
