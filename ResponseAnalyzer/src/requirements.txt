@@ -6,3 +6,4 @@ language_tool_python
 langchain_ollama
 langchain
 opik
+lexical-diversity
