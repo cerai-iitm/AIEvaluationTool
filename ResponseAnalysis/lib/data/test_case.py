@@ -21,6 +21,13 @@ class TestCase:
         self.prompt = prompt
         self.response = response
 
+    def evaluate(self) -> float:
+        """
+        Evaluates the test case.
+        This method can be overridden by subclasses to provide specific evaluation logic.
+        """
+        raise NotImplementedError("someone should implement this method.")
+
     def __str__(self):
         """Returns a string representation of the test case."""
         return f"TestCase(prompt={self.prompt}, response={self.response})"
