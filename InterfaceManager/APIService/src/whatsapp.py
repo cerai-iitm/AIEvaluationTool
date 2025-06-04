@@ -178,8 +178,9 @@ def logout_whatsapp():
         folder_name = "whatsapp_profile"
         profile_folder_path = os.path.join(current_dir, folder_name)
         opts = Options()
-        opts.add_argument("--no-sandbox"); 
+        opts.add_argument("--no-sandbox") 
         opts.add_argument("--start-maximized")
+        opts.add_argument("--window-size=1920,1080")
         opts.add_argument(f"user-data-dir={profile_folder_path}")         
         opts.add_experimental_option("excludeSwitches", ["enable-logging"])
 
@@ -205,7 +206,7 @@ def search_llm(driver: webdriver.Chrome) -> bool:
 
     try:
         logger.info(f"Searching for contact: {llm_name}")
-        search_input_xpath = '//*[@id="side"]/div[1]/div/div[2]/div/div/div/p'
+        search_input_xpath = '//div[@aria-label="Search input textbox" and @contenteditable="true"]'
         search_box = WebDriverWait(driver, 20).until(
             EC.presence_of_element_located((By.XPATH, search_input_xpath))
         )
@@ -248,20 +249,22 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int = 3):
                 return "[Failed: Internet unavailable]"
 
             logger.info(f"Sending prompt: {prompt}")
-            message_box_xpath = (
-                '//*[@id="main"]/footer/div[1]/div/span/div/div[2]/div[1]/div[2]/div[1]/p'
-            )
+            # message_box_xpath = (
+                # '//*[@id="main"]/footer/div[1]/div/span/div/div[2]/div[1]/div[2]/div[1]/p'
+            # )
+
+            message_box_xpath = '//div[@aria-label="Type a message" and @contenteditable="true"]'
             message_box = WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.XPATH, message_box_xpath))
             )
             message_box.clear()
             message_box.click()
             chunks = split_message(prompt)
-
+            
             for chunk in chunks:
                 message_box.send_keys(chunk)
                 message_box.send_keys(Keys.SHIFT + Keys.ENTER)
-                time.sleep(2)
+                time.sleep(0.5)
             message_box.send_keys(Keys.RETURN)
 
             time.sleep(30)
