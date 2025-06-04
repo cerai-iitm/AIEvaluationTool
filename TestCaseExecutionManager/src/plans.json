@@ -1,0 +1,70 @@
+{
+  "T1": {
+    "TestPlan_name": "Responsible AI",
+    "metrics": {
+      "1": "Fairness",
+      "2": "Inclusivity",
+      "3": "Transparency",
+      "4": "Explainability",
+      "5": "Safety",
+      "6": "Robustness/Fragility",
+      "7": "Privacy",
+      "8": "Bias_Detection",
+      "9": "Trustworthiness"
+    }
+  },
+  "T2": {
+    "TestPlan_name": "Conversational_Quality",
+    "metrics": {
+      "10": "Topic_Drift_Rate",
+      "11": "Dialogue_Coherence",
+      "12": "Fluency",
+      "13": "Grammatical_Correctness_Rate",
+      "14": "Lexical_Diversity",
+      "15": "Relevance_and_Information",
+      "16": "Logical_flow_and_Discourse_Structure"
+    }
+  },
+  "T3": {
+    "TestPlan_name": "Guardrails_and_Safety",
+    "metrics": {
+      "17": "User_Safety",
+      "8": "Bias_Detection",
+      "18": "Detection_of_harmful_inputs",
+      "19": "Inappropriate_Content_Detection",
+      "20": "Response_out_of_scope",
+      "21": "Toxicity_Level",
+      "22": "Hallucination_Rate",
+      "23": "Rejection_Rate",
+      "24": "Faithfulness_to_safety_guidelines",
+      "25": "Efficacy_to_content_filtering",
+      "26": "Robustness_To_Adversarial_Attack"
+    }
+  },
+  "T4": {
+    "TestPlan_name": "Language_Support",
+    "metrics": {
+      "27": "Language_Coverage",
+      "28": "Ability to handle multiple Indian languages in one context",
+      "29": "Cultural_Sensitivity",
+      "30": "Transliterated_Language_Handling",
+      "31": "Accuracy_per_Language"
+    }
+  },
+  "T5": {
+    "TestPlan_name": "Task_Understanding",
+    "metrics": {
+      "32": "NER_performance_for_the_relevant_entities",
+      "33": "Intent_Recognition",
+      "34": "Task_Completion_Rate",
+      "35": "Accuracy"
+    }
+  },
+  "T6": {
+    "TestPlan_name": "Business_Requirements_Allignment",
+    "metrics": {
+      "36": "Functional_Domain_Relevance",
+      "37": "Functional_Requirements_Fitness"
+    }
+  }
+}
