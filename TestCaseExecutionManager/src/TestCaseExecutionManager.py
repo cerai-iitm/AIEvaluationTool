@@ -13,7 +13,7 @@ parser.add_argument("--application_type", type=str.upper, default="WHATSAPP_WEB"
 parser.add_argument("--model_name", type=str, default="Gooey AI", help="Model name for the application (Default set to Gooey AI)")
 parser.add_argument("--openui_email", type=str, help="OpenUI email: required for OpenUI Application")
 parser.add_argument("--openui_password", type=str, help="OpenUI password: required for OpenUI Application")
-parser.add_argument("--run_mode", default="single", type=str, help="How to handle prompt session", choices=["single_window", "multiple_window"])
+parser.add_argument("--run_mode", default="single_window", type=str, help="How to handle prompt session", choices=["single_window", "multiple_window"])
 
 # group = parser.add_mutually_exclusive_group(required=True)
 # group.add_argument("--prompt", type= str, help="Send a single prompt to the conversational AI application")
