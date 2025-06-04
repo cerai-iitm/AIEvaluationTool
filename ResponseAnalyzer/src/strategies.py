@@ -201,7 +201,7 @@ async def lexical_diversity(test_case_responses):
 
 def bleu_score_metric(predictions, references):
     """
-    Strategy 6 : Calculates the BLEU score between predicted and reference texts.
+    Strategy 8 : Calculates the BLEU score between predicted and reference texts.
 
     Parameters:
     - predictions (list of str): List of predicted output sentences.
@@ -229,7 +229,7 @@ def bleu_score_metric(predictions, references):
 
 def meteor_metric(prompts, test_case_responses):
     """
-    Strategy 7 : Compute METEOR score for each predicted sentence vs. its reference.
+    Strategy 9 : Compute METEOR score for each predicted sentence vs. its reference.
     Parameters:
     - prompts (list of str): List of reference sentences.
     - test_case_responses (list of str): List of generated/predicted sentences.
@@ -258,7 +258,7 @@ def meteor_metric(prompts, test_case_responses):
 
 def rouge_score_metric(prompts, test_case_responses):
     """
-    Strategy 8 : Compute average ROUGE scores over a batch of predictions and references.
+    Strategy 10 : Compute average ROUGE scores over a batch of predictions and references.
     Parameters:
     - prompts (list of str): Reference (ground truth) sentences.
     - test_case_responses (list of str): Predicted/generated responses.
