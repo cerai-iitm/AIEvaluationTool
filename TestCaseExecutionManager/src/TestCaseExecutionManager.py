@@ -5,6 +5,7 @@ import argparse
 from typing import List, Dict, Union
 import sys, os
 import logging
+from pathlib import Path
 
 sys.path.append(os.path.relpath("../.."))
 from InterfaceManager import InterfaceManagerClient
@@ -20,6 +21,15 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
+
+current_file = Path(__file__).resolve()
+
+# Setting path to the Data folder
+plans_path = current_file.parents[2] / "Data" / "plans.json"
+
+data_points_path = current_file.parents[2] / "Data" / "DataPoints.json"
+
+response_file = current_file.parents[2] / "Data" / "responses.json"
 
 parser = argparse.ArgumentParser(description="LLM Evaluation Suite - A comprehensive evaluation tool for verifying conversational AI applications.")
 
@@ -49,7 +59,7 @@ parser.add_argument(
 ) # Add more to this list
 parser.add_argument("--n", type=int, help="Number of Prompts to run in a Test Plan", default=2)
 parser.add_argument("--action", type=str, help="Send all Prompts", default="send_all_prompts")
-parser.add_argument("--test_plan_file", default="Data/DataPoints.json", help="Default json file")
+parser.add_argument("--test_plan_file", default=str(data_points_path), help="Default json file")
 
 args = parser.parse_args()
 
@@ -87,7 +97,7 @@ class TestCaseExecutionManager:
     def load_test_cases(self) -> List[Dict]:
         try:
 
-            with open("Data/plans.json", 'r', encoding='utf-8') as plan_file:
+            with open(plans_path, 'r', encoding='utf-8') as plan_file:
                 all_plans = json.load(plan_file)
                 
             if self.test_plan_id not in all_plans:
@@ -168,7 +178,7 @@ class TestCaseExecutionManager:
         prompt_id_list = []
         sent_prompts = set()
 
-        with open("Data/plans.json", 'r', encoding='utf-8') as plan_file:
+        with open(plans_path, 'r', encoding='utf-8') as plan_file:
             all_plans = json.load(plan_file)
             plan_entry = all_plans[self.test_plan_id]
             metric_ids = list(plan_entry.get("metrics", {}).keys())
@@ -244,7 +254,7 @@ class TestCaseExecutionManager:
                     })
 
         # Save to file
-        result_path = "Data/responses.json"
+        result_path = response_file
         with open(result_path, "w", encoding="utf-8") as f:
             json.dump(results, f, indent=2, ensure_ascii=False)
         logger.info(f"Responses saved to {result_path}")
@@ -257,7 +267,7 @@ class TestCaseExecutionManager:
 client_args = {
         "base_url": args.base_url,
         "application_type": args.application_type,
-        "model_name": args.model_name,
+        "model_name": args.agent_name,
         "openui_email": args.openui_email,
         "openui_password": args.openui_password,
         "run_mode": args.run_mode
@@ -275,5 +285,5 @@ manager = TestCaseExecutionManager(
 
 if args.action == "send_all_prompts":
     results = manager.send_all_prompts()
-    output_file = "Data/responses.json"
+    output_file = str(response_file)
     print(f"Responses saved to {output_file}")
