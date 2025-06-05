@@ -189,7 +189,7 @@ def logout_whatsapp():
         driver = webdriver.Chrome(service=service, options=opts)
 
         logout_status = initiate_logout(driver=driver)
-        time.sleep(2)
+        time.sleep(0.5)
         driver.quit()
         logger.info("Browser session closed.")
         return logout_status
@@ -208,7 +208,7 @@ def search_llm(driver: webdriver.Chrome) -> bool:
     try:
         logger.info(f"Searching for contact: {llm_name}")
         search_input_xpath = '//div[@aria-label="Search input textbox" and @contenteditable="true"]'
-        search_box = WebDriverWait(driver, 20).until(
+        search_box = WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.XPATH, search_input_xpath))
         )
         search_box.click()
@@ -231,7 +231,7 @@ def split_message(message, max_length=1000):
 
 def extract_text(msg_element):
     try:
-        time.sleep(20)
+        time.sleep(10)
         elements = msg_element.find_elements(By.CLASS_NAME, 'copyable-text')
         for element in elements:
             print(element.text)
@@ -281,7 +281,7 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int = 3):
             # )
 
             message_box_xpath = '//div[@aria-label="Type a message" and @contenteditable="true"]'
-            message_box = WebDriverWait(driver, 10).until(
+            message_box = WebDriverWait(driver, 2).until(
                 EC.presence_of_element_located((By.XPATH, message_box_xpath))
             )
             message_box.clear()
@@ -296,7 +296,7 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int = 3):
 
             time.sleep(30)
 
-            wait = WebDriverWait(driver, 50)
+            wait = WebDriverWait(driver, 10)
             all_messages = wait.until(
                 EC.presence_of_all_elements_located(
                     (By.CSS_SELECTOR, "div.message-in, div.message-out")
@@ -349,7 +349,7 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int = 3):
             logger.error(f"Chat attempt {attempt} failed: {e}")
             if attempt < max_retries:
                 logger.info("Retrying chat...")
-                time.sleep(0.5)
+                time.sleep(0.3)
             else:
                 return ["[Error during chat after retries]"]
 
