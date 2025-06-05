@@ -8,15 +8,17 @@ class TestCase:
     Attributes:
         prompt (Prompt): The prompt associated with the test case.
         response (Response): The response associated with the test case.
+        kwargs (dict): Additional keyword arguments for future extensibility.
     """
     
-    def __init__(self, prompt: Prompt, response: Optional[Response] = None):
+    def __init__(self, prompt: Prompt, response: Optional[Response] = None, **kwargs):
         """
         Initializes a TestCase instance.
 
         Args:
             prompt (Prompt): The prompt for the test case.
             response (Response): The response for the test case.
+            kwargs: Additional keyword arguments for future extensibility.
         """
         self.prompt = prompt
         self.response = response

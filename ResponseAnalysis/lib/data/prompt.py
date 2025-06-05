@@ -8,17 +8,19 @@ class Prompt(BaseModel):
         prompt (str): The text of the prompt.
     """
     system_prompt: Optional[str] = Field(None, description="The system prompt, if any.")
-    user_prompt: str = Field(..., description="The text of the prompt.")
+    user_prompt: Optional[str] = Field(None, description="The text of the prompt.")
+    kwargs: dict = Field(default_factory=dict, description="Additional keyword arguments for future extensibility.")
 
-    def __init__(self, system_prompt: Optional[str] = None, user_prompt: str = ""):
+    def __init__(self, system_prompt: Optional[str] = None, user_prompt: Optional[str] = None, **kwargs):
         """
         Initializes a Prompt instance.
 
         Args:
             system_prompt (Optional[str]): The system prompt, if any.
-            user_prompt (str): The text of the prompt.
+            user_prompt (Optional[str]): The text of the prompt.
+            kwargs: Additional keyword arguments for future extensibility.
         """
-        super().__init__(system_prompt=system_prompt, user_prompt=user_prompt)
+        super().__init__(system_prompt=system_prompt, user_prompt=user_prompt, kwargs=kwargs)
 
     def __str__(self):
         """
