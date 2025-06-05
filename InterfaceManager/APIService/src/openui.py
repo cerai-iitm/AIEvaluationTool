@@ -233,7 +233,7 @@ def search_llm(driver: webdriver.Chrome) -> bool:
     """
     Searching for the local models in OpenUI interface
     """ 
-    llm_name = load_config().get("model_name")
+    llm_name = load_config().get("agent_name")
     try:
         if login_openui(driver):
             logger.info(f"Launched the OpenUI Interface")
