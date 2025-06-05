@@ -1,7 +1,6 @@
 {
     "base_url": "http://localhost:8000",
     "application_type": "WHATSAPP_WEB",
-    "model_name": "Gooey",
     "openui_email": "OPENUI_EMAIL",
     "openui_password": "OPENUI_PASSWORD",
     "debug": "True",
