@@ -33,10 +33,10 @@
     },
     "9":{
         "name": "meteor_metric",
-        "metrics": ["39"]
+        "metrics": ["40"]
     },
     "10":{
         "name": "rouge_score_metric",
-        "metrics": ["40"]
+        "metrics": ["39"]
     }
 }
