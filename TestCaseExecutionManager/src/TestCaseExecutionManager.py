@@ -49,7 +49,7 @@ parser.add_argument(
 ) # Add more to this list
 parser.add_argument("--n", type=int, help="Number of Prompts to run in a Test Plan", default=2)
 parser.add_argument("--action", type=str, help="Send all Prompts", default="send_all_prompts")
-parser.add_argument("--test_plan_file", default="DataPoints.json", help="Default json file")
+parser.add_argument("--test_plan_file", default="Data/DataPoints.json", help="Default json file")
 
 args = parser.parse_args()
 
@@ -87,7 +87,7 @@ class TestCaseExecutionManager:
     def load_test_cases(self) -> List[Dict]:
         try:
 
-            with open("plans.json", 'r', encoding='utf-8') as plan_file:
+            with open("Data/plans.json", 'r', encoding='utf-8') as plan_file:
                 all_plans = json.load(plan_file)
                 
             if self.test_plan_id not in all_plans:
@@ -168,7 +168,7 @@ class TestCaseExecutionManager:
         prompt_id_list = []
         sent_prompts = set()
 
-        with open("plans.json", 'r', encoding='utf-8') as plan_file:
+        with open("Data/plans.json", 'r', encoding='utf-8') as plan_file:
             all_plans = json.load(plan_file)
             plan_entry = all_plans[self.test_plan_id]
             metric_ids = list(plan_entry.get("metrics", {}).keys())
@@ -244,7 +244,7 @@ class TestCaseExecutionManager:
                     })
 
         # Save to file
-        result_path = "responses.json"
+        result_path = "Data/responses.json"
         with open(result_path, "w", encoding="utf-8") as f:
             json.dump(results, f, indent=2, ensure_ascii=False)
         logger.info(f"Responses saved to {result_path}")
@@ -275,9 +275,5 @@ manager = TestCaseExecutionManager(
 
 if args.action == "send_all_prompts":
     results = manager.send_all_prompts()
-
-    output_file = "responses.json"
-    with open(output_file, "w") as f:
-        json.dump(results, f, indent=2)
-
+    output_file = "Data/responses.json"
     print(f"Responses saved to {output_file}")
