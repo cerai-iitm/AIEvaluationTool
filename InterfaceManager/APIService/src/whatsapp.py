@@ -203,7 +203,7 @@ def search_llm(driver: webdriver.Chrome) -> bool:
     Search for the particular LLM in whatsapp web application
     """
     config = load_config()
-    llm_name = config.get("model_name")
+    llm_name = config.get("agent_name")
 
     try:
         logger.info(f"Searching for contact: {llm_name}")
