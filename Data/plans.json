@@ -22,7 +22,10 @@
       "13": "Grammatical_Correctness_Rate",
       "14": "Lexical_Diversity",
       "15": "Relevance_and_Information",
-      "16": "Logical_flow_and_Discourse_Structure"
+      "16": "Logical_flow_and_Discourse_Structure",
+      "38": "BLEU",
+      "39": "ROUGE",
+      "40": "METEOR"
     }
   },
   "T3": {

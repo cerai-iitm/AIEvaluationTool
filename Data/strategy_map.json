@@ -29,14 +29,14 @@
     },
     "8":{
         "name": "bleu_score_metric",
-        "metrics": ["21"]
+        "metrics": ["38"]
     },
     "9":{
         "name": "meteor_metric",
-        "metrics": ["21"]
+        "metrics": ["39"]
     },
     "10":{
         "name": "rouge_score_metric",
-        "metrics": ["21"]
+        "metrics": ["40"]
     }
 }
