@@ -10,7 +10,8 @@
       "6": "Robustness/Fragility",
       "7": "Privacy",
       "8": "Bias_Detection",
-      "9": "Trustworthiness"
+      "9": "Trustworthiness",
+      "29": "Cultural_Sensitivity"
     }
   },
   "T2": {
@@ -49,7 +50,6 @@
     "metrics": {
       "27": "Language_Coverage",
       "28": "Ability_to_handle_multiple_Indian_languages_in_one_context",
-      "29": "Cultural_Sensitivity",
       "30": "Transliterated_Language_Handling",
       "31": "Accuracy_per_Language"
     }
