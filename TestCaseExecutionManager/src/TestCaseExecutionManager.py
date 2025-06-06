@@ -56,8 +56,9 @@ parser.add_argument(
   T5 - Task Understanding\n
   T6 - Business Requirements Alignment\n"""
     
-) # Add more to this list
-parser.add_argument("--n", type=int, help="Number of Prompts to run in a Test Plan", default=2)
+)
+#--test_case_count - instead of --n
+parser.add_argument("--test_case_count", type=int, help="Number of Prompts to run in a Test Plan", default=2)
 parser.add_argument("--action", type=str, help="Send all Prompts", default="send_all_prompts")
 parser.add_argument("--test_plan_file", default=str(data_points_path), help="Default json file")
 
