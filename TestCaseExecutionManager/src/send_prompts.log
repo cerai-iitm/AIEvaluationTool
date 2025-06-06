@@ -284,3 +284,75 @@
 2025-06-06 10:22:02,965 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
 2025-06-06 10:22:02,971 [INFO] Total prompts sent: 10
 2025-06-06 10:22:02,971 [INFO] === END: send_all_prompts ===
+2025-06-06 15:06:07,613 [INFO] === START: send_all_prompts ===
+2025-06-06 15:06:07,615 [INFO] Plan ID: T1
+2025-06-06 15:06:07,616 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
+2025-06-06 15:06:07,616 [INFO] Global Limit: 10
+2025-06-06 15:06:07,618 [INFO] Loaded metric_ids: ['2', '3', '4', '29']
+2025-06-06 15:06:07,622 [INFO] 2 has 3 cases
+2025-06-06 15:06:07,623 [INFO] Processing prompt 1 (metric: 2)
+2025-06-06 15:06:07,624 [INFO] Processing prompt 2 (metric: 2)
+2025-06-06 15:06:07,624 [INFO] Processing prompt 3 (metric: 2)
+2025-06-06 15:06:07,625 [INFO] 3 has 5 cases
+2025-06-06 15:06:07,626 [INFO] Processing prompt 4 (metric: 3)
+2025-06-06 15:06:07,626 [INFO] Processing prompt 5 (metric: 3)
+2025-06-06 15:06:07,627 [INFO] Processing prompt 6 (metric: 3)
+2025-06-06 15:06:07,628 [INFO] Processing prompt 7 (metric: 3)
+2025-06-06 15:06:07,629 [INFO] Processing prompt 8 (metric: 3)
+2025-06-06 15:06:07,630 [INFO] 4 has 4 cases
+2025-06-06 15:06:07,631 [INFO] Processing prompt 9 (metric: 4)
+2025-06-06 15:06:07,632 [INFO] Processing prompt 10 (metric: 4)
+2025-06-06 15:06:41,466 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
+2025-06-06 15:06:41,472 [INFO] Total prompts sent: 10
+2025-06-06 15:06:41,473 [INFO] === END: send_all_prompts ===
+2025-06-06 15:06:55,352 [INFO] === START: send_all_prompts ===
+2025-06-06 15:06:55,354 [INFO] Plan ID: T1
+2025-06-06 15:06:55,354 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
+2025-06-06 15:06:55,355 [INFO] Global Limit: 10
+2025-06-06 15:06:55,357 [INFO] Loaded metric_ids: ['2', '3', '4', '29']
+2025-06-06 15:06:55,361 [INFO] 2 has 3 cases
+2025-06-06 15:06:55,362 [INFO] Processing prompt 1 (metric: 2)
+2025-06-06 15:06:55,363 [INFO] Processing prompt 2 (metric: 2)
+2025-06-06 15:06:55,363 [INFO] Processing prompt 3 (metric: 2)
+2025-06-06 15:06:55,364 [INFO] 3 has 5 cases
+2025-06-06 15:06:55,366 [INFO] Processing prompt 4 (metric: 3)
+2025-06-06 15:06:55,366 [INFO] Processing prompt 5 (metric: 3)
+2025-06-06 15:06:55,367 [INFO] Processing prompt 6 (metric: 3)
+2025-06-06 15:06:55,368 [INFO] Processing prompt 7 (metric: 3)
+2025-06-06 15:06:55,369 [INFO] Processing prompt 8 (metric: 3)
+2025-06-06 15:06:55,369 [INFO] 4 has 4 cases
+2025-06-06 15:06:55,370 [INFO] Processing prompt 9 (metric: 4)
+2025-06-06 15:06:55,370 [INFO] Processing prompt 10 (metric: 4)
+2025-06-06 15:12:37,128 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
+2025-06-06 15:12:37,134 [INFO] Total prompts sent: 10
+2025-06-06 15:12:37,134 [INFO] === END: send_all_prompts ===
+2025-06-06 15:13:57,309 [INFO] === START: send_all_prompts ===
+2025-06-06 15:13:57,310 [INFO] Plan ID: T2
+2025-06-06 15:13:57,311 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
+2025-06-06 15:13:57,311 [INFO] Global Limit: 5
+2025-06-06 15:13:57,313 [INFO] Loaded metric_ids: ['10', '11', '13', '14', '15', '16', '38', '39', '40']
+2025-06-06 15:13:57,316 [INFO] 10 has 4 cases
+2025-06-06 15:13:57,317 [INFO] Processing prompt 1 (metric: 10)
+2025-06-06 15:13:57,317 [INFO] Processing prompt 2 (metric: 10)
+2025-06-06 15:13:57,318 [INFO] Processing prompt 3 (metric: 10)
+2025-06-06 15:13:57,319 [INFO] Processing prompt 4 (metric: 10)
+2025-06-06 15:13:57,320 [INFO] 11 has 4 cases
+2025-06-06 15:13:57,321 [INFO] Processing prompt 5 (metric: 11)
+2025-06-06 15:17:02,844 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
+2025-06-06 15:17:02,858 [INFO] Total prompts sent: 5
+2025-06-06 15:17:02,859 [INFO] === END: send_all_prompts ===
+2025-06-06 15:17:48,551 [INFO] === START: send_all_prompts ===
+2025-06-06 15:17:48,552 [INFO] Plan ID: T3
+2025-06-06 15:17:48,552 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
+2025-06-06 15:17:48,553 [INFO] Global Limit: 5
+2025-06-06 15:17:48,554 [INFO] Loaded metric_ids: ['20', '21', '23', '25']
+2025-06-06 15:17:48,556 [INFO] 20 has 3 cases
+2025-06-06 15:17:48,556 [INFO] Processing prompt 1 (metric: 20)
+2025-06-06 15:17:48,557 [INFO] Processing prompt 2 (metric: 20)
+2025-06-06 15:17:48,557 [INFO] Processing prompt 3 (metric: 20)
+2025-06-06 15:17:48,558 [INFO] 21 has 5 cases
+2025-06-06 15:17:48,558 [INFO] Processing prompt 4 (metric: 21)
+2025-06-06 15:17:48,559 [INFO] Processing prompt 5 (metric: 21)
+2025-06-06 15:20:47,843 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
+2025-06-06 15:20:47,852 [INFO] Total prompts sent: 5
+2025-06-06 15:20:47,853 [INFO] === END: send_all_prompts ===

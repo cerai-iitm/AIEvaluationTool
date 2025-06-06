@@ -20,5 +20,6 @@
     "test_plan_file": "C:\\Users\\nithy\\AIEvaluationTool\\Data\\DataPoints.json",
     "run_mode": "single_window",
     "agent_name": "Gooey AI",
-    "test_plan_id": "T1"
+    "test_plan_id": "T3",
+    "test_case_count": 5
 }
