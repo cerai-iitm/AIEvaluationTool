@@ -536,28 +536,28 @@
       {
         "PROMPT_ID": "P67",
         "LLM_AS_JUDGE": "No",
-        "SYSTEM_PROMPT": "No",
+        "SYSTEM_PROMPT": "",
         "PROMPT": "भारत का प्रधानमंत्री कौन है?",
         "EXPECTED_OUTPUT": "नरेंद्र मोदी भारत के प्रधानमंत्री हैं।"
       },
       {
         "PROMPT_ID": "P68",
         "LLM_AS_JUDGE": "No",
-        "SYSTEM_PROMPT": "No",
+        "SYSTEM_PROMPT": "",
         "PROMPT": "இந்தியாவின் தேசியக் கொடி என்ன?",
         "EXPECTED_OUTPUT": "இந்தியாவின் தேசியக் கொடி திருங்கோலப் பசுமை, வெள்ளை, ஊதா நிறங்களைக் கொண்டது."
       },
       {
         "PROMPT_ID": "P69",
         "LLM_AS_JUDGE": "No",
-        "SYSTEM_PROMPT": "No",
+        "SYSTEM_PROMPT": "",
         "PROMPT": "पाणी उकळल्याने ते गोठतं का?",
         "EXPECTED_OUTPUT": "नाही, पाणी उकळल्याने ते वाफ बनते, गोठत नाही."
       },
       {
         "PROMPT_ID": "P70",
         "LLM_AS_JUDGE": "No",
-        "SYSTEM_PROMPT": "No",
+        "SYSTEM_PROMPT": "",
         "PROMPT": "ગાંધીનગર ગુજરાતની રાજધાની છે?",
         "EXPECTED_OUTPUT": "હા, ગાંધીનગર ગુજરાતની રાજધાની છે."
       }
