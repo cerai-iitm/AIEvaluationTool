@@ -83,7 +83,6 @@ class TestCaseExecutionManager:
     def __init__(self, test_plan_file, test_plan_id, limit=None, **client_args):
         self.test_plan_file = test_plan_file
         self.test_plan_id = test_plan_id
-        self.test_plan_id = test_plan_id
         self.limit = limit
         self.test_plan_name = ""
         self.test_plan_name = ""
@@ -181,7 +180,7 @@ class TestCaseExecutionManager:
         logger.info("=== START: send_all_prompts ===")
         logger.info(f"Plan ID: {self.test_plan_id}")
         logger.info(f"Test plan file: {self.test_plan_file}")
-        logger.info(f"Global Limit: {self.limit}")
+        logger.info(f"Number of Test cases: {self.limit}")
 
         results = []
         prompt_list = []
@@ -295,7 +294,6 @@ client = InterfaceManagerClient(**client_args)
 
 manager = TestCaseExecutionManager(
         test_plan_file=args.test_plan_file,
-        test_plan_id=args.test_plan_id,
         test_plan_id=args.test_plan_id,
         limit=args.test_case_count,
         **client_args
