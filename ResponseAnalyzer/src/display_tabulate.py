@@ -2,16 +2,22 @@ import json
 import textwrap
 from tabulate import tabulate
 from colorama import Fore, Style, init
+from pathlib import Path
+
+current_file = Path(__file__).resolve()
+
+# Setting path to the Data folder
+response_analysis_results_path = current_file.parents[2] / "Data" / "response_analysis_output.json"
 
 init(autoreset=True)
 
 MAX_WIDTH = 25
-TOTAL_SAMPLES_PER_METRIC = 3  # Adjust if needed
+TOTAL_SAMPLES_PER_METRIC = 3  
 
 def wrap(text, width=MAX_WIDTH):
     return "\n".join(textwrap.wrap(str(text), width=width))
 
-with open("data/response_analysis_output.json", "r") as f:
+with open(str(response_analysis_results_path), "r") as f:
     data = json.load(f)
 
 rows = []

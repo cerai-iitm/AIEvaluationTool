@@ -25,6 +25,7 @@ from tqdm import tqdm
 import evaluate
 from nltk.translate.meteor_score import meteor_score
 from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
+from pathlib import Path
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -35,16 +36,27 @@ model_name = "llama3.2:1b"
 # llm = OllamaLLM(model=model_name, callbacks=[opik_tracer])
 llm = OllamaLLM(model=model_name)
 
-with open('Data/DataPoints.json', 'r',encoding='utf-8') as f:
+current_file = Path(__file__).resolve()
+
+# Setting path to the Data folder
+plans_path = current_file.parents[2] / "Data" / "plans.json"
+
+data_points_path = current_file.parents[2] / "Data" / "DataPoints.json"
+
+response_path = current_file.parents[2] / "Data" / "responses.json"
+
+strategy_map_path = current_file.parents[2] / "Data" / "strategy_map.json"
+
+with open(data_points_path, 'r',encoding='utf-8') as f:
     datapoints = json.load(f)
 
-with open('Data/plans.json', 'r') as f:
+with open(plans_path, 'r') as f:
     plans = json.load(f)
 
-with open('Data/responses.json', 'r',encoding='utf-8') as f:
+with open(response_path, 'r',encoding='utf-8') as f:
     responses = json.load(f)
 
-with open('Data/strategy_map.json', 'r') as f:
+with open(strategy_map_path, 'r') as f:
     strategy_map = json.load(f)
 
 embedding_model = SentenceTransformer("thenlper/gte-small")

@@ -15,16 +15,31 @@ from strategies import (
     rouge_score_metric
 )
 
-with open('Data/DataPoints.json', 'r',encoding='utf-8') as f:
+from pathlib import Path
+
+current_file = Path(__file__).resolve()
+
+# Setting path to the Data folder
+plans_path = current_file.parents[2] / "Data" / "plans.json"
+
+data_points_path = current_file.parents[2] / "Data" / "DataPoints.json"
+
+response_path = current_file.parents[2] / "Data" / "responses.json"
+
+strategy_map_path = current_file.parents[2] / "Data" / "strategy_map.json"
+
+response_analyzer_results_path = current_file.parents[2] / "Data" / "response_analysis_output.json"
+
+with open(data_points_path, 'r',encoding='utf-8') as f:
     datapoints = json.load(f)
 
-with open('Data/plans.json', 'r') as f:
+with open(plans_path, 'r') as f:
     plans = json.load(f)
 
-with open('Data/responses.json', 'r',encoding='utf-8') as f:
+with open(response_path, 'r',encoding='utf-8') as f:
     responses = json.load(f)
 
-with open('Data/strategy_map.json', 'r') as f:
+with open(strategy_map_path, 'r') as f:
     strategy_map = json.load(f)
 
 strategy_functions = {
@@ -138,7 +153,7 @@ async def analyze():
 
 asyncio.run(analyze())
 
-output_path = "Data/response_analysis_output.json"
+output_path = str(response_analyzer_results_path)
 with open(output_path, "w") as f:
     json.dump(final_results, f, indent=2)
 
