@@ -1,5 +1,10 @@
 __pycache__
+<<<<<<< HEAD
 env/**
 .env
 Gokul/
 environ/
+=======
+whatsapp_profile/
+logs/
+>>>>>>> origin/main

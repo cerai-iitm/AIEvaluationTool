@@ -1,0 +1,23 @@
+{
+    "base_url": "http://localhost:8000",
+    "application_type": "WHATSAPP_WEB",
+    "model_name": "Gooey",
+    "openui_email": "OPENUI_EMAIL",
+    "openui_password": "OPENUI_PASSWORD",
+    "debug": "True",
+    "default_host": "8.8.8.8",
+    "default_port": 53,
+    "default_timeout": 3,
+    "ollama_server_url": "http://localhost:11434",
+    "server_url": "http://localhost:3000",
+    "server_timeout": 5,
+    "retries": 5,
+    "retry_delay": 3,
+    "max_retry_delay": 60,
+    "whatsapp_url": "https://web.whatsapp.com",
+    "test_plan_name": "Inappropriate Content Detection",
+    "n": 2,
+    "action": "send_all_prompts",
+    "test_plan_file": "test.json",
+    "run_mode": "single"
+}

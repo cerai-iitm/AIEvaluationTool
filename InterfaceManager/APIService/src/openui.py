@@ -1,17 +1,17 @@
 # openui.py
 
-import os
 import time
+import json
 import socket
 import requests
-from datetime import datetime
-from config import settings
 from selenium import webdriver
 from typing import Optional
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import (
     StaleElementReferenceException,
@@ -20,6 +20,7 @@ from selenium.common.exceptions import (
 )
 from selenium.webdriver.chrome.options import Options
 from logger import get_logger
+from typing import List
 
 logger = get_logger("openui_driver")
 
@@ -28,14 +29,20 @@ driver: Optional[WebDriver] = None  # Global driver instance
 def get_ui_response():
     return {"ui": "OpenUI Interface", "features": ["smart-compose", "modular-layout"]}
 
+def load_config():
+    with open('config.json', 'r') as file:
+        return json.load(file)
+
 # helper functions
 def is_connected(host: str, port: int, timeout: int) -> bool:
     '''
-    Checking whether the device is connected to internet of not 
+    Checking whether the device is connected to internet or not 
     '''
-    host = settings.default_host
-    port = settings.default_port
-    timeout = settings.default_timeout
+    config = load_config()
+
+    host = config.get("default_host")
+    port = config.get("default_port")
+    timeout = config.get("default_timeout")
     try:
         socket.setdefaulttimeout(timeout)
         socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((host, port))
@@ -44,12 +51,14 @@ def is_connected(host: str, port: int, timeout: int) -> bool:
         logger.error(f"Network down: {ex}")
         return False
 
-def is_server_running(url: str, timeout: int=settings.server_timeout) -> bool:
+def is_server_running(url: str, timeout: int) -> bool:
     '''
     Checking whether the server is running or not
     '''
-    url = settings.server_url
-    timeout = settings.server_timeout
+    config = load_config()
+
+    url = config.get("server_url")
+    timeout = config.get("server_timeout")
     try:
         response = requests.get(url)
         return response.status_code == 200
@@ -61,14 +70,16 @@ def wait_for_server(url: str, retries: int, delay: int, max_delay=None, on_retry
     '''
     Retry the automation function if server is down or a runtime exception occurs.
     '''
-    url = settings.server_url
-    retries = retries if retries is not None else settings.retries
-    delay = delay if delay is not None else settings.retry_delay
-    max_delay = max_delay if max_delay is not None else settings.max_retry_delay
+    config = load_config()
+
+    url = config.get("server_url")
+    retries = retries if retries is not None else config.get("retries")
+    delay = delay if delay is not None else config.get("retry_delay")
+    max_delay = max_delay if max_delay is not None else config.get("max_retry_delay")
 
     current_delay = delay
     for attempt in range(1, retries + 1):
-        if is_server_running(url=url):
+        if is_server_running(url=url, timeout=config.get("default_timeout")):
             logger.info(f"Server at {url} is up.")
             return True
         logger.warning(f"Attempt {attempt}/{retries}: Server not responding. Retrying in {current_delay}s...")
@@ -87,11 +98,13 @@ def initiate_login(driver: webdriver.Chrome) -> bool:
     """
     Login initiation using email and password stored in environment variable
     """
+    config = load_config()
+
     status: bool = False
     try:
         logger.info("Initiating OpenUI Login process..")
-        EMAIL = settings.openui_email
-        PASSWORD = settings.openui_password
+        EMAIL = config.get("openui_email")
+        PASSWORD = config.get("openui_password")
 
         """
         Sending email and password to the site for login
@@ -120,16 +133,17 @@ def login_openui(driver: Optional[WebDriver]= None) -> bool:
     """
     Login with OpenUI using Selenium automation
     """
+    config = load_config()
     driver = driver
     status: bool = False
     try:
-        if not wait_for_server(url=settings.ollama_server_url, retries=5, delay=3, max_delay=10):
+        if not wait_for_server(url=config.get("ollama_server_url"), retries=5, delay=3, max_delay=10):
             logger.error("Ollama server is not reachable after multiple attempts")
             raise ConnectionError("Ollama server is not reachable after multiple attempts.")
 
         if driver is None:
             driver = webdriver.Chrome()
-            driver.get(settings.server_url)
+            driver.get(config.get("server_url"))
 
         if initiate_login(driver):
             status = True
@@ -143,7 +157,6 @@ def safe_click(driver, selector: str, retries: int = 3, wait_time: int = 10) -> 
     """
     Safely clicks an element located by either XPath or CSS selector.
     """
-    # Determine selector type
     if selector.strip().startswith('/') or selector.strip().startswith('('):
         by_type = By.XPATH
     else:
@@ -177,23 +190,20 @@ def initiate_logout(driver: webdriver.Chrome) -> bool:
         profile_btn = 'button[aria-label="User Menu"]'
         sign_out_btn = '//button[.//div[text()="Sign Out"]]'
         
-        # Click profile button
         if not safe_click(driver, profile_btn):
             logger.error("Failed to click profile button.")
             return False
 
-        # Click sign out button
         if not safe_click(driver, sign_out_btn):
             logger.error("Failed to click sign-out button.")
             return False
 
-        # Optional: wait until redirected or URL change
         WebDriverWait(driver, 5).until(EC.url_contains("/auth"))
         logger.info(f"Logout successful. Current URL: {driver.current_url}")
         return True
     except TimeoutException:
         logger.warning(f"Logout click sequence completed but no redirect detected. Current URL: {driver.current_url}")
-        return True  # Still return True if actions succeeded but URL check failed
+        return True  
     except Exception as e:
         logger.error(f"Logout failed: {e}")
         return False
@@ -219,10 +229,11 @@ def logout_openui() -> bool:
     finally:
         driver = None
 
-def search_llm(driver: webdriver.Chrome, llm_name: str) -> bool:
+def search_llm(driver: webdriver.Chrome) -> bool:
     """
     Searching for the local models in OpenUI interface
     """ 
+    llm_name = load_config().get("model_name")
     try:
         if login_openui(driver):
             logger.info(f"Launched the OpenUI Interface")
@@ -251,69 +262,108 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int=3):
     """
     Send prompt to the Ollama model using OpenUI Interface
     """
+    config = load_config()
     attempt = 0
     while attempt < max_retries:
         try:
-            if not is_server_running(url=settings.ollama_server_url, timeout=settings.server_timeout):
+            if not is_server_running(url=config.get("ollama_server_url"), timeout=config.get("server_timeout")):
                 return "[Failed: Server unavailable]"
             
-            logger.info(f"Sending prompt: {prompt}")
-            # Locate the message input box
+            logger.info(f"Sending prompt")
+            
             message_box_xpath = '//*[@id="chat-input"]/p'
-            message_box = WebDriverWait(driver, 20).until(
+            message_box = WebDriverWait(driver, 30).until(
                 EC.presence_of_element_located((By.XPATH, message_box_xpath))
             )
             message_box.click()
             message_box.send_keys(prompt)
+            time.sleep(2)
             message_box.send_keys(Keys.RETURN)
-
-            # Wait and capture latest incoming message
-            time.sleep(15)
             
-            elements = driver.find_elements(By.CSS_SELECTOR, "div#response-content-container")
+            time.sleep(20)
+            
+            wait = WebDriverWait(driver, 50)
+            wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="response-content-container"]')))
+            
+            elements = driver.find_elements(By.XPATH, '//*[@id="response-content-container"]')
+            
             if elements:
-                response = elements[-1].text  # Get the last element
+                response = elements[-1].text
                 logger.info(f"Received response: {response}")
                 return response
         except Exception as e:
             logger.error(f"Error during chat: {e}")
             return "[Error during chat]"
         
-def send_prompt_openui(prompt: str) -> dict:
+def send_prompt_openui(chat_id: int, prompt_list: List[str], mode: str = "single_window") -> list[dict]:
     """
     Send prompt and receive response from Ollama Server using OpenUI Interface
     """
-    llm_name: str=settings.ollama_model_name
-    # start_time = None 
-    # end_time = None
-    response_json = {
-        "prompt": prompt,
-        "response": "Not available"
-    }
+    results = []
 
-    try:
-        if not is_server_running(url=settings.ollama_server_url, timeout=settings.server_timeout):
-            return response_json
-        
+    if mode == "single_window":
         opts = Options()
-        opts.add_argument('--start-maximized')
-        driver = webdriver.Chrome(options=opts)
-        driver.get(settings.server_url)
+        opts.add_argument("--start-maximized")
+        opts.add_experimental_option("excludeSwitches", ["enable-logging"])
 
-        if search_llm(driver=driver, llm_name=llm_name):
-            # start_time = datetime.now()
-            response_str = send_message(driver=driver, prompt=prompt)
-            # end_time = datetime.now()
-            # response_json['start_time'] = str(start_time)
-            # response_json['end_time'] = str(end_time)
-            response_json["prompt"] = prompt
-            response_json["response"] = str(response_str)
+        service = Service(ChromeDriverManager().install())
+        driver = webdriver.Chrome(service=service, options=opts)
 
-        close(driver=driver)
+        try:
+            driver.get(load_config().get("server_url"))
+            time.sleep(5)
 
-    except Exception as e:
-        logger.error(f"Chat failed: {e}")
-    return response_json
+            chat_found = search_llm(driver=driver)
+            
+            for i, prompt in enumerate(prompt_list):
+                result = {"chat_id": chat_id, "prompt": prompt, "response": "Not available"}
+
+                try:
+                    if chat_found:
+                        response_str = send_message(driver=driver, prompt=prompt)
+                        result["response"] = str(response_str)
+                    else:
+                        result["response"] = "Chat not found"
+                except Exception as e:
+                    logger.error(f"Prompt failed for chat '{chat_id}': {e}")
+                    result['response'] = f"Error: {e}"
+                
+                results.append(result)
+        
+        finally:
+            driver.quit()
+    
+    elif mode == "multi_window":
+        for i, prompt in enumerate(prompt_list):
+            opts = Options()
+            opts.add_argument("--start-maximized")
+            opts.add_experimental_option("excludeSwitches", ["enable-logging"])
+
+            service = Service(ChromeDriverManager().install())
+            driver = webdriver.Chrome(service=service, options=opts)
+            
+            try:
+                driver.get(load_config().get("server_url"))
+                time.sleep(5)
+
+                result = {"chat_id": chat_id, "prompt": prompt, "response": "Not available"}
+
+                try:
+                    if search_llm(driver):
+                        result["response"] = send_message(driver, prompt)
+                    else:
+                        result["response"] = "Chat not found"
+                except Exception as e:
+                    result["response"] = f"Error: {e}"
+                
+                results.append(result)
+            
+            finally:
+                driver.quit()
+    else:
+        raise ValueError("Invalid mode: choose 'single_window' or 'multi_window'.")
+
+    return results
 
 def close(driver: webdriver.Chrome):
     """
