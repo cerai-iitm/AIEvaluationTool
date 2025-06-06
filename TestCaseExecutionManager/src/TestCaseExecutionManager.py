@@ -81,11 +81,15 @@ elif args.application_type == "OPENUI":
 
 class TestCaseExecutionManager:
     def __init__(self, test_plan_file, test_plan_id, limit=None, **client_args):
+    def __init__(self, test_plan_file, test_plan_id, limit=None, **client_args):
         self.test_plan_file = test_plan_file
+        self.test_plan_id = test_plan_id
         self.test_plan_id = test_plan_id
         self.limit = limit
         self.test_plan_name = ""
+        self.test_plan_name = ""
         self.test_cases = self.load_test_cases()
+        self.chat_id_count= 0
         self.chat_id_count= 0
 
         if client_args.get("base_url"):
@@ -95,6 +99,7 @@ class TestCaseExecutionManager:
         else:
             self.client = None
 
+    def load_test_cases(self) -> List[Dict]:
     def load_test_cases(self) -> List[Dict]:
         try:
 
@@ -148,6 +153,12 @@ class TestCaseExecutionManager:
             response = self.client.chat(chat_id=chat_id, prompt_list=[prompt])
             data = response.json()
 
+            if isinstance(data, dict) and "response" in data:
+                resp = data["response"]
+                if isinstance(resp, list) and resp and isinstance(resp[0], dict):
+                    response_text = resp[0].get("response", "")
+                else:
+                    response_text = str(resp)
             if isinstance(data, dict) and "response" in data:
                 resp = data["response"]
                 if isinstance(resp, list) and resp and isinstance(resp[0], dict):
@@ -268,7 +279,9 @@ class TestCaseExecutionManager:
         logger.info(f"Total prompts sent: {len(prompt_list)}")
         logger.info("=== END: send_all_prompts ===")
 
+        print(prompt_list) 
         return results
+
 
 
 # setting arguments for InterfaceManager Client
@@ -286,6 +299,7 @@ client = InterfaceManagerClient(**client_args)
 
 manager = TestCaseExecutionManager(
         test_plan_file=args.test_plan_file,
+        test_plan_id=args.test_plan_id,
         test_plan_id=args.test_plan_id,
         limit=args.n,
         **client_args
