@@ -171,7 +171,7 @@ class TestCaseExecutionManager:
         logger.info("=== START: send_all_prompts ===")
         logger.info(f"Plan ID: {self.test_plan_id}")
         logger.info(f"Test plan file: {self.test_plan_file}")
-        logger.info(f"Limit: {self.limit}")
+        logger.info(f"Global Limit: {self.limit}")
 
         results = []
         prompt_list = []
@@ -187,7 +187,11 @@ class TestCaseExecutionManager:
         with open(self.test_plan_file, 'r', encoding='utf-8') as case_file:
             all_cases_by_metric = json.load(case_file)
 
+        total_collected = 0
         for metric_id in metric_ids:
+            if self.limit and total_collected >= self.limit:
+                break
+
             metric_data = all_cases_by_metric.get(metric_id)
             if not metric_data:
                 continue
@@ -195,12 +199,15 @@ class TestCaseExecutionManager:
             cases = metric_data.get("cases", [])
             logger.info(f"{metric_id} has {len(cases)} cases")
 
-            for idx, test_case in enumerate(cases[:self.limit] if self.limit else cases):
-                logger.info(f"Processing prompt {idx + 1}/{len(cases)} for metric '{metric_id}'")
+            for idx, test_case in enumerate(cases):
+                if self.limit and total_collected >= self.limit:
+                    break
+
+                logger.info(f"Processing prompt {total_collected + 1} (metric: {metric_id})")
 
                 test_case_id = test_case.get('PROMPT_ID')
-                system_prompt = str(test_case.get('SYSTEM_PROMPT', '')).replace("\n","")
-                prompt = str(test_case.get('PROMPT', '')).replace("\n","")
+                system_prompt = str(test_case.get('SYSTEM_PROMPT', '')).replace("\n", "")
+                prompt = str(test_case.get('PROMPT', '')).replace("\n", "")
                 prompt_text = f"{system_prompt.strip()} {prompt.strip()}".strip()
 
                 dedup_key = test_case_id or prompt_text
@@ -213,6 +220,7 @@ class TestCaseExecutionManager:
 
                 prompt_list.append(prompt_text)
                 prompt_id_list.append(test_case_id)
+                total_collected += 1
 
         if not self.client:
             logger.warning("Client is not initialized!")
@@ -236,7 +244,6 @@ class TestCaseExecutionManager:
                                 "response": r.get("response", "")
                             })
                     else:
-                        # fallback single response string
                         results.append({
                             "prompt_id": prompt_id_list[0],
                             "test_plan_id": self.test_plan_id,
@@ -253,7 +260,6 @@ class TestCaseExecutionManager:
                         "response": f"Error: {e}"
                     })
 
-        # Save to file
         result_path = response_file
         with open(result_path, "w", encoding="utf-8") as f:
             json.dump(results, f, indent=2, ensure_ascii=False)
@@ -262,6 +268,7 @@ class TestCaseExecutionManager:
         logger.info("=== END: send_all_prompts ===")
 
         return results
+
 
 # setting arguments for InterfaceManager Client
 client_args = {

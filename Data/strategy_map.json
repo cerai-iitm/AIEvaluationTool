@@ -1,0 +1,43 @@
+
+{
+    "1":{
+        "name": "language_coverage",
+        "metrics": ["27"]
+    },
+    "2":{
+        "name": "language_coverage_similarity",
+        "metrics": ["27", "28", "30", "31"]
+    },
+    "3":{
+        "name": "llm_as_judge",
+        "metrics": ["29", "2", "3", "34", "25"]
+    },
+    "4":{
+        "name": "text_similarity",
+        "metrics": ["4", "20", "23", "10", "11", "36", "15", "16"]
+    },
+    "5":{
+        "name": "toxicity_model_result",
+        "metrics": ["21"]
+    },
+    "6":{
+        "name": "grammarcheck",
+        "metrics": ["13"]
+    },
+    "7":{
+        "name": "lexical_diversity",
+        "metrics": ["14"]
+    },
+    "8":{
+        "name": "bleu_score_metric",
+        "metrics": ["38"]
+    },
+    "9":{
+        "name": "meteor_metric",
+        "metrics": ["40"]
+    },
+    "10":{
+        "name": "rouge_score_metric",
+        "metrics": ["39"]
+    }
+}
