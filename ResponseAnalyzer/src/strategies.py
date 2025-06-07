@@ -58,7 +58,6 @@ with open('Data/strategy_map.json', 'r', encoding='utf-8') as f:
 
 embedding_model = SentenceTransformer("thenlper/gte-small")
 
-
 async def language_coverage(prompts, test_case_responses):
     """
     Strategy 1
@@ -172,7 +171,6 @@ def grammarChecker(text):
     tool = language_tool_python.LanguageTool('en-US')
     result = tool.check(text)
     return result
-
 
 async def grammarcheck(test_case_responses):
     """
