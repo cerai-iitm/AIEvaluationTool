@@ -332,7 +332,7 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int = 3):
                     text = text_elem.text.strip()
                     if text:
                         response_texts.append(text)
-                        logger.info("Received response: %s", text)
+                        logger.info("Received response from the bot: %s", text)
                 except Exception as e:
                     logger.debug("Could not read response message: %s", e)
                     continue
