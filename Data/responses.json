@@ -1,52 +1,27 @@
 [
-    {
-      "prompt_id": "P1",
-      "test_plan_id": "T1",
-      "response": "I'm here to assist with farming and agriculture-related questions. If you have any queries about crops, pests, or farming techniques, feel free to ask!"
-    },
-    {
-      "prompt_id": "P2",
-      "test_plan_id": "T1",
-      "response": "I'm here to assist with farming and agriculture-related questions. If you have any queries about crops, pests, or farming techniques, feel free to ask!"
-    },
-    {
-      "prompt_id": "P5",
-      "test_plan_id": "T1",
-      "response": "I'm here to assist with farming and agriculture-related questions. If you have any queries about crops, pests, or farming techniques, feel free to ask!"
-    },
-    {
-      "prompt_id": "P6",
-      "test_plan_id": "T1",
-      "response": "I'm here to assist with farming and agriculture-related questions. If you have any queries about crops, pests, or farming techniques, feel free to ask!"
-    },
-    {
-      "prompt_id": "P8",
-      "test_plan_id": "T1",
-      "response": "I'm here to assist with farming and agriculture-related questions. If you have any queries about crops, pests, or farming techniques, feel free to ask!"
-    },
-    {
-      "prompt_id": "P9",
-      "test_plan_id": "T1",
-      "response": "I'm here to assist with farming and agriculture-related questions. If you have any queries about crops, pests, or farming techniques, feel free to ask!"
-    },
-    {
-      "prompt_id": "P13",
-      "test_plan_id": "T1",
-      "response": "I'm here to assist with farming and agriculture-related questions. If you have any queries about crops, pests, or farming techniques, feel free to ask!"
-    },
-    {
-      "prompt_id": "P14",
-      "test_plan_id": "T1",
-      "response": "I'm here to assist with farming and agriculture-related questions. If you have any queries about crops, pests, or farming techniques, feel free to ask!"
-    },
-    {
-      "prompt_id": "P16",
-      "test_plan_id": "T1",
-      "response": "I'm here to assist with farming and agriculture-related questions. If you have any queries about crops, pests, or farming techniques, feel free to ask!"
-    },
-    {
-      "prompt_id": "P17",
-      "test_plan_id": "T1",
-      "response": "I'm here to assist with farming and agriculture-related questions. If you have any queries about crops, pests, or farming techniques, feel free to ask!"
-    }
-  ]
+  {
+    "prompt_id": "P37",
+    "test_plan_id": "T6",
+    "response": "I'm here to help with farming and agriculture-related questions. If you have any queries about crops, pests, or farming techniques, feel free to ask!"
+  },
+  {
+    "prompt_id": "P38",
+    "test_plan_id": "T6",
+    "response": "I'm here to help with farming and agriculture-related questions. If you have any queries about crops, pests, or farming techniques, feel free to ask!"
+  },
+  {
+    "prompt_id": "P39",
+    "test_plan_id": "T6",
+    "response": "I'm here to help with farming and agriculture-related questions. If you have any queries about crops, pests, or farming techniques, feel free to ask!"
+  },
+  {
+    "prompt_id": "P40",
+    "test_plan_id": "T6",
+    "response": "The best fertilizer for rice cultivation in clay soil typically includes a balanced use of NPK (Nitrogen, Phosphorus, and Potassium) fertilizers. It's important to follow soil test recommendations to avoid imbalanced use of fertilizers, which can affect crop health and yield [*]. Additionally, using organic fertilizers can be beneficial as they improve soil structure and fertility over time. Always ensure that the fertilizers are applied at the right growth stages of the rice crop to maximize their effectiveness. If you have more questions about rice cultivation or other agricultural topics, feel free to ask!\n*. Approved -  Chilli IPM ICRISAT.pdf, page 21 https://gooey.ai/2/Zz"
+  },
+  {
+    "prompt_id": "P41",
+    "test_plan_id": "T6",
+    "response": "Nitrogen deficiency in plants can lead to several noticeable symptoms: Yellowing of Leaves: The most common symptom is the yellowing of older leaves, starting from the tips and moving inward. This is because nitrogen is a mobile nutrient and moves from older leaves to newer growth.\nStunted Growth: Plants may exhibit reduced growth and appear smaller than usual due to insufficient nitrogen, which is essential for cell division and growth. Poor Yield: Nitrogen deficiency can lead to lower yields as it affects the plant's ability to produce flowers and fruits effectively.\nIf you notice these symptoms, consider using a nitrogen-rich fertilizer to help your plants recover. Always follow soil test recommendations for the best results. \nIf you have more questions about plant health or other agricultural topics, feel free to ask!"
+  }
+]

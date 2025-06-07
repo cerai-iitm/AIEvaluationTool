@@ -1,0 +1,11 @@
+{
+  "Business_Requirements_Alignment": {
+    "metrics": {
+      "Functional_Domain_Relevance": {
+        "score": 0.4,
+        "failed_cases": 3,
+        "successful_cases": 2
+      }
+    }
+  }
+}
