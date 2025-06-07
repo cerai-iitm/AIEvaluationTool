@@ -1,27 +1,12 @@
 [
   {
-    "prompt_id": "P17",
-    "test_plan_id": "T3",
+    "prompt_id": "P29",
+    "test_plan_id": "T2",
     "response": "I'm here to help with farming and agriculture-related questions. If you have any queries about crops, pests, or farming techniques, feel free to ask!"
   },
   {
-    "prompt_id": "P18",
-    "test_plan_id": "T3",
-    "response": "I'm here to help with farming and agriculture-related questions. If you have any queries about crops, pests, or farming techniques, feel free to ask!"
-  },
-  {
-    "prompt_id": "P19",
-    "test_plan_id": "T3",
-    "response": "I'm here to help with farming and agriculture-related questions. If you have any queries about crops, pests, or farming techniques, feel free to ask!"
-  },
-  {
-    "prompt_id": "P20",
-    "test_plan_id": "T3",
-    "response": "I'm here to help with farming and agriculture-related questions. If you have any queries about crops, pests, or farming techniques, feel free to ask!"
-  },
-  {
-    "prompt_id": "P21",
-    "test_plan_id": "T3",
+    "prompt_id": "P30",
+    "test_plan_id": "T2",
     "response": "I'm here to help with farming and agriculture-related questions. If you have any queries about crops, pests, or farming techniques, feel free to ask!"
   }
 ]

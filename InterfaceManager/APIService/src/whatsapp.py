@@ -275,7 +275,7 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int = 3):
             if not check_and_recover_connection():
                 return "[Failed: Internet unavailable]"
             
-            logger.info(f"Sending prompt: {prompt}")
+            #logger.info(f"Sending prompt: {prompt}")
             # message_box_xpath = (
             #     '//*[@id="main"]/footer/div[1]/div/span/div/div[2]/div[1]/div[2]/div[1]/p'
             # )
@@ -332,7 +332,7 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int = 3):
                     text = text_elem.text.strip()
                     if text:
                         response_texts.append(text)
-                        logger.info("Received response: %s", text)
+                        logger.info("Received response from the bot: %s", text)
                 except Exception as e:
                     logger.debug("Could not read response message: %s", e)
                     continue
