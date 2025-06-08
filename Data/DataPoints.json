@@ -277,14 +277,14 @@
         "PROMPT_ID": "P35",
         "LLM_AS_JUDGE": "",
         "SYSTEM_PROMPT": "You are an educational bot, you need to answer queries related to the students. Given the series of conversation, try answering student's queries -",
-        "PROMPT": "Alia: Is Sunita maam coming to teach us today?  Bot: She is attending the meeting with principal.  Alia: When will she back?  Bot: She should be back in few mins.  Alia: Can you help me with hindi akshars?",
+        "PROMPT": "Alia: Is Sunita maam coming to teach us today?  Bot: She is attending the meeting with principal.  Alia: When will she be back?  Bot: She should be back in few mins.  Alia: Can you help me with hindi akshars?",
         "EXPECTED_OUTPUT": "If the chatbot is able to continue the answers then it is coherent"
       },
       {
         "PROMPT_ID": "P36",
         "LLM_AS_JUDGE": "",
         "SYSTEM_PROMPT": "You are a bot to assist disabled people, you need to answer queries related to the them. Given the series of conversation, try answering the queries - ",
-        "PROMPT": "Manus: What are the available equipments in Chemical lab?  Bot: Chemical Lab has all the requirement chemicals and equipments.  Manus: Are the labelled?  Bot: Yes they are. Manus: Can I understand them?",
+        "PROMPT": "Manus: What are the available equipments in Chemical lab?  Bot: Chemical Lab has all the requirement chemicals and equipments.  Manus: Are they labelled?  Bot: Yes they are. Manus: Can you help me to understand them?",
         "EXPECTED_OUTPUT": "If the chatbot is supportive and answers things according to the labels."
       }
     ]
@@ -296,7 +296,7 @@
         "LLM_AS_JUDGE": "",
         "SYSTEM_PROMPT": "You are a hospital support chatbot assisting with appointment scheduling, patient queries, and general hospital info.",
         "PROMPT": "How can I book an appointment with a dermatologist?",
-        "EXPECTED_OUTPUT": "You can book an appointment by calling our hospital helpline or using the online portal. Would you like the link?"
+        "EXPECTED_OUTPUT": "You can book an appointment by calling our hospital helpline or using the online portal. Would you like, if i give you the link?"
       },
       {
         "PROMPT_ID": "P38",
@@ -368,7 +368,7 @@
       {
         "PROMPT_ID": "P46",
         "LLM_AS_JUDGE": "",
-        "SYSTEM_PROMPT": "You are a helpful medical assistant. Provide a detailed explanation of diabetes symptoms in patients.",
+        "SYSTEM_PROMPT": "You are a helpful medical assistant. Provide a detailed answers of patient's questions.",
         "PROMPT": "Explain common symptoms of diabetes.",
         "EXPECTED_OUTPUT": "Diabetes symptoms typically include increased thirst, frequent urination, unexplained weight loss, fatigue, blurred vision, slow-healing sores, and frequent infections. Patients may also experience numbness or tingling in the hands or feet due to nerve damage."
       },
@@ -414,14 +414,14 @@
       },
       {
         "PROMPT_ID": "P52",
-        "LLM_AS_JUDGE": "You are an evaluation bot, Evaluate how relevant and informative this response is. Score between 0 (off-topic or vague) and 1 (on-topic + relevant answer).",
+        "LLM_AS_JUDGE": "You are an evaluation bot, Evaluate how relevant and informative the response is. Score between 0 (off-topic or vague) and 1 (on-topic + relevant answer).",
         "SYSTEM_PROMPT": "You are a technical explainer. Stay on-topic and provide insightful, correct content.",
         "PROMPT": "What is a database index and why is it important?",
         "EXPECTED_OUTPUT": "A database index is a data structure that improves query speed. It allows faster retrieval of rows by creating pointers to data in a table."
       },
       {
         "PROMPT_ID": "P53",
-        "LLM_AS_JUDGE": "You are an evaluation bot. Evaluate how relevant and informative this response is. Score between 0 (off-topic or vague) and 1 (on-topic and relevant answer).",
+        "LLM_AS_JUDGE": "You are an evaluation bot. Evaluate how relevant and informative the response is. Score between 0 (off-topic or vague) and 1 (on-topic and relevant answer).",
         "SYSTEM_PROMPT": "You are an agricultural product advisor. Provide concise and detailed info that answers the customer's query.",
         "PROMPT": "Which fertilizer is best for increasing tomato yield? ",
         "EXPECTED_OUTPUT": "For increasing tomato yield, a balanced NPK fertilizer like 10-10-10 or 5-10-10 is recommended. Ensure proper irrigation and apply the fertilizer during the flowering and fruiting stages for best results."
