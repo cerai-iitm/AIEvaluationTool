@@ -43,8 +43,7 @@
   "T5": {
     "TestPlan_name": "Task_Understanding",
     "metrics": {
-      "34": "Task_Completion_Rate"
-      
+      "34": "Task_Completion_Rate" 
     }
   },
   "T6": {
