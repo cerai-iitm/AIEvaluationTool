@@ -1,3 +1,4 @@
+
 import os
 import json
 import asyncio
@@ -20,6 +21,8 @@ from strategies import (
     rouge_score_metric
 )
 
+init(autoreset=True)
+
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 if logger.hasHandlers():
@@ -33,13 +36,10 @@ logger.addHandler(file_handler)
 
 with open('Data/DataPoints.json', 'r', encoding='utf-8') as f:
     datapoints = json.load(f)
-
 with open('Data/plans.json', 'r', encoding='utf-8') as f:
     plans = json.load(f)
-
 with open('Data/responses.json', 'r', encoding='utf-8') as f:
     responses = json.load(f)
-
 with open('Data/strategy_map.json', 'r', encoding='utf-8') as f:
     strategy_map = json.load(f)
 
@@ -56,13 +56,15 @@ strategy_functions = {
     "rouge_score_metric": rouge_score_metric
 }
 
-final_results = {}
 test_plan_groups = {}
 for item in responses:
-    plan_id = item["test_plan_id"]
-    test_plan_groups.setdefault(plan_id, []).append(item)
+    plan_id = item.get("test_plan_id")
+    if plan_id is not None:
+        test_plan_groups.setdefault(plan_id, []).append(item)
 
-# --------------------- Main Analysis Function -------------------------------------------------------------
+final_results = {}
+
+# -----------------------Main analysis function --------------------------------------------------------
 async def analyze():
     for plan_id, response_items in test_plan_groups.items():
         plan_info = plans.get(plan_id, {})
@@ -85,14 +87,14 @@ async def analyze():
 
                 dp_case = next(
                     (case for case in datapoints.get(metric_id, {}).get("cases", [])
-                     if case["PROMPT_ID"] == prompt_id),
+                     if case.get("PROMPT_ID") == prompt_id),
                     None
                 )
                 if not dp_case:
                     continue
 
                 evaluable_cases += 1
-                collected_prompts.append(dp_case["PROMPT"])
+                collected_prompts.append(dp_case.get("PROMPT", ""))
                 collected_responses.append(response_text)
                 expected_outputs.append(dp_case.get("EXPECTED_OUTPUT", ""))
                 sys_prompts.append(dp_case.get("SYSTEM_PROMPT", ""))
@@ -110,15 +112,16 @@ async def analyze():
 
             strategy_fn = None
             for strat_id, strat in strategy_map.items():
-                if metric_id in strat["metrics"]:
-                    strategy_fn = strategy_functions.get(strat["name"])
+                if metric_id in strat.get("metrics", []):
+                    strategy_fn = strategy_functions.get(strat.get("name"))
                     break
 
             if not strategy_fn:
                 final_results[plan_name]["metrics"][metric_name] = {
                     "score": None,
                     "failed_cases": evaluable_cases,
-                    "successful_cases": 0
+                    "successful_cases": 0,
+                    "note": "No strategy function mapped."
                 }
                 logger.warning(f"[{metric_name}] → No strategy function mapped.")
                 print(f"[{metric_name}] → Score: None, Failed Cases: {evaluable_cases}, Successful Cases: 0")
@@ -157,7 +160,7 @@ async def analyze():
                     score_list = strategy_fn(collected_prompts, collected_responses)
                 elif fn_name == "rouge_score_metric":
                     rouge_result = strategy_fn(collected_prompts, collected_responses)
-                    score_list = [rouge_result["rouge1"]] * len(collected_prompts)
+                    score_list = [rouge_result.get("rouge1", 0)] * len(collected_prompts)
                 else:
                     raise ValueError(f"Unknown strategy function: {fn_name}")
 
@@ -190,12 +193,12 @@ output_path = "Data/response_analysis_output.json"
 with open(output_path, "w", encoding='utf-8') as f:
     json.dump(final_results, f, indent=2, ensure_ascii=False)
 
-print(f"\n Results saved to: {output_path}")
+print(f"\nResults saved to: {output_path}")
 logger.info(f"Results saved to: {output_path}")
 
-init(autoreset=True)
+# -----------------Tabulation ---------------------------------------------------------
 MAX_WIDTH = 25
-TSV_OUTPUT_PATH = "data/evaluation_summary.tsv"
+TSV_OUTPUT_PATH = "Data/evaluation_summary.tsv"
 
 def wrap(text, width=MAX_WIDTH):
     return "\n".join(textwrap.wrap(str(text), width=width))
@@ -207,7 +210,7 @@ rows = []
 tsv_rows = []
 
 for test_plan, plan_info in data.items():
-    metrics = plan_info["metrics"]
+    metrics = plan_info.get("metrics", {})
     metrics_list = list(metrics.items())
 
     for i, (metric, metric_info) in enumerate(metrics_list):

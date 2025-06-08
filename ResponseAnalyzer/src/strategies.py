@@ -18,7 +18,7 @@ from opik.evaluation.metrics import GEval
 from opik import Opik
 import litellm
 from lexical_diversity import lex_div as ld
-from tqdm import tqdm
+
 import evaluate
 from nltk.translate.meteor_score import meteor_score
 from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
@@ -133,7 +133,7 @@ def text_similarity(prompts, test_case_responses, expected_responses):
     logger.info("Starting text_similarity evaluation strategy")
     result = []
     for i in range(len(prompts)):
-        embeddings = embedding_model.encode([prompts[i], test_case_responses[i], expected_responses[i]])
+        embeddings = embedding_model.encode([prompts[i], test_case_responses[i], expected_responses[i]] , show_progress_bar=False)
         similarity = cos_sim(embeddings[0], embeddings[1])
         similarity_2 = cos_sim(embeddings[1], embeddings[2])
         score = 1.0 if similarity > 0.8 or similarity_2 > 0.8 else 0.0
