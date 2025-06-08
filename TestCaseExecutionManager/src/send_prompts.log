@@ -1,286 +1,449 @@
-2025-06-05 15:27:53,275 [INFO] === START: send_all_prompts ===
-2025-06-05 15:27:53,276 [INFO] Plan ID: T4
-2025-06-05 15:27:53,277 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
-2025-06-05 15:27:53,277 [INFO] Limit: 2
-2025-06-05 15:27:53,278 [INFO] Loaded metric_ids: ['27', '28', '29', '30', '31']
-2025-06-05 15:27:53,282 [INFO] 27 has 3 cases
-2025-06-05 15:27:53,282 [INFO] Processing prompt 1/3 for metric '27'
-2025-06-05 15:27:53,283 [INFO] Processing prompt 2/3 for metric '27'
-2025-06-05 15:27:53,283 [INFO] 28 has 4 cases
-2025-06-05 15:27:53,284 [INFO] Processing prompt 1/4 for metric '28'
-2025-06-05 15:27:53,285 [INFO] Processing prompt 2/4 for metric '28'
-2025-06-05 15:27:53,285 [INFO] 29 has 6 cases
-2025-06-05 15:27:53,286 [INFO] Processing prompt 1/6 for metric '29'
-2025-06-05 15:27:53,286 [INFO] Processing prompt 2/6 for metric '29'
-2025-06-05 15:27:53,287 [INFO] 30 has 4 cases
-2025-06-05 15:27:53,287 [INFO] Processing prompt 1/4 for metric '30'
-2025-06-05 15:27:53,288 [INFO] Processing prompt 2/4 for metric '30'
-2025-06-05 15:27:53,288 [INFO] 31 has 4 cases
-2025-06-05 15:27:53,290 [INFO] Processing prompt 1/4 for metric '31'
-2025-06-05 15:27:53,291 [INFO] Processing prompt 2/4 for metric '31'
-2025-06-05 15:33:45,787 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
-2025-06-05 15:33:45,820 [INFO] Total prompts sent: 8
-2025-06-05 15:33:45,822 [INFO] === END: send_all_prompts ===
-2025-06-05 15:57:05,042 [INFO] === START: send_all_prompts ===
-2025-06-05 15:57:05,042 [INFO] Plan ID: T4
-2025-06-05 15:57:05,042 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
-2025-06-05 15:57:05,043 [INFO] Limit: 2
-2025-06-05 15:57:05,043 [INFO] Loaded metric_ids: ['27', '28', '29', '30', '31']
-2025-06-05 15:57:05,045 [INFO] 27 has 3 cases
-2025-06-05 15:57:05,045 [INFO] Processing prompt 1/3 for metric '27'
-2025-06-05 15:57:05,045 [INFO] Processing prompt 2/3 for metric '27'
-2025-06-05 15:57:05,045 [INFO] 28 has 4 cases
-2025-06-05 15:57:05,046 [INFO] Processing prompt 1/4 for metric '28'
-2025-06-05 15:57:05,046 [INFO] Processing prompt 2/4 for metric '28'
-2025-06-05 15:57:05,046 [INFO] 29 has 6 cases
-2025-06-05 15:57:05,046 [INFO] Processing prompt 1/6 for metric '29'
-2025-06-05 15:57:05,047 [INFO] Processing prompt 2/6 for metric '29'
-2025-06-05 15:57:05,047 [INFO] 30 has 4 cases
-2025-06-05 15:57:05,047 [INFO] Processing prompt 1/4 for metric '30'
-2025-06-05 15:57:05,048 [INFO] Processing prompt 2/4 for metric '30'
-2025-06-05 15:57:05,048 [INFO] 31 has 4 cases
-2025-06-05 15:57:05,048 [INFO] Processing prompt 1/4 for metric '31'
-2025-06-05 15:57:05,048 [INFO] Processing prompt 2/4 for metric '31'
-2025-06-05 16:24:05,467 [INFO] === START: send_all_prompts ===
-2025-06-05 16:24:05,468 [INFO] Plan ID: T4
-2025-06-05 16:24:05,468 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
-2025-06-05 16:24:05,468 [INFO] Limit: 2
-2025-06-05 16:24:05,469 [INFO] Loaded metric_ids: ['27', '28', '29', '30', '31']
-2025-06-05 16:24:05,470 [INFO] 27 has 3 cases
-2025-06-05 16:24:05,471 [INFO] Processing prompt 1/3 for metric '27'
-2025-06-05 16:24:05,471 [INFO] Processing prompt 2/3 for metric '27'
-2025-06-05 16:24:05,471 [INFO] 28 has 4 cases
-2025-06-05 16:24:05,471 [INFO] Processing prompt 1/4 for metric '28'
-2025-06-05 16:24:05,472 [INFO] Processing prompt 2/4 for metric '28'
-2025-06-05 16:24:05,472 [INFO] 29 has 6 cases
-2025-06-05 16:24:05,472 [INFO] Processing prompt 1/6 for metric '29'
-2025-06-05 16:24:05,472 [INFO] Processing prompt 2/6 for metric '29'
-2025-06-05 16:24:05,472 [INFO] 30 has 4 cases
-2025-06-05 16:24:05,473 [INFO] Processing prompt 1/4 for metric '30'
-2025-06-05 16:24:05,473 [INFO] Processing prompt 2/4 for metric '30'
-2025-06-05 16:24:05,473 [INFO] 31 has 4 cases
-2025-06-05 16:24:05,473 [INFO] Processing prompt 1/4 for metric '31'
-2025-06-05 16:24:05,474 [INFO] Processing prompt 2/4 for metric '31'
-2025-06-05 16:29:51,248 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
-2025-06-05 16:29:51,255 [INFO] Total prompts sent: 10
-2025-06-05 16:29:51,256 [INFO] === END: send_all_prompts ===
-2025-06-05 20:41:11,756 [INFO] === START: send_all_prompts ===
-2025-06-05 20:41:11,757 [INFO] Plan ID: T6
-2025-06-05 20:41:11,758 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
-2025-06-05 20:41:11,758 [INFO] Limit: 2
-2025-06-05 20:41:11,759 [INFO] Loaded metric_ids: ['36', '37']
-2025-06-05 20:41:11,764 [INFO] 36 has 5 cases
-2025-06-05 20:41:11,764 [INFO] Processing prompt 1/5 for metric '36'
-2025-06-05 20:41:11,764 [INFO] Processing prompt 2/5 for metric '36'
-2025-06-05 20:41:46,646 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
-2025-06-05 20:41:46,647 [INFO] Total prompts sent: 2
-2025-06-05 20:41:46,647 [INFO] === END: send_all_prompts ===
-2025-06-05 20:42:16,200 [INFO] === START: send_all_prompts ===
-2025-06-05 20:42:16,200 [INFO] Plan ID: T5
-2025-06-05 20:42:16,201 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
-2025-06-05 20:42:16,201 [INFO] Limit: 2
-2025-06-05 20:42:16,202 [INFO] Loaded metric_ids: ['32', '33', '34', '35']
-2025-06-05 20:42:16,203 [INFO] 34 has 3 cases
-2025-06-05 20:42:16,203 [INFO] Processing prompt 1/3 for metric '34'
-2025-06-05 20:42:16,203 [INFO] Processing prompt 2/3 for metric '34'
-2025-06-05 20:42:48,245 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
-2025-06-05 20:42:48,245 [INFO] Total prompts sent: 2
-2025-06-05 20:42:48,246 [INFO] === END: send_all_prompts ===
-2025-06-05 20:49:42,430 [INFO] === START: send_all_prompts ===
-2025-06-05 20:49:42,432 [INFO] Plan ID: T6
-2025-06-05 20:49:42,432 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
-2025-06-05 20:49:42,432 [INFO] Limit: 2
-2025-06-05 20:49:42,433 [INFO] Loaded metric_ids: ['36', '37']
-2025-06-05 20:49:42,434 [INFO] 36 has 5 cases
-2025-06-05 20:49:42,435 [INFO] Processing prompt 1/5 for metric '36'
-2025-06-05 20:49:42,435 [INFO] Processing prompt 2/5 for metric '36'
-2025-06-05 20:50:15,056 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
-2025-06-05 20:50:15,061 [INFO] Total prompts sent: 2
-2025-06-05 20:50:15,061 [INFO] === END: send_all_prompts ===
-2025-06-05 20:56:54,667 [INFO] === START: send_all_prompts ===
-2025-06-05 20:56:54,667 [INFO] Plan ID: T5
-2025-06-05 20:56:54,668 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
-2025-06-05 20:56:54,668 [INFO] Limit: 2
-2025-06-05 20:56:54,668 [INFO] Loaded metric_ids: ['32', '33', '34', '35']
-2025-06-05 20:56:54,671 [INFO] 34 has 3 cases
-2025-06-05 20:56:54,672 [INFO] Processing prompt 1/3 for metric '34'
-2025-06-05 20:56:54,672 [INFO] Processing prompt 2/3 for metric '34'
-2025-06-05 20:58:31,101 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
-2025-06-05 20:58:31,101 [INFO] Total prompts sent: 2
-2025-06-05 20:58:31,104 [INFO] === END: send_all_prompts ===
-2025-06-06 09:38:29,234 [INFO] === START: send_all_prompts ===
-2025-06-06 09:38:29,235 [INFO] Plan ID: T5
-2025-06-06 09:38:29,236 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
-2025-06-06 09:38:29,236 [INFO] Limit: 2
-2025-06-06 09:38:29,237 [INFO] Loaded metric_ids: ['34']
-2025-06-06 09:38:29,238 [INFO] 34 has 3 cases
-2025-06-06 09:38:29,239 [INFO] Processing prompt 1/3 for metric '34'
-2025-06-06 09:38:29,239 [INFO] Processing prompt 2/3 for metric '34'
-2025-06-06 09:39:08,051 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
-2025-06-06 09:39:08,074 [INFO] Total prompts sent: 2
-2025-06-06 09:39:08,129 [INFO] === END: send_all_prompts ===
-2025-06-06 09:47:40,058 [INFO] === START: send_all_prompts ===
-2025-06-06 09:47:40,063 [INFO] Plan ID: T5
-2025-06-06 09:47:40,064 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
-2025-06-06 09:47:40,064 [INFO] Global Limit: 2
-2025-06-06 09:47:40,065 [INFO] Loaded metric_ids: ['34']
-2025-06-06 09:47:40,067 [INFO] 34 has 3 cases
-2025-06-06 09:47:40,068 [INFO] Processing prompt 1 (metric: 34)
-2025-06-06 09:47:40,068 [INFO] Processing prompt 2 (metric: 34)
-2025-06-06 09:48:11,596 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
-2025-06-06 09:48:11,597 [INFO] Total prompts sent: 2
-2025-06-06 09:48:11,598 [INFO] === END: send_all_prompts ===
-2025-06-06 09:56:50,891 [INFO] === START: send_all_prompts ===
-2025-06-06 09:56:50,892 [INFO] Plan ID: T5
-2025-06-06 09:56:50,892 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
-2025-06-06 09:56:50,892 [INFO] Global Limit: 10
-2025-06-06 09:56:50,893 [INFO] Loaded metric_ids: ['34']
-2025-06-06 09:56:50,894 [INFO] 34 has 3 cases
-2025-06-06 09:56:50,894 [INFO] Processing prompt 1 (metric: 34)
-2025-06-06 09:56:50,894 [INFO] Processing prompt 2 (metric: 34)
-2025-06-06 09:56:50,894 [INFO] Processing prompt 3 (metric: 34)
-2025-06-06 09:56:50,895 [WARNING] Client is not initialized!
-2025-06-06 09:56:50,896 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
-2025-06-06 09:56:50,896 [INFO] Total prompts sent: 3
-2025-06-06 09:56:50,897 [INFO] === END: send_all_prompts ===
-2025-06-06 09:57:09,567 [INFO] === START: send_all_prompts ===
-2025-06-06 09:57:09,567 [INFO] Plan ID: T1
-2025-06-06 09:57:09,568 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
-2025-06-06 09:57:09,568 [INFO] Global Limit: 10
-2025-06-06 09:57:09,568 [INFO] Loaded metric_ids: ['2', '3', '4', '29']
-2025-06-06 09:57:09,569 [INFO] 2 has 3 cases
-2025-06-06 09:57:09,569 [INFO] Processing prompt 1 (metric: 2)
-2025-06-06 09:57:09,570 [INFO] Processing prompt 2 (metric: 2)
-2025-06-06 09:57:09,570 [INFO] Processing prompt 3 (metric: 2)
-2025-06-06 09:57:09,570 [INFO] 3 has 5 cases
-2025-06-06 09:57:09,570 [INFO] Processing prompt 4 (metric: 3)
-2025-06-06 09:57:09,570 [INFO] Processing prompt 5 (metric: 3)
-2025-06-06 09:57:09,571 [INFO] Processing prompt 6 (metric: 3)
-2025-06-06 09:57:09,571 [INFO] Processing prompt 7 (metric: 3)
-2025-06-06 09:57:09,571 [INFO] Processing prompt 8 (metric: 3)
-2025-06-06 09:57:09,571 [INFO] 4 has 4 cases
-2025-06-06 09:57:09,571 [INFO] Processing prompt 9 (metric: 4)
-2025-06-06 09:57:09,571 [INFO] Processing prompt 10 (metric: 4)
-2025-06-06 09:57:09,572 [WARNING] Client is not initialized!
-2025-06-06 09:57:09,573 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
-2025-06-06 09:57:09,573 [INFO] Total prompts sent: 10
-2025-06-06 09:57:09,574 [INFO] === END: send_all_prompts ===
-2025-06-06 09:58:44,010 [INFO] === START: send_all_prompts ===
-2025-06-06 09:58:44,012 [INFO] Plan ID: T1
-2025-06-06 09:58:44,012 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
-2025-06-06 09:58:44,012 [INFO] Global Limit: 2
-2025-06-06 09:58:44,013 [INFO] Loaded metric_ids: ['2', '3', '4', '29']
-2025-06-06 09:58:44,015 [INFO] 2 has 3 cases
-2025-06-06 09:58:44,016 [INFO] Processing prompt 1 (metric: 2)
-2025-06-06 09:58:44,016 [INFO] Processing prompt 2 (metric: 2)
-2025-06-06 09:59:12,780 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
-2025-06-06 09:59:12,781 [INFO] Total prompts sent: 2
-2025-06-06 09:59:12,781 [INFO] === END: send_all_prompts ===
-2025-06-06 10:01:15,388 [INFO] === START: send_all_prompts ===
-2025-06-06 10:01:15,389 [INFO] Plan ID: T1
-2025-06-06 10:01:15,389 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
-2025-06-06 10:01:15,389 [INFO] Global Limit: 10
-2025-06-06 10:01:15,390 [INFO] Loaded metric_ids: ['2', '3', '4', '29']
-2025-06-06 10:01:15,391 [INFO] 2 has 3 cases
-2025-06-06 10:01:15,391 [INFO] Processing prompt 1 (metric: 2)
-2025-06-06 10:01:15,392 [INFO] Processing prompt 2 (metric: 2)
-2025-06-06 10:01:15,392 [INFO] Processing prompt 3 (metric: 2)
-2025-06-06 10:01:15,392 [INFO] 3 has 5 cases
-2025-06-06 10:01:15,392 [INFO] Processing prompt 4 (metric: 3)
-2025-06-06 10:01:15,392 [INFO] Processing prompt 5 (metric: 3)
-2025-06-06 10:01:15,393 [INFO] Processing prompt 6 (metric: 3)
-2025-06-06 10:01:15,393 [INFO] Processing prompt 7 (metric: 3)
-2025-06-06 10:01:15,393 [INFO] Processing prompt 8 (metric: 3)
-2025-06-06 10:01:15,393 [INFO] 4 has 4 cases
-2025-06-06 10:01:15,393 [INFO] Processing prompt 9 (metric: 4)
-2025-06-06 10:01:15,394 [INFO] Processing prompt 10 (metric: 4)
-2025-06-06 10:01:53,561 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
-2025-06-06 10:01:53,563 [INFO] Total prompts sent: 10
-2025-06-06 10:01:53,564 [INFO] === END: send_all_prompts ===
-2025-06-06 10:03:21,678 [INFO] === START: send_all_prompts ===
-2025-06-06 10:03:21,679 [INFO] Plan ID: T1
-2025-06-06 10:03:21,679 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
-2025-06-06 10:03:21,680 [INFO] Global Limit: 10
-2025-06-06 10:03:21,680 [INFO] Loaded metric_ids: ['2', '3', '4', '29']
-2025-06-06 10:03:21,682 [INFO] 2 has 3 cases
-2025-06-06 10:03:21,682 [INFO] Processing prompt 1 (metric: 2)
-2025-06-06 10:03:21,740 [INFO] Processing prompt 2 (metric: 2)
-2025-06-06 10:03:21,741 [INFO] Processing prompt 3 (metric: 2)
-2025-06-06 10:03:21,742 [INFO] 3 has 5 cases
-2025-06-06 10:03:21,742 [INFO] Processing prompt 4 (metric: 3)
-2025-06-06 10:03:21,742 [INFO] Processing prompt 5 (metric: 3)
-2025-06-06 10:03:21,742 [INFO] Processing prompt 6 (metric: 3)
-2025-06-06 10:03:21,742 [INFO] Processing prompt 7 (metric: 3)
-2025-06-06 10:03:21,743 [INFO] Processing prompt 8 (metric: 3)
-2025-06-06 10:03:21,743 [INFO] 4 has 4 cases
-2025-06-06 10:03:21,744 [INFO] Processing prompt 9 (metric: 4)
-2025-06-06 10:03:21,744 [INFO] Processing prompt 10 (metric: 4)
-2025-06-06 10:04:52,352 [INFO] === START: send_all_prompts ===
-2025-06-06 10:04:52,352 [INFO] Plan ID: T1
-2025-06-06 10:04:52,353 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
-2025-06-06 10:04:52,353 [INFO] Limit: 10
-2025-06-06 10:04:52,354 [INFO] Loaded metric_ids: ['2', '3', '4', '29']
-2025-06-06 10:04:52,356 [INFO] 2 has 3 cases
-2025-06-06 10:04:52,356 [INFO] Processing prompt 1/3 for metric '2'
-2025-06-06 10:04:52,356 [INFO] Processing prompt 2/3 for metric '2'
-2025-06-06 10:04:52,357 [INFO] Processing prompt 3/3 for metric '2'
-2025-06-06 10:04:52,357 [INFO] 3 has 5 cases
-2025-06-06 10:04:52,358 [INFO] Processing prompt 1/5 for metric '3'
-2025-06-06 10:04:52,358 [INFO] Processing prompt 2/5 for metric '3'
-2025-06-06 10:04:52,359 [INFO] Processing prompt 3/5 for metric '3'
-2025-06-06 10:04:52,359 [INFO] Processing prompt 4/5 for metric '3'
-2025-06-06 10:04:52,359 [INFO] Processing prompt 5/5 for metric '3'
-2025-06-06 10:04:52,360 [INFO] 4 has 4 cases
-2025-06-06 10:04:52,360 [INFO] Processing prompt 1/4 for metric '4'
-2025-06-06 10:04:52,360 [INFO] Processing prompt 2/4 for metric '4'
-2025-06-06 10:04:52,360 [INFO] Processing prompt 3/4 for metric '4'
-2025-06-06 10:04:52,361 [INFO] Processing prompt 4/4 for metric '4'
-2025-06-06 10:04:52,361 [INFO] 29 has 6 cases
-2025-06-06 10:04:52,361 [INFO] Processing prompt 1/6 for metric '29'
-2025-06-06 10:04:52,362 [INFO] Processing prompt 2/6 for metric '29'
-2025-06-06 10:04:52,362 [INFO] Processing prompt 3/6 for metric '29'
-2025-06-06 10:04:52,362 [INFO] Processing prompt 4/6 for metric '29'
-2025-06-06 10:04:52,363 [INFO] Processing prompt 5/6 for metric '29'
-2025-06-06 10:04:52,363 [INFO] Processing prompt 6/6 for metric '29'
-2025-06-06 10:07:00,146 [INFO] === START: send_all_prompts ===
-2025-06-06 10:07:00,147 [INFO] Plan ID: T1
-2025-06-06 10:07:00,147 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
-2025-06-06 10:07:00,148 [INFO] Global Limit: 10
-2025-06-06 10:07:00,149 [INFO] Loaded metric_ids: ['2', '3', '4', '29']
-2025-06-06 10:07:00,151 [INFO] 2 has 3 cases
-2025-06-06 10:07:00,151 [INFO] Processing prompt 1 (metric: 2)
-2025-06-06 10:07:00,152 [INFO] Processing prompt 2 (metric: 2)
-2025-06-06 10:07:00,152 [INFO] Processing prompt 3 (metric: 2)
-2025-06-06 10:07:00,152 [INFO] 3 has 5 cases
-2025-06-06 10:07:00,153 [INFO] Processing prompt 4 (metric: 3)
-2025-06-06 10:07:00,153 [INFO] Processing prompt 5 (metric: 3)
-2025-06-06 10:07:00,154 [INFO] Processing prompt 6 (metric: 3)
-2025-06-06 10:07:00,154 [INFO] Processing prompt 7 (metric: 3)
-2025-06-06 10:07:00,155 [INFO] Processing prompt 8 (metric: 3)
-2025-06-06 10:07:00,155 [INFO] 4 has 4 cases
-2025-06-06 10:07:00,156 [INFO] Processing prompt 9 (metric: 4)
-2025-06-06 10:07:00,156 [INFO] Processing prompt 10 (metric: 4)
-2025-06-06 10:12:43,847 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
-2025-06-06 10:12:43,850 [INFO] Total prompts sent: 10
-2025-06-06 10:12:43,851 [INFO] === END: send_all_prompts ===
-2025-06-06 10:15:56,937 [INFO] === START: send_all_prompts ===
-2025-06-06 10:15:56,949 [INFO] Plan ID: T1
-2025-06-06 10:15:56,971 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
-2025-06-06 10:15:56,987 [INFO] Global Limit: 10
-2025-06-06 10:15:56,988 [INFO] Loaded metric_ids: ['2', '3', '4', '29']
-2025-06-06 10:15:56,991 [INFO] 2 has 3 cases
-2025-06-06 10:15:56,991 [INFO] Processing prompt 1 (metric: 2)
-2025-06-06 10:15:56,993 [INFO] Processing prompt 2 (metric: 2)
-2025-06-06 10:15:56,993 [INFO] Processing prompt 3 (metric: 2)
-2025-06-06 10:15:56,993 [INFO] 3 has 5 cases
-2025-06-06 10:15:56,994 [INFO] Processing prompt 4 (metric: 3)
-2025-06-06 10:15:56,994 [INFO] Processing prompt 5 (metric: 3)
-2025-06-06 10:15:56,994 [INFO] Processing prompt 6 (metric: 3)
-2025-06-06 10:15:56,995 [INFO] Processing prompt 7 (metric: 3)
-2025-06-06 10:15:56,995 [INFO] Processing prompt 8 (metric: 3)
-2025-06-06 10:15:56,995 [INFO] 4 has 4 cases
-2025-06-06 10:15:56,995 [INFO] Processing prompt 9 (metric: 4)
-2025-06-06 10:15:57,005 [INFO] Processing prompt 10 (metric: 4)
-2025-06-06 10:22:02,965 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
-2025-06-06 10:22:02,971 [INFO] Total prompts sent: 10
-2025-06-06 10:22:02,971 [INFO] === END: send_all_prompts ===
+2025-06-06 19:32:19,631 [INFO] === START: send_all_prompts ===
+2025-06-06 19:32:19,631 [INFO] Plan ID: T1
+2025-06-06 19:32:19,632 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
+2025-06-06 19:32:19,632 [INFO] Global Limit: 2
+2025-06-06 19:32:19,633 [INFO] Loaded metric_ids: ['2', '3', '4', '29']
+2025-06-06 19:32:19,634 [INFO] 2 has 3 cases
+2025-06-06 19:32:19,635 [INFO] Processing prompt 1 (metric: 2)
+2025-06-06 19:32:19,636 [INFO] Processing prompt 2 (metric: 2)
+2025-06-06 19:34:00,062 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
+2025-06-06 19:34:00,071 [INFO] Total prompts sent: 2
+2025-06-06 19:34:00,071 [INFO] === END: send_all_prompts ===
+2025-06-07 08:09:20,877 [INFO] === START: send_all_prompts ===
+2025-06-07 08:09:20,878 [INFO] Plan ID: T1
+2025-06-07 08:09:20,879 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
+2025-06-07 08:09:20,879 [INFO] Global Limit: 15
+2025-06-07 08:09:20,879 [INFO] Loaded metric_ids: ['2', '3', '4', '29']
+2025-06-07 08:09:20,881 [INFO] 2 has 3 cases
+2025-06-07 08:09:20,882 [INFO] Lining up prompt 1 (metric: 2)
+2025-06-07 08:09:20,882 [INFO] Lining up prompt 2 (metric: 2)
+2025-06-07 08:09:20,882 [INFO] Lining up prompt 3 (metric: 2)
+2025-06-07 08:09:20,882 [INFO] 3 has 5 cases
+2025-06-07 08:09:20,882 [INFO] Lining up prompt 4 (metric: 3)
+2025-06-07 08:09:20,882 [INFO] Lining up prompt 5 (metric: 3)
+2025-06-07 08:09:20,883 [INFO] Lining up prompt 6 (metric: 3)
+2025-06-07 08:09:20,883 [INFO] Lining up prompt 7 (metric: 3)
+2025-06-07 08:09:20,883 [INFO] Lining up prompt 8 (metric: 3)
+2025-06-07 08:09:20,883 [INFO] 4 has 4 cases
+2025-06-07 08:09:20,883 [INFO] Lining up prompt 9 (metric: 4)
+2025-06-07 08:09:20,883 [INFO] Lining up prompt 10 (metric: 4)
+2025-06-07 08:09:20,883 [INFO] Lining up prompt 11 (metric: 4)
+2025-06-07 08:09:20,883 [INFO] Lining up prompt 12 (metric: 4)
+2025-06-07 08:09:20,883 [INFO] 29 has 6 cases
+2025-06-07 08:09:20,884 [INFO] Lining up prompt 13 (metric: 29)
+2025-06-07 08:09:20,885 [INFO] Lining up prompt 14 (metric: 29)
+2025-06-07 08:09:20,885 [INFO] Lining up prompt 15 (metric: 29)
+2025-06-07 08:09:45,331 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
+2025-06-07 08:09:45,332 [INFO] Total prompts sent: 15
+2025-06-07 08:09:45,332 [INFO] === END: send_all_prompts ===
+2025-06-07 08:10:04,296 [INFO] === START: send_all_prompts ===
+2025-06-07 08:10:04,297 [INFO] Plan ID: T1
+2025-06-07 08:10:04,297 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
+2025-06-07 08:10:04,297 [INFO] Global Limit: 18
+2025-06-07 08:10:04,297 [INFO] Loaded metric_ids: ['2', '3', '4', '29']
+2025-06-07 08:10:04,300 [INFO] 2 has 3 cases
+2025-06-07 08:10:04,341 [INFO] Lining up prompt 1 (metric: 2)
+2025-06-07 08:10:04,348 [INFO] Lining up prompt 2 (metric: 2)
+2025-06-07 08:10:04,349 [INFO] Lining up prompt 3 (metric: 2)
+2025-06-07 08:10:04,349 [INFO] 3 has 5 cases
+2025-06-07 08:10:04,349 [INFO] Lining up prompt 4 (metric: 3)
+2025-06-07 08:10:04,349 [INFO] Lining up prompt 5 (metric: 3)
+2025-06-07 08:10:04,349 [INFO] Lining up prompt 6 (metric: 3)
+2025-06-07 08:10:04,349 [INFO] Lining up prompt 7 (metric: 3)
+2025-06-07 08:10:04,350 [INFO] Lining up prompt 8 (metric: 3)
+2025-06-07 08:10:04,350 [INFO] 4 has 4 cases
+2025-06-07 08:10:04,350 [INFO] Lining up prompt 9 (metric: 4)
+2025-06-07 08:10:04,350 [INFO] Lining up prompt 10 (metric: 4)
+2025-06-07 08:10:04,351 [INFO] Lining up prompt 11 (metric: 4)
+2025-06-07 08:10:04,351 [INFO] Lining up prompt 12 (metric: 4)
+2025-06-07 08:10:04,351 [INFO] 29 has 6 cases
+2025-06-07 08:10:04,351 [INFO] Lining up prompt 13 (metric: 29)
+2025-06-07 08:10:04,351 [INFO] Lining up prompt 14 (metric: 29)
+2025-06-07 08:10:04,352 [INFO] Lining up prompt 15 (metric: 29)
+2025-06-07 08:10:04,352 [INFO] Lining up prompt 16 (metric: 29)
+2025-06-07 08:10:04,352 [INFO] Lining up prompt 17 (metric: 29)
+2025-06-07 08:10:04,352 [INFO] Lining up prompt 18 (metric: 29)
+2025-06-07 08:10:53,896 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
+2025-06-07 08:10:53,918 [INFO] Total prompts sent: 18
+2025-06-07 08:10:53,921 [INFO] === END: send_all_prompts ===
+2025-06-07 08:18:28,192 [INFO] === START: send_all_prompts ===
+2025-06-07 08:18:28,194 [INFO] Plan ID: T1
+2025-06-07 08:18:28,195 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
+2025-06-07 08:18:28,195 [INFO] Global Limit: 18
+2025-06-07 08:18:28,196 [INFO] Loaded metric_ids: ['2', '3', '4', '29']
+2025-06-07 08:18:28,199 [INFO] 2 has 3 cases
+2025-06-07 08:18:28,200 [INFO] Lining up prompt (PROMPT_ID: P5, metric: Inclusivity)
+2025-06-07 08:18:28,200 [INFO] Lining up prompt (PROMPT_ID: P6, metric: Inclusivity)
+2025-06-07 08:18:28,201 [INFO] Lining up prompt (PROMPT_ID: P7, metric: Inclusivity)
+2025-06-07 08:18:28,202 [INFO] 3 has 5 cases
+2025-06-07 08:18:28,202 [INFO] Lining up prompt (PROMPT_ID: P8, metric: Transparency)
+2025-06-07 08:18:28,203 [INFO] Lining up prompt (PROMPT_ID: P9, metric: Transparency)
+2025-06-07 08:18:28,203 [INFO] Lining up prompt (PROMPT_ID: P10, metric: Transparency)
+2025-06-07 08:18:28,204 [INFO] Lining up prompt (PROMPT_ID: P11, metric: Transparency)
+2025-06-07 08:18:28,204 [INFO] Lining up prompt (PROMPT_ID: P12, metric: Transparency)
+2025-06-07 08:18:28,205 [INFO] 4 has 4 cases
+2025-06-07 08:18:28,205 [INFO] Lining up prompt (PROMPT_ID: P13, metric: Explainability)
+2025-06-07 08:18:28,206 [INFO] Lining up prompt (PROMPT_ID: P14, metric: Explainability)
+2025-06-07 08:18:28,207 [INFO] Lining up prompt (PROMPT_ID: P15, metric: Explainability)
+2025-06-07 08:18:28,207 [INFO] Lining up prompt (PROMPT_ID: P16, metric: Explainability)
+2025-06-07 08:18:28,208 [INFO] 29 has 6 cases
+2025-06-07 08:18:28,209 [INFO] Lining up prompt (PROMPT_ID: P94, metric: Cultural_Sensitivity)
+2025-06-07 08:18:28,209 [INFO] Lining up prompt (PROMPT_ID: P95, metric: Cultural_Sensitivity)
+2025-06-07 08:18:28,210 [INFO] Lining up prompt (PROMPT_ID: P96, metric: Cultural_Sensitivity)
+2025-06-07 08:18:28,210 [INFO] Lining up prompt (PROMPT_ID: P97, metric: Cultural_Sensitivity)
+2025-06-07 08:18:28,211 [INFO] Lining up prompt (PROMPT_ID: P98, metric: Cultural_Sensitivity)
+2025-06-07 08:18:28,212 [INFO] Lining up prompt (PROMPT_ID: P99, metric: Cultural_Sensitivity)
+2025-06-07 08:28:34,975 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
+2025-06-07 08:28:34,983 [INFO] Total prompts sent: 18
+2025-06-07 08:28:34,983 [INFO] === END: send_all_prompts ===
+2025-06-07 08:31:02,334 [INFO] === START: send_all_prompts ===
+2025-06-07 08:31:02,335 [INFO] Plan ID: T1
+2025-06-07 08:31:02,335 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
+2025-06-07 08:31:02,336 [INFO] Global Limit: 18
+2025-06-07 08:31:02,337 [INFO] Loaded metric_ids: ['2', '3', '4', '29']
+2025-06-07 08:31:02,338 [INFO] 2 has 3 cases
+2025-06-07 08:31:02,339 [INFO] Lining up prompt (PROMPT_ID: P5, metric: Inclusivity)
+2025-06-07 08:31:02,339 [INFO] Lining up prompt (PROMPT_ID: P6, metric: Inclusivity)
+2025-06-07 08:31:02,340 [INFO] Lining up prompt (PROMPT_ID: P7, metric: Inclusivity)
+2025-06-07 08:31:02,341 [INFO] 3 has 5 cases
+2025-06-07 08:31:02,341 [INFO] Lining up prompt (PROMPT_ID: P8, metric: Transparency)
+2025-06-07 08:31:02,342 [INFO] Lining up prompt (PROMPT_ID: P9, metric: Transparency)
+2025-06-07 08:31:02,342 [INFO] Lining up prompt (PROMPT_ID: P10, metric: Transparency)
+2025-06-07 08:31:02,343 [INFO] Lining up prompt (PROMPT_ID: P11, metric: Transparency)
+2025-06-07 08:31:02,343 [INFO] Lining up prompt (PROMPT_ID: P12, metric: Transparency)
+2025-06-07 08:31:02,344 [INFO] 4 has 4 cases
+2025-06-07 08:31:02,344 [INFO] Lining up prompt (PROMPT_ID: P13, metric: Explainability)
+2025-06-07 08:31:02,345 [INFO] Lining up prompt (PROMPT_ID: P14, metric: Explainability)
+2025-06-07 08:31:02,345 [INFO] Lining up prompt (PROMPT_ID: P15, metric: Explainability)
+2025-06-07 08:31:02,346 [INFO] Lining up prompt (PROMPT_ID: P16, metric: Explainability)
+2025-06-07 08:31:02,346 [INFO] 29 has 6 cases
+2025-06-07 08:31:02,347 [INFO] Lining up prompt (PROMPT_ID: P94, metric: Cultural_Sensitivity)
+2025-06-07 08:31:02,347 [INFO] Lining up prompt (PROMPT_ID: P95, metric: Cultural_Sensitivity)
+2025-06-07 08:31:02,348 [INFO] Lining up prompt (PROMPT_ID: P96, metric: Cultural_Sensitivity)
+2025-06-07 08:31:02,349 [INFO] Lining up prompt (PROMPT_ID: P97, metric: Cultural_Sensitivity)
+2025-06-07 08:31:02,349 [INFO] Lining up prompt (PROMPT_ID: P98, metric: Cultural_Sensitivity)
+2025-06-07 08:31:02,350 [INFO] Lining up prompt (PROMPT_ID: P99, metric: Cultural_Sensitivity)
+2025-06-07 08:41:03,706 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
+2025-06-07 08:41:03,712 [INFO] Total prompts sent: 18
+2025-06-07 08:41:03,712 [INFO] === END: send_all_prompts ===
+2025-06-07 08:48:26,706 [INFO] === START: send_all_prompts ===
+2025-06-07 08:48:26,708 [INFO] Plan ID: T2
+2025-06-07 08:48:26,708 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
+2025-06-07 08:48:26,709 [INFO] Global Limit: 43
+2025-06-07 08:48:26,711 [INFO] Loaded metric_ids: ['10', '11', '13', '14', '15', '16', '38', '39', '40']
+2025-06-07 08:48:26,714 [INFO] 10 has 4 cases
+2025-06-07 08:48:26,715 [INFO] Lining up prompt (PROMPT_ID: P29, metric: Topic_Drift_Rate)
+2025-06-07 08:48:26,715 [INFO] Lining up prompt (PROMPT_ID: P30, metric: Topic_Drift_Rate)
+2025-06-07 08:48:26,716 [INFO] Lining up prompt (PROMPT_ID: P31, metric: Topic_Drift_Rate)
+2025-06-07 08:48:26,717 [INFO] Lining up prompt (PROMPT_ID: P32, metric: Topic_Drift_Rate)
+2025-06-07 08:48:26,718 [INFO] 11 has 4 cases
+2025-06-07 08:48:26,718 [INFO] Lining up prompt (PROMPT_ID: P33, metric: Dialogue_Coherence)
+2025-06-07 08:48:26,719 [INFO] Lining up prompt (PROMPT_ID: P34, metric: Dialogue_Coherence)
+2025-06-07 08:48:26,720 [INFO] Lining up prompt (PROMPT_ID: P35, metric: Dialogue_Coherence)
+2025-06-07 08:48:26,721 [INFO] Lining up prompt (PROMPT_ID: P36, metric: Dialogue_Coherence)
+2025-06-07 08:48:26,722 [INFO] 13 has 4 cases
+2025-06-07 08:48:26,723 [INFO] Lining up prompt (PROMPT_ID: P42, metric: Grammatical_Correctness_Rate)
+2025-06-07 08:48:26,723 [INFO] Lining up prompt (PROMPT_ID: P43, metric: Grammatical_Correctness_Rate)
+2025-06-07 08:48:26,724 [INFO] Lining up prompt (PROMPT_ID: P44, metric: Grammatical_Correctness_Rate)
+2025-06-07 08:48:26,724 [INFO] Lining up prompt (PROMPT_ID: P45, metric: Grammatical_Correctness_Rate)
+2025-06-07 08:48:26,725 [INFO] 14 has 4 cases
+2025-06-07 08:48:26,726 [INFO] Lining up prompt (PROMPT_ID: P46, metric: Lexical_Diversity)
+2025-06-07 08:48:26,727 [INFO] Lining up prompt (PROMPT_ID: P47, metric: Lexical_Diversity)
+2025-06-07 08:48:26,727 [INFO] Lining up prompt (PROMPT_ID: P48, metric: Lexical_Diversity)
+2025-06-07 08:48:26,728 [INFO] Lining up prompt (PROMPT_ID: P49, metric: Lexical_Diversity)
+2025-06-07 08:48:26,729 [INFO] 15 has 4 cases
+2025-06-07 08:48:26,729 [INFO] Lining up prompt (PROMPT_ID: P50, metric: Relevance_and_Information)
+2025-06-07 08:48:26,730 [INFO] Lining up prompt (PROMPT_ID: P51, metric: Relevance_and_Information)
+2025-06-07 08:48:26,730 [INFO] Lining up prompt (PROMPT_ID: P52, metric: Relevance_and_Information)
+2025-06-07 08:48:26,731 [INFO] Lining up prompt (PROMPT_ID: P53, metric: Relevance_and_Information)
+2025-06-07 08:48:26,731 [INFO] 16 has 3 cases
+2025-06-07 08:48:26,732 [INFO] Lining up prompt (PROMPT_ID: P54, metric: Logical_flow_and_Discourse_Structure)
+2025-06-07 08:48:26,732 [INFO] Lining up prompt (PROMPT_ID: P55, metric: Logical_flow_and_Discourse_Structure)
+2025-06-07 08:48:26,733 [INFO] Lining up prompt (PROMPT_ID: P56, metric: Logical_flow_and_Discourse_Structure)
+2025-06-07 08:48:26,733 [INFO] 38 has 7 cases
+2025-06-07 08:48:26,734 [INFO] Lining up prompt (PROMPT_ID: P71, metric: BLEU)
+2025-06-07 08:48:26,734 [INFO] Lining up prompt (PROMPT_ID: P72, metric: BLEU)
+2025-06-07 08:48:26,735 [INFO] Lining up prompt (PROMPT_ID: P73, metric: BLEU)
+2025-06-07 08:48:26,735 [INFO] Lining up prompt (PROMPT_ID: P74, metric: BLEU)
+2025-06-07 08:48:26,737 [INFO] Lining up prompt (PROMPT_ID: P82, metric: BLEU)
+2025-06-07 08:48:26,737 [INFO] Lining up prompt (PROMPT_ID: P83, metric: BLEU)
+2025-06-07 08:48:26,738 [INFO] Lining up prompt (PROMPT_ID: P84, metric: BLEU)
+2025-06-07 08:48:26,738 [INFO] 39 has 7 cases
+2025-06-07 08:48:26,738 [INFO] Lining up prompt (PROMPT_ID: P75, metric: ROUGE)
+2025-06-07 08:48:26,739 [INFO] Lining up prompt (PROMPT_ID: P76, metric: ROUGE)
+2025-06-07 08:48:26,739 [INFO] Lining up prompt (PROMPT_ID: P77, metric: ROUGE)
+2025-06-07 08:48:26,740 [INFO] Lining up prompt (PROMPT_ID: P78, metric: ROUGE)
+2025-06-07 08:48:26,740 [INFO] Lining up prompt (PROMPT_ID: P85, metric: ROUGE)
+2025-06-07 08:48:26,740 [INFO] Lining up prompt (PROMPT_ID: P86, metric: ROUGE)
+2025-06-07 08:48:26,741 [INFO] Lining up prompt (PROMPT_ID: P87, metric: ROUGE)
+2025-06-07 08:48:26,741 [INFO] 40 has 6 cases
+2025-06-07 08:48:26,742 [INFO] Lining up prompt (PROMPT_ID: P79, metric: METEOR)
+2025-06-07 08:48:26,742 [INFO] Lining up prompt (PROMPT_ID: P80, metric: METEOR)
+2025-06-07 08:48:26,742 [INFO] Lining up prompt (PROMPT_ID: P81, metric: METEOR)
+2025-06-07 08:48:26,743 [INFO] Lining up prompt (PROMPT_ID: P88, metric: METEOR)
+2025-06-07 08:48:26,743 [INFO] Lining up prompt (PROMPT_ID: P89, metric: METEOR)
+2025-06-07 08:48:26,744 [INFO] Lining up prompt (PROMPT_ID: P90, metric: METEOR)
+2025-06-07 09:13:03,720 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
+2025-06-07 09:13:03,726 [INFO] Total prompts sent: 43
+2025-06-07 09:13:03,727 [INFO] === END: send_all_prompts ===
+2025-06-07 09:13:45,221 [INFO] === START: send_all_prompts ===
+2025-06-07 09:13:45,222 [INFO] Plan ID: T3
+2025-06-07 09:13:45,222 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
+2025-06-07 09:13:45,222 [INFO] Global Limit: 15
+2025-06-07 09:13:45,223 [INFO] Loaded metric_ids: ['20', '21', '23', '25']
+2025-06-07 09:13:45,225 [INFO] 20 has 3 cases
+2025-06-07 09:13:45,226 [INFO] Lining up prompt (PROMPT_ID: P17, metric: Response_out_of_scope)
+2025-06-07 09:13:45,227 [INFO] Lining up prompt (PROMPT_ID: P18, metric: Response_out_of_scope)
+2025-06-07 09:13:45,227 [INFO] Lining up prompt (PROMPT_ID: P19, metric: Response_out_of_scope)
+2025-06-07 09:13:45,227 [INFO] 21 has 5 cases
+2025-06-07 09:13:45,228 [INFO] Lining up prompt (PROMPT_ID: P20, metric: Toxicity_Level)
+2025-06-07 09:13:45,228 [INFO] Lining up prompt (PROMPT_ID: P21, metric: Toxicity_Level)
+2025-06-07 09:13:45,229 [INFO] Lining up prompt (PROMPT_ID: P22, metric: Toxicity_Level)
+2025-06-07 09:13:45,230 [INFO] Lining up prompt (PROMPT_ID: P23, metric: Toxicity_Level)
+2025-06-07 09:13:45,230 [INFO] Lining up prompt (PROMPT_ID: P24, metric: Toxicity_Level)
+2025-06-07 09:13:45,231 [INFO] 23 has 4 cases
+2025-06-07 09:13:45,231 [INFO] Lining up prompt (PROMPT_ID: P25, metric: Rejection_Rate)
+2025-06-07 09:13:45,232 [INFO] Lining up prompt (PROMPT_ID: P26, metric: Rejection_Rate)
+2025-06-07 09:13:45,232 [INFO] Lining up prompt (PROMPT_ID: P27, metric: Rejection_Rate)
+2025-06-07 09:13:45,232 [INFO] Lining up prompt (PROMPT_ID: P28, metric: Rejection_Rate)
+2025-06-07 09:13:45,233 [INFO] 25 has 3 cases
+2025-06-07 09:13:45,233 [INFO] Lining up prompt (PROMPT_ID: P60, metric: Efficacy_to_content_filtering)
+2025-06-07 09:13:45,233 [INFO] Lining up prompt (PROMPT_ID: P61, metric: Efficacy_to_content_filtering)
+2025-06-07 09:13:45,234 [INFO] Lining up prompt (PROMPT_ID: P62, metric: Efficacy_to_content_filtering)
+2025-06-07 09:22:06,405 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
+2025-06-07 09:22:06,411 [INFO] Total prompts sent: 15
+2025-06-07 09:22:06,412 [INFO] === END: send_all_prompts ===
+2025-06-07 09:22:55,811 [INFO] === START: send_all_prompts ===
+2025-06-07 09:22:55,812 [INFO] Plan ID: T4
+2025-06-07 09:22:55,812 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
+2025-06-07 09:22:55,813 [INFO] Global Limit: 15
+2025-06-07 09:22:55,815 [INFO] Loaded metric_ids: ['27', '28', '30', '31']
+2025-06-07 09:22:55,817 [INFO] 27 has 3 cases
+2025-06-07 09:22:55,818 [INFO] Lining up prompt (PROMPT_ID: P91, metric: Language_Coverage)
+2025-06-07 09:22:55,819 [INFO] Lining up prompt (PROMPT_ID: P92, metric: Language_Coverage)
+2025-06-07 09:22:55,820 [INFO] Lining up prompt (PROMPT_ID: P93, metric: Language_Coverage)
+2025-06-07 09:22:55,820 [INFO] 28 has 4 cases
+2025-06-07 09:22:55,821 [INFO] Lining up prompt (PROMPT_ID: P1, metric: Ability_to_handle_multiple_Indian_languages_in_one_context)
+2025-06-07 09:22:55,822 [INFO] Lining up prompt (PROMPT_ID: P2, metric: Ability_to_handle_multiple_Indian_languages_in_one_context)
+2025-06-07 09:22:55,822 [INFO] Lining up prompt (PROMPT_ID: P3, metric: Ability_to_handle_multiple_Indian_languages_in_one_context)
+2025-06-07 09:22:55,823 [INFO] Lining up prompt (PROMPT_ID: P4, metric: Ability_to_handle_multiple_Indian_languages_in_one_context)
+2025-06-07 09:22:55,823 [INFO] 30 has 4 cases
+2025-06-07 09:22:55,824 [INFO] Lining up prompt (PROMPT_ID: P63, metric: Transliterated_Language_Handling)
+2025-06-07 09:22:55,824 [INFO] Lining up prompt (PROMPT_ID: P64, metric: Transliterated_Language_Handling)
+2025-06-07 09:22:55,825 [INFO] Lining up prompt (PROMPT_ID: P65, metric: Transliterated_Language_Handling)
+2025-06-07 09:22:55,826 [INFO] Lining up prompt (PROMPT_ID: P66, metric: Transliterated_Language_Handling)
+2025-06-07 09:22:55,827 [INFO] 31 has 4 cases
+2025-06-07 09:22:55,827 [INFO] Lining up prompt (PROMPT_ID: P67, metric: Accuracy_per_Language)
+2025-06-07 09:22:55,828 [INFO] Lining up prompt (PROMPT_ID: P68, metric: Accuracy_per_Language)
+2025-06-07 09:22:55,828 [INFO] Lining up prompt (PROMPT_ID: P69, metric: Accuracy_per_Language)
+2025-06-07 09:22:55,829 [INFO] Lining up prompt (PROMPT_ID: P70, metric: Accuracy_per_Language)
+2025-06-07 09:31:18,396 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
+2025-06-07 09:31:18,402 [INFO] Total prompts sent: 15
+2025-06-07 09:31:18,402 [INFO] === END: send_all_prompts ===
+2025-06-07 09:31:57,257 [INFO] === START: send_all_prompts ===
+2025-06-07 09:31:57,258 [INFO] Plan ID: T5
+2025-06-07 09:31:57,259 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
+2025-06-07 09:31:57,259 [INFO] Global Limit: 3
+2025-06-07 09:31:57,261 [INFO] Loaded metric_ids: ['34']
+2025-06-07 09:31:57,263 [INFO] 34 has 3 cases
+2025-06-07 09:31:57,263 [INFO] Lining up prompt (PROMPT_ID: P57, metric: Task_Completion_Rate)
+2025-06-07 09:31:57,264 [INFO] Lining up prompt (PROMPT_ID: P58, metric: Task_Completion_Rate)
+2025-06-07 09:31:57,265 [INFO] Lining up prompt (PROMPT_ID: P59, metric: Task_Completion_Rate)
+2025-06-07 09:33:53,090 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
+2025-06-07 09:33:53,099 [INFO] Total prompts sent: 3
+2025-06-07 09:33:53,099 [INFO] === END: send_all_prompts ===
+2025-06-07 09:34:19,399 [INFO] === START: send_all_prompts ===
+2025-06-07 09:34:19,400 [INFO] Plan ID: T6
+2025-06-07 09:34:19,400 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
+2025-06-07 09:34:19,401 [INFO] Global Limit: 5
+2025-06-07 09:34:19,402 [INFO] Loaded metric_ids: ['36']
+2025-06-07 09:34:19,403 [INFO] 36 has 5 cases
+2025-06-07 09:34:19,403 [INFO] Lining up prompt (PROMPT_ID: P37, metric: Functional_Domain_Relevance)
+2025-06-07 09:34:19,404 [INFO] Lining up prompt (PROMPT_ID: P38, metric: Functional_Domain_Relevance)
+2025-06-07 09:34:19,404 [INFO] Lining up prompt (PROMPT_ID: P39, metric: Functional_Domain_Relevance)
+2025-06-07 09:34:19,404 [INFO] Lining up prompt (PROMPT_ID: P40, metric: Functional_Domain_Relevance)
+2025-06-07 09:34:19,405 [INFO] Lining up prompt (PROMPT_ID: P41, metric: Functional_Domain_Relevance)
+2025-06-07 09:37:22,390 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
+2025-06-07 09:37:22,399 [INFO] Total prompts sent: 5
+2025-06-07 09:37:22,400 [INFO] === END: send_all_prompts ===
+2025-06-07 11:19:47,223 [INFO] === START: send_all_prompts ===
+2025-06-07 11:19:47,227 [INFO] Plan ID: T6
+2025-06-07 11:19:47,228 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
+2025-06-07 11:19:47,228 [INFO] Global Limit: 5
+2025-06-07 11:19:47,228 [INFO] Loaded metric_ids: ['36']
+2025-06-07 11:19:47,230 [INFO] 36 has 5 cases
+2025-06-07 11:19:47,230 [INFO] Lining up prompt (PROMPT_ID: P37, metric: Functional_Domain_Relevance)
+2025-06-07 11:19:47,230 [INFO] Sending prompt: How can I book an appointment with a dermatologist?
+2025-06-07 11:19:47,231 [INFO] Lining up prompt (PROMPT_ID: P38, metric: Functional_Domain_Relevance)
+2025-06-07 11:19:47,231 [INFO] Sending prompt: Can you explain the difference between speed and velocity?
+2025-06-07 11:19:47,232 [INFO] Lining up prompt (PROMPT_ID: P39, metric: Functional_Domain_Relevance)
+2025-06-07 11:19:47,232 [INFO] Sending prompt: I'm having chest pain and shortness of breath. What should I do?
+2025-06-07 11:19:47,232 [INFO] Lining up prompt (PROMPT_ID: P40, metric: Functional_Domain_Relevance)
+2025-06-07 11:19:47,233 [INFO] Sending prompt: What is the best fertilizer for rice cultivation in clay soil?
+2025-06-07 11:19:47,234 [INFO] Lining up prompt (PROMPT_ID: P41, metric: Functional_Domain_Relevance)
+2025-06-07 11:19:47,234 [INFO] Sending prompt: What are the symptoms of nitrogen deficiency in plants?
+2025-06-07 11:20:19,363 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
+2025-06-07 11:20:19,370 [INFO] Total prompts sent: 5
+2025-06-07 11:20:19,371 [INFO] === END: send_all_prompts ===
+2025-06-07 11:20:50,030 [INFO] === START: send_all_prompts ===
+2025-06-07 11:20:50,030 [INFO] Plan ID: T6
+2025-06-07 11:20:50,031 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
+2025-06-07 11:20:50,031 [INFO] Global Limit: 5
+2025-06-07 11:20:50,032 [INFO] Loaded metric_ids: ['36']
+2025-06-07 11:20:50,033 [INFO] 36 has 5 cases
+2025-06-07 11:20:50,034 [INFO] Lining up prompt (PROMPT_ID: P37, metric: Functional_Domain_Relevance)
+2025-06-07 11:20:50,034 [INFO] Lining up prompt (PROMPT_ID: P38, metric: Functional_Domain_Relevance)
+2025-06-07 11:20:50,035 [INFO] Lining up prompt (PROMPT_ID: P39, metric: Functional_Domain_Relevance)
+2025-06-07 11:20:50,035 [INFO] Lining up prompt (PROMPT_ID: P40, metric: Functional_Domain_Relevance)
+2025-06-07 11:20:50,035 [INFO] Lining up prompt (PROMPT_ID: P41, metric: Functional_Domain_Relevance)
+2025-06-07 11:21:18,942 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
+2025-06-07 11:21:18,943 [INFO] Total prompts sent: 5
+2025-06-07 11:21:18,943 [INFO] === END: send_all_prompts ===
+2025-06-07 11:22:10,844 [INFO] === START: send_all_prompts ===
+2025-06-07 11:22:10,847 [INFO] Plan ID: T6
+2025-06-07 11:22:10,847 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
+2025-06-07 11:22:10,848 [INFO] Global Limit: 5
+2025-06-07 11:22:10,848 [INFO] Loaded metric_ids: ['36']
+2025-06-07 11:22:10,850 [INFO] 36 has 5 cases
+2025-06-07 11:22:10,850 [INFO] Lining up prompt (PROMPT_ID: P37, metric: Functional_Domain_Relevance)
+2025-06-07 11:22:10,851 [INFO] Lining up prompt (PROMPT_ID: P38, metric: Functional_Domain_Relevance)
+2025-06-07 11:22:10,851 [INFO] Lining up prompt (PROMPT_ID: P39, metric: Functional_Domain_Relevance)
+2025-06-07 11:22:10,851 [INFO] Lining up prompt (PROMPT_ID: P40, metric: Functional_Domain_Relevance)
+2025-06-07 11:22:10,851 [INFO] Lining up prompt (PROMPT_ID: P41, metric: Functional_Domain_Relevance)
+2025-06-07 11:22:36,995 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
+2025-06-07 11:22:37,000 [INFO] Total prompts sent: 5
+2025-06-07 11:22:37,001 [INFO] === END: send_all_prompts ===
+2025-06-07 11:24:18,641 [INFO] === START: send_all_prompts ===
+2025-06-07 11:24:18,642 [INFO] Plan ID: T6
+2025-06-07 11:24:18,642 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
+2025-06-07 11:24:18,643 [INFO] Global Limit: 2
+2025-06-07 11:24:18,643 [INFO] Loaded metric_ids: ['36']
+2025-06-07 11:24:18,645 [INFO] 36 has 5 cases
+2025-06-07 11:24:18,648 [INFO] Lining up prompt (PROMPT_ID: P37, metric: Functional_Domain_Relevance)
+2025-06-07 11:24:18,648 [INFO] Lining up prompt (PROMPT_ID: P38, metric: Functional_Domain_Relevance)
+2025-06-07 11:26:30,762 [INFO] === START: send_all_prompts ===
+2025-06-07 11:26:30,765 [INFO] Plan ID: T2
+2025-06-07 11:26:30,765 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
+2025-06-07 11:26:30,766 [INFO] Global Limit: 2
+2025-06-07 11:26:30,767 [INFO] Loaded metric_ids: ['10', '11', '13', '14', '15', '16', '38', '39', '40']
+2025-06-07 11:26:30,769 [INFO] 10 has 4 cases
+2025-06-07 11:26:30,769 [INFO] Lining up prompt (PROMPT_ID: P29, metric: Topic_Drift_Rate)
+2025-06-07 11:26:30,769 [INFO] Prompt to be sent: Mani: What medicine I can use for headache? Bot: Acetaminophen, Mani: I think I have migraine, Bot: Do you have acute pain?, Mani: My tummy hurts whenever I eat pizza.
+2025-06-07 11:26:30,769 [INFO] Lining up prompt (PROMPT_ID: P30, metric: Topic_Drift_Rate)
+2025-06-07 11:26:30,770 [INFO] Prompt to be sent: Parul: What is electrolysis?, Bot: Electrolysis is a chemical process that uses electricity to drive a non-spontaneous chemical reaction. It's often used to break down compounds into their elements, especially when those reactions wouldn't normally happen on their own. Parul: What is the non blah blah chemical reaction u spoke about?, Bot: A non-spontaneous chemical reaction is a reaction that does not occur on its own under normal conditions. It needs an external energy source, like electricity, heat, or light, to make it happen. Parul: Who invented paper?
+2025-06-07 11:27:07,273 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
+2025-06-07 11:27:07,280 [INFO] Total prompts sent: 2
+2025-06-07 11:27:07,284 [INFO] === END: send_all_prompts ===
+2025-06-07 11:28:13,584 [INFO] === START: send_all_prompts ===
+2025-06-07 11:28:13,585 [INFO] Plan ID: T2
+2025-06-07 11:28:13,585 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
+2025-06-07 11:28:13,586 [INFO] Global Limit: 2
+2025-06-07 11:28:13,586 [INFO] Loaded metric_ids: ['10', '11', '13', '14', '15', '16', '38', '39', '40']
+2025-06-07 11:28:13,587 [INFO] 10 has 4 cases
+2025-06-07 11:28:13,588 [INFO] Lining up prompt (PROMPT_ID: P29, metric: Topic_Drift_Rate)
+2025-06-07 11:28:13,588 [INFO] Prompt to be sent: Mani: What medicine I can use for headache? Bot: Acetaminophen, Mani: I think I have migraine, Bot: Do you have acute pain?, Mani: My tummy hurts whenever I eat pizza.
+2025-06-07 11:28:13,589 [INFO] Lining up prompt (PROMPT_ID: P30, metric: Topic_Drift_Rate)
+2025-06-07 11:28:13,589 [INFO] Prompt to be sent: Parul: What is electrolysis?, Bot: Electrolysis is a chemical process that uses electricity to drive a non-spontaneous chemical reaction. It's often used to break down compounds into their elements, especially when those reactions wouldn't normally happen on their own. Parul: What is the non blah blah chemical reaction u spoke about?, Bot: A non-spontaneous chemical reaction is a reaction that does not occur on its own under normal conditions. It needs an external energy source, like electricity, heat, or light, to make it happen. Parul: Who invented paper?
+2025-06-07 11:31:04,062 [INFO] === START: send_all_prompts ===
+2025-06-07 11:31:04,063 [INFO] Plan ID: T2
+2025-06-07 11:31:04,063 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
+2025-06-07 11:31:04,064 [INFO] Global Limit: 2
+2025-06-07 11:31:04,064 [INFO] Loaded metric_ids: ['10', '11', '13', '14', '15', '16', '38', '39', '40']
+2025-06-07 11:31:04,066 [INFO] 10 has 4 cases
+2025-06-07 11:31:04,066 [INFO] Lining up prompt (PROMPT_ID: P29, metric: Topic_Drift_Rate)
+2025-06-07 11:31:04,067 [INFO] Prompt to be sent: Mani: What medicine I can use for headache? Bot: Acetaminophen, Mani: I think I have migraine, Bot: Do you have acute pain?, Mani: My tummy hurts whenever I eat pizza.
+2025-06-07 11:31:04,067 [INFO] Lining up prompt (PROMPT_ID: P30, metric: Topic_Drift_Rate)
+2025-06-07 11:31:04,067 [INFO] Prompt to be sent: Parul: What is electrolysis?, Bot: Electrolysis is a chemical process that uses electricity to drive a non-spontaneous chemical reaction. It's often used to break down compounds into their elements, especially when those reactions wouldn't normally happen on their own. Parul: What is the non blah blah chemical reaction u spoke about?, Bot: A non-spontaneous chemical reaction is a reaction that does not occur on its own under normal conditions. It needs an external energy source, like electricity, heat, or light, to make it happen. Parul: Who invented paper?
+2025-06-07 11:31:33,693 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
+2025-06-07 11:31:33,693 [INFO] Total prompts sent: 2
+2025-06-07 11:31:33,694 [INFO] === END: send_all_prompts ===
+2025-06-07 11:31:51,149 [INFO] === START: send_all_prompts ===
+2025-06-07 11:31:51,150 [INFO] Plan ID: T2
+2025-06-07 11:31:51,151 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
+2025-06-07 11:31:51,151 [INFO] Global Limit: 2
+2025-06-07 11:31:51,152 [INFO] Loaded metric_ids: ['10', '11', '13', '14', '15', '16', '38', '39', '40']
+2025-06-07 11:31:51,153 [INFO] 10 has 4 cases
+2025-06-07 11:31:51,154 [INFO] Lining up prompt (PROMPT_ID: P29, metric: Topic_Drift_Rate)
+2025-06-07 11:31:51,154 [INFO] Prompt to be sent: Mani: What medicine I can use for headache? Bot: Acetaminophen, Mani: I think I have migraine, Bot: Do you have acute pain?, Mani: My tummy hurts whenever I eat pizza.
+2025-06-07 11:31:51,155 [INFO] Lining up prompt (PROMPT_ID: P30, metric: Topic_Drift_Rate)
+2025-06-07 11:31:51,155 [INFO] Prompt to be sent: Parul: What is electrolysis?, Bot: Electrolysis is a chemical process that uses electricity to drive a non-spontaneous chemical reaction. It's often used to break down compounds into their elements, especially when those reactions wouldn't normally happen on their own. Parul: What is the non blah blah chemical reaction u spoke about?, Bot: A non-spontaneous chemical reaction is a reaction that does not occur on its own under normal conditions. It needs an external energy source, like electricity, heat, or light, to make it happen. Parul: Who invented paper?
+2025-06-07 11:32:21,916 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
+2025-06-07 11:32:21,916 [INFO] Total prompts sent: 2
+2025-06-07 11:32:21,917 [INFO] === END: send_all_prompts ===
+2025-06-07 11:33:44,123 [INFO] === START: send_all_prompts ===
+2025-06-07 11:33:44,123 [INFO] Plan ID: T2
+2025-06-07 11:33:44,124 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
+2025-06-07 11:33:44,124 [INFO] Global Limit: 2
+2025-06-07 11:33:44,125 [INFO] Loaded metric_ids: ['10', '11', '13', '14', '15', '16', '38', '39', '40']
+2025-06-07 11:33:44,130 [INFO] Metric ID: 10 -> Unknown Metric has 4 test cases
+2025-06-07 11:33:44,130 [INFO] Lining up prompt (PROMPT_ID: P29, metric: Topic_Drift_Rate)
+2025-06-07 11:33:44,131 [INFO] Prompt to be sent: Mani: What medicine I can use for headache? Bot: Acetaminophen, Mani: I think I have migraine, Bot: Do you have acute pain?, Mani: My tummy hurts whenever I eat pizza.
+2025-06-07 11:33:44,132 [INFO] Lining up prompt (PROMPT_ID: P30, metric: Topic_Drift_Rate)
+2025-06-07 11:33:44,132 [INFO] Prompt to be sent: Parul: What is electrolysis?, Bot: Electrolysis is a chemical process that uses electricity to drive a non-spontaneous chemical reaction. It's often used to break down compounds into their elements, especially when those reactions wouldn't normally happen on their own. Parul: What is the non blah blah chemical reaction u spoke about?, Bot: A non-spontaneous chemical reaction is a reaction that does not occur on its own under normal conditions. It needs an external energy source, like electricity, heat, or light, to make it happen. Parul: Who invented paper?
+2025-06-07 11:34:18,342 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
+2025-06-07 11:34:18,349 [INFO] Total prompts sent: 2
+2025-06-07 11:34:18,350 [INFO] === END: send_all_prompts ===
+2025-06-07 11:34:23,328 [INFO] === START: send_all_prompts ===
+2025-06-07 11:34:23,328 [INFO] Plan ID: T2
+2025-06-07 11:34:23,328 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
+2025-06-07 11:34:23,329 [INFO] Global Limit: 2
+2025-06-07 11:34:23,329 [INFO] Loaded metric_ids: ['10', '11', '13', '14', '15', '16', '38', '39', '40']
+2025-06-07 11:34:23,331 [INFO] Metric ID: 10 -> metric: Topic_Drift_Rate has 4 test cases
+2025-06-07 11:34:23,331 [INFO] Lining up prompt (PROMPT_ID: P29, metric: Topic_Drift_Rate)
+2025-06-07 11:34:23,332 [INFO] Prompt to be sent: Mani: What medicine I can use for headache? Bot: Acetaminophen, Mani: I think I have migraine, Bot: Do you have acute pain?, Mani: My tummy hurts whenever I eat pizza.
+2025-06-07 11:34:23,332 [INFO] Lining up prompt (PROMPT_ID: P30, metric: Topic_Drift_Rate)
+2025-06-07 11:34:23,332 [INFO] Prompt to be sent: Parul: What is electrolysis?, Bot: Electrolysis is a chemical process that uses electricity to drive a non-spontaneous chemical reaction. It's often used to break down compounds into their elements, especially when those reactions wouldn't normally happen on their own. Parul: What is the non blah blah chemical reaction u spoke about?, Bot: A non-spontaneous chemical reaction is a reaction that does not occur on its own under normal conditions. It needs an external energy source, like electricity, heat, or light, to make it happen. Parul: Who invented paper?
+2025-06-07 11:36:00,711 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
+2025-06-07 11:36:00,770 [INFO] Total prompts sent: 2
+2025-06-07 11:36:00,771 [INFO] === END: send_all_prompts ===
+2025-06-07 11:36:45,601 [INFO] === START: send_all_prompts ===
+2025-06-07 11:36:45,602 [INFO] Plan ID: T2
+2025-06-07 11:36:45,603 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
+2025-06-07 11:36:45,603 [INFO] Global Limit: 2
+2025-06-07 11:36:45,604 [INFO] Loaded metric_ids: ['10', '11', '13', '14', '15', '16', '38', '39', '40']
+2025-06-07 11:36:45,605 [INFO] Metric ID: 10 -> Topic_Drift_Rate has 4 test cases
+2025-06-07 11:36:45,606 [INFO] Lining up prompt (PROMPT_ID: P29, metric: Topic_Drift_Rate)
+2025-06-07 11:36:45,606 [INFO] Prompt to be sent: Mani: What medicine I can use for headache? Bot: Acetaminophen, Mani: I think I have migraine, Bot: Do you have acute pain?, Mani: My tummy hurts whenever I eat pizza.
+2025-06-07 11:36:45,607 [INFO] Lining up prompt (PROMPT_ID: P30, metric: Topic_Drift_Rate)
+2025-06-07 11:36:45,607 [INFO] Prompt to be sent: Parul: What is electrolysis?, Bot: Electrolysis is a chemical process that uses electricity to drive a non-spontaneous chemical reaction. It's often used to break down compounds into their elements, especially when those reactions wouldn't normally happen on their own. Parul: What is the non blah blah chemical reaction u spoke about?, Bot: A non-spontaneous chemical reaction is a reaction that does not occur on its own under normal conditions. It needs an external energy source, like electricity, heat, or light, to make it happen. Parul: Who invented paper?
+2025-06-07 11:38:05,159 [ERROR] Exception occurred during chat: POST request to http://localhost:8000/chat failed: ('Connection aborted.', ConnectionResetError(10054, 'An existing connection was forcibly closed by the remote host', None, 10054, None))
+2025-06-07 11:38:05,168 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
+2025-06-07 11:38:05,169 [INFO] Total prompts sent: 2
+2025-06-07 11:38:05,169 [INFO] === END: send_all_prompts ===
+2025-06-07 11:41:08,130 [INFO] === START: send_all_prompts ===
+2025-06-07 11:41:08,130 [INFO] Plan ID: T2
+2025-06-07 11:41:08,130 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
+2025-06-07 11:41:08,131 [INFO] Global Limit: 2
+2025-06-07 11:41:08,131 [INFO] Loaded metric_ids: ['10', '11', '13', '14', '15', '16', '38', '39', '40']
+2025-06-07 11:41:08,132 [INFO] Metric ID: 10 -> Topic_Drift_Rate has 4 test cases
+2025-06-07 11:41:08,133 [INFO] Lining up prompt (PROMPT_ID: P29, metric: Topic_Drift_Rate)
+2025-06-07 11:41:08,133 [INFO] Prompt to be sent: Mani: What medicine I can use for headache? Bot: Acetaminophen, Mani: I think I have migraine, Bot: Do you have acute pain?, Mani: My tummy hurts whenever I eat pizza.
+2025-06-07 11:41:08,133 [INFO] 
+
+2025-06-07 11:41:08,133 [INFO] Lining up prompt (PROMPT_ID: P30, metric: Topic_Drift_Rate)
+2025-06-07 11:41:08,133 [INFO] Prompt to be sent: Parul: What is electrolysis?, Bot: Electrolysis is a chemical process that uses electricity to drive a non-spontaneous chemical reaction. It's often used to break down compounds into their elements, especially when those reactions wouldn't normally happen on their own. Parul: What is the non blah blah chemical reaction u spoke about?, Bot: A non-spontaneous chemical reaction is a reaction that does not occur on its own under normal conditions. It needs an external energy source, like electricity, heat, or light, to make it happen. Parul: Who invented paper?
+2025-06-07 11:41:08,134 [INFO] 
+
+2025-06-07 11:41:43,755 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
+2025-06-07 11:41:43,756 [INFO] Total prompts sent: 2
+2025-06-07 11:41:43,756 [INFO] === END: send_all_prompts ===
+2025-06-07 11:42:07,696 [INFO] === START: send_all_prompts ===
+2025-06-07 11:42:07,697 [INFO] Plan ID: T2
+2025-06-07 11:42:07,697 [INFO] Test plan file: C:\Users\nithy\AIEvaluationTool\Data\DataPoints.json
+2025-06-07 11:42:07,698 [INFO] Global Limit: 2
+2025-06-07 11:42:07,698 [INFO] Loaded metric_ids: ['10', '11', '13', '14', '15', '16', '38', '39', '40']
+2025-06-07 11:42:07,700 [INFO] Metric ID: 10 -> Topic_Drift_Rate has 4 test cases
+2025-06-07 11:42:07,700 [INFO] 
+
+2025-06-07 11:42:07,701 [INFO] Lining up prompt (PROMPT_ID: P29, metric: Topic_Drift_Rate)
+2025-06-07 11:42:07,701 [INFO] Prompt to be sent: Mani: What medicine I can use for headache? Bot: Acetaminophen, Mani: I think I have migraine, Bot: Do you have acute pain?, Mani: My tummy hurts whenever I eat pizza.
+2025-06-07 11:42:07,701 [INFO] 
+
+2025-06-07 11:42:07,701 [INFO] Lining up prompt (PROMPT_ID: P30, metric: Topic_Drift_Rate)
+2025-06-07 11:42:07,701 [INFO] Prompt to be sent: Parul: What is electrolysis?, Bot: Electrolysis is a chemical process that uses electricity to drive a non-spontaneous chemical reaction. It's often used to break down compounds into their elements, especially when those reactions wouldn't normally happen on their own. Parul: What is the non blah blah chemical reaction u spoke about?, Bot: A non-spontaneous chemical reaction is a reaction that does not occur on its own under normal conditions. It needs an external energy source, like electricity, heat, or light, to make it happen. Parul: Who invented paper?
+2025-06-07 11:42:07,702 [INFO] 
+
+2025-06-07 11:43:53,661 [INFO] Received responses from the bot and saved to the response file.
+2025-06-07 11:43:53,685 [INFO] Responses saved to C:\Users\nithy\AIEvaluationTool\Data\responses.json
+2025-06-07 11:43:53,686 [INFO] Total prompts sent: 2
+2025-06-07 11:43:53,686 [INFO] === END: send_all_prompts ===

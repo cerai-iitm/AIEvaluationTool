@@ -64,6 +64,22 @@ parser.add_argument("--test_plan_file", default=str(data_points_path), help="Def
 
 args = parser.parse_args()
 
+# Dynamically set test_case_count to the total number of prompts in the selected test plan if not provided
+if args.test_case_count is None:
+    # Load plans and datapoints
+    with open(plans_path, 'r', encoding='utf-8') as plan_file:
+        all_plans = json.load(plan_file)
+    plan_entry = all_plans.get(args.test_plan_id, {})
+    metric_ids = list(plan_entry.get('metrics', {}).keys())
+    with open(args.test_plan_file, 'r', encoding='utf-8') as case_file:
+        all_cases_by_metric = json.load(case_file)
+    total_prompts = 0
+    for metric_id in metric_ids:
+        metric_data = all_cases_by_metric.get(metric_id, {})
+        cases = metric_data.get('cases', [])
+        total_prompts += len(cases)
+    args.test_case_count = total_prompts
+
 # Validation based on application type
 if args.application_type == "WHATSAPP_WEB":
     if not args.agent_name:
@@ -178,10 +194,10 @@ class TestCaseExecutionManager:
             }
 
     def send_all_prompts(self):
-        logger.info("=== START: send_all_prompts ===")
+        logger.info("=== START: send_prompts ===")
         logger.info(f"Plan ID: {self.test_plan_id}")
         logger.info(f"Test plan file: {self.test_plan_file}")
-        logger.info(f"Number of Test cases: {self.limit}")
+        logger.info(f"Test case count: {self.limit}")
 
         results = []
         prompt_list = []
@@ -192,7 +208,7 @@ class TestCaseExecutionManager:
             all_plans = json.load(plan_file)
             plan_entry = all_plans[self.test_plan_id]
             metric_ids = list(plan_entry.get("metrics", {}).keys())
-            logger.info(f"Loaded metric_ids: {metric_ids}")
+            logger.info(f"Metric IDs within the test plan: {metric_ids}")
 
         with open(self.test_plan_file, 'r', encoding='utf-8') as case_file:
             all_cases_by_metric = json.load(case_file)
@@ -207,18 +223,22 @@ class TestCaseExecutionManager:
                 continue
 
             cases = metric_data.get("cases", [])
-            logger.info(f"{metric_id} has {len(cases)} cases")
+            logger.info(f"Metric ID: {metric_id} -> {plan_entry.get('metrics', {}).get(metric_id, metric_id)} has {len(cases)} test cases")
+            logger.info("\n")
 
             for idx, test_case in enumerate(cases):
                 if self.limit and total_collected >= self.limit:
                     break
 
-                logger.info(f"Processing prompt {total_collected + 1} (metric: {metric_id})")
+                logger.info(f"Lining up prompt (PROMPT_ID: {test_case.get('PROMPT_ID')}, metric: {plan_entry.get('metrics', {}).get(metric_id, metric_id)})")
+                logger.info(f"Prompt to be sent: {test_case.get('PROMPT')}")
+                logger.info("\n")
 
                 test_case_id = test_case.get('PROMPT_ID')
                 system_prompt = str(test_case.get('SYSTEM_PROMPT', '')).replace("\n", "")
                 prompt = str(test_case.get('PROMPT', '')).replace("\n", "")
                 prompt_text = f"{system_prompt.strip()} {prompt.strip()}".strip()
+                
 
                 dedup_key = test_case_id or prompt_text
                 logger.debug(f"Processing test_case_id: {test_case_id}, dedup_key: {dedup_key}")
@@ -273,11 +293,11 @@ class TestCaseExecutionManager:
         result_path = response_file
         with open(result_path, "w", encoding="utf-8") as f:
             json.dump(results, f, indent=2, ensure_ascii=False)
+        logger.info("Received responses from the bot and saved to the response file.")
         logger.info(f"Responses saved to {result_path}")
         logger.info(f"Total prompts sent: {len(prompt_list)}")
-        logger.info("=== END: send_all_prompts ===")
+        logger.info("=== END: send_prompts ===")
 
-        print(prompt_list) 
         return results
 
 
