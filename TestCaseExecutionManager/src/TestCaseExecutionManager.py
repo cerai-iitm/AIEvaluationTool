@@ -102,9 +102,7 @@ class TestCaseExecutionManager:
         self.test_plan_id = test_plan_id
         self.limit = limit
         self.test_plan_name = ""
-        self.test_plan_name = ""
         self.test_cases = self.load_test_cases()
-        self.chat_id_count= 0
         self.chat_id_count= 0
 
         if client_args.get("base_url"):
@@ -113,6 +111,7 @@ class TestCaseExecutionManager:
             self.client.sync_config(vars(args))
         else:
             self.client = None
+
 
     def load_test_cases(self) -> List[Dict]:
         try:

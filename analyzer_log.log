@@ -1,0 +1,11 @@
+2025-06-07 16:16:58,236 - INFO - ---- Starting Test Plan: Business_Requirements_Alignment ----
+2025-06-07 16:16:58,237 - INFO - Evaluating [Functional_Domain_Relevance] using strategy: text_similarity
+2025-06-07 16:16:58,238 - INFO - Starting text_similarity evaluation strategy
+2025-06-07 16:16:58,690 - INFO - text_similarity score for batch 0: 0.0
+2025-06-07 16:16:58,816 - INFO - text_similarity score for batch 1: 0.0
+2025-06-07 16:16:58,901 - INFO - text_similarity score for batch 2: 0.0
+2025-06-07 16:16:59,061 - INFO - text_similarity score for batch 3: 1.0
+2025-06-07 16:16:59,209 - INFO - text_similarity score for batch 4: 1.0
+2025-06-07 16:16:59,209 - INFO - Completed text_similarity evaluation strategy
+2025-06-07 16:16:59,209 - INFO - [Functional_Domain_Relevance] → Score: 0.4, Failed: 3, Passed: 2
+2025-06-07 16:16:59,211 - INFO - Results saved to: Data/response_analysis_output.json
