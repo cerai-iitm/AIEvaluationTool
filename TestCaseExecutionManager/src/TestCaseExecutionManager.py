@@ -223,7 +223,7 @@ class TestCaseExecutionManager:
 
             cases = metric_data.get("cases", [])
             logger.info(f"Metric ID: {metric_id} -> {plan_entry.get('metrics', {}).get(metric_id, metric_id)} has {len(cases)} test cases")
-            logger.info("\n")
+            
 
             for idx, test_case in enumerate(cases):
                 if self.limit and total_collected >= self.limit:
@@ -231,7 +231,7 @@ class TestCaseExecutionManager:
 
                 logger.info(f"Lining up prompt (PROMPT_ID: {test_case.get('PROMPT_ID')}, metric: {plan_entry.get('metrics', {}).get(metric_id, metric_id)})")
                 logger.info(f"Prompt to be sent: {test_case.get('PROMPT')}")
-                logger.info("\n")
+               
 
                 test_case_id = test_case.get('PROMPT_ID')
                 system_prompt = str(test_case.get('SYSTEM_PROMPT', '')).replace("\n", "")
@@ -260,26 +260,41 @@ class TestCaseExecutionManager:
         else:
             try:
                 chat_id = self.assign_chat_id()
-                response = self.client.chat(chat_id=chat_id, prompt_list=prompt_list)
-                data = response.json()
-
-                if isinstance(data, dict) and "response" in data:
-                    resp = data["response"]
-                    if isinstance(resp, list) and all(isinstance(r, dict) for r in resp):
-                        for pid, r in zip(prompt_id_list, resp):
-                            results.append({
-                                "prompt_id": pid,
-                                "test_plan_id": self.test_plan_id,
-                                "response": r.get("response", "")
-                            })
-                    else:
+                # Sequential processing: send and log each prompt one by one
+                for idx, (pid, prompt) in enumerate(zip(prompt_id_list, prompt_list)):
+                    # Retrieve the original test_case for this prompt_id
+                    test_case = None
+                    for metric_id in metric_ids:
+                        metric_data = all_cases_by_metric.get(metric_id)
+                        if not metric_data:
+                            continue
+                        cases = metric_data.get("cases", [])
+                        for case in cases:
+                            if case.get('PROMPT_ID') == pid:
+                                test_case = case
+                                break
+                        if test_case:
+                            break
+                    system_prompt = test_case.get('SYSTEM_PROMPT', '') if test_case else ''
+                    user_prompt = test_case.get('PROMPT', '') if test_case else ''
+                    logger.info(f"Processing prompt (PROMPT_ID: {pid}) - Sending to the agent...")
+                    logger.info(f"Prompt to be sent: {system_prompt}{user_prompt}")
+                    response = self.client.chat(chat_id=chat_id, prompt_list=[prompt])
+                    data = response.json()
+                    if isinstance(data, dict) and "response" in data:
+                        resp = data["response"]
+                        if isinstance(resp, list) and resp and isinstance(resp[0], dict):
+                            response_text = resp[0].get("response", "")
+                        else:
+                            response_text = str(resp)
+                        logger.info(f"Received response for prompt (PROMPT_ID: {pid}): {response_text}")
                         results.append({
-                            "prompt_id": prompt_id_list[0],
+                            "prompt_id": pid,
                             "test_plan_id": self.test_plan_id,
-                            "response": str(resp)
+                            "response": response_text
                         })
-                else:
-                    logger.warning("Unexpected response format")
+                    else:
+                        logger.warning(f"Unexpected response format for prompt (PROMPT_ID: {pid})")
             except Exception as e:
                 logger.error(f"Exception occurred during chat: {e}")
                 for pid in prompt_id_list:
