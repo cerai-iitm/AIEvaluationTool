@@ -3,3 +3,30 @@
 2025-06-09 12:26:16,584 - INFO - Starting llm_as_judge evaluation strategy for Inclusivity
 2025-06-09 12:26:16,597 - INFO - 
 LiteLLM completion() model= llama3.2:1b; provider = ollama_chat
+2025-06-09 12:26:59,868 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2025-06-09 12:26:59,973 - INFO - Wrapper: Completed Call, calling success_handler
+2025-06-09 12:27:00,201 - INFO - selected model name for cost calculation: ollama_chat/llama3.2:1b
+2025-06-09 12:27:00,203 - INFO - selected model name for cost calculation: ollama_chat/llama3.2:1b
+2025-06-09 12:27:00,372 - INFO - HTTP Request: POST http://localhost:11434/api/show "HTTP/1.1 200 OK"
+2025-06-09 12:27:00,437 - INFO - 
+LiteLLM completion() model= llama3.2:1b; provider = ollama_chat
+2025-06-09 12:27:02,385 - INFO - HTTP Request: POST http://localhost:11434/api/show "HTTP/1.1 200 OK"
+2025-06-09 12:27:02,502 - INFO - HTTP Request: POST http://localhost:11434/api/show "HTTP/1.1 200 OK"
+2025-06-09 12:27:02,523 - INFO - selected model name for cost calculation: ollama_chat/llama3.2:1b
+2025-06-09 12:27:02,607 - INFO - HTTP Request: POST http://localhost:11434/api/show "HTTP/1.1 200 OK"
+2025-06-09 12:27:02,690 - INFO - HTTP Request: POST http://localhost:11434/api/show "HTTP/1.1 200 OK"
+2025-06-09 12:27:13,481 - INFO - HTTP Request: POST http://localhost:11434/api/chat "HTTP/1.1 200 OK"
+2025-06-09 12:27:13,500 - INFO - Wrapper: Completed Call, calling success_handler
+2025-06-09 12:27:13,502 - INFO - selected model name for cost calculation: ollama_chat/llama3.2:1b
+2025-06-09 12:27:13,502 - INFO - selected model name for cost calculation: ollama_chat/llama3.2:1b
+2025-06-09 12:27:13,622 - INFO - HTTP Request: POST http://localhost:11434/api/show "HTTP/1.1 200 OK"
+2025-06-09 12:27:13,638 - INFO - llm_as_judge score for batch 0: 0.0
+2025-06-09 12:27:13,638 - INFO - Completed llm_as_judge evaluation strategy
+2025-06-09 12:27:13,640 - INFO - Starting llm_as_judge evaluation strategy for Inclusivity
+2025-06-09 12:27:13,684 - INFO - 
+LiteLLM completion() model= llama3.2:1b; provider = ollama_chat
+2025-06-09 12:27:15,640 - INFO - HTTP Request: POST http://localhost:11434/api/show "HTTP/1.1 200 OK"
+2025-06-09 12:27:15,709 - INFO - HTTP Request: POST http://localhost:11434/api/show "HTTP/1.1 200 OK"
+2025-06-09 12:27:15,711 - INFO - selected model name for cost calculation: ollama_chat/llama3.2:1b
+2025-06-09 12:27:15,787 - INFO - HTTP Request: POST http://localhost:11434/api/show "HTTP/1.1 200 OK"
+2025-06-09 12:27:15,878 - INFO - HTTP Request: POST http://localhost:11434/api/show "HTTP/1.1 200 OK"
