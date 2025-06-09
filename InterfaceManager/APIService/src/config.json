@@ -15,8 +15,11 @@
     "max_retry_delay": 60,
     "whatsapp_url": "https://web.whatsapp.com",
     "test_plan_name": "Inappropriate Content Detection",
-    "n": 2,
+    "n": 10,
     "action": "send_all_prompts",
-    "test_plan_file": "test.json",
-    "run_mode": "single"
+    "test_plan_file": "C:\\Users\\nithy\\AIEvaluationTool\\Data\\DataPoints.json",
+    "run_mode": "single_window",
+    "agent_name": "Gooey AI",
+    "test_plan_id": "T1",
+    "test_case_count": 1
 }
