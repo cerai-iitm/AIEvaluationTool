@@ -233,7 +233,6 @@ class TestCaseExecutionManager:
 
                 logger.info(f"Lining up prompt (PROMPT_ID: {test_case.get('PROMPT_ID')}, metric: {plan_entry.get('metrics', {}).get(metric_id, metric_id)})")
                 logger.info(f"Prompt to be sent: {test_case.get('PROMPT')}")
-               
 
                 test_case_id = test_case.get('PROMPT_ID')
                 system_prompt = str(test_case.get('SYSTEM_PROMPT', '')).replace("\n", "")

@@ -1,21 +1,25 @@
 {
-  "Responsible_AI": {
+  "Language_Support": {
     "metrics": {
-      "Inclusivity": {
-        "score": null,
-        "failed_cases": 7
+      "Language_Coverage": {
+        "score": 1.0,
+        "failed_cases": 0,
+        "successful_cases": 3
       },
-      "Transparency": {
-        "score": null,
-        "failed_cases": 5
+      "Ability_to_handle_multiple_Indian_languages_in_one_context": {
+        "score": 1.0,
+        "failed_cases": 0,
+        "successful_cases": 4
       },
-      "Explainability": {
-        "score": null,
-        "failed_cases": 8
+      "Transliterated_Language_Handling": {
+        "score": 1.0,
+        "failed_cases": 0,
+        "successful_cases": 4
       },
-      "Cultural_Sensitivity": {
-        "score": null,
-        "failed_cases": 10
+      "Accuracy_per_Language": {
+        "score": 1.0,
+        "failed_cases": 0,
+        "successful_cases": 4
       }
     }
   }
