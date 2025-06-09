@@ -99,7 +99,6 @@ class TestCaseExecutionManager:
     def __init__(self, test_plan_file, test_plan_id, limit=None, **client_args):
         self.test_plan_file = test_plan_file
         self.test_plan_id = test_plan_id
-        self.test_plan_id = test_plan_id
         self.limit = limit
         self.test_plan_name = ""
         self.test_cases = self.load_test_cases()
@@ -260,7 +259,7 @@ class TestCaseExecutionManager:
         else:
             try:
                 chat_id = self.assign_chat_id()
-                # Sequential processing: send and log each prompt one by one
+                # Sending as a list of strings
                 for idx, (pid, prompt) in enumerate(zip(prompt_id_list, prompt_list)):
                     # Retrieve the original test_case for this prompt_id
                     test_case = None
@@ -275,26 +274,31 @@ class TestCaseExecutionManager:
                                 break
                         if test_case:
                             break
-                    system_prompt = test_case.get('SYSTEM_PROMPT', '') if test_case else ''
-                    user_prompt = test_case.get('PROMPT', '') if test_case else ''
-                    logger.info(f"Processing prompt (PROMPT_ID: {pid}) - Sending to the agent...")
-                    logger.info(f"Prompt to be sent: {system_prompt}{user_prompt}")
-                    response = self.client.chat(chat_id=chat_id, prompt_list=[prompt])
-                    data = response.json()
-                    if isinstance(data, dict) and "response" in data:
-                        resp = data["response"]
-                        if isinstance(resp, list) and resp and isinstance(resp[0], dict):
-                            response_text = resp[0].get("response", "")
-                        else:
-                            response_text = str(resp)
-                        logger.info(f"Received response for prompt (PROMPT_ID: {pid}): {response_text}")
-                        results.append({
-                            "prompt_id": pid,
-                            "test_plan_id": self.test_plan_id,
-                            "response": response_text
-                        })
-                    else:
-                        logger.warning(f"Unexpected response format for prompt (PROMPT_ID: {pid})")
+                system_prompt = test_case.get('SYSTEM_PROMPT', '') if test_case else ''
+                user_prompt = test_case.get('PROMPT', '') if test_case else ''
+                logger.info(f"Processing prompt (PROMPT_ID: {pid}) - Sending to the agent...")
+                logger.info(f"Prompt to be sent: {system_prompt}{user_prompt}")
+                response = self.client.chat(chat_id=chat_id, prompt_list=prompt_list)
+                data = response.json()
+                if isinstance(data, dict) and "response" in data:
+                    resp = data["response"]
+                    if isinstance(resp, list) and len(resp) == len(prompt_list):
+                        for pid, prompt_text, resp in zip(prompt_id_list, prompt_list, resp):
+                            response_text = (
+                                resp.get("response", "") if isinstance(resp, dict)
+                                else str(resp)
+                            )
+                            logger.info(f"PROMPT_ID: {pid}")
+                            logger.info(f"Prompt sent: {prompt_text}")
+                            logger.info(f"Response from WhatsApp for PROMPT_ID {pid}: {response_text}")
+
+                            results.append({
+                                "prompt_id": pid,
+                                "test_plan_id": self.test_plan_id,
+                                "response": response_text
+                            })
+                else:
+                    logger.warning(f"Unexpected response format for prompt (PROMPT_ID: {pid})")
             except Exception as e:
                 logger.error(f"Exception occurred during chat: {e}")
                 for pid in prompt_id_list:
@@ -313,7 +317,6 @@ class TestCaseExecutionManager:
         logger.info("=== END: send_prompts ===")
 
         return results
-
 
 
 # setting arguments for InterfaceManager Client
