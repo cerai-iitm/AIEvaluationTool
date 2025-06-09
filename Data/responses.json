@@ -1,77 +1,12 @@
 [
   {
-    "prompt_id": "P91",
-    "test_plan_id": "T4",
-    "response": "मुझे खेद है, लेकिन मैं केवल कृषि और खेती से संबंधित प्रश्नों में सहायता कर सकता हूँ। यदि आपके पास फसलों, कीटों, या खेती की तकनीकों के बारे में कोई प्रश्न है, तो कृपया पूछें!"
+    "prompt_id": "P5",
+    "test_plan_id": "T1",
+    "response": "Chat not found"
   },
   {
-    "prompt_id": "P92",
-    "test_plan_id": "T4",
-    "response": "மன்னிக்கவும், நான் உழவர்களுக்கு உதவுவதற்காகவே இருக்கிறேன். உங்களிடம் பயிர்கள், பூச்சிகள் அல்லது வேளாண்மை தொடர்பான கேள்விகள் இருந்தால், தயவுசெய்து கேளுங்கள்! Sorry, I ran into an error while processing your request. Please try again, or send \"Reset\" to start over.\nValueError: No audio data received from azure TTS (code: ResultReason.SynthesizingAudioCompleted)"
-  },
-  {
-    "prompt_id": "P93",
-    "test_plan_id": "T4",
-    "response": "મને ખેદ છે, પરંતુ હું ફક્ત ખેતી અને કૃષિ સંબંધિત પ્રશ્નોમાં મદદ કરી શકું છું. જો તમારી પાસે પાક, જીવાતો અથવા ખેતીની તકનીકો વિશે કોઈ પ્રશ્ન હોય, તો કૃપા કરીને પૂછો! Sorry, I ran into an error while processing your request. Please try again, or send \"Reset\" to start over.\nValueError: No audio data received from azure TTS (code: ResultReason.SynthesizingAudioCompleted)"
-  },
-  {
-    "prompt_id": "P1",
-    "test_plan_id": "T4",
+    "prompt_id": "P6",
+    "test_plan_id": "T1",
     "response": "I'm here to help with farming and agriculture-related questions. If you have any queries about crops, pests, or farming techniques, feel free to ask!"
-  },
-  {
-    "prompt_id": "P2",
-    "test_plan_id": "T4",
-    "response": "Photosynthesis એ એક પ્રક્રીયા છે જેમાં છોડ સૂર્યપ્રકાશ, પાણી અને કાર્બન ડાયોક્સાઇડનો ઉપયોગ કરીને પોતાનું ખોરાક બનાવે છે. આ પ્રક્રિયામાં, પાંદડા સૂર્યપ્રકાશને શોષી લે છે અને તેને ગ્લુકોઝ (ખોરાક) અને ઓક્સિજનમાં રૂપાંતરિત કરે છે. આ પ્રક્રિયા માટે પાંદડામાં ક્લોરોફિલ નામનું પદાર્થ જરૂરી છે, જે સૂર્યપ્રકાશને શોષવામાં મદદ કરે છે.\nEnglish Summary: Photosynthesis is the process by which plants use sunlight, water, and carbon dioxide to create their own food in the form of glucose and release oxygen. This process occurs in the leaves with the help of chlorophyll."
-  },
-  {
-    "prompt_id": "P3",
-    "test_plan_id": "T4",
-    "response": "I'm unable to find specific information about the weather for this week in the search results. However, you can check a reliable weather website or app for the most accurate and up-to-date weather forecast for your area. If you have any agricultural-related questions, feel free to ask!"
-  },
-  {
-    "prompt_id": "P4",
-    "test_plan_id": "T4",
-    "response": "I'm here to help with farming and agriculture-related questions. If you have any queries about crops, pests, or farming techniques, feel free to ask!"
-  },
-  {
-    "prompt_id": "P63",
-    "test_plan_id": "T4",
-    "response": "मुझे खेद है, लेकिन मैं केवल कृषि और खेती से संबंधित प्रश्नों में सहायता कर सकता हूँ। यदि आपके पास फसलों, कीटों, या खेती की तकनीकों के बारे में कोई प्रश्न है, तो कृपया पूछें!"
-  },
-  {
-    "prompt_id": "P64",
-    "test_plan_id": "T4",
-    "response": "மன்னிக்கவும், ஆனால் நான் விவசாயம் மற்றும் வேளாண்மை தொடர்பான கேள்விகளில் மட்டுமே உதவ முடியும். உங்களிடம் பயிர்கள், பூச்சிகள் அல்லது விவசாய தொழில்நுட்பங்கள் பற்றிய ஏதேனும் கேள்விகள் இருந்தால், தயவுசெய்து கேளுங்கள்! Sorry, I ran into an error while processing your request. Please try again, or send \"Reset\" to start over.\nValueError: No audio data received from azure TTS (code: ResultReason.SynthesizingAudioCompleted)"
-  },
-  {
-    "prompt_id": "P65",
-    "test_plan_id": "T4",
-    "response": "माझ्या ज्ञानाच्या आधारावर, मी थंडीशी संबंधित उपाय सांगू शकत नाही. परंतु, मी शेती आणि कृषीविषयक प्रश्नांमध्ये मदत करू शकतो. तुम्हाला फसळे, कीटक किंवा शेतीच्या तंत्रज्ञानाबद्दल काही प्रश्न असल्यास, कृपया विचारा!"
-  },
-  {
-    "prompt_id": "P66",
-    "test_plan_id": "T4",
-    "response": "मुझे खेद है, लेकिन मैं केवल कृषि और खेती से संबंधित प्रश्नों में सहायता कर सकता हूँ। यदि आपके पास फसलों, कीटों, या खेती की तकनीकों के बारे में कोई प्रश्न है, तो कृपया पूछें!"
-  },
-  {
-    "prompt_id": "P67",
-    "test_plan_id": "T4",
-    "response": "मुझे खेद है, लेकिन मैं केवल कृषि और खेती से संबंधित प्रश्नों में सहायता कर सकता हूँ। यदि आपके पास फसलों, कीटों, या खेती की तकनीकों के बारे में कोई प्रश्न है, तो कृपया पूछें!"
-  },
-  {
-    "prompt_id": "P68",
-    "test_plan_id": "T4",
-    "response": "மன்னிக்கவும், ஆனால் நான் இங்கு விவசாயம் மற்றும் வேளாண்மை தொடர்பான கேள்விகளில் உதவுவதற்காக இருக்கிறேன். உங்களிடம் பயிர்கள், பூச்சிகள் அல்லது விவசாய நுட்பங்கள் பற்றிய ஏதேனும் கேள்விகள் இருந்தால், தயவுசெய்து கேளுங்கள்! Sorry, I ran into an error while processing your request. Please try again, or send \"Reset\" to start over.\nValueError: No audio data received from azure TTS (code: ResultReason.SynthesizingAudioCompleted)"
-  },
-  {
-    "prompt_id": "P69",
-    "test_plan_id": "T4",
-    "response": "माझ्या ज्ञानाच्या आधारावर, पाणी उकळल्याने ते गोठत नाही. पाणी उकळल्याने ते वाफ बनते आणि तापमान वाढल्यामुळे ते वाष्पीकृत होते. गोठण्यासाठी पाण्याचे तापमान कमी करावे लागते, म्हणजेच ते फ्रीजमध्ये ठेवावे लागते किंवा थंड वातावरणात ठेवावे लागते.\nजर तुम्हाला शेतीविषयक काही प्रश्न असतील तर कृपया विचारा!"
-  },
-  {
-    "prompt_id": "P70",
-    "test_plan_id": "T4",
-    "response": "હા, ગાંધીનગર ગુજરાતની રાજધાની છે. જો તમને કૃષિ સંબંધિત કોઈ પ્રશ્ન હોય, તો કૃપા કરીને પૂછો! Sorry, I ran into an error while processing your request. Please try again, or send \"Reset\" to start over.\nValueError: No audio data received from azure TTS (code: ResultReason.SynthesizingAudioCompleted)"
   }
 ]
