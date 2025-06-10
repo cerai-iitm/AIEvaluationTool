@@ -4,9 +4,9 @@
 
 A comprehensive evaluation framework designed to rigorously test and validate the performance, consistency, and reliability of conversational AI systems across diverse use cases and scenarios.
 
-## Key Features
+## Description
 
-
+The Conversational AI Evaluation Tool is a comprehensive and scalable framework designed to rigorously assess the performance, reliability, and safety of conversational AI systems. Tailored for developers, researchers, and QA teams, the tool enables automated, systematic evaluation of dialogue agents across a wide range of metrics including Inclusivity, Transparency, Explainability, Cultural Sensitivity, Dialogue Coherence, Language Coverage, Functional Domain Relevance and more.
 
 ## Getting started
 
@@ -101,7 +101,9 @@ python TestCaseExecutionManager/src/TestCaseExecutionManager.py --test_plan_id T
 
 ### Command to run the ResponseAnalyser 
 
-
+```bash
+ python -W ignore ResponseAnalyzer/src/ResponseAnalyzer.py
+```
 
 ## Sample Screenshots
 
