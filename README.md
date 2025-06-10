@@ -152,7 +152,7 @@ On running the Test Case Execution Manager, the terminal output should look simi
 
 The Test Case Execution Manager leverages the interface automation to automatically deliver test cases to the conversational platform and retrieve responses without manual intervention.
 
-![Interface](screenshots\Interface_Automation.jpg)
+![Interface](screenshots\Interface.jpg)
 
 
 This step will execute the test cases and store the responses in `Data/responses.json`.
