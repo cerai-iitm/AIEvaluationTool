@@ -90,7 +90,7 @@ python InterfaceManager/APIService/src/main.py
 Run the TestCase Execution Manager with the following command,
 
 ```bash
-python TestCaseExecutionManager/src/TestCaseExecutionManager.py --test_plan_id <plan-id> --test_case_count <count>
+python TestCaseExecutionManager/src/TestCaseExecutionManager.py --test_plan_id <plan-id> --test_case_count <number of prompts>
 ```
 
 For example,
