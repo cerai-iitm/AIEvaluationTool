@@ -1,0 +1,17 @@
+python-dotenv
+pandas
+googletrans
+sentence-transformers
+language_tool_python
+langchain_ollama
+langchain
+opik
+litellm
+lexical-diversity
+evaluate
+nltk
+rouge_score
+tabulate
+colorama
+transformers
+tqdm
