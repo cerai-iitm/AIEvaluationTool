@@ -7,7 +7,6 @@ import textwrap
 import csv
 from tabulate import tabulate
 from colorama import Fore, Style, init
-
 from strategies import (
     language_coverage,
     language_coverage_similarity,
@@ -20,7 +19,6 @@ from strategies import (
     meteor_metric,
     rouge_score_metric
 )
-
 init(autoreset=True)
 
 logger = logging.getLogger()
@@ -71,14 +69,12 @@ async def analyze():
         plan_name = plan_info.get("TestPlan_name", f"UnknownPlan_{plan_id}")
         final_results.setdefault(plan_name, {"metrics": {}})
         metrics = plan_info.get("metrics", {})
-
         logger.info(f"---- Starting Test Plan: {plan_name} ----")
         print(f"\n---- Test Plan: {plan_name} ----")
 
         for metric_id, metric_name in metrics.items():
             collected_prompts, collected_responses, expected_outputs, sys_prompts = [], [], [], []
             evaluable_cases = 0
-
             for resp_item in response_items:
                 prompt_id = resp_item.get("prompt_id")
                 response_text = resp_item.get("response", "").strip()

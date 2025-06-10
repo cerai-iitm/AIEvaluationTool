@@ -1,6 +1,6 @@
 python-dotenv
 pandas
-googletrans==4.0.0-rc1
+googletrans
 sentence-transformers
 language_tool_python
 langchain_ollama
