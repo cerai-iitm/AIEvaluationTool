@@ -91,9 +91,10 @@ def login_whatsapp():
             return status
         logger.info("Initiating WhatsApp Web Login process..")
         
-        temp_dir = tempfile.gettempdir()
-        folder_name = "whatsapp_profile"
-        profile_folder_path = os.path.join(temp_dir, folder_name)
+        #temp_dir = tempfile.gettempdir()
+        #folder_name = "whatsapp_profile"
+        #profile_folder_path = os.path.join(temp_dir, folder_name)
+        profile_folder_path = os.path.expanduser('~') + "/whatsapp_profile"
         opts = Options()
         opts.add_argument("--no-sandbox"); 
         opts.add_argument("--start-maximized")
@@ -176,12 +177,14 @@ def logout_whatsapp():
     Login from whatsapp using selenium automation
     """
     try:
-        temp_dir = tempfile.gettempdir()
-        folder_name = "whatsapp_profile"
-        profile_folder_path = os.path.join(temp_dir, folder_name)
+        #temp_dir = tempfile.gettempdir()
+        #folder_name = "whatsapp_profile"
+        #profile_folder_path = os.path.join(temp_dir, folder_name)
+        profile_folder_path = os.path.expanduser('~') + "/whatsapp_profile"
         opts = Options()
-        opts.add_argument("--no-sandbox"); 
+        opts.add_argument("--no-sandbox") 
         opts.add_argument("--start-maximized")
+        opts.add_argument("--window-size=1920,1080")
         opts.add_argument(f"user-data-dir={profile_folder_path}")         
         opts.add_experimental_option("excludeSwitches", ["enable-logging"])
 
@@ -287,7 +290,7 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int = 3):
             message_box.clear()
             message_box.click()
             chunks = split_message(prompt)
-
+            
             for chunk in chunks:
                 message_box.send_keys(chunk)
                 message_box.send_keys(Keys.SHIFT + Keys.ENTER)
@@ -357,9 +360,12 @@ def send_prompt_whatsapp(chat_id: int, prompt_list: List[str], mode: str = "sing
     results = []
 
     if mode == "single_window":
-        temp_dir = tempfile.gettempdir()
-        folder_name = "whatsapp_profile"
-        profile_folder_path = os.path.join(temp_dir, folder_name)
+        #temp_dir = tempfile.gettempdir()
+        #folder_name = "whatsapp_profile"
+        #profile_folder_path = os.path.join(temp_dir, folder_name)
+
+        profile_folder_path = os.path.expanduser('~') + "/whatsapp_profile"  # For testing purposes
+        logger.info(f"Using profile folder: {profile_folder_path}")
 
         if is_profile_in_use(profile_folder_path):
             logger.info("Chrome with this session is already running. Attempting to close it...")
@@ -405,9 +411,11 @@ def send_prompt_whatsapp(chat_id: int, prompt_list: List[str], mode: str = "sing
 
     elif mode == "multi_window":
         for i, prompt in enumerate(prompt_list):
-            temp_dir = tempfile.gettempdir()
-            folder_name = "whatsapp_profile"
-            profile_folder_path = os.path.join(temp_dir, folder_name)
+            #temp_dir = tempfile.gettempdir()
+            #folder_name = "whatsapp_profile"
+            #profile_folder_path = os.path.join(temp_dir, folder_name)
+
+            profile_folder_path = os.path.expanduser('~') + "/whatsapp_profile"
             
             if is_profile_in_use(profile_folder_path):
                 print("Chrome with this session is already running. Attempting to close it...")
