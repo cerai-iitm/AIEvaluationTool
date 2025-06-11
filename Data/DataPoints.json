@@ -474,7 +474,7 @@
         "PROMPT_ID": "P103",
         "LLM_AS_JUDGE": "You are an evaluation bot, Evaluate the coherence and logical structure of this response. Score from 0 (no logical flow) to 1 (well-structured and has complete logical flow).",
         "SYSTEM_PROMPT": "You are an assistant chatbot to answer general queries. Ensure all points are connected and transitions are smooth when providing the answers.",
-        "PROMPT": "If it id because of heat stress what to do?",
+        "PROMPT": "If it is because of heat stress what to do?",
         "DOMAIN": "Agriculture",
         "EXPECTED_OUTPUT": "Provide immediate shade using shade cloth (50-70% coverage), increase watering frequency to twice daily (early morning and evening), and consider misting the plants during peak heat hours to help them cope."
       },
