@@ -99,12 +99,9 @@ class TestCaseExecutionManager:
     def __init__(self, test_plan_file, test_plan_id, limit=None, **client_args):
         self.test_plan_file = test_plan_file
         self.test_plan_id = test_plan_id
-        self.test_plan_id = test_plan_id
         self.limit = limit
         self.test_plan_name = ""
-        self.test_plan_name = ""
         self.test_cases = self.load_test_cases()
-        self.chat_id_count= 0
         self.chat_id_count= 0
 
         if client_args.get("base_url"):
@@ -128,7 +125,6 @@ class TestCaseExecutionManager:
             self.test_plan_name = plan_entry.get("TestPlan_name", "Unknown Plan")
             metric_ids = plan_entry.get("metrics", [])
         
-
             with open(self.test_plan_file, 'r', encoding='utf-8') as case_file:
                 all_cases_by_metric = json.load(case_file)
 
@@ -261,41 +257,19 @@ class TestCaseExecutionManager:
         else:
             try:
                 chat_id = self.assign_chat_id()
-                # Sequential processing: send and log each prompt one by one
-                for idx, (pid, prompt) in enumerate(zip(prompt_id_list, prompt_list)):
-                    # Retrieve the original test_case for this prompt_id
-                    test_case = None
-                    for metric_id in metric_ids:
-                        metric_data = all_cases_by_metric.get(metric_id)
-                        if not metric_data:
-                            continue
-                        cases = metric_data.get("cases", [])
-                        for case in cases:
-                            if case.get('PROMPT_ID') == pid:
-                                test_case = case
-                                break
-                        if test_case:
-                            break
-                    system_prompt = test_case.get('SYSTEM_PROMPT', '') if test_case else ''
-                    user_prompt = test_case.get('PROMPT', '') if test_case else ''
-                    logger.info(f"Processing prompt (PROMPT_ID: {pid}) - Sending to the agent...")
-                    logger.info(f"Prompt to be sent: {system_prompt}{user_prompt}")
-                    response = self.client.chat(chat_id=chat_id, prompt_list=[prompt])
-                    data = response.json()
-                    if isinstance(data, dict) and "response" in data:
-                        resp = data["response"]
-                        if isinstance(resp, list) and resp and isinstance(resp[0], dict):
-                            response_text = resp[0].get("response", "")
-                        else:
-                            response_text = str(resp)
-                        logger.info(f"Received response for prompt (PROMPT_ID: {pid}): {response_text}")
+                response = self.client.chat(chat_id=chat_id, prompt_list=prompt_list)
+                data = response.json()
+                if isinstance(data, dict) and "response" in data:
+                    resp_list = data["response"]
+                    for pid, resp, prompt in zip(prompt_id_list, resp_list, prompt_list):
+                        response_text = resp.get("response", "") if isinstance(resp, dict) else str(resp)
                         results.append({
                             "prompt_id": pid,
                             "test_plan_id": self.test_plan_id,
                             "response": response_text
                         })
-                    else:
-                        logger.warning(f"Unexpected response format for prompt (PROMPT_ID: {pid})")
+                else:
+                    logger.warning("Unexpected response format for batch prompts")
             except Exception as e:
                 logger.error(f"Exception occurred during chat: {e}")
                 for pid in prompt_id_list:
@@ -314,7 +288,6 @@ class TestCaseExecutionManager:
         logger.info("=== END: send_prompts ===")
 
         return results
-
 
 
 # setting arguments for InterfaceManager Client
