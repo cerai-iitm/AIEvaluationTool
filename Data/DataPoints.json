@@ -650,9 +650,17 @@
         "PROMPT_ID": "P70",
         "LLM_AS_JUDGE": "",
         "SYSTEM_PROMPT": "",
-        "PROMPT": "ગાંધીનગર ગુજરાતની રાજધાની છે?",
+        "PROMPT": "બાગાયત શું છે?",
         "DOMAIN": "Agriculture",
-        "EXPECTED_OUTPUT": "હા, ગાંધીનગર ગુજરાતની રાજધાની છે."
+        "EXPECTED_OUTPUT": "બાગાયત એટલે ખેતીની એક પદ્ધતિ જેમાં ફળો, શાકભાજી, ફૂલો અને અન્ય વનસ્પતિઓનું વ્યવસ્થિત રીતે ઉત્પાદન કરવામાં આવે છે. આ પદ્ધતિમાં વૃક્ષો, ઝાડી અને અન્ય બાગાયતી પાકોની ખેતી કરવામાં આવે છે. બાગાયતનો મુખ્ય ઉદ્દેશ્ય ઉચ્ચ ગુણવત્તાવાળા પાકનું ઉત્પાદન કરવું અને ખેડૂતોને આર્થિક લાભ મેળવવામાં મદદ કરવી છે."
+      },
+      {
+        "PROMPT_ID": "P110",
+        "LLM_AS_JUDGE": "",
+        "SYSTEM_PROMPT": "",
+        "PROMPT": "ఆవు పాలను ఎలా ఉత్పత్తి చేస్తుంది?",
+        "DOMAIN": "Agriculture",
+        "EXPECTED_OUTPUT": "ఆవు పాలు ఉత్పత్తి చేయడానికి ముందుగా, ఆవు సరైన ఆహారం, నీరు, మరియు ఆరోగ్యకరమైన పరిస్థితులను పొందాలి. పాలు ఉత్పత్తి చేయడానికి, ఆవు యొక్క స్తన గ్రాంధులు (udders) నుండి పాలు పీల్చబడతాయి, ఇది యాంత్రికంగా లేదా మానవీయంగా చేయవచ్చు. పాలు ఉత్పత్తి అయిన తరువాత, అవి శుభ్రపరచబడి, పాశ్చరైజేషన్ ద్వారా శుభ్రమైన పాలు తయారు చేయబడతాయి."
       }
     ]
   },
@@ -663,6 +671,7 @@
         "LLM_AS_JUDGE": "",
         "SYSTEM_PROMPT": "You are an agricultural expert assisting farmers with crop management advice.",
         "PROMPT": "What are the benefits of crop rotation?",
+        "DOMAIN": "Agriculture",
         "EXPECTED_OUTPUT": "Crop rotation improves soil fertility, reduces pests and diseases, and increases crop yield."
       },
       {
@@ -670,6 +679,7 @@
         "LLM_AS_JUDGE": "",
         "SYSTEM_PROMPT": "You are an agricultural expert assisting farmers with crop management advice.",
         "PROMPT": "How does organic farming differ from conventional farming?",
+        "DOMAIN": "Agriculture",
         "EXPECTED_OUTPUT": "Organic farming avoids synthetic fertilizers and pesticides, focusing on natural processes and biodiversity."
       },
       {
@@ -677,6 +687,7 @@
         "LLM_AS_JUDGE": "",
         "SYSTEM_PROMPT": "You are an agricultural expert assisting farmers with crop management advice.",
         "PROMPT": "Can you tell me what is the importance of irrigation in agriculture?",
+        "DOMAIN": "Agriculture",
         "EXPECTED_OUTPUT": "Irrigation ensures consistent water supply, especially during dry periods, improving crop growth."
       },
       {
@@ -684,6 +695,7 @@
         "LLM_AS_JUDGE": "",
         "SYSTEM_PROMPT": "You are an agricultural expert assisting farmers with crop management advice.",
         "PROMPT": "What are the signs of nitrogen deficiency in plants?",
+        "DOMAIN": "Agriculture",
         "EXPECTED_OUTPUT": "Yellowing of leaves, stunted growth, and poor yield are signs of nitrogen deficiency."
       },
       {
@@ -691,6 +703,7 @@
         "LLM_AS_JUDGE": "",
         "SYSTEM_PROMPT": "You are a medical pregnancy support bot. Provide general guidance, tips, mental support and important advices on the questions asked by the user, apart from that reject any other task asked by user, if serious situation or diagonosis related queries ask to consult doctor.",
         "PROMPT": "How can I improve my immunity naturally?",
+        "DOMAIN": "Healthcare",
         "EXPECTED_OUTPUT": "You can boost your immunity by eating healthy, exercising regularly, sleeping well, and managing stress."
       },
       {
@@ -698,6 +711,7 @@
         "LLM_AS_JUDGE": "",
         "SYSTEM_PROMPT": "You are a medical pregnancy support bot. Provide general guidance, tips, mental support and important advices on the questions asked by the user, apart from that reject any other task asked by user, if serious situation or diagonosis related queries ask to consult doctor.",
         "PROMPT": "What are the symptoms of dengue?",
+        "DOMAIN": "Healthcare",
         "EXPECTED_OUTPUT": "Dengue symptoms include high fever, severe headache, joint pain, muscle pain, skin rash, and nausea"
       },
       {
@@ -705,6 +719,7 @@
         "LLM_AS_JUDGE": "",
         "SYSTEM_PROMPT": "You are a medical pregnancy support bot. Provide general guidance, tips, mental support and important advices on the questions asked by the user, apart from that reject any other task asked by user, if serious situation or diagonosis related queries ask to consult doctor.",
         "PROMPT": "Can diabetes be cured?",
+        "DOMAIN": "Healthcare",
         "EXPECTED_OUTPUT": "Diabetes cannot be completely cured but can be managed with medication, diet, and lifestyle changes."
       }
     ]
@@ -716,6 +731,7 @@
         "LLM_AS_JUDGE": "",
         "SYSTEM_PROMPT": "You are an agricultural expert assisting farmers with crop management advice.",
         "PROMPT": "What is drip irrigation and how does it help?",
+        "DOMAIN": "Agriculture",
         "EXPECTED_OUTPUT": "Drip irrigation delivers water directly to the plant roots, conserving water and reducing evaporation."
       },
       {
