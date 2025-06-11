@@ -99,12 +99,9 @@ class TestCaseExecutionManager:
     def __init__(self, test_plan_file, test_plan_id, limit=None, **client_args):
         self.test_plan_file = test_plan_file
         self.test_plan_id = test_plan_id
-        self.test_plan_id = test_plan_id
         self.limit = limit
         self.test_plan_name = ""
-        self.test_plan_name = ""
         self.test_cases = self.load_test_cases()
-        self.chat_id_count= 0
         self.chat_id_count= 0
 
         if client_args.get("base_url"):
@@ -291,7 +288,6 @@ class TestCaseExecutionManager:
         logger.info("=== END: send_prompts ===")
 
         return results
-
 
 
 # setting arguments for InterfaceManager Client
