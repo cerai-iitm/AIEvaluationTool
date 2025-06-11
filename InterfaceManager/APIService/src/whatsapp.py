@@ -91,9 +91,10 @@ def login_whatsapp():
             return status
         logger.info("Initiating WhatsApp Web Login process..")
         
-        temp_dir = tempfile.gettempdir()
-        folder_name = "whatsapp_profile"
-        profile_folder_path = os.path.join(temp_dir, folder_name)
+        #temp_dir = tempfile.gettempdir()
+        #folder_name = "whatsapp_profile"
+        #profile_folder_path = os.path.join(temp_dir, folder_name)
+        profile_folder_path = os.path.expanduser('~') + "/whatsapp_profile"
         opts = Options()
         opts.add_argument("--no-sandbox"); 
         opts.add_argument("--start-maximized")
@@ -176,9 +177,10 @@ def logout_whatsapp():
     Login from whatsapp using selenium automation
     """
     try:
-        temp_dir = tempfile.gettempdir()
-        folder_name = "whatsapp_profile"
-        profile_folder_path = os.path.join(temp_dir, folder_name)
+        #temp_dir = tempfile.gettempdir()
+        #folder_name = "whatsapp_profile"
+        #profile_folder_path = os.path.join(temp_dir, folder_name)
+        profile_folder_path = os.path.expanduser('~') + "/whatsapp_profile"
         opts = Options()
         opts.add_argument("--no-sandbox") 
         opts.add_argument("--start-maximized")
@@ -209,7 +211,7 @@ def search_llm(driver: webdriver.Chrome) -> bool:
     try:
         logger.info(f"Searching for contact: {llm_name}")
         search_input_xpath = '//div[@aria-label="Search input textbox" and @contenteditable="true"]'
-        search_box = WebDriverWait(driver, 20).until(
+        search_box = WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.XPATH, search_input_xpath))
         )
         search_box.click()
@@ -281,13 +283,8 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int = 3):
             #     '//*[@id="main"]/footer/div[1]/div/span/div/div[2]/div[1]/div[2]/div[1]/p'
             # )
 
-            logger.info(f"Sending prompt: {prompt}")
-            # message_box_xpath = (
-                # '//*[@id="main"]/footer/div[1]/div/span/div/div[2]/div[1]/div[2]/div[1]/p'
-            # )
-
             message_box_xpath = '//div[@aria-label="Type a message" and @contenteditable="true"]'
-            message_box = WebDriverWait(driver, 10).until(
+            message_box = WebDriverWait(driver, 2).until(
                 EC.presence_of_element_located((By.XPATH, message_box_xpath))
             )
             message_box.clear()
@@ -363,9 +360,12 @@ def send_prompt_whatsapp(chat_id: int, prompt_list: List[str], mode: str = "sing
     results = []
 
     if mode == "single_window":
-        temp_dir = tempfile.gettempdir()
-        folder_name = "whatsapp_profile"
-        profile_folder_path = os.path.join(temp_dir, folder_name)
+        #temp_dir = tempfile.gettempdir()
+        #folder_name = "whatsapp_profile"
+        #profile_folder_path = os.path.join(temp_dir, folder_name)
+
+        profile_folder_path = os.path.expanduser('~') + "/whatsapp_profile"  # For testing purposes
+        logger.info(f"Using profile folder: {profile_folder_path}")
 
         if is_profile_in_use(profile_folder_path):
             logger.info("Chrome with this session is already running. Attempting to close it...")
@@ -411,9 +411,11 @@ def send_prompt_whatsapp(chat_id: int, prompt_list: List[str], mode: str = "sing
 
     elif mode == "multi_window":
         for i, prompt in enumerate(prompt_list):
-            temp_dir = tempfile.gettempdir()
-            folder_name = "whatsapp_profile"
-            profile_folder_path = os.path.join(temp_dir, folder_name)
+            #temp_dir = tempfile.gettempdir()
+            #folder_name = "whatsapp_profile"
+            #profile_folder_path = os.path.join(temp_dir, folder_name)
+
+            profile_folder_path = os.path.expanduser('~') + "/whatsapp_profile"
             
             if is_profile_in_use(profile_folder_path):
                 print("Chrome with this session is already running. Attempting to close it...")

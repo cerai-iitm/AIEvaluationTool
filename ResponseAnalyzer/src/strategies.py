@@ -46,18 +46,6 @@ litellm.drop_params = True
 model_name = "llama3.2:1b"
 llm = OllamaLLM(model=model_name)
 
-with open('Data/DataPoints.json', 'r', encoding='utf-8') as f:
-    datapoints = json.load(f)
-
-with open('Data/plans.json', 'r', encoding='utf-8') as f:
-    plans = json.load(f)
-
-with open('Data/responses.json', 'r', encoding='utf-8') as f:
-    responses = json.load(f)
-
-with open('Data/strategy_map.json', 'r', encoding='utf-8') as f:
-    strategy_map = json.load(f)
-
 embedding_model = SentenceTransformer("thenlper/gte-small")
 
 async def language_coverage(prompts, test_case_responses):
