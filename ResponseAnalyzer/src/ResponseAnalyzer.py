@@ -23,6 +23,9 @@ from strategies import (
 
 init(autoreset=True)
 
+litellm_logger = logging.getLogger("LiteLLM")
+litellm_logger.setLevel(logging.WARNING)
+
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 if logger.hasHandlers():
