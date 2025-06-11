@@ -41,15 +41,21 @@
     }
   },
   "T5": {
-    "TestPlan_name": "Task_Understanding",
+    "TestPlan_name": "Task_Performance_Metrics",
     "metrics": {
-      "34": "Task_Completion_Rate" 
+      "34": "Task_Completion_Rate",
+      "23": "Rejection_Rate",
+      "45": "Accuracy",
+      "46": "Average_Interaction_Length"
     }
   },
   "T6": {
-    "TestPlan_name": "Business_Requirements_Alignment",
+    "TestPlan_name": "Performance_and_Scalability",
     "metrics": {
-      "36": "Functional_Domain_Relevance"
+      "41": "Turn_Around_Time",
+      "42": "Processing_Time",
+      "43": "Response_Latency",
+      "44": "Uptime"
     }
   }
 }
