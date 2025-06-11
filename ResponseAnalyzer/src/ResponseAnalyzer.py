@@ -31,6 +31,8 @@ file_handler.setLevel(logging.INFO)
 file_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 file_handler.setFormatter(file_formatter)
 logger.addHandler(file_handler)
+litellm_logger = logging.getLogger("LiteLLM")
+litellm_logger.setLevel(logging.WARNING)
 
 with open('Data/DataPoints.json', 'r', encoding='utf-8') as f:
     datapoints = json.load(f)
@@ -102,8 +104,8 @@ async def analyze():
                     "successful_cases": 0,
                     "note": "No matching prompts or valid responses found."
                 }
-                logger.warning(f"[{metric_name}] → Skipped. Reason: No matching prompts or valid responses found.")
-                print(f"[{metric_name}] → (Skipped - Reason: No matching prompts or valid responses found.)")
+                logger.warning(f"[{metric_name}] => Skipped. Reason: No matching prompts or valid responses found.")
+                print(f"[{metric_name}] => (Skipped - Reason: No matching prompts or valid responses found.)")
                 continue
 
             strategy_fn = None
@@ -119,8 +121,8 @@ async def analyze():
                     "successful_cases": 0,
                     "note": "No strategy function mapped."
                 }
-                logger.warning(f"[{metric_name}] → No strategy function mapped.")
-                print(f"[{metric_name}] → Score: None, Failed Cases: {evaluable_cases}, Successful Cases: 0")
+                logger.warning(f"[{metric_name}] => No strategy function mapped.")
+                print(f"[{metric_name}] => Score: None, Failed Cases: {evaluable_cases}, Successful Cases: 0")
                 continue
 
             try:
@@ -180,8 +182,8 @@ async def analyze():
                 "successful_cases": successful_cases
             }
 
-            logger.info(f"[{metric_name}] → Score: {avg_score}, Failed: {failed_cases}, Passed: {successful_cases}")
-            print(f"[{metric_name}] → Score: {avg_score}, Failed Cases: {failed_cases}, Successful Cases: {successful_cases}")
+            logger.info(f"[{metric_name}] => Score: {avg_score}, Failed: {failed_cases}, Passed: {successful_cases}")
+            print(f"[{metric_name}] => Score: {avg_score}, Failed Cases: {failed_cases}, Successful Cases: {successful_cases}")
 
 asyncio.run(analyze())
 
