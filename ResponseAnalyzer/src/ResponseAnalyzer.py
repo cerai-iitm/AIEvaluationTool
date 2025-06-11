@@ -35,13 +35,13 @@ file_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 file_handler.setFormatter(file_formatter)
 logger.addHandler(file_handler)
 
-with open('Data/DataPoints.json', 'r', encoding='utf-8') as f:
+with open('../../Data/DataPoints.json', 'r', encoding='utf-8') as f:
     datapoints = json.load(f)
-with open('Data/plans.json', 'r', encoding='utf-8') as f:
+with open('../../Data/plans.json', 'r', encoding='utf-8') as f:
     plans = json.load(f)
-with open('Data/responses.json', 'r', encoding='utf-8') as f:
+with open('../../Data/responses.json', 'r', encoding='utf-8') as f:
     responses = json.load(f)
-with open('Data/strategy_map.json', 'r', encoding='utf-8') as f:
+with open('../../Data/strategy_map.json', 'r', encoding='utf-8') as f:
     strategy_map = json.load(f)
 
 strategy_functions = {
