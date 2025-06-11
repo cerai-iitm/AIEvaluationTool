@@ -423,7 +423,7 @@
         "SYSTEM_PROMPT": "You are an expert tutor. Give clear and detailed answers directly related to the question.",
         "PROMPT": "What is the Pythagorean theorem used for?",
         "DOMAIN": "Education",
-        "EXPECTED_OUTPUT": "The Pythagorean theorem (a2+b2=c2a2+b2=c2) calculates missing sides in right triangles, finds distances between points, and applies in construction, physics, and navigation. It’s essential for solving right-angle problems in math and real-world tasks."
+        "EXPECTED_OUTPUT": "The Pythagorean theorem (a2+b2=c2a2+b2=c2) calculates missing sides in right triangles, finds distances between points, and applies in construction, physics, and navigation. It's essential for solving right-angle problems in math and real-world tasks."
       },
       {
         "PROMPT_ID": "P52",
@@ -1036,34 +1036,34 @@
   "45":{
     "cases": [
       {
-        "PROMPT_ID": "P100",
+        "PROMPT_ID": "P400",
         "LLM_AS_JUDGE": "",
         "SYSTEM_PROMPT": "You are an agriculture bot, you need to answer queries related to the agriculture and events related to it. Given the series of conversation, try answering the farmer queries.",
-        "PROMPT": "I’ve noticed some unusual spots and wilting on the leaves of my tomato plants. The leaves are turning yellow with brown edges, and some fruits are showing dark sunken spots. Can you help me identify the disease affecting my crop? Also, please suggest an effective treatment plan, including any organic or chemical control methods and preventive steps I should follow.",
+        "PROMPT": "I've noticed some unusual spots and wilting on the leaves of my tomato plants. The leaves are turning yellow with brown edges, and some fruits are showing dark sunken spots. Can you help me identify the disease affecting my crop? Also, please suggest an effective treatment plan, including any organic or chemical control methods and preventive steps I should follow.",
         "EXPECTED_OUTPUT": "Your tomato plants are likely suffering from Early Blight or Late Blight; to treat, prune affected parts, apply a suitable fungicide (copper-based for organic, or chemical options like chlorothalonil/mancozeb), and prevent recurrence through proper cultural practices like spacing, bottom watering, mulching, and crop rotation."
       }
       ,{
-        "PROMPT_ID": "P101",
+        "PROMPT_ID": "P401",
         "LLM_AS_JUDGE": "",
         "SYSTEM_PROMPT": "You are an agriculture bot, you need to answer queries related to the agriculture and events related to it. Given the series of conversation, try answering the farmer queries",
-        "PROMPT": "Here are the key parameters from my soil test report: pH = 6.2, Nitrogen = Low, Phosphorus = Medium, Potassium = High, Organic Matter = 2.3%. I’m planning to grow maize in this field. Based on this data, can you recommend an optimal fertilization schedule and irrigation plan to ensure good crop yield.",
+        "PROMPT": "Here are the key parameters from my soil test report: pH = 6.2, Nitrogen = Low, Phosphorus = Medium, Potassium = High, Organic Matter = 2.3%. I'm planning to grow maize in this field. Based on this data, can you recommend an optimal fertilization schedule and irrigation plan to ensure good crop yield.",
         "EXPECTED_OUTPUT": "Focus on nitrogen fertilization—a basal application of an NPK fertilizer with a higher N ratio, followed by top-dressing at knee-high and tasseling stages—and ensure consistent irrigation, particularly during silking and grain filling"
       },
       {
-        "PROMPT_ID": "P102",
+        "PROMPT_ID": "P402",
         "LLM_AS_JUDGE": "",
         "SYSTEM_PROMPT": "You are an agriculture bot, you need to answer queries related to the agriculture and events related to it. Given the series of conversation, try answering the farmer queries.",
         "PROMPT": "I am a farmer in Tamil Nadu, India, currently growing rice during the Kharif season. I want to implement an effective crop rotation plan and integrated pest management strategy for the next three years. Can you suggest suitable crop sequences and pest control methods considering the local climate and common pest threats?",
         "EXPECTED_OUTPUT": "For rice in Tamil Nadu, a good three-year crop rotation is Rice (Kharif) - Pulses (Rabi) - Maize/Millets (Summer), and an effective Integrated Pest Management (IPM) strategy involves using resistant varieties, promoting natural enemies, monitoring pest populations (e.g., Yellow Stem Borer, Brown Plant Hopper) with traps, and employing cultural practices like synchronized planting and targeted pesticide application when necessary."
       },
       {
-        "PROMPT_ID": "P400",
+        "PROMPT_ID": "P403",
         "LLM_AS_JUDGE": "",
         "SYSTEM_PROMPT": "You are a general AI bot, you need to answer queries related to general knowledge across all domains.",
         "PROMPT": "Who was the President of the United States in 2008, and what major global event affected the economy that year",
         "EXPECTED_OUTPUT": "Barack Obama was the President of the United States in 2008, and the global financial crisis affected the economy that year."},
       {
-        "PROMPT_ID": "P401",
+        "PROMPT_ID": "P404",
         "LLM_AS_JUDGE": "",
         "SYSTEM_PROMPT": "You are a general AI bot, you need to answer queries related to general knowledge across all domains.",
         "PROMPT": "If a car travels 60 km in 1.5 hours, what is its average speed in km/h?",
@@ -1074,32 +1074,74 @@
   "46":{
     "cases": [
       {
-        "PROMPT_ID": "P108",
+        "PROMPT_ID": "P412",
         "LLM_AS_JUDGE": "",
         "SYSTEM_PROMPT": "You are an agricultural bot , designed to help with farmer requests and queries.",
-        "PROMPT": ["Can you explain what organic farming means, and how it differs from conventional farming?",
-        "How is organic farming currently being practiced in India? Are there any specific regions leading in this area?",
-        "What are the major benefits and challenges faced by Indian farmers adopting organic methods?",
-        "How does a farmer in India get certified as an organic producer? Is it a complicated process?",
-        "What natural fertilizers and pest control methods are used in organic farming in India?",
-        "Is there a growing market for organic produce in India? Do organic farmers earn more than conventional ones?",
-        "Are there any government schemes or subsidies that support organic farming in India?",
-        "Can you share examples of successful organic farming ventures or farmers in India?",
-        "How can a conventional farmer transition to organic farming? What steps are involved?",
-        "What does the future look like for organic farming in India? Is it sustainable at scale?"
-
-      ],
-        "EXPECTED_OUTPUT": ["Organic farming is a system that uses natural processes and resources, avoiding synthetic inputs like fertilizers and pesticides, while conventional farming heavily relies on synthetic chemicals and often GMOs to maximize yields.",
-        "In India, organic farming is practiced through various methods like composting, crop rotation, green manures, natural pest management, and biofertilizers, with government schemes like PKVY and MOVCD-NER promoting its growth, and states like Sikkim (100% organic), Madhya Pradesh, Maharashtra, Rajasthan, and Gujarat leading in certified organic area.",
-        "Major benefits for Indian farmers adopting organic methods include improved soil health and fertility, reduced input costs (no expensive chemicals), higher market prices for organic produce, enhanced environmental sustainability (less pollution, better biodiversity), and a healthier farm ecosystem, while challenges include lower initial yields during transition, higher labor requirements (e.g., for weeding), difficulty in managing pests and diseases naturally, limited access to organic inputs and certification, and inadequate market infrastructure and awareness among consumers.",
-        "Organic certification in India happens via NPOP (complex, export-focused, third-party inspection) or PGS-India (simpler, local, group-based), both requiring adherence to organic standards.",
-        "Organic farming in India uses natural fertilizers like compost, green manure, and biofertilizers (e.g., Azolla, Azotobacter, and Azospirillum), and natural pest control methods like crop rotation, intercropping, and biological control (e.g., parasitoids, predators, and pathogens).",
-        "Yes, there is a growing market for organic produce in India, with increasing consumer awareness and demand for clean, safe, and healthy food. Organic farmers often earn more than conventional ones due to higher market prices and reduced input costs.",
-        "Yes, there are government schemes and subsidies that support organic farming in India, including the National Programme for Organic Production (NPOP), the National Mission for Sustainable Agriculture (NMSA), and the Pradhan Mantri Krishi Sinchai Yojana (PMKSY) under the Ministry of Agriculture and Farmers Welfare.",
-        "Some successful organic farming ventures in India include the Kheti Virasat Mission (KVM), which promotes organic farming through training and certification, and the Organic Farming and Processing (OF&P) scheme, which provides financial assistance for organic farming activities.",
-        "A conventional farmer can transition to organic farming by gradually reducing synthetic inputs, adopting organic practices, and building soil health through organic amendments and cover crops. This process typically takes 3-5 years to fully transition, with careful monitoring and adjustment of practices as needed.",
-        "The future of organic farming in India looks promising, with increasing consumer demand, government support, and a growing market for organic products. Organic farming is sustainable at scale, as it promotes biodiversity, soil health, and a healthier ecosystem, while also providing economic benefits to farmers and consumers alike."
-      ]
+        "PROMPT": "Can you explain what organic farming means, and how it differs from conventional farming?",
+        "EXPECTED_OUTPUT": "Organic farming is a system that uses natural processes and resources, avoiding synthetic inputs like fertilizers and pesticides, while conventional farming heavily relies on synthetic chemicals and often GMOs to maximize yields."
+      },
+      {
+        "PROMPT_ID": "P413",
+        "LLM_AS_JUDGE": "",
+        "SYSTEM_PROMPT": "You are an agricultural bot , designed to help with farmer requests and queries.",
+        "PROMPT": "How is organic farming currently being practiced in India? Are there any specific regions leading in this area?",
+        "EXPECTED_OUTPUT": "In India, organic farming is practiced through various methods like composting, crop rotation, green manures, natural pest management, and biofertilizers, with government schemes like PKVY and MOVCD-NER promoting its growth, and states like Sikkim (100% organic), Madhya Pradesh, Maharashtra, Rajasthan, and Gujarat leading in certified organic area."
+      },
+      {
+        "PROMPT_ID": "P414",
+        "LLM_AS_JUDGE": "",
+        "SYSTEM_PROMPT": "You are an agricultural bot , designed to help with farmer requests and queries.",
+        "PROMPT": "What are the major benefits and challenges faced by Indian farmers adopting organic methods?",
+        "EXPECTED_OUTPUT": "Major benefits for Indian farmers adopting organic methods include improved soil health and fertility, reduced input costs (no expensive chemicals), higher market prices for organic produce, enhanced environmental sustainability (less pollution, better biodiversity), and a healthier farm ecosystem, while challenges include lower initial yields during transition, higher labor requirements (e.g., for weeding), difficulty in managing pests and diseases naturally, limited access to organic inputs and certification, and inadequate market infrastructure and awareness among consumers."
+      },
+      {
+        "PROMPT_ID": "P415",
+        "LLM_AS_JUDGE": "",
+        "SYSTEM_PROMPT": "You are an agricultural bot , designed to help with farmer requests and queries.",
+        "PROMPT": "How does a farmer in India get certified as an organic producer? Is it a complicated process?",
+        "EXPECTED_OUTPUT": "Organic certification in India happens via NPOP (complex, export-focused, third-party inspection) or PGS-India (simpler, local, group-based), both requiring adherence to organic standards."
+      },
+      {
+        "PROMPT_ID": "P416",
+        "LLM_AS_JUDGE": "",
+        "SYSTEM_PROMPT": "You are an agricultural bot , designed to help with farmer requests and queries.",
+        "PROMPT": "What natural fertilizers and pest control methods are used in organic farming in India?",
+        "EXPECTED_OUTPUT": "Organic farming in India uses natural fertilizers like compost, green manure, and biofertilizers (e.g., Azolla, Azotobacter, and Azospirillum), and natural pest control methods like crop rotation, intercropping, and biological control (e.g., parasitoids, predators, and pathogens)."
+      },
+      {
+        "PROMPT_ID": "P417",
+        "LLM_AS_JUDGE": "",
+        "SYSTEM_PROMPT": "You are an agricultural bot , designed to help with farmer requests and queries.",
+        "PROMPT": "Is there a growing market for organic produce in India? Do organic farmers earn more than conventional ones?",
+        "EXPECTED_OUTPUT": "Yes, there is a growing market for organic produce in India, with increasing consumer awareness and demand for clean, safe, and healthy food. Organic farmers often earn more than conventional ones due to higher market prices and reduced input costs."
+      },
+      {
+        "PROMPT_ID": "P418",
+        "LLM_AS_JUDGE": "",
+        "SYSTEM_PROMPT": "You are an agricultural bot , designed to help with farmer requests and queries.",
+        "PROMPT": "Are there any government schemes or subsidies that support organic farming in India?",
+        "EXPECTED_OUTPUT": "Yes, there are government schemes and subsidies that support organic farming in India, including the National Programme for Organic Production (NPOP), the National Mission for Sustainable Agriculture (NMSA), and the Pradhan Mantri Krishi Sinchai Yojana (PMKSY) under the Ministry of Agriculture and Farmers Welfare."
+      },
+      {
+        "PROMPT_ID": "P419",
+        "LLM_AS_JUDGE": "",
+        "SYSTEM_PROMPT": "You are an agricultural bot , designed to help with farmer requests and queries.",
+        "PROMPT": "Can you share examples of successful organic farming ventures or farmers in India?",
+        "EXPECTED_OUTPUT": "Some successful organic farming ventures in India include the Kheti Virasat Mission (KVM), which promotes organic farming through training and certification, and the Organic Farming and Processing (OF&P) scheme, which provides financial assistance for organic farming activities."
+      },
+      {
+        "PROMPT_ID": "P420",
+        "LLM_AS_JUDGE": "",
+        "SYSTEM_PROMPT": "You are an agricultural bot , designed to help with farmer requests and queries.",
+        "PROMPT": "How can a conventional farmer transition to organic farming? What steps are involved?",
+        "EXPECTED_OUTPUT": "A conventional farmer can transition to organic farming by gradually reducing synthetic inputs, adopting organic practices, and building soil health through organic amendments and cover crops. This process typically takes 3-5 years to fully transition, with careful monitoring and adjustment of practices as needed."
+      },
+      {
+        "PROMPT_ID": "P421",
+        "LLM_AS_JUDGE": "",
+        "SYSTEM_PROMPT": "You are an agricultural bot , designed to help with farmer requests and queries.",
+        "PROMPT": "What does the future look like for organic farming in India? Is it sustainable at scale?",
+        "EXPECTED_OUTPUT": "The future of organic farming in India looks promising, with increasing consumer demand, government support, and a growing market for organic products. Organic farming is sustainable at scale, as it promotes biodiversity, soil health, and a healthier ecosystem, while also providing economic benefits to farmers and consumers alike."
       }
     ]
   },
@@ -1108,49 +1150,49 @@
     "cases": [
       [
         {
-          "PROMPT_ID": "P103",
+          "PROMPT_ID": "P405",
           "LLM_AS_JUDGE": "",
           "SYSTEM_PROMPT": "You are an intelligent agriculture assistant helping farmers with accurate, region-specific answers to their queries. Provide precise and actionable responses.",
           "PROMPT": "What's the optimal planting depth for groundnuts?",
           "EXPECTED_OUTPUT": "Optimal planting depth for groundnuts is typically 5–7 cm (2–3 inches)."
         },
         {
-          "PROMPT_ID": "P104",
+          "PROMPT_ID": "P406",
           "LLM_AS_JUDGE": "",
           "SYSTEM_PROMPT": "You are an intelligent agriculture assistant helping farmers with accurate, region-specific answers to their queries. Provide precise and actionable responses.",
           "PROMPT": "Suggest a fungicide for early blight in tomatoes.",
           "EXPECTED_OUTPUT": "For early blight in tomatoes, fungicides containing chlorothalonil or mancozeb are often recommended."
         },
         {
-          "PROMPT_ID": "P105",
+          "PROMPT_ID": "P407",
           "LLM_AS_JUDGE": "",
           "SYSTEM_PROMPT": "You are an intelligent agriculture assistant helping farmers with accurate, region-specific answers to their queries. Provide precise and actionable responses.",
           "PROMPT": "When should I apply urea to my rice crop?",
           "EXPECTED_OUTPUT": "Urea for rice is typically applied in split doses: basal application, tillering stage (20–25 days after transplanting/sowing), and panicle initiation stage (45–50 days after transplanting/sowing)."
         },
         {
-          "PROMPT_ID": "P106",
+          "PROMPT_ID": "P408",
           "LLM_AS_JUDGE": "",
           "SYSTEM_PROMPT": "You are an intelligent agriculture assistant helping farmers with accurate, region-specific answers to their queries. Provide precise and actionable responses.",
           "PROMPT": "What's the current market price for maize in Salem?",
           "EXPECTED_OUTPUT": "As an AI, I cannot provide real-time market prices; please check with local market boards or agricultural price aggregators for the most current data."
         },
         {
-          "PROMPT_ID": "P107",
+          "PROMPT_ID": "P409",
           "LLM_AS_JUDGE": "",
           "SYSTEM_PROMPT": "You are an intelligent agriculture assistant helping farmers with accurate, region-specific answers to their queries. Provide precise and actionable responses.",
           "PROMPT": "How do I identify a nutrient deficiency in banana plants?",
           "EXPECTED_OUTPUT": "Nutrient deficiencies in banana plants often manifest as yellowing or browning of leaves (chlorosis/necrosis, e.g., potassium deficiency causing yellowing edges or magnesium deficiency causing interveinal yellowing), stunted growth, or poor fruit development."
         },
         {
-          "PROMPT_ID": "P402",
+          "PROMPT_ID": "P410",
           "LLM_AS_JUDGE": "",
           "SYSTEM_PROMPT": "You are a general AI bot, you need to answer queries related to general knowledge across all domains.",
           "PROMPT": "What is the capital of Belgium?",
           "EXPECTED_OUTPUT": "The capital of Belgium is Brussels."
         },
         {
-          "PROMPT_ID": "P403",
+          "PROMPT_ID": "P411",
           "LLM_AS_JUDGE": "",
           "SYSTEM_PROMPT": "You are a general AI bot, you need to answer queries related to general knowledge across all domains.",
           "PROMPT": "Summarize the benefits and drawbacks of remote work in 3 bullet points.",
