@@ -1,6 +1,8 @@
 from pydantic import BaseModel, Field
 from typing import Optional
 
+#print('__file__={0:<35} | __name__={1:<25} | __package__={2:<25}'.format(__file__,__name__,str(__package__)))
+
 class Prompt(BaseModel):
     """
     Represents a prompt used in the response analysis system.
@@ -28,9 +30,7 @@ class Prompt(BaseModel):
         If system_prompt is provided, it includes both system and user prompts.
         Otherwise, it returns only the user prompt.
         """
-        if self.system_prompt:
-            return f"System: {self.system_prompt}\nUser: {self.user_prompt}"
-        return self.user_prompt
+        return f"System: {self.system_prompt}\nUser: {self.user_prompt}"
     
     def __repr__(self):
         """
@@ -58,7 +58,7 @@ class Prompt(BaseModel):
     class Config:
         """Configuration for the Pydantic model."""
         extra = "forbid"
-        allow_mutation = False
+        #allow_mutation = False
         frozen = True
         validate_assignment = True
         use_enum_values = True

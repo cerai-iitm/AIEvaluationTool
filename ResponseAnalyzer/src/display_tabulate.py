@@ -41,7 +41,6 @@ for test_plan, plan_info in data.items():
             summary
         ]
         rows.append(row)
-
         tsv_rows.append([
             test_plan if i == 0 else "",
             metric,
