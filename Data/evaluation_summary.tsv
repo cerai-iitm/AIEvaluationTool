@@ -1,0 +1,5 @@
+TEST PLAN	METRICS	SCORE	SUMMARY
+Language_Support	Language_Coverage	1.000	Passed: 3, Failed: 0, Total: 3
+	Ability_to_handle_multiple_Indian_languages_in_one_context	1.000	Passed: 4, Failed: 0, Total: 4
+	Transliterated_Language_Handling	1.000	Passed: 4, Failed: 0, Total: 4
+	Accuracy_per_Language	1.000	Passed: 4, Failed: 0, Total: 4

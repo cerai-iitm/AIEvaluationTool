@@ -5,6 +5,8 @@ import time
 import json
 import socket
 import subprocess
+import tempfile
+import psutil
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -30,16 +32,6 @@ def load_config():
 
 def get_ui_response():
     return {"ui": "Whatsapp Web Chat Interface", "features": ["smart-compose", "modular-layout"]}
-
-def run_batch_file(bat_file_path: str) -> int:
-    """
-    Executes a .bat file for whatsapp web qr scan
-    """
-    try:
-        result = subprocess.run([bat_file_path], shell=True)
-        return result.returncode
-    except Exception:
-        return -1
 
 # helper functions
 def check_and_recover_connection() -> bool:
@@ -94,15 +86,25 @@ def login_whatsapp():
     Login to whatsapp using batch file
     """
     status: bool = False
-    login_batch_file = "login_whatsapp.bat"
     try:
         if not check_and_recover_connection():
             return status
         logger.info("Initiating WhatsApp Web Login process..")
-        response_code = run_batch_file(login_batch_file)
-        if response_code == 0:
-            status = True
-            logger.info("Whatapp web login successful")
+        
+        temp_dir = tempfile.gettempdir()
+        folder_name = "whatsapp_profile"
+        profile_folder_path = os.path.join(temp_dir, folder_name)
+        opts = Options()
+        opts.add_argument("--no-sandbox"); 
+        opts.add_argument("--start-maximized")
+        opts.add_argument(f"user-data-dir={profile_folder_path}")         
+        opts.add_experimental_option("excludeSwitches", ["enable-logging"])
+
+        service = Service(ChromeDriverManager().install())
+        driver = webdriver.Chrome(service=service, options=opts)
+        driver.get(load_config().get("whatsapp_url"))
+        status = True
+        logger.info("Whatapp web login successful")
         return status
     except Exception as e:
             logger.error(f"Error initializing WhatsApp Web interface: {e}")
@@ -174,9 +176,9 @@ def logout_whatsapp():
     Login from whatsapp using selenium automation
     """
     try:
-        current_dir = os.getcwd()
+        temp_dir = tempfile.gettempdir()
         folder_name = "whatsapp_profile"
-        profile_folder_path = os.path.join(current_dir, folder_name)
+        profile_folder_path = os.path.join(temp_dir, folder_name)
         opts = Options()
         opts.add_argument("--no-sandbox") 
         opts.add_argument("--start-maximized")
@@ -188,7 +190,7 @@ def logout_whatsapp():
         driver = webdriver.Chrome(service=service, options=opts)
 
         logout_status = initiate_logout(driver=driver)
-        time.sleep(2)
+        time.sleep(0.5)
         driver.quit()
         logger.info("Browser session closed.")
         return logout_status
@@ -202,7 +204,7 @@ def search_llm(driver: webdriver.Chrome) -> bool:
     Search for the particular LLM in whatsapp web application
     """
     config = load_config()
-    llm_name = config.get("model_name")
+    llm_name = config.get("agent_name")
 
     try:
         logger.info(f"Searching for contact: {llm_name}")
@@ -230,13 +232,39 @@ def split_message(message, max_length=1000):
 
 def extract_text(msg_element):
     try:
-        time.sleep(20)
+        time.sleep(10)
         elements = msg_element.find_elements(By.CLASS_NAME, 'copyable-text')
         for element in elements:
             print(element.text)
         return " ".join(el.text for el in elements if el.text.strip() != "")
     except:
         return ""
+
+def is_profile_in_use(profile_path):
+    """Check if any Chrome process is using the given user-data-dir."""
+    for proc in psutil.process_iter(['name', 'cmdline']):
+        try:
+            if 'chrome' in proc.info['name'].lower():
+                cmdline = ' '.join(proc.info['cmdline'])
+                if f"user-data-dir={profile_path}" in cmdline:
+                    return True
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue
+    return False
+
+def close_chrome_with_profile(profile_path):
+    """Kill any Chrome process using the specified user-data-dir."""
+    closed_any = False
+    for proc in psutil.process_iter(['name', 'cmdline']):
+        try:
+            if 'chrome' in proc.info['name'].lower():
+                cmdline = ' '.join(proc.info['cmdline'])
+                if f"user-data-dir={profile_path}" in cmdline:
+                    proc.kill()
+                    closed_any = True
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue
+    return closed_any
 
 def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int = 3):
     """
@@ -247,6 +275,11 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int = 3):
         try:
             if not check_and_recover_connection():
                 return "[Failed: Internet unavailable]"
+            
+            logger.info(f"Sending prompt to the bot: {prompt}")
+            # message_box_xpath = (
+            #     '//*[@id="main"]/footer/div[1]/div/span/div/div[2]/div[1]/div[2]/div[1]/p'
+            # )
 
             logger.info(f"Sending prompt: {prompt}")
             # message_box_xpath = (
@@ -269,7 +302,7 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int = 3):
 
             time.sleep(30)
 
-            wait = WebDriverWait(driver, 50)
+            wait = WebDriverWait(driver, 10)
             all_messages = wait.until(
                 EC.presence_of_all_elements_located(
                     (By.CSS_SELECTOR, "div.message-in, div.message-out")
@@ -305,7 +338,7 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int = 3):
                     text = text_elem.text.strip()
                     if text:
                         response_texts.append(text)
-                        logger.info("Received response: %s", text)
+                        logger.info("Received response from WhatsApp: %s", text)
                 except Exception as e:
                     logger.debug("Could not read response message: %s", e)
                     continue
@@ -322,7 +355,7 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int = 3):
             logger.error(f"Chat attempt {attempt} failed: {e}")
             if attempt < max_retries:
                 logger.info("Retrying chat...")
-                time.sleep(2)
+                time.sleep(0.3)
             else:
                 return ["[Error during chat after retries]"]
 
@@ -330,9 +363,18 @@ def send_prompt_whatsapp(chat_id: int, prompt_list: List[str], mode: str = "sing
     results = []
 
     if mode == "single_window":
-        current_dir = os.getcwd()
+        temp_dir = tempfile.gettempdir()
         folder_name = "whatsapp_profile"
-        profile_folder_path = os.path.join(current_dir, folder_name)
+        profile_folder_path = os.path.join(temp_dir, folder_name)
+
+        if is_profile_in_use(profile_folder_path):
+            logger.info("Chrome with this session is already running. Attempting to close it...")
+            if close_chrome_with_profile(profile_folder_path):
+                logger.info("Successfully closed the Chrome instance using this session.")
+            else:
+                logger.error("Failed to close. Possibly due to permission or timing issues.")
+        else:
+            logger.info("No Chrome instance is using the session. Safe to launch a new one.")
 
         opts = Options()
         opts.add_argument("--no-sandbox")
@@ -369,9 +411,18 @@ def send_prompt_whatsapp(chat_id: int, prompt_list: List[str], mode: str = "sing
 
     elif mode == "multi_window":
         for i, prompt in enumerate(prompt_list):
-            current_dir = os.getcwd()
+            temp_dir = tempfile.gettempdir()
             folder_name = "whatsapp_profile"
-            profile_folder_path = os.path.join(current_dir, folder_name)
+            profile_folder_path = os.path.join(temp_dir, folder_name)
+            
+            if is_profile_in_use(profile_folder_path):
+                print("Chrome with this session is already running. Attempting to close it...")
+                if close_chrome_with_profile(profile_folder_path):
+                    print("Successfully closed the Chrome instance using this session.")
+                else:
+                    print("Failed to close. Possibly due to permission or timing issues.")
+            else:
+                print("No Chrome instance is using the session. Safe to launch a new one.")
 
             opts = Options()
             opts.add_argument("--no-sandbox")
