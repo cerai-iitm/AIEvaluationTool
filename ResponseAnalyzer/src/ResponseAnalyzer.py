@@ -188,7 +188,7 @@ async def analyze():
 
 asyncio.run(analyze())
 
-output_path = "Data/response_analysis_output.json"
+output_path = "../../Data/response_analysis_output.json"
 with open(output_path, "w", encoding='utf-8') as f:
     json.dump(final_results, f, indent=2, ensure_ascii=False)
 
@@ -197,7 +197,7 @@ logger.info(f"Results saved to: {output_path}")
 
 # -----------------Tabulation ---------------------------------------------------------
 MAX_WIDTH = 25
-TSV_OUTPUT_PATH = "Data/evaluation_summary.tsv"
+TSV_OUTPUT_PATH = "../../Data/evaluation_summary.tsv"
 
 def wrap(text, width=MAX_WIDTH):
     return "\n".join(textwrap.wrap(str(text), width=width))
