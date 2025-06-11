@@ -2,6 +2,10 @@ __pycache__
 env/**
 .env
 Gokul/
+environ/
+env/**
+.env
+Gokul/
 envir/
 whatsapp_profile/
 logs/
