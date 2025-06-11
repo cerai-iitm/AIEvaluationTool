@@ -1272,7 +1272,7 @@
           "SYSTEM_PROMPT": "You are an intelligent agriculture assistant helping farmers with accurate, region-specific answers to their queries. Provide precise and actionable responses.",
           "PROMPT": "How many total irrigations are required for wheat?",
           "EXPECTED_OUTPUT": "Wheat generally requires 4–6 irrigations: at CRI, tillering, jointing, flowering, and grain filling stages. Timing is key for high yields.",
-          "DOMAIN": "Agriculture"
+          "DOMAIN": ""
         },
         {
           "PROMPT_ID": "P218",
@@ -1280,7 +1280,7 @@
           "SYSTEM_PROMPT": "You are an intelligent agriculture assistant helping farmers with accurate, region-specific answers to their queries. Provide precise and actionable responses.",
           "PROMPT": "What are the common pests or diseases in wheat I should watch out for?",
           "EXPECTED_OUTPUT": "Look out for rust (yellow/brown/black), aphids, and termite damage. Regular field checks and timely fungicide or pesticide use help prevent losses.",
-          "DOMAIN": "Agriculture"
+          "DOMAIN": ""
         },
         {
           "PROMPT_ID": "P219",
@@ -1288,7 +1288,7 @@
           "SYSTEM_PROMPT": "You are an intelligent agriculture assistant helping farmers with accurate, region-specific answers to their queries. Provide precise and actionable responses.",
           "PROMPT": "Can I use organic methods to control pests instead of chemicals?",
           "EXPECTED_OUTPUT": "Absolutely! Neem oil sprays, Trichoderma-based biofungicides, and cow dung-based compost sprays work effectively as organic controls.",
-          "DOMAIN": "Agriculture"
+          "DOMAIN": ""
         },  
         {
           "PROMPT_ID": "P220",
@@ -1296,7 +1296,7 @@
           "SYSTEM_PROMPT": "You are an intelligent agriculture assistant helping farmers with accurate, region-specific answers to their queries. Provide precise and actionable responses.",
           "PROMPT": "Once harvested, how should I store the wheat to avoid pest damage?",
           "EXPECTED_OUTPUT": "Dry the grains properly (to <12% moisture), and store them in jute bags with neem leaves or use metal bins. You can also use neem oil-treated sacks for extra protection.",
-          "DOMAIN": "Agriculture"
+          "DOMAIN": ""
         }    
     ]
   }
