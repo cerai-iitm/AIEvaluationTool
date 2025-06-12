@@ -325,13 +325,6 @@
         "SYSTEM_PROMPT": "You are a crop cultivation expert bot designed for Indian farmers.",
         "PROMPT": "What are the symptoms of nitrogen deficiency in plants?",
         "EXPECTED_OUTPUT": "Nitrogen deficiency in plants typically causes yellowing of older leaves, stunted growth, and poor yield. Applying urea or compost can help restore nitrogen levels."
-      },
-      {
-        "PROMPT_ID": "P",
-        "LLM_AS_JUDGE": "",
-        "SYSTEM_PROMPT": "You are a crop cultivation expert bot designed for Indian farmers.",
-        "PROMPT": "What are the symptoms of nitrogen deficiency in plants?",
-        "EXPECTED_OUTPUT": "Nitrogen deficiency in plants typically causes yellowing of older leaves, stunted growth, and poor yield. Applying urea or compost can help restore nitrogen levels."
       }
     ]
   },
@@ -1148,7 +1141,7 @@
   
   "41":{
     "cases": [
-      [
+      
         {
           "PROMPT_ID": "P405",
           "LLM_AS_JUDGE": "",
@@ -1197,10 +1190,8 @@
           "SYSTEM_PROMPT": "You are a general AI bot, you need to answer queries related to general knowledge across all domains.",
           "PROMPT": "Summarize the benefits and drawbacks of remote work in 3 bullet points.",
           "EXPECTED_OUTPUT": "Benefits: Flexibility, reduced commute time, lower stress levels, and increased work-life balance. Drawbacks: Isolation, difficulty in maintaining focus, and potential for burnout."
-        }
-        
+        }  
       ]
       
-    ]
   }
 }
