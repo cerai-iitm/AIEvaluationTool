@@ -1317,87 +1317,86 @@
         "PROMPT": "What does the future look like for organic farming in India? Is it sustainable at scale?",
         "EXPECTED_OUTPUT": "The future of organic farming in India looks promising, with increasing consumer demand, government support, and a growing market for organic products. Organic farming is sustainable at scale, as it promotes biodiversity, soil health, and a healthier ecosystem, while also providing economic benefits to farmers and consumers alike."
       },
-       {
-          "PROMPT_ID": "P133",
-          "LLM_AS_JUDGE": "",
-          "SYSTEM_PROMPT": "You are an intelligent agriculture assistant helping farmers with accurate, region-specific answers to their queries. Provide precise and actionable responses.",
-          "PROMPT": "I am planning to grow wheat this Rabi season. Is it suitable for black soil in Uttar Pradesh?",
-          "EXPECTED_OUTPUT": "Yes, wheat is very well-suited for black soil, especially during the Rabi season in Uttar Pradesh. The soil retains moisture well, which supports wheat growth.",
-          "DOMAIN": "Agriculture"
-        },
-        {
-          "PROMPT_ID": "P134",
-          "LLM_AS_JUDGE": "",
-          "SYSTEM_PROMPT": "You are an intelligent agriculture assistant helping farmers with accurate, region-specific answers to their queries. Provide precise and actionable responses.",
-          "PROMPT": "What seed variety would you suggest for higher yield?",
-          "EXPECTED_OUTPUT": "For higher yield in UP, you can go for HD 2967 or PBW 550. These are high-yielding, rust-resistant, and perform well under irrigated conditions.",
-          "DOMAIN": "Agriculture"
-        },
-        {
-          "PROMPT_ID": "P135",
-          "LLM_AS_JUDGE": "",
-          "SYSTEM_PROMPT": "You are an intelligent agriculture assistant helping farmers with accurate, region-specific answers to their queries. Provide precise and actionable responses.",
-          "PROMPT": "I have around 2 acres. How much seed should I buy and when should I sow it?",
-          "EXPECTED_OUTPUT": "You will need about 100 kg of wheat seed per acre, so for 2 acres, 200 kg. The best sowing time in Uttar Pradesh is from the second half of November to the first week of December.",
-          "DOMAIN": "Agriculture"
-        },
-        {
-          "PROMPT_ID": "P136",
-          "LLM_AS_JUDGE": "",
-          "SYSTEM_PROMPT": "You are an intelligent agriculture assistant helping farmers with accurate, region-specific answers to their queries. Provide precise and actionable responses.",
-          "PROMPT": "What spacing should I maintain while sowing the seeds?",
-          "EXPECTED_OUTPUT": "Maintain a row-to-row spacing of 20–22 cm and a seed depth of about 4–5 cm. This ensures proper aeration and nutrient absorption.",
-          "DOMAIN": "Agriculture"
-        },
-        {
-          "PROMPT_ID": "P137",
-          "LLM_AS_JUDGE": "",
-          "SYSTEM_PROMPT": "You are an intelligent agriculture assistant helping farmers with accurate, region-specific answers to their queries. Provide precise and actionable responses.",
-          "PROMPT": "What fertilizer should I apply at the time of sowing?",
-          "EXPECTED_OUTPUT": "Apply a basal dose of DAP (Di-Ammonium Phosphate) — around 100 kg per acre. You can supplement with 45 kg of urea per acre split across stages.",
-          "DOMAIN": "Agriculture"
-        },
-        {
-          "PROMPT_ID": "P138",
-          "LLM_AS_JUDGE": "",
-          "SYSTEM_PROMPT": "You are an intelligent agriculture assistant helping farmers with accurate, region-specific answers to their queries. Provide precise and actionable responses.",
-          "PROMPT": "When should I give the first irrigation?",
-          "EXPECTED_OUTPUT": "The first irrigation should be around 21–25 days after sowing during the crown root initiation (CRI) stage. This is crucial for root development.",
-          "DOMAIN": "Agriculture"
-        },
-        {
-          "PROMPT_ID": "P139",
-          "LLM_AS_JUDGE": "",
-          "SYSTEM_PROMPT": "You are an intelligent agriculture assistant helping farmers with accurate, region-specific answers to their queries. Provide precise and actionable responses.",
-          "PROMPT": "How many total irrigations are required for wheat?",
-          "EXPECTED_OUTPUT": "Wheat generally requires 4–6 irrigations: at CRI, tillering, jointing, flowering, and grain filling stages. Timing is key for high yields.",
-          "DOMAIN": "Agriculture"
-        },
-        {
-          "PROMPT_ID": "P140",
-          "LLM_AS_JUDGE": "",
-          "SYSTEM_PROMPT": "You are an intelligent agriculture assistant helping farmers with accurate, region-specific answers to their queries. Provide precise and actionable responses.",
-          "PROMPT": "What are the common pests or diseases in wheat I should watch out for?",
-          "EXPECTED_OUTPUT": "Look out for rust (yellow/brown/black), aphids, and termite damage. Regular field checks and timely fungicide or pesticide use help prevent losses.",
-          "DOMAIN": "Agriculture"
-        },
-        {
-          "PROMPT_ID": "P141",
-          "LLM_AS_JUDGE": "",
-          "SYSTEM_PROMPT": "You are an intelligent agriculture assistant helping farmers with accurate, region-specific answers to their queries. Provide precise and actionable responses.",
-          "PROMPT": "Can I use organic methods to control pests instead of chemicals?",
-          "EXPECTED_OUTPUT": "Absolutely! Neem oil sprays, Trichoderma-based biofungicides, and cow dung-based compost sprays work effectively as organic controls.",
-          "DOMAIN": "Agriculture"
-        },  
-        {
-          "PROMPT_ID": "P142",
-          "LLM_AS_JUDGE": "",
-          "SYSTEM_PROMPT": "You are an intelligent agriculture assistant helping farmers with accurate, region-specific answers to their queries. Provide precise and actionable responses.",
-          "PROMPT": "Once harvested, how should I store the wheat to avoid pest damage?",
-          "EXPECTED_OUTPUT": "Dry the grains properly (to <12% moisture), and store them in jute bags with neem leaves or use metal bins. You can also use neem oil-treated sacks for extra protection.",
-          "DOMAIN": "Agriculture"
-        }    
-
+      {
+        "PROMPT_ID": "P133",
+        "LLM_AS_JUDGE": "",
+        "SYSTEM_PROMPT": "You are an intelligent agriculture assistant helping farmers with accurate, region-specific answers to their queries. Provide precise and actionable responses.",
+        "PROMPT": "I am planning to grow wheat this Rabi season. Is it suitable for black soil in Uttar Pradesh?",
+        "EXPECTED_OUTPUT": "Yes, wheat is very well-suited for black soil, especially during the Rabi season in Uttar Pradesh. The soil retains moisture well, which supports wheat growth.",
+        "DOMAIN": "Agriculture"
+      },
+      {
+        "PROMPT_ID": "P134",
+        "LLM_AS_JUDGE": "",
+        "SYSTEM_PROMPT": "You are an intelligent agriculture assistant helping farmers with accurate, region-specific answers to their queries. Provide precise and actionable responses.",
+        "PROMPT": "What seed variety would you suggest for higher yield?",
+        "EXPECTED_OUTPUT": "For higher yield in UP, you can go for HD 2967 or PBW 550. These are high-yielding, rust-resistant, and perform well under irrigated conditions.",
+        "DOMAIN": "Agriculture"
+      },
+      {
+        "PROMPT_ID": "P135",
+        "LLM_AS_JUDGE": "",
+        "SYSTEM_PROMPT": "You are an intelligent agriculture assistant helping farmers with accurate, region-specific answers to their queries. Provide precise and actionable responses.",
+        "PROMPT": "I have around 2 acres. How much seed should I buy and when should I sow it?",
+        "EXPECTED_OUTPUT": "You will need about 100 kg of wheat seed per acre, so for 2 acres, 200 kg. The best sowing time in Uttar Pradesh is from the second half of November to the first week of December.",
+        "DOMAIN": "Agriculture"
+      },
+      {
+        "PROMPT_ID": "P136",
+        "LLM_AS_JUDGE": "",
+        "SYSTEM_PROMPT": "You are an intelligent agriculture assistant helping farmers with accurate, region-specific answers to their queries. Provide precise and actionable responses.",
+        "PROMPT": "What spacing should I maintain while sowing the seeds?",
+        "EXPECTED_OUTPUT": "Maintain a row-to-row spacing of 20–22 cm and a seed depth of about 4–5 cm. This ensures proper aeration and nutrient absorption.",
+        "DOMAIN": "Agriculture"
+      },
+      {
+        "PROMPT_ID": "P137",
+        "LLM_AS_JUDGE": "",
+        "SYSTEM_PROMPT": "You are an intelligent agriculture assistant helping farmers with accurate, region-specific answers to their queries. Provide precise and actionable responses.",
+        "PROMPT": "What fertilizer should I apply at the time of sowing?",
+        "EXPECTED_OUTPUT": "Apply a basal dose of DAP (Di-Ammonium Phosphate) — around 100 kg per acre. You can supplement with 45 kg of urea per acre split across stages.",
+        "DOMAIN": "Agriculture"
+      },
+      {
+        "PROMPT_ID": "P138",
+        "LLM_AS_JUDGE": "",
+        "SYSTEM_PROMPT": "You are an intelligent agriculture assistant helping farmers with accurate, region-specific answers to their queries. Provide precise and actionable responses.",
+        "PROMPT": "When should I give the first irrigation?",
+        "EXPECTED_OUTPUT": "The first irrigation should be around 21–25 days after sowing during the crown root initiation (CRI) stage. This is crucial for root development.",
+        "DOMAIN": "Agriculture"
+      },
+      {
+        "PROMPT_ID": "P139",
+        "LLM_AS_JUDGE": "",
+        "SYSTEM_PROMPT": "You are an intelligent agriculture assistant helping farmers with accurate, region-specific answers to their queries. Provide precise and actionable responses.",
+        "PROMPT": "How many total irrigations are required for wheat?",
+        "EXPECTED_OUTPUT": "Wheat generally requires 4–6 irrigations: at CRI, tillering, jointing, flowering, and grain filling stages. Timing is key for high yields.",
+        "DOMAIN": "Agriculture"
+      },
+      {
+        "PROMPT_ID": "P140",
+        "LLM_AS_JUDGE": "",
+        "SYSTEM_PROMPT": "You are an intelligent agriculture assistant helping farmers with accurate, region-specific answers to their queries. Provide precise and actionable responses.",
+        "PROMPT": "What are the common pests or diseases in wheat I should watch out for?",
+        "EXPECTED_OUTPUT": "Look out for rust (yellow/brown/black), aphids, and termite damage. Regular field checks and timely fungicide or pesticide use help prevent losses.",
+        "DOMAIN": "Agriculture"
+      },
+      {
+        "PROMPT_ID": "P141",
+        "LLM_AS_JUDGE": "",
+        "SYSTEM_PROMPT": "You are an intelligent agriculture assistant helping farmers with accurate, region-specific answers to their queries. Provide precise and actionable responses.",
+        "PROMPT": "Can I use organic methods to control pests instead of chemicals?",
+        "EXPECTED_OUTPUT": "Absolutely! Neem oil sprays, Trichoderma-based biofungicides, and cow dung-based compost sprays work effectively as organic controls.",
+        "DOMAIN": "Agriculture"
+      },  
+      {
+        "PROMPT_ID": "P142",
+        "LLM_AS_JUDGE": "",
+        "SYSTEM_PROMPT": "You are an intelligent agriculture assistant helping farmers with accurate, region-specific answers to their queries. Provide precise and actionable responses.",
+        "PROMPT": "Once harvested, how should I store the wheat to avoid pest damage?",
+        "EXPECTED_OUTPUT": "Dry the grains properly (to <12% moisture), and store them in jute bags with neem leaves or use metal bins. You can also use neem oil-treated sacks for extra protection.",
+        "DOMAIN": "Agriculture"
+      }    
     ]
   },
   "41": {
