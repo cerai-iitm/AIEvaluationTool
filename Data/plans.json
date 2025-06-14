@@ -25,8 +25,7 @@
       "20": "Response_out_of_scope",
       "21": "Toxicity_Level",
       "23": "Rejection_Rate",
-      "25": "Efficacy_to_content_filtering"
-      
+      "25": "Efficacy_to_content_filtering" 
     }
   },
   "T4": {
@@ -57,4 +56,3 @@
     }
   }
 }
-
