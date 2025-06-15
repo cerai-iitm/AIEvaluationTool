@@ -16,8 +16,10 @@ from langchain_core.prompts import ChatPromptTemplate
 from opik.integrations.langchain import OpikTracer
 from opik.evaluation.metrics import GEval
 from opik import Opik
+from dotenv import load_dotenv
 import litellm
 from lexical_diversity import lex_div as ld
+from tqdm import tqdm
 import evaluate
 from nltk.translate.meteor_score import meteor_score
 from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
@@ -127,7 +129,6 @@ def text_similarity(prompts, test_case_responses, expected_responses):
         logger.info(f"text_similarity score for batch {i}: {score}")
     logger.info("Completed text_similarity evaluation strategy")
     return result
-
 
 def toxicity_model_result(test_case_responses):
     """
