@@ -170,7 +170,7 @@ class DB:
             return False
 
     def sample_prompts(self, 
-                       lang_id: Optional[int] = None, 
+                       lang_id: Optional[int] = None,
                        domain: Union[Optional[int], Optional[str]] = None,  # can be the domain id or name.
                        plan: Optional[Union[int, str]] = None,  # can be the plan id or name.
                        metric_id: Optional[int] = None ) -> List[Prompt]:
@@ -195,13 +195,13 @@ class DB:
                 if isinstance(plan, str):
                     sql = sql.join(TestPlans).where(TestPlans.plan_name == plan)
                 else:
-                    sql = sql.where(Prompts.plan_id == plan)
+                    sql = sql.where(TestPlans.plan_id == plan)
             if metric_id is not None:
                 sql = sql.join(Metrics).where(Metrics.metric_id == metric_id)
             
             # Execute the query and return the results
             result = session.execute(sql).scalars().all()
             return [Prompt(prompt_id=prompt.prompt_id, 
-                           prompt_string=prompt.prompt_string, 
-                           system_prompt=prompt.system_prompt, 
+                           user_prompt=str(prompt.user_prompt), 
+                           system_prompt=str(prompt.system_prompt), 
                            lang_id=prompt.lang_id) for prompt in result]            
