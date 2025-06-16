@@ -4,6 +4,13 @@
 # @description: This module defines the Domoain class, which represents an Indian industry domain with its name and code.
 
 class Domain:
+    """
+    Represents an Indian industry domain with its name and code.
+    This class provides methods for creating a domain object, comparing it with other domain objects,
+    and generating string representations for both developers and users.
+    """
+
+    general = 1 # the default domain ID for "General" industry domain.
 
     def __init__(self, name: str, code: int):
         self.name = name
