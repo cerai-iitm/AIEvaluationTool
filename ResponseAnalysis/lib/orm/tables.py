@@ -20,7 +20,8 @@ class Prompts(Base):
     prompt_string = Column(Text, nullable=False)
     system_prompt = Column(Text, nullable=True)
     lang_id = Column(Integer, ForeignKey('Languages.lang_id'), nullable=False)    # Foreign key to Languages
-
+    domain_id = Column(Integer, ForeignKey('Domains.domain_id'), nullable=False)  # Foreign key to Domains
+    
 class Languages(Base):
     """ORM model for the Languages table.
     This class defines the structure of the Languages table in the database.

@@ -1,5 +1,6 @@
 from DB import DB
 import sys
+import os
 
 # setup the relative import path for data module.
 sys.path.append(os.path.dirname(__file__) + '/..')
@@ -16,7 +17,11 @@ db = DB()
 print("\n".join([repr(_) for _ in db.languages]))
 print(db.get_language_name(2))
 lang_english = db.get_language_id('english')
+domain_general = db.get_domain_id('general')
 
-newPrompt = Prompt(system_prompt="Answer in one sentence.", prompt_string="What is AI?", lang_id=lang_english)
+newPrompt = Prompt(system_prompt="Answer in one sentence.", 
+                   user_prompt="What is AI?",
+                   domain_id=domain_general,
+                   lang_id=lang_english)
 db.add_prompt(newPrompt)
-
+print(newPrompt)

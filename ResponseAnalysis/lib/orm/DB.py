@@ -136,10 +136,11 @@ class DB:
         with self.Session() as session:
             # Default to the default language ID if not provided
             lang_id = prompt.kwargs.get("lang_id", Language.autodetect)  # Get the language ID from kwargs if provided
-
+            domain_id = prompt.kwargs.get("domain_id", Domain.general)  # Get the domain ID from kwargs if provided
             new_prompt = Prompts(prompt_string=prompt.user_prompt, 
                                  system_prompt=prompt.system_prompt, 
-                                 lang_id=lang_id)
+                                 lang_id=lang_id,
+                                 domain_id=domain_id,)
             session.add(new_prompt)
             session.commit()
 

@@ -5,7 +5,7 @@
 
 class Language:
 
-    autodetect = 1  # Default language ID for "Auto" identification of language.
+    autodetect:int = 1  # Default language ID for "Auto" identification of language.
 
     def __init__(self, name: str, code: int):
         self.name = name
