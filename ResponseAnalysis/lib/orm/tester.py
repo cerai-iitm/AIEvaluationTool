@@ -17,11 +17,15 @@ db = DB()
 print("\n".join([repr(_) for _ in db.languages]))
 print(db.get_language_name(2))
 lang_english = db.get_language_id('english')
-domain_general = db.get_domain_id('general')
+domain_id = db.get_domain_id('education')
 
-newPrompt = Prompt(system_prompt="Answer in one sentence.", 
-                   user_prompt="What is AI?",
-                   domain_id=domain_general,
+newPrompt = Prompt(system_prompt="You are an educational counselor. Provide guidance in a simple and clear manner.", 
+                   user_prompt="How can I improve my coding skills?",
+                   domain_id=domain_id,
                    lang_id=lang_english)
-db.add_prompt(newPrompt)
-print(newPrompt)
+
+#prompt_id = db.add_prompt(newPrompt)
+#print(newPrompt, "added with id:", prompt_id)
+
+tc_id = db.create_testcase(testcase_name="tc1", prompt=newPrompt)
+print(f"Test case created with ID: {tc_id}")
