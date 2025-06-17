@@ -15,6 +15,7 @@ sys.path.append(os.path.dirname(__file__) + '/..')
 from data.prompt import Prompt
 from data.language import Language
 from data.domain import Domain
+from data.response import Response
 
 class DB:    
     """
@@ -138,7 +139,148 @@ class DB:
             #return result.domain_name if result else None
             return getattr(result, 'domain_name', None) if result else None
         
-    def add_prompt(self, prompt: Prompt) -> bool:
+    def create_test_plan(self, plan_name: str, plan_desc: str = "", **kwargs) -> bool:
+        """
+        Creates a new test plan in the database.
+        
+        Args:
+            plan_name (str): The name of the test plan.
+            plan_desc (str): A description of the test plan.
+            kwargs: Additional keyword arguments for future extensibility.
+        
+        Returns:
+            bool: True if the test plan was created successfully, False if it already exists.
+        """
+        try:
+            with self.Session() as session:
+                self.logger.debug(f"Creating test plan '{plan_name}' ..")
+                new_plan = TestPlans(plan_name=plan_name, plan_description=plan_desc)
+                session.add(new_plan)
+                session.commit()
+                self.logger.debug(f"Test plan '{plan_name}' created successfully.")
+                return True
+        except IntegrityError as e:
+            self.logger.error(f"Test plan '{plan_name}' already exists. Error: {e}")
+            return False
+        
+    def create_testcase(self, testcase_name:str, prompt: Prompt, response: Optional[Response] = None) -> int:
+        """
+        Creates a new test case in the database.
+        
+        Args:
+            prompt (Prompt): The prompt associated with the test case.
+            response (Optional[str]): The response associated with the test case.
+            kwargs: Additional keyword arguments for future extensibility.
+        
+        Returns:
+            bool: True if the test case was created successfully, False if it already exists.
+        """
+        try:
+            # Add the prompt to the database and get its ID
+            prompt_id = self.add_prompt(prompt)  
+            if prompt_id == -1:
+                self.logger.error(f"Prompt '{prompt.user_prompt}' already exists. Cannot create test case.")
+                return -1
+            
+            # If a response is provided, create a Responses object
+            response_id = self.add_response(response, prompt_id) if response else None
+
+            with self.Session() as session:
+                self.logger.debug(f"Creating test case for prompt '{prompt.user_prompt}' ..")
+
+                new_testcase = TestCases(testcase_name=testcase_name,  # Use the test case name
+                                         prompt_id=prompt_id,  # Use the ID of the added prompt
+                                         response_id=response_id) # Use the ID of the added response
+                # Add the new test case to the session
+                session.add(new_testcase)
+                
+                # Commit the session to save all changes
+                session.commit()
+                self.logger.debug(f"Test case created successfully for prompt '{new_testcase.testcase_id}'.")
+                return getattr(new_testcase, "test_case_id")
+            
+        except IntegrityError as e:
+            self.logger.error(f"Test case for prompt '{prompt.user_prompt}' already exists. Error: {e}")
+            return -1
+        
+    def add_prompts(self, prompts: List[Prompt]) -> bool:
+        """
+        Adds multiple prompts to the database.
+        
+        Args:
+            prompts (List[Prompt]): A list of Prompt objects to be added.
+        
+        Returns:
+            bool: True if all prompts were added successfully, False if any prompt already exists.
+        """
+        try:
+            with self.Session() as session:
+                n_prompts = len(prompts)
+                self.logger.debug(f"Adding {n_prompts} prompts to the database.")
+                n_added = 0
+                for prompt in prompts:
+                    # Default to the default language ID if not provided
+                    lang_id = prompt.kwargs.get("lang_id", Language.autodetect)  # Get the language ID from kwargs if provided
+                    domain_id = prompt.kwargs.get("domain_id", Domain.general)  # Get the domain ID from kwargs if provided
+
+                    # create the orm object for the prompt to insert into the database table.
+                    new_prompt = Prompts(user_prompt=prompt.user_prompt, 
+                                        system_prompt=prompt.system_prompt, 
+                                        lang_id=lang_id,
+                                        domain_id=domain_id,
+                                        hash_value=prompt.digest)
+                    
+                    # Add the new prompt to the session
+                    session.add(new_prompt)
+                    n_added += 1
+                # Commit the session to save all new prompts
+                session.commit()
+                self.logger.debug(f"{n_added} prompts added successfully.")
+                return True
+        except IntegrityError as e:
+            # Handle the case where one or more prompts already exist
+            self.logger.error(f"One or more prompts already exist. Error: {e}")
+            return False
+        
+    def add_response(self, response: Response, prompt_id: int) -> int:
+        """
+        Adds a new response to the database.
+        
+        Args:
+            response (Response): The Response object to be added.
+        
+        Returns:
+            int: The ID of the newly added response, or -1 if it already exists.
+        """
+        try:
+            with self.Session() as session:
+                # Default to the default language ID if not provided
+                lang_id = response.kwargs.get("lang_id", Language.autodetect)  # Get the language ID from kwargs if provided
+
+                # create the orm object for the response to insert into the database table.
+                new_response = Responses(response_text=response.response_text, 
+                                         response_type=response.response_type,
+                                         prompt_id=prompt_id,  # Get the prompt ID
+                                         lang_id=lang_id,
+                                         hash_value=response.digest)
+                
+                # Add the new response to the session
+                session.add(new_response)
+                # Commit the session to save the new response
+                session.commit()
+                # Ensure response_id is populated
+                session.refresh(new_response)  
+
+                self.logger.debug(f"Response added successfully: {new_response.response_id}")
+                
+                # Return the ID of the newly added response
+                return getattr(new_response, "response_id")
+        except IntegrityError as e:
+            # Handle the case where the response already exists
+            self.logger.error(f"Response already exists: {response}. Error: {e}")
+            return -1
+    
+    def add_prompt(self, prompt: Prompt) -> int:
         """
         Adds a new prompt to the database.
         
@@ -151,23 +293,28 @@ class DB:
                 lang_id = prompt.kwargs.get("lang_id", Language.autodetect)  # Get the language ID from kwargs if provided
                 domain_id = prompt.kwargs.get("domain_id", Domain.general)  # Get the domain ID from kwargs if provided
 
-                hashing = hashlib.sha1()
-                hashing.update(str(prompt).encode('utf-8'))
-                digest = hashing.hexdigest()
-
+                # create the orm object for the prompt to insert into the database table.
                 new_prompt = Prompts(user_prompt=prompt.user_prompt, 
                                     system_prompt=prompt.system_prompt, 
                                     lang_id=lang_id,
                                     domain_id=domain_id,
-                                    hash_value=digest)
-                                    
+                                    hash_value=prompt.digest)
+                
+                # Add the new prompt to the session
                 session.add(new_prompt)
+                # Commit the session to save the new prompt
                 session.commit()
-                return True
+                # Ensure prompt_id is populated
+                session.refresh(new_prompt)  
+
+                self.logger.debug(f"Prompt added successfully: {new_prompt.prompt_id}")
+                
+                # Return the ID of the newly added prompt
+                return getattr(new_prompt, "prompt_id")
         except IntegrityError as e:
             # Handle the case where the prompt already exists
             self.logger.error(f"Prompt already exists: {prompt}. Error: {e}")
-            return False
+            return -1
 
     def sample_prompts(self, 
                        lang_id: Optional[int] = None,
