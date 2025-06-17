@@ -64,6 +64,7 @@ class Responses(Base):
     response_type = Column(Enum('GT', 'GTDesc', 'NA'), nullable=False)  # GT: Ground Truth, GTDesc: Ground Truth Description, NA: Not Applicable
     prompt_id = Column(Integer, nullable=False) # Foreign key to Prompts
     lang_id = Column(Integer, nullable=False) # Foreign key to Languages
+    hash_value = Column(String(100), nullable=False, unique=True)  # Hash value for the prompt
 
 class TestCases(Base):
     """ORM model for the TestCases table.
@@ -71,10 +72,10 @@ class TestCases(Base):
     """
     __tablename__ = 'TestCases'
     
-    test_case_id = Column(Integer, primary_key=True)
-    test_case_name = Column(String(255), nullable=False)
+    testcase_id = Column(Integer, primary_key=True)
+    testcase_name = Column(String(255), nullable=False)
     prompt_id = Column(Integer, nullable=False) # Foreign key to Prompts
-    response_id = Column(Integer, nullable=False) # Foreign key to Responses
+    response_id = Column(Integer, nullable=True) # Foreign key to Responses
 
 class TestPlans(Base):
     """ORM model for the TestPlans table.
@@ -83,7 +84,7 @@ class TestPlans(Base):
     __tablename__ = 'TestPlans'
     
     plan_id = Column(Integer, primary_key=True)
-    plan_name = Column(String(255), nullable=False)
+    plan_name = Column(String(255), nullable=False, unique=True)  # Unique name for the test plan
     plan_description = Column(Text, nullable=True)  # Optional description for the test plan
 
 class TargetSessions(Base):
