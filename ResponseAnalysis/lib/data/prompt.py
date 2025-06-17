@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Optional
+import hashlib
 
 #print('__file__={0:<35} | __name__={1:<25} | __package__={2:<25}'.format(__file__,__name__,str(__package__)))
 
@@ -54,18 +55,15 @@ class Prompt(BaseModel):
         Uses the hash of both system_prompt and user_prompt.
         """
         return hash((self.system_prompt, self.user_prompt))
+    
+    @property
+    def digest(self):
+        """
+        Returns a digest of the response.
+        This can be used for quick comparisons or checks.
+        """
+        # compute the hash value for the prompt
+        hashing = hashlib.sha1()
+        hashing.update(str(self).encode('utf-8'))
+        return hashing.hexdigest()    
 
-    class Config:
-        """Configuration for the Pydantic model."""
-        extra = "forbid"
-        #allow_mutation = False
-        frozen = True
-        validate_assignment = True
-        use_enum_values = True
-        arbitrary_types_allowed = True
-        json_encoders = {
-            str: lambda v: v,
-            int: lambda v: v,
-            float: lambda v: v,
-            bool: lambda v: v,
-        }
