@@ -1,10 +1,13 @@
 from tables import Base, Languages, Domains, Metrics, Responses, TestCases, TestPlans, Prompts
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy import select
 from typing import List, Optional, Union
 import sys
 import os
+import hashlib # For hashing prompts
+import logging
 
 # setup the relative import path for data module.
 sys.path.append(os.path.dirname(__file__) + '/..')
@@ -32,6 +35,15 @@ class DB:
         self.engine = create_engine(self.db_url, echo=debug, pool_size=pool_size, max_overflow=max_overflow)
         Base.metadata.create_all(self.engine)
         self.Session = scoped_session(sessionmaker(bind=self.engine))
+
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
+        # Console handler
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.INFO)
+        ch_formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
+        ch.setFormatter(ch_formatter)
+        self.logger.addHandler(ch)
 
     @property
     def languages(self) -> List[Language]:
@@ -126,26 +138,39 @@ class DB:
             #return result.domain_name if result else None
             return getattr(result, 'domain_name', None) if result else None
         
-    def add_prompt(self, prompt: Prompt) -> None:
+    def add_prompt(self, prompt: Prompt) -> bool:
         """
         Adds a new prompt to the database.
         
         Args:
             prompt (Prompt): The Prompt object to be added.
         """
-        with self.Session() as session:
-            # Default to the default language ID if not provided
-            lang_id = prompt.kwargs.get("lang_id", Language.autodetect)  # Get the language ID from kwargs if provided
-            domain_id = prompt.kwargs.get("domain_id", Domain.general)  # Get the domain ID from kwargs if provided
-            new_prompt = Prompts(prompt_string=prompt.user_prompt, 
-                                 system_prompt=prompt.system_prompt, 
-                                 lang_id=lang_id,
-                                 domain_id=domain_id,)
-            session.add(new_prompt)
-            session.commit()
+        try:
+            with self.Session() as session:
+                # Default to the default language ID if not provided
+                lang_id = prompt.kwargs.get("lang_id", Language.autodetect)  # Get the language ID from kwargs if provided
+                domain_id = prompt.kwargs.get("domain_id", Domain.general)  # Get the domain ID from kwargs if provided
+
+                hashing = hashlib.sha1()
+                hashing.update(str(prompt).encode('utf-8'))
+                digest = hashing.hexdigest()
+
+                new_prompt = Prompts(user_prompt=prompt.user_prompt, 
+                                    system_prompt=prompt.system_prompt, 
+                                    lang_id=lang_id,
+                                    domain_id=domain_id,
+                                    hash_value=digest)
+                                    
+                session.add(new_prompt)
+                session.commit()
+                return True
+        except IntegrityError as e:
+            # Handle the case where the prompt already exists
+            self.logger.error(f"Prompt already exists: {prompt}. Error: {e}")
+            return False
 
     def sample_prompts(self, 
-                       lang_id: Optional[int] = None, 
+                       lang_id: Optional[int] = None,
                        domain: Union[Optional[int], Optional[str]] = None,  # can be the domain id or name.
                        plan: Optional[Union[int, str]] = None,  # can be the plan id or name.
                        metric_id: Optional[int] = None ) -> List[Prompt]:
@@ -170,13 +195,13 @@ class DB:
                 if isinstance(plan, str):
                     sql = sql.join(TestPlans).where(TestPlans.plan_name == plan)
                 else:
-                    sql = sql.where(Prompts.plan_id == plan)
+                    sql = sql.where(TestPlans.plan_id == plan)
             if metric_id is not None:
                 sql = sql.join(Metrics).where(Metrics.metric_id == metric_id)
             
             # Execute the query and return the results
             result = session.execute(sql).scalars().all()
             return [Prompt(prompt_id=prompt.prompt_id, 
-                           prompt_string=prompt.prompt_string, 
-                           system_prompt=prompt.system_prompt, 
+                           user_prompt=str(prompt.user_prompt), 
+                           system_prompt=str(prompt.system_prompt), 
                            lang_id=prompt.lang_id) for prompt in result]            

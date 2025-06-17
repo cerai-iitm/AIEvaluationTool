@@ -3,7 +3,7 @@ import sys
 import os
 
 # setup the relative import path for data module.
-sys.path.append(os.path.dirname(__file__) + '/..')
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from data.prompt import Prompt
 
