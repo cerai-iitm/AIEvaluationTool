@@ -23,9 +23,8 @@ class LLMJudgeStrategy(Strategy):
     def __init__(self, name: str = "llm_judge", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
         # uses Llama3 by default
-        #Unable to resolve this!
-        self.model_name = kwargs.get("model_name", "llama3")
-        self.model = OllamaLLM(model=model_name)
+        self.__model_name = kwargs.get("model_name", "llama3")
+        self.model = OllamaLLM(model=self.__model_name)
 
     def evaluate(self, metric_name:str, prompt: str, system_prompt: str, agent_response: str, judge_prompt: str, expected_response: Optional[str] = None) -> float:
         """
@@ -46,7 +45,7 @@ class LLMJudgeStrategy(Strategy):
             name=metric_name,
             task_introduction=intro_prompt,
             evaluation_criteria=eval_criteria,
-            model=f'ollama_chat/{self.model_name}'
+            model=f'ollama_chat/{self.__model_name}'
         )
         logger.info(f"Using metric: {metric_name} to compute the score:")
         score = metric.score(

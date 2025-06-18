@@ -6,6 +6,7 @@ import warnings
 from sentence_transformers.util import cos_sim
 from sentence_transformers import SentenceTransformer
 from googletrans import Translator
+from similarity_match import blue_score_metric 
 
 logging.basicConfig(
     level=logging.INFO,  
