@@ -12,10 +12,7 @@ import logging
 # setup the relative import path for data module.
 sys.path.append(os.path.dirname(__file__) + '/..')
 
-from data.prompt import Prompt
-from data.language import Language
-from data.domain import Domain
-from data.response import Response
+from data import Prompt, Language, Domain, Response, TestCase, TestPlan
 
 class DB:    
     """
@@ -139,7 +136,7 @@ class DB:
             #return result.domain_name if result else None
             return getattr(result, 'domain_name', None) if result else None
         
-    def create_test_plan(self, plan_name: str, plan_desc: str = "", **kwargs) -> bool:
+    def create_testplan(self, plan_name: str, plan_desc: str = "", **kwargs) -> bool:
         """
         Creates a new test plan in the database.
         
@@ -163,7 +160,38 @@ class DB:
             self.logger.error(f"Test plan '{plan_name}' already exists. Error: {e}")
             return False
         
-    def create_testcase(self, testcase_name:str, prompt: Prompt, response: Optional[Response] = None) -> int:
+    def fetch_testcase(self, testcase_id: int) -> Optional[TestCase]:
+        """
+        Fetches a test case by its ID.
+        
+        Args:
+            testcase_id (int): The ID of the test case to fetch.
+        
+        Returns:
+            Optional[TestCase]: The TestCase object if found, otherwise None.
+        """
+        with self.Session() as session:
+            sql = select(TestCases).where(TestCases.testcase_id == testcase_id)
+            result = session.execute(sql).scalar_one_or_none()
+            if result:
+                return TestCase(name=getattr(result, "testcase_name"), 
+                                prompt=Prompt(prompt_id=result.prompt_id), 
+                                response=Response(response_id=result.response_id))
+            return None
+    
+    def create_testcase(self, testcase: TestCase) -> int:
+        """
+        Creates a new test case in the database.
+        
+        Args:
+            testcase (TestCase): The TestCase object to be created.
+        
+        Returns:
+            int: The ID of the newly created test case, or -1 if it already exists.
+        """
+        return self.create_testcase_from_prompt(testcase_name = testcase.name, prompt = testcase.prompt, response = testcase.response)
+        
+    def create_testcase_from_prompt(self, testcase_name:str, prompt: Prompt, response: Optional[Response] = None) -> int:
         """
         Creates a new test case in the database.
         
@@ -197,8 +225,8 @@ class DB:
                 # Commit the session to save all changes
                 session.commit()
                 self.logger.debug(f"Test case created successfully for prompt '{new_testcase.testcase_id}'.")
-                return getattr(new_testcase, "test_case_id")
-            
+                return getattr(new_testcase, "testcase_id")
+           
         except IntegrityError as e:
             self.logger.error(f"Test case for prompt '{prompt.user_prompt}' already exists. Error: {e}")
             return -1
