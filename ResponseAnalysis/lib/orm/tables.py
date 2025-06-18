@@ -21,7 +21,7 @@ class Prompts(Base):
     system_prompt = Column(Text, nullable=True)
     lang_id = Column(Integer, ForeignKey('Languages.lang_id'), nullable=False)    # Foreign key to Languages
     domain_id = Column(Integer, ForeignKey('Domains.domain_id'), nullable=False)  # Foreign key to Domains
-    hash_value = Column(String(255), nullable=False, unique=True)  # Hash value for the prompt
+    hash_value = Column(String(100), nullable=False, unique=True)  # Hash value for the prompt
 
 class Languages(Base):
     """ORM model for the Languages table.
