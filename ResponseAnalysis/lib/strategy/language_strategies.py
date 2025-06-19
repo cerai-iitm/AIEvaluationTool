@@ -1,12 +1,13 @@
-from .strategy_base import Strategy
+from strategy_base import Strategy
 from typing import Optional
 import asyncio
 import logging
 import warnings
 from sentence_transformers.util import cos_sim
 from sentence_transformers import SentenceTransformer
+from langdetect import detect
 from googletrans import Translator
-from similarity_match import blue_score_metric 
+from similarity_match import SimilarityMatchStrategy
 
 logging.basicConfig(
     level=logging.INFO,  
@@ -113,3 +114,20 @@ class LanguageStrategies(Strategy):
         except Exception as e:
             logger.error(f"Error in translation: {e}")
             return text
+        
+    def language_detection(self, text: str) -> str:
+        """
+        Detect the language of the given text.
+        :param text: The text to be analyzed.
+        :return: The detected language code.
+        """
+        try:
+            language =detect(text)
+            logger.info(f"Detected language: {language}")
+            return language
+        except Exception as e:
+            logger.error(f"Error in language detection: {e}")
+            return "unknown"
+        
+    def evaluate(self, agent_response: str, expected_response: Optional[str] = None) -> float:
+        pass
