@@ -1,4 +1,4 @@
-from tables import Base, Languages, Domains, Metrics, Responses, TestCases, TestPlans, Prompts
+from tables import Base, Languages, Domains, Metrics, Responses, TestCases, TestPlans, Prompts, Strategies
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.exc import IntegrityError
@@ -12,7 +12,7 @@ import logging
 # setup the relative import path for data module.
 sys.path.append(os.path.dirname(__file__) + '/..')
 
-from data import Prompt, Language, Domain, Response, TestCase, TestPlan
+from data import Prompt, Language, Domain, Response, TestCase, TestPlan, Strategy
 
 class DB:    
     """
@@ -27,19 +27,26 @@ class DB:
         
         Args:
             db_url (str): The database URL for connecting to the MariaDB database.
-            host (str): The host where the MariaDB server is running.
+            debug (bool): If True, enables debug mode for SQLAlchemy.
+            pool_size (int): The size of the connection pool.
+            max_overflow (int): The maximum number of connections that can be created beyond the pool size.
         """
         self.db_url = db_url
         self.engine = create_engine(self.db_url, echo=debug, pool_size=pool_size, max_overflow=max_overflow)
+        # Create all tables in the database
+        # This will create the tables defined in the ORM models if they do not exist.
         Base.metadata.create_all(self.engine)
+        # Create a scoped session to manage database sessions
+        # A scoped session is a thread-safe session that can be used across multiple threads.
         self.Session = scoped_session(sessionmaker(bind=self.engine))
 
+        # Set up logging
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
         # Console handler
         ch = logging.StreamHandler()
-        ch.setLevel(logging.INFO)
-        ch_formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
+        ch.setLevel(logging.DEBUG)
+        ch_formatter = logging.Formatter("%(asctime)s|%(name)s|%(levelname)s|%(funcName)s|%(message)s")
         ch.setFormatter(ch_formatter)
         self.logger.addHandler(ch)
 
@@ -69,8 +76,53 @@ class DB:
         with self.Session() as session:
             sql = select(Domains)
             return [Domain(name=getattr(domain, 'domain_name'), code=getattr(domain, 'domain_id')) for domain in session.query(Domains).all()]
-       
         return None
+    
+    @property
+    def strategies(self) -> List[Strategy]:
+        """
+        Fetches all strategies from the database.
+        
+        Returns:
+            List[Strategy]: A list of Strategy objects or None if no strategies are found.
+        """
+        with self.Session() as session:
+            sql = select(Strategies)
+            return [Strategy(name=getattr(strategy, 'strategy_name'), 
+                             description=getattr(strategy, 'strategy_description'),
+                             strategy_id=getattr(strategy, 'strategy_id')) for strategy in session.query(Strategies).all()]
+        return None
+    
+    def get_strategy_id(self, strategy_name: str) -> Optional[int]:
+        """
+        Fetches the ID of a strategy by its name.
+        
+        Args:
+            strategy_name (str): The name of the strategy to fetch.
+        
+        Returns:
+            Optional[int]: The ID of the strategy if found, otherwise None.
+        """
+        with self.Session() as session:
+            sql = select(Strategies).where(Strategies.strategy_name == strategy_name)
+            result = session.execute(sql).scalar_one_or_none()
+            return getattr(result, 'strategy_id', None) if result else None
+        
+    def get_strategy_name(self, strategy_id: int) -> Optional[str]:
+        """
+        Fetches the name of a strategy by its ID.
+        
+        Args:
+            strategy_id (int): The ID of the strategy to fetch.
+        
+        Returns:
+            Optional[str]: The name of the strategy if found, otherwise None.
+        """
+        with self.Session() as session:
+            sql = select(Strategies).where(Strategies.strategy_id == strategy_id)
+            result = session.execute(sql).scalar_one_or_none()
+            return getattr(result, 'strategy_name', None) if result else None
+
 
     def get_language_id(self, lang_name: str) -> Optional[int]:
         """
@@ -136,7 +188,53 @@ class DB:
             #return result.domain_name if result else None
             return getattr(result, 'domain_name', None) if result else None
         
-    def create_testplan(self, plan_name: str, plan_desc: str = "", **kwargs) -> bool:
+    def get_prompt(self, prompt_id: int) -> Optional[Prompt]:
+        """
+        Fetches a prompt by its ID.
+        
+        Args:
+            prompt_id (int): The ID of the prompt to fetch.
+        
+        Returns:
+            Optional[Prompt]: The Prompt object if found, otherwise None.
+        """
+        with self.Session() as session:
+            sql = select(Prompts).where(Prompts.prompt_id == prompt_id)
+            result = session.execute(sql).scalar_one_or_none()
+            if result is None:
+                self.logger.error(f"Prompt with ID '{prompt_id}' does not exist.")
+                return None
+            return Prompt(prompt_id=getattr(result, 'prompt_id'),
+                          user_prompt=str(result.user_prompt),
+                          system_prompt=str(result.system_prompt),
+                          lang_id=getattr(result, 'lang_id'),
+                          domain_id=getattr(result, 'domain_id'),
+                          digest=result.hash_value)
+        
+    def get_response(self, response_id: int) -> Optional[Response]:
+        """
+        Fetches a response by its ID.
+        
+        Args:
+            response_id (int): The ID of the response to fetch.
+        
+        Returns:
+            Optional[Response]: The Response object if found, otherwise None.
+        """
+        with self.Session() as session:
+            sql = select(Responses).where(Responses.response_id == response_id)
+            result = session.execute(sql).scalar_one_or_none()
+            if result is None:
+                self.logger.error(f"Response with ID '{response_id}' does not exist.")
+                return None
+            return Response(response_text=str(result.response_text),
+                            response_type=str(result.response_type),
+                            response_id=getattr(result, 'response_id'),
+                            prompt_id=result.prompt_id,
+                            lang_id=result.lang_id,
+                            digest=result.hash_value)
+        
+    def create_testplan(self, plan_name: str, plan_desc: str = "") -> bool:
         """
         Creates a new test plan in the database.
         
@@ -160,26 +258,103 @@ class DB:
             self.logger.error(f"Test plan '{plan_name}' already exists. Error: {e}")
             return False
         
-    def fetch_testcase(self, testcase_id: int) -> Optional[TestCase]:
+    def testcase_id2name(self, testcase_id: int) -> Optional[str]:
         """
-        Fetches a test case by its ID.
+        Converts a test case ID to its name.
         
         Args:
-            testcase_id (int): The ID of the test case to fetch.
+            testcase_id (int): The ID of the test case.
+        
+        Returns:
+            Optional[str]: The name of the test case if found, otherwise None.
+        """
+        with self.Session() as session:
+            self.logger.debug(f"Fetching test case name for ID '{testcase_id}' ..")
+            sql = select(TestCases).where(TestCases.testcase_id == testcase_id)
+            result = session.execute(sql).scalar_one_or_none()
+            if result is None:
+                self.logger.error(f"Test case with ID '{testcase_id}' does not exist.")
+                return None
+            testcase_name = getattr(result, 'testcase_name', None)
+            self.logger.debug(f"Test case name for ID '{testcase_id}' is '{testcase_name}'.")
+            return testcase_name
+        
+    def fetch_testcase(self, testcase: int|str) -> Optional[TestCase]:
+        """
+        Fetches a test case by its ID or NAME
+        Ex: select user_prompt, Prompts.prompt_id, response_text, Responses.response_id from TestCases left join Responses on TestCases.response_id = Responses.response_id left join Prompts on TestCases.prompt_id = Prompts.prompt_id where TestCases.testcase_name = 'NAME'
+
+        Args:
+            testcase (int|str): The ID or NAME of the test case to fetch.
         
         Returns:
             Optional[TestCase]: The TestCase object if found, otherwise None.
         """
         with self.Session() as session:
-            sql = select(TestCases).where(TestCases.testcase_id == testcase_id)
-            result = session.execute(sql).scalar_one_or_none()
+            self.logger.debug(f"Fetching test case '{testcase}' ..")
+            # Construct the SQL query to fetch the test case
+            # We will join the Prompts and TestCases tables to get the prompt details
+            # and the response details if available.
+            #sql = select(Prompts, TestCases).join(TestCases, Prompts.prompt_id == TestCases.prompt_id)
+            #sql = session.query(Prompts, Responses, TestCases).join(TestCases, Prompts.prompt_id == TestCases.prompt_id) #.join(Responses, TestCases.response_id == Responses.response_id)
+            sql = session.query(Prompts, Responses, TestCases).select_from(TestCases). \
+                join(Prompts, TestCases.prompt_id == Prompts.prompt_id). \
+                join(Responses, TestCases.response_id == Responses.response_id, isouter=True)
+        
+            # If testcase is an int, we assume it's the testcase_id
+            # If testcase is a str, we assume it's the testcase_name
+            if isinstance(testcase, int):
+                testcase_id = testcase
+                sql = sql.where(TestCases.testcase_id == testcase_id)
+            elif isinstance(testcase, str):
+                testcase_name = testcase
+                sql = sql.where(TestCases.testcase_name == testcase_name)
+            else:
+                self.logger.error(f"Invalid type for testcase: {type(testcase)}. Expected int or str.")
+                return None
+
+            # The query will return the user_prompt, system_prompt, prompt_id, testcase_id,
+            # testcase_name, and response_id if available.
+            # We will use the scalar_one_or_none() method to get a single result or None
+            # if no result is found.
+            #result = session.execute(sql).scalar_one_or_none()
+            result = sql.one_or_none()
             if result:
-                return TestCase(name=getattr(result, "testcase_name"), 
-                                prompt=Prompt(prompt_id=result.prompt_id), 
-                                response=Response(response_id=result.response_id))
+                testcase_name = result[2].testcase_name
+                testcase_id = result[2].testcase_id
+                testcase_strategy = result[2].strategy_id
+                # Create a Prompt object from the result
+                prompt = Prompt(prompt_id=getattr(result[0], "prompt_id"),
+                                lang_id=getattr(result[0], "lang_id"),
+                                domain_id=getattr(result[0], "domain_id"),
+                                user_prompt=str(result[0].user_prompt),
+                                system_prompt=str(result[0].system_prompt))
+                if result[1] is None:
+                    response = None
+                    response_id = None
+                else:
+                    # Create a Response object from the result
+                    response_id = getattr(result[1], "response_id")
+                    response = Response(response_text=str(result[1].response_text),
+                                        response_type=result[1].response_type,
+                                        response_id = response_id,
+                                        prompt_id = result[1].prompt_id,
+                                        lang_id=result[1].lang_id,
+                                        digest=result[1].hash_value)
+                    
+                self.logger.debug(f"Test case '{testcase_name}' (ID: {testcase_id}) found with prompt ID: {prompt.prompt_id}")
+                return TestCase(name=testcase_name,
+                                testcase_id=testcase_id,
+                                prompt=prompt,
+                                prompt_id=prompt.prompt_id,
+                                strategy=testcase_strategy,
+                                response=response,
+                                response_id=response_id)
+            
+            self.logger.error(f"Test case '{testcase}' does not exist.")
             return None
     
-    def create_testcase(self, testcase: TestCase) -> int:
+    def add_testcase(self, testcase: TestCase) -> int:
         """
         Creates a new test case in the database.
         
@@ -189,9 +364,49 @@ class DB:
         Returns:
             int: The ID of the newly created test case, or -1 if it already exists.
         """
-        return self.create_testcase_from_prompt(testcase_name = testcase.name, prompt = testcase.prompt, response = testcase.response)
+        return self.add_testcase_from_prompt(testcase_name = testcase.name, prompt = testcase.prompt, strategy=testcase.strategy, response = testcase.response)
+    
+    def add_testcase_from_prompt_id(self, testcase_name: str, prompt_id: int, strategy:int|str, response_id: Optional[int] = None) -> int:
+        """
+        Creates a new test case in the database using an existing prompt ID.
         
-    def create_testcase_from_prompt(self, testcase_name:str, prompt: Prompt, response: Optional[Response] = None) -> int:
+        Args:
+            testcase_name (str): The name of the test case.
+            prompt_id (int): The ID of the prompt associated with the test case.
+            response_id (Optional[int]): The ID of the response associated with the test case.
+        
+        Returns:
+            int: The ID of the newly created test case, or -1 if it already exists.
+        """
+        strategy_id = strategy
+        if isinstance(strategy, str):
+            # If strategy is a string, fetch the strategy ID from the database
+            strategy_id = self.get_strategy_id(strategy)
+            if strategy_id is None:
+                self.logger.error(f"Strategy '{strategy}' does not exist.")
+                return -1
+
+        try:
+            with self.Session() as session:
+                self.logger.debug(f"Creating test case (name:{testcase_name}) ..")
+
+                new_testcase = TestCases(testcase_name=testcase_name,  # Use the test case name
+                                         prompt_id=prompt_id,  # Use the provided prompt ID
+                                         strategy_id=strategy_id,  # Use the provided strategy ID
+                                         response_id=response_id) # Use the provided response ID
+                # Add the new test case to the session
+                session.add(new_testcase)
+                # Commit the session to save all changes
+                session.commit()
+
+                self.logger.debug(f"Test case created successfully, name:{new_testcase.testcase_name}, ID:{new_testcase.testcase_id}.")
+                return getattr(new_testcase, "testcase_id")
+           
+        except IntegrityError as e:
+            self.logger.error(f"Test case (name:{testcase_name}) already exists. Error: {e}")
+            return -1
+        
+    def add_testcase_from_prompt(self, testcase_name:str, prompt: Prompt, strategy: int|str, response: Optional[Response] = None) -> int:
         """
         Creates a new test case in the database.
         
@@ -203,6 +418,14 @@ class DB:
         Returns:
             bool: True if the test case was created successfully, False if it already exists.
         """
+        strategy_id = strategy
+        if isinstance(strategy, str):
+            # If strategy is a string, fetch the strategy ID from the database
+            strategy_id = self.get_strategy_id(strategy)
+            if strategy_id is None:
+                self.logger.error(f"Strategy '{strategy}' does not exist.")
+                return -1
+
         try:
             # Add the prompt to the database and get its ID
             prompt_id = self.add_prompt(prompt)  
@@ -214,21 +437,22 @@ class DB:
             response_id = self.add_response(response, prompt_id) if response else None
 
             with self.Session() as session:
-                self.logger.debug(f"Creating test case for prompt '{prompt.user_prompt}' ..")
+                self.logger.debug(f"Creating test case (name:{testcase_name}) ..")
 
                 new_testcase = TestCases(testcase_name=testcase_name,  # Use the test case name
                                          prompt_id=prompt_id,  # Use the ID of the added prompt
-                                         response_id=response_id) # Use the ID of the added response
+                                         response_id=response_id, # Use the ID of the added response
+                                         strategy_id=strategy_id) 
                 # Add the new test case to the session
                 session.add(new_testcase)
-                
                 # Commit the session to save all changes
                 session.commit()
-                self.logger.debug(f"Test case created successfully for prompt '{new_testcase.testcase_id}'.")
+
+                self.logger.debug(f"Test case created successfully, name:{new_testcase.testcase_name}, ID:{new_testcase.testcase_id}.")
                 return getattr(new_testcase, "testcase_id")
            
         except IntegrityError as e:
-            self.logger.error(f"Test case for prompt '{prompt.user_prompt}' already exists. Error: {e}")
+            self.logger.error(f"Test case (name:{testcase_name}) cannot be added. Error: {e}")
             return -1
         
     def add_prompts(self, prompts: List[Prompt]) -> bool:
@@ -341,7 +565,7 @@ class DB:
                 return getattr(new_prompt, "prompt_id")
         except IntegrityError as e:
             # Handle the case where the prompt already exists
-            self.logger.error(f"Prompt already exists: {prompt}. Error: {e}")
+            self.logger.error(f"Prompt already exists: {prompt} Error: {e}")
             return -1
 
     def sample_prompts(self, 
