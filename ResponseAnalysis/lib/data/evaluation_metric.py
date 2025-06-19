@@ -1,5 +1,5 @@
 from .test_case import TestCase
-from typing import List, Optional
+from typing import List, Optional, Any
 from functools import reduce
 
 class EvaluationMetric:
@@ -18,7 +18,23 @@ class EvaluationMetric:
         self.name = name
         self.desc = desc
         self.kwargs = kwargs
-        self.test_cases = []  # List to hold test cases for this metric 
+        self.test_cases = []  # List to hold test cases for this metric
+
+    def __getattr__(self, name: str) -> Any:
+        """
+        Allows access to additional keyword arguments as attributes.
+        If the attribute does not exist, raises an AttributeError.
+        Args:
+            name (str): The name of the attribute to access.
+        Returns:
+            Any: The value of the attribute if it exists in kwargs.
+        Raises:
+            AttributeError: If the attribute does not exist in kwargs.
+        """
+        if name.startswith('_') or name not in self.kwargs:
+            # Prevent access to private attributes
+            raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
+        return self.kwargs.get(name)
 
     def add_test_case(self, test_case: TestCase):
         """

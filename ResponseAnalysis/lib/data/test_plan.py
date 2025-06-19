@@ -1,4 +1,5 @@
 from .evaluation_metric import EvaluationMetric
+from typing import Any, List
 
 class TestPlan:
     """
@@ -18,6 +19,22 @@ class TestPlan:
         self.desc = desc
         self.metrics = []
 
+    def __getattr__(self, name: str) -> Any:
+        """
+        Allows access to additional keyword arguments as attributes.
+        If the attribute does not exist, raises an AttributeError.
+        Args:
+            name (str): The name of the attribute to access.
+        Returns:
+            Any: The value of the attribute if it exists in kwargs.
+        Raises:
+            AttributeError: If the attribute does not exist in kwargs.
+        """
+        if name.startswith('_') or name not in self.kwargs:
+            # Prevent access to private attributes
+            raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
+        return self.kwargs.get(name)        
+
     def add_metric(self, metric: EvaluationMetric):
         """
         Add an evaluation metric to the test plan.
@@ -35,4 +52,4 @@ class TestPlan:
         return results
 
     def __str__(self):
-        return f"TestPlan(name={self.name}, description={self.desc}, metrics={self.metrics})"
+        return f"TestPlan(name=\"{self.name}\", description=\"{self.desc}\", metrics=\"{self.metrics}\")"
