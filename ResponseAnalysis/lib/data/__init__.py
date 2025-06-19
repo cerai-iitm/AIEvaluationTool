@@ -5,3 +5,4 @@ from .evaluation_metric import EvaluationMetric
 from .domain import Domain
 from .language import Language
 from .prompt import Prompt
+from .strategy import Strategy
