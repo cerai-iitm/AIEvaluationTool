@@ -5,8 +5,6 @@ import logging
 import warnings
 from sentence_transformers.util import cos_sim
 from sentence_transformers import SentenceTransformer
-from langdetect import detect
-from googletrans import Translator
 from similarity_match import SimilarityMatchStrategy
 
 logging.basicConfig(
@@ -87,47 +85,6 @@ class LanguageStrategies(Strategy):
                 logger.info("Low language similarity detected.")
                 score = 0.0
         return score
-    
-    async def detect_text(text):
-        """
-        Helper function to translate text to a specified language.
-        """
-        translator = Translator()
-        try:
-            language = await translator.detect(text)
-            return language.lang
-        except Exception as e:
-            logger.error(f"Error in language detection: {e}")
-            return "unknown"
-    
-    async def google_lang_translate(self, text: str, target_lang: str = "en") -> str:
-        """
-        Helper function to translate text to english language using Google Translate.
-        :param text: The text to be translated.
-        :param target_lang: The target language code (default is English
-        return: The translated text in english
-        """
-        translator = Translator()
-        try:
-            translation = await translator.translate(text, dest=target_lang)
-            return translation.text
-        except Exception as e:
-            logger.error(f"Error in translation: {e}")
-            return text
-        
-    def language_detection(self, text: str) -> str:
-        """
-        Detect the language of the given text.
-        :param text: The text to be analyzed.
-        :return: The detected language code.
-        """
-        try:
-            language =detect(text)
-            logger.info(f"Detected language: {language}")
-            return language
-        except Exception as e:
-            logger.error(f"Error in language detection: {e}")
-            return "unknown"
         
     def evaluate(self, agent_response: str, expected_response: Optional[str] = None) -> float:
         pass
