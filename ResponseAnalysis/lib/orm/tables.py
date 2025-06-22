@@ -7,7 +7,7 @@ class Base(DeclarativeBase):
     It inherits from DeclarativeBase, which is a base class for declarative models in SQLAlchemy.
     It can be extended to include common functionality or properties for all models.
     """
-    pass
+    __abstract__ = True
 
 class Prompts(Base):
     """ORM model for the Prompts table.
@@ -20,8 +20,19 @@ class Prompts(Base):
     user_prompt = Column(Text, nullable=False)
     system_prompt = Column(Text, nullable=True)
     lang_id = Column(Integer, ForeignKey('Languages.lang_id'), nullable=False)    # Foreign key to Languages
-    #language = relationship("Languages", back_populates="Prompts", uselist=False)  # Relationship to Languages
     domain_id = Column(Integer, ForeignKey('Domains.domain_id'), nullable=False)  # Foreign key to Domains
+    hash_value = Column(String(100), nullable=False, unique=True)  # Hash value for the prompt
+
+class LLMJudgePrompts(Base):
+    """ORM model for the LLMJudgePrompts table.
+    This class defines the structure of the LLMJudgePrompts table in the database.
+    It inherits from DeclarativeBase, which is a base class for declarative models in SQLAlchemy.
+    """
+    __tablename__ = 'LLMJudgePrompts'
+    
+    prompt_id = Column(Integer, primary_key=True)
+    judge_prompt = Column(Text, nullable=False)  # Text of the judge prompt
+    lang_id = Column(Integer, ForeignKey('Languages.lang_id'), nullable=False)  # Foreign key to Languages
     hash_value = Column(String(100), nullable=False, unique=True)  # Hash value for the prompt
 
 class Strategies(Base):
@@ -42,7 +53,6 @@ class Languages(Base):
     
     lang_id = Column(Integer, primary_key=True)
     lang_name = Column(String(255), nullable=False)
-    #prompt = relationship("Prompts", back_populates="Languages", uselist=True)  # Relationship to Prompts
 
 class Domains(Base):
     """ORM model for the Domains table.
@@ -77,6 +87,8 @@ class TestCases(Base):
     prompt_id = Column(Integer, ForeignKey('Prompts.prompt_id'), nullable=False) # Foreign key to Prompts
     response_id = Column(Integer, ForeignKey('Responses.response_id'), nullable=True) # Foreign key to Responses
     strategy_id = Column(Integer, ForeignKey('Strategies.strategy_id'), nullable=False)  # Foreign key to Strategies
+    judge_prompt_id = Column(Integer, ForeignKey('LLMJudgePrompts.prompt_id'), nullable=True)  # Foreign key to LLMJudgePrompts
+    metrics = relationship("Metrics", secondary="MetricTestCaseMapping", back_populates="cases")
 
 class TestPlans(Base):
     """ORM model for the TestPlans table.
@@ -87,6 +99,7 @@ class TestPlans(Base):
     plan_id = Column(Integer, primary_key=True)
     plan_name = Column(String(255), nullable=False, unique=True)  # Unique name for the test plan
     plan_description = Column(Text, nullable=True)  # Optional description for the test plan
+    metrics = relationship("Metrics", secondary="TestPlanMetricMapping", back_populates="plans")
 
 class Metrics(Base):
     """ORM model for the Metrics table.
@@ -95,10 +108,35 @@ class Metrics(Base):
     __tablename__ = 'Metrics'
     
     metric_id = Column(Integer, primary_key=True)
-    metric_name = Column(String(255), nullable=False)
+    metric_name = Column(String(255), nullable=False, unique=True)
+    metric_description = Column(Text, nullable=True)  # Optional description for the metric
     metric_source = Column(String(255), nullable=True)
     domain_id = Column(Integer, ForeignKey('Domains.domain_id'), nullable=False)  # Foreign key to Domains
     metric_benchmark = Column(String(255), nullable=True)
+    plans = relationship("TestPlans", secondary="TestPlanMetricMapping", back_populates="metrics")
+    cases = relationship("TestCases", secondary="MetricTestCaseMapping", back_populates="metrics")
+
+class TestPlanMetricMapping(Base):
+    """ORM model for the TestPlanMetricMapping table.
+    This class defines the structure of the TestPlanMetricMapping table in the database.
+    It maps test plans to metrics.
+    """
+    __tablename__ = 'TestPlanMetricMapping'
+    
+    mapping_id = Column(Integer, primary_key=True)
+    plan_id = Column(Integer, ForeignKey('TestPlans.plan_id'), nullable=False)  # Foreign key to TestPlans
+    metric_id = Column(Integer, ForeignKey('Metrics.metric_id'), nullable=False)  # Foreign key to Metrics
+
+class MetricTestCaseMapping(Base):
+    """ORM model for the MetricTestCaseMapping table.
+    This class defines the structure of the MetricTestCaseMapping table in the database.
+    It maps metrics to test cases.
+    """
+    __tablename__ = 'MetricTestCaseMapping'
+    
+    mapping_id = Column(Integer, primary_key=True)
+    testcase_id = Column(Integer, ForeignKey('TestCases.testcase_id'), nullable=False)  # Foreign key to TestCases
+    metric_id = Column(Integer, ForeignKey('Metrics.metric_id'), nullable=False)  # Foreign key to Metrics
 
 class TargetSessions(Base):
     """ORM model for the TargetSessions table.
@@ -135,17 +173,6 @@ class Conversations(Base):
     prompt_ts = Column(DateTime, nullable=True)  # Start timestamp of the conversation
     response_ts = Column(DateTime, nullable=True)  # End timestamp of the conversation
 
-class MetricTestCaseMapping(Base):
-    """ORM model for the MetricTestCaseMapping table.
-    This class defines the structure of the MetricTestCaseMapping table in the database.
-    It maps metrics to test cases.
-    """
-    __tablename__ = 'MetricTestCaseMapping'
-    
-    mapping_id = Column(Integer, primary_key=True)
-    testcase_id = Column(Integer, ForeignKey('TestCases.testcase_id'), nullable=False)  # Foreign key to TestCases
-    metric_id = Column(Integer, ForeignKey('Metrics.metric_id'), nullable=False)  # Foreign key to Metrics
-
 class TargetLanguages(Base):
     """ORM model for the TargetLanguages table.
     This class defines the structure of the TargetLanguages table in the database.  
@@ -156,17 +183,6 @@ class TargetLanguages(Base):
     target_lang_id = Column(Integer, primary_key=True)
     target_id = Column(Integer, ForeignKey('Targets.target_id'), nullable=False)  # Foreign key to Targets
     lang_id = Column(Integer, ForeignKey('Languages.lang_id'), nullable=False)  # Foreign key to Languages
-
-class TestPlanMetricMapping(Base):
-    """ORM model for the TestPlanMetricMapping table.
-    This class defines the structure of the TestPlanMetricMapping table in the database.
-    It maps test plans to metrics.
-    """
-    __tablename__ = 'TestPlanMetricMapping'
-    
-    mapping_id = Column(Integer, primary_key=True)
-    plan_id = Column(Integer, ForeignKey('TestPlans.plan_id'), nullable=False)  # Foreign key to TestPlans
-    metric_id = Column(Integer, ForeignKey('Metrics.metric_id'), nullable=False)  # Foreign key to Metrics
 
 class TestRuns(Base):
     """ORM model for the TestRuns table.

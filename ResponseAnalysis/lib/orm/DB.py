@@ -1,4 +1,4 @@
-from tables import Base, Languages, Domains, Metrics, Responses, TestCases, TestPlans, Prompts, Strategies
+from tables import Base, Languages, Domains, Metrics, Responses, TestCases, TestPlans, Prompts, Strategies, LLMJudgePrompts
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.exc import IntegrityError
@@ -12,7 +12,8 @@ import logging
 # setup the relative import path for data module.
 sys.path.append(os.path.dirname(__file__) + '/..')
 
-from data import Prompt, Language, Domain, Response, TestCase, TestPlan, Strategy
+from data import Prompt, Language, Domain, Response, TestCase, TestPlan, \
+    Strategy, Metric, LLMJudgePrompt
 
 class DB:    
     """
@@ -21,7 +22,7 @@ class DB:
     It uses SQLAlchemy for ORM and supports MariaDB as the database backend.
     """
 
-    def __init__(self, db_url: str = "mariadb+mariadbconnector://root:ATmega32*@localhost:3306/aieval", debug=False, pool_size = 5, max_overflow = 10):
+    def __init__(self, db_url: str, debug:bool, pool_size:int = 5, max_overflow:int = 10):
         """
         Initializes the DB instance with the provided database URL and host.
         
@@ -123,6 +124,21 @@ class DB:
             result = session.execute(sql).scalar_one_or_none()
             return getattr(result, 'strategy_name', None) if result else None
 
+    def add_language(self, lang_name: str) -> Optional[int]:
+        with self.Session() as session:
+            new_lang = Languages(lang_name=lang_name)
+            try:
+                session.add(new_lang)
+                session.commit()
+                # Ensure lang_id is populated
+                session.refresh(new_lang)  
+                self.logger.debug(f"Language added successfully: {new_lang.lang_id}")
+                
+                # Return the ID of the newly added response
+                return getattr(new_lang, "lang_id")
+            except IntegrityError as e:
+                self.logger.error(f"Language '{lang_name}' already exists. Error: {e}")
+                return None
 
     def get_language_id(self, lang_name: str) -> Optional[int]:
         """
@@ -155,6 +171,31 @@ class DB:
             result = session.execute(sql).scalar_one_or_none()
             #return result.lang_name if result else None
             return getattr(result, 'lang_name', None) if result else None
+        
+    def add_domain(self, domain_name: str) -> Optional[int]:
+        """
+        Adds a new domain to the database.
+        
+        Args:
+            domain_name (str): The name of the domain to be added.
+        
+        Returns:
+            Optional[int]: The ID of the newly added domain, or None if it already exists.
+        """
+        try:
+            with self.Session() as session:
+                new_domain = Domains(domain_name=domain_name)
+                session.add(new_domain)
+                session.commit()
+                # Ensure domain_id is populated
+                session.refresh(new_domain)  
+                self.logger.debug(f"Domain added successfully: {new_domain.domain_id}")
+                
+                # Return the ID of the newly added domain
+                return getattr(new_domain, "domain_id")
+        except IntegrityError as e:
+            self.logger.error(f"Domain '{domain_name}' already exists. Error: {e}")
+            return None
 
     def get_domain_id(self, domain_name: str) -> Optional[int]:
         """
@@ -187,52 +228,6 @@ class DB:
             result = session.execute(sql).scalar_one_or_none()
             #return result.domain_name if result else None
             return getattr(result, 'domain_name', None) if result else None
-        
-    def get_prompt(self, prompt_id: int) -> Optional[Prompt]:
-        """
-        Fetches a prompt by its ID.
-        
-        Args:
-            prompt_id (int): The ID of the prompt to fetch.
-        
-        Returns:
-            Optional[Prompt]: The Prompt object if found, otherwise None.
-        """
-        with self.Session() as session:
-            sql = select(Prompts).where(Prompts.prompt_id == prompt_id)
-            result = session.execute(sql).scalar_one_or_none()
-            if result is None:
-                self.logger.error(f"Prompt with ID '{prompt_id}' does not exist.")
-                return None
-            return Prompt(prompt_id=getattr(result, 'prompt_id'),
-                          user_prompt=str(result.user_prompt),
-                          system_prompt=str(result.system_prompt),
-                          lang_id=getattr(result, 'lang_id'),
-                          domain_id=getattr(result, 'domain_id'),
-                          digest=result.hash_value)
-        
-    def get_response(self, response_id: int) -> Optional[Response]:
-        """
-        Fetches a response by its ID.
-        
-        Args:
-            response_id (int): The ID of the response to fetch.
-        
-        Returns:
-            Optional[Response]: The Response object if found, otherwise None.
-        """
-        with self.Session() as session:
-            sql = select(Responses).where(Responses.response_id == response_id)
-            result = session.execute(sql).scalar_one_or_none()
-            if result is None:
-                self.logger.error(f"Response with ID '{response_id}' does not exist.")
-                return None
-            return Response(response_text=str(result.response_text),
-                            response_type=str(result.response_type),
-                            response_id=getattr(result, 'response_id'),
-                            prompt_id=result.prompt_id,
-                            lang_id=result.lang_id,
-                            digest=result.hash_value)
         
     def create_testplan(self, plan_name: str, plan_desc: str = "") -> bool:
         """
@@ -366,7 +361,7 @@ class DB:
         """
         return self.add_testcase_from_prompt(testcase_name = testcase.name, prompt = testcase.prompt, strategy=testcase.strategy, response = testcase.response)
     
-    def add_testcase_from_prompt_id(self, testcase_name: str, prompt_id: int, strategy:int|str, response_id: Optional[int] = None) -> int:
+    def add_testcase_from_prompt_id(self, testcase_name: str, prompt_id: int, strategy:int|str, response_id: Optional[int] = None, judge_prompt_id:Optional[int] = None) -> int:
         """
         Creates a new test case in the database using an existing prompt ID.
         
@@ -393,6 +388,7 @@ class DB:
                 new_testcase = TestCases(testcase_name=testcase_name,  # Use the test case name
                                          prompt_id=prompt_id,  # Use the provided prompt ID
                                          strategy_id=strategy_id,  # Use the provided strategy ID
+                                         judge_prompt_id=judge_prompt_id,  # Use the provided judge prompt ID
                                          response_id=response_id) # Use the provided response ID
                 # Add the new test case to the session
                 session.add(new_testcase)
@@ -406,7 +402,7 @@ class DB:
             self.logger.error(f"Test case (name:{testcase_name}) already exists. Error: {e}")
             return -1
         
-    def add_testcase_from_prompt(self, testcase_name:str, prompt: Prompt, strategy: int|str, response: Optional[Response] = None) -> int:
+    def add_testcase_from_prompt(self, testcase_name:str, prompt: Prompt, strategy: int|str, response: Optional[Response] = None, judge_prompt: Optional[LLMJudgePrompt] = None) -> int:
         """
         Creates a new test case in the database.
         
@@ -455,44 +451,28 @@ class DB:
             self.logger.error(f"Test case (name:{testcase_name}) cannot be added. Error: {e}")
             return -1
         
-    def add_prompts(self, prompts: List[Prompt]) -> bool:
+    def get_response(self, response_id: int) -> Optional[Response]:
         """
-        Adds multiple prompts to the database.
+        Fetches a response by its ID.
         
         Args:
-            prompts (List[Prompt]): A list of Prompt objects to be added.
+            response_id (int): The ID of the response to fetch.
         
         Returns:
-            bool: True if all prompts were added successfully, False if any prompt already exists.
+            Optional[Response]: The Response object if found, otherwise None.
         """
-        try:
-            with self.Session() as session:
-                n_prompts = len(prompts)
-                self.logger.debug(f"Adding {n_prompts} prompts to the database.")
-                n_added = 0
-                for prompt in prompts:
-                    # Default to the default language ID if not provided
-                    lang_id = prompt.kwargs.get("lang_id", Language.autodetect)  # Get the language ID from kwargs if provided
-                    domain_id = prompt.kwargs.get("domain_id", Domain.general)  # Get the domain ID from kwargs if provided
-
-                    # create the orm object for the prompt to insert into the database table.
-                    new_prompt = Prompts(user_prompt=prompt.user_prompt, 
-                                        system_prompt=prompt.system_prompt, 
-                                        lang_id=lang_id,
-                                        domain_id=domain_id,
-                                        hash_value=prompt.digest)
-                    
-                    # Add the new prompt to the session
-                    session.add(new_prompt)
-                    n_added += 1
-                # Commit the session to save all new prompts
-                session.commit()
-                self.logger.debug(f"{n_added} prompts added successfully.")
-                return True
-        except IntegrityError as e:
-            # Handle the case where one or more prompts already exist
-            self.logger.error(f"One or more prompts already exist. Error: {e}")
-            return False
+        with self.Session() as session:
+            sql = select(Responses).where(Responses.response_id == response_id)
+            result = session.execute(sql).scalar_one_or_none()
+            if result is None:
+                self.logger.error(f"Response with ID '{response_id}' does not exist.")
+                return None
+            return Response(response_text=str(result.response_text),
+                            response_type=str(result.response_type),
+                            response_id=getattr(result, 'response_id'),
+                            prompt_id=result.prompt_id,
+                            lang_id=result.lang_id,
+                            digest=result.hash_value)
         
     def add_response(self, response: Response, prompt_id: int) -> int:
         """
@@ -531,8 +511,91 @@ class DB:
             # Handle the case where the response already exists
             self.logger.error(f"Response already exists: {response}. Error: {e}")
             return -1
+        
+    def get_judge_prompt(self, judge_prompt_id: int) -> Optional[LLMJudgePrompt]:
+        """
+        Fetches a judge prompt by its ID.
+        
+        Args:
+            judge_prompt_id (int): The ID of the judge prompt to fetch.
+        
+        Returns:
+            Optional[LLMJudgePrompt]: The LLMJudgePrompt object if found, otherwise None.
+        """
+        with self.Session() as session:
+            sql = select(LLMJudgePrompts).where(LLMJudgePrompts.prompt_id == judge_prompt_id)
+            result = session.execute(sql).scalar_one_or_none()
+            if result is None:
+                self.logger.error(f"Judge prompt with ID '{judge_prompt_id}' does not exist.")
+                return None
+            return LLMJudgePrompt(judge_prompt=str(result.judge_prompt),
+                                  lang_id=getattr(result, 'lang_id', Language.autodetect),  # Get the language ID from kwargs if provided
+                                  digest=result.hash_value)
+        
+    def add_or_get_judge_prompt(self, judge_prompt: LLMJudgePrompt) -> int:
+        """
+        Adds a new judge prompt to the database.
+        
+        Args:
+            judge_prompt (LLMJudgePrompt): The LLMJudgePrompt object to be added.
+        
+        Returns:
+            int: The ID of the newly added judge prompt, or -1 if it already exists.
+        """
+        try:
+            with self.Session() as session:
+                # check of the judge prompt already exists in the database.
+                existing_judge_prompt = session.query(LLMJudgePrompts).filter_by(hash_value=judge_prompt.digest).first()
+                if existing_judge_prompt:
+                    # Return the ID of the existing judge prompt
+                    return getattr(existing_judge_prompt, "prompt_id")
+                    
+                self.logger.debug(f"Adding new judge prompt: {judge_prompt.judge_prompt}")
+                # create the orm object for the judge prompt to insert into the database table.
+                new_judge_prompt = LLMJudgePrompts(prompt_text=judge_prompt.judge_prompt, 
+                                                   lang_id=getattr(judge_prompt, "lang_id", Language.autodetect),  # Get the language ID from kwargs if provided
+                                                   hash_value=judge_prompt.digest)
+                
+                # Add the new judge prompt to the session
+                session.add(new_judge_prompt)
+                # Commit the session to save the new judge prompt
+                session.commit()
+                # Ensure judge_prompt_id is populated
+                session.refresh(new_judge_prompt)  
+
+                self.logger.debug(f"Judge prompt added successfully: {new_judge_prompt.prompt_id}")
+                
+                # Return the ID of the newly added judge prompt
+                return getattr(new_judge_prompt, "prompt_id")
+        except IntegrityError as e:
+            # Handle the case where the judge prompt already exists
+            self.logger.error(f"Judge prompt already exists: {judge_prompt}. Error: {e}")
+            return -1
     
-    def add_prompt(self, prompt: Prompt) -> int:
+    def get_prompt(self, prompt_id: int) -> Optional[Prompt]:
+        """
+        Fetches a prompt by its ID.
+        
+        Args:
+            prompt_id (int): The ID of the prompt to fetch.
+        
+        Returns:
+            Optional[Prompt]: The Prompt object if found, otherwise None.
+        """
+        with self.Session() as session:
+            sql = select(Prompts).where(Prompts.prompt_id == prompt_id)
+            result = session.execute(sql).scalar_one_or_none()
+            if result is None:
+                self.logger.error(f"Prompt with ID '{prompt_id}' does not exist.")
+                return None
+            return Prompt(prompt_id=getattr(result, 'prompt_id'),
+                          user_prompt=str(result.user_prompt),
+                          system_prompt=str(result.system_prompt),
+                          lang_id=getattr(result, 'lang_id'),
+                          domain_id=getattr(result, 'domain_id'),
+                          digest=result.hash_value)
+
+    def add_or_get_prompt(self, prompt: Prompt) -> int:
         """
         Adds a new prompt to the database.
         
@@ -541,6 +604,15 @@ class DB:
         """
         try:
             with self.Session() as session:
+                # check of the prompt already exists in the database.
+                existing_prompt = session.query(Prompts).filter_by(hash_value=prompt.digest).first()
+                if existing_prompt:
+                    self.logger.debug(f"Returning the existing prompt ID: {existing_prompt.prompt_id}")
+                    # Return the ID of the existing prompt
+                    return getattr(existing_prompt, "prompt_id")
+                
+                self.logger.debug(f"Adding new prompt: {prompt.user_prompt}")
+
                 # Default to the default language ID if not provided
                 lang_id = prompt.kwargs.get("lang_id", Language.autodetect)  # Get the language ID from kwargs if provided
                 domain_id = prompt.kwargs.get("domain_id", Domain.general)  # Get the domain ID from kwargs if provided
@@ -603,4 +675,111 @@ class DB:
             return [Prompt(prompt_id=prompt.prompt_id, 
                            user_prompt=str(prompt.user_prompt), 
                            system_prompt=str(prompt.system_prompt), 
-                           lang_id=prompt.lang_id) for prompt in result]            
+                           lang_id=prompt.lang_id) for prompt in result]
+        
+    def add_metric_and_testcases(self, metric: Metric, testcases: List[TestCase]) -> bool:
+        """
+        Adds a new metric and its associated test cases to the database.
+        
+        Args:
+            metric (Metric): The Metric object to be added.
+            testcases (List[TestCase]): A list of TestCase objects associated with the metric.
+        
+        Returns:
+            bool: True if the metric and test cases were added successfully, False if the metric already exists.
+        """
+        try:
+            with self.Session() as session:
+                # Create the Metrics object
+                new_metric = self._get_or_create_metric(metric.metric_name,
+                                                        metric.domain_id, 
+                                                        metric.metric_description)
+                
+                # Add each test case associated with the metric
+                for testcase in testcases:
+                    # Ensure the prompt is added first
+                    prompt_id = self.add_prompt(testcase.prompt)
+                    if prompt_id == -1:
+                        self.logger.error(f"Prompt '{testcase.prompt.user_prompt}' already exists. Cannot add test case.")
+                        return False
+                    
+                    judge_prompt_id = self.add_judge_prompt(testcase.judge_prompt) if testcase.judge_prompt else None
+                    if judge_prompt_id == -1:
+                        self.logger.error(f"Judge prompt '{testcase.judge_prompt.judge_prompt}' already exists. Cannot add test case.")
+                        return False
+                    
+                    # If a response is provided, create a Responses object
+                    response_id = self.add_response(testcase.response, prompt_id) if testcase.response else None
+                    # If the response already exists, use its ID
+                    if response_id == -1:
+                        self.logger.error(f"Response '{testcase.response.response_text}' already exists. Cannot add test case.")
+                        return False
+                    
+                    # Create the TestCases object
+                    new_testcase = TestCases(testcase_name=testcase.name, 
+                                             prompt_id=prompt_id, 
+                                             response_id=response_id,
+                                             strategy_id=testcase.strategy,
+                                             metric=new_metric)  # Associate the metric with the test case
+                    
+                    # Add the new test case to the session
+                    session.add(new_testcase)
+                
+                # Add the new metric to the session
+                session.add(new_metric)
+                # Commit the session to save all changes
+                session.commit()
+                
+                self.logger.debug(f"Metric '{metric.metric_name}' and its test cases added successfully.")
+                return True
+        except IntegrityError as e:
+            self.logger.error(f"Metric '{metric.metric_name}' already exists. Error: {e}")
+            return False
+
+    def add_testplan_and_metrics(self, plan: TestPlan, metrics: List[Metric]) -> bool:
+        """
+        Adds a new test plan and its associated metrics to the database.
+        
+        Args:
+            plan (TestPlan): The TestPlan object to be added.
+            metrics (List[Metric]): A list of Metric objects associated with the test plan.
+        
+        Returns:
+            bool: True if the test plan and metrics were added successfully, False if the plan already exists.
+        """
+        try:
+            with self.Session() as session:
+                # Add each metric associated with the test plan
+                #new_metrics = [Metrics(metric_name=metric.metric_name, domain_id = metric.domain_id, metric_description=metric.metric_description) for metric in metrics]
+                new_metrics = [self._get_or_create_metric(metric.metric_name, metric.domain_id, metric.metric_description) for metric in metrics]
+                    
+                # Create the TestPlan object
+                new_plan = TestPlans(plan_name=plan.plan_name, 
+                                     plan_description=plan.plan_description,
+                                     metrics=new_metrics)
+                
+                # Add the new test plan to the session
+                session.add(new_plan)
+                # Commit the session to save all changes
+                session.commit()
+                
+                # Ensure plan_id is populated
+                session.refresh(new_plan)  
+                
+                self.logger.debug(f"Test plan '{plan.plan_name}' and its metrics added successfully.")
+                return True
+        except IntegrityError as e:
+            self.logger.error(f"Test plan '{plan.plan_name}' already exists. Error: {e}")
+            return False        
+
+    # Create or get Metrics objects from the database to ensure they are persistent
+    def _get_or_create_metric(self, metric_name, domain_id: Optional[int] = None, metric_description: Optional[str] = None) -> Metrics:
+        with self.Session() as session:
+            self.logger.debug(f"Fetching or creating metric '{metric_name}' ..")
+            # Check if the metric already exists in the database
+            metric = session.query(Metrics).filter_by(metric_name=metric_name).first()
+            if not metric:
+                metric = Metrics(metric_name=metric_name, domain_id=domain_id, metric_description=metric_description)
+                session.add(metric)
+                session.commit()
+            return metric

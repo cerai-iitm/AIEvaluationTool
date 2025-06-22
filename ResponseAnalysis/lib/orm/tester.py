@@ -1,17 +1,40 @@
 from DB import DB
 import sys
 import os
+import json
 
 # setup the relative import path for data module.
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from data import Prompt, TestCase, Response
+from data import Prompt, TestCase, Response, TestPlan, Metric
 
 # __len__ __getitem__ __setitem__ __delitem__ __iter__ __contains__
 # __enter__ __exit__  contextual management methods for the DB class
 # __iter__ __next__ methods for iterating over languages (raise StopIteration when done)
 
-db = DB(debug=False)
+db = DB(db_url="mariadb+mariadbconnector://root:ATmega32*@localhost:3306/eval", debug=False)
+
+plans = json.load(open('Data/plans.json', 'r'))
+prompts = json.load(open('Data/DataPoints.json', 'r'))
+
+domain_general = db.add_domain(domain_name='general')
+#db.add_domain(domain_name='agriculture')
+
+metrics_lookup = {}
+
+for plan in plans.keys():
+    record = plans[plan]
+    plan_name = record['TestPlan_name']
+    test_plan = TestPlan(plan_name=plan_name)
+    metrics_list = []
+    for metric in record['metrics'].keys():
+        metric_name = record['metrics'][metric]
+        metrics_lookup[metric] = metric_name
+        metric_obj = Metric(metric_name=metric_name, domain_id=domain_general if domain_general is not None else 1)
+        metrics_list.append(metric_obj)
+
+    db.add_testplan_and_metrics(plan=test_plan, metrics=metrics_list)
+
 
 
 #print("\n".join([repr(_) for _ in db.languages]))

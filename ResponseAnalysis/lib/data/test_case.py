@@ -1,5 +1,6 @@
 from .prompt import Prompt
 from .response import Response
+from .llm_judge_prompt import LLMJudgePrompt
 from typing import Optional, Any
 from pydantic import BaseModel, Field
 
@@ -11,15 +12,17 @@ class TestCase(BaseModel):
         prompt (Prompt): The prompt associated with the test case.
         response (Response): The response associated with the test case.
         strategy (str|int): The strategy name or id used for the test case.
+        judge_prompt (LLMJudgePrompt): The judge prompt for the test case, if applicable.
         kwargs (dict): Additional keyword arguments for future extensibility.
     """
     name: str = Field(..., description="The name of the test case.")
     prompt: Prompt = Field(..., description="The prompt for the test case.")
     response: Optional[Response] = Field(None, description="The response for the test case.")
     strategy: str|int = Field(..., description="The strategy name or id used for the test case")
+    judge_prompt: Optional[LLMJudgePrompt] = Field(None, description="The judge prompt for the test case, if applicable.")
     kwargs: dict = Field(default_factory=dict, description="Additional keyword arguments for future extensibility")
     
-    def __init__(self, name:str, prompt: Prompt, strategy: str|int, response: Optional[Response] = None, **kwargs):
+    def __init__(self, name:str, prompt: Prompt, strategy: str|int, response: Optional[Response] = None, judge_prompt:Optional[LLMJudgePrompt]=None, **kwargs):
         """
         Initializes a TestCase instance.
 
@@ -28,7 +31,7 @@ class TestCase(BaseModel):
             response (Response): The response for the test case.
             kwargs: Additional keyword arguments for future extensibility.
         """
-        super().__init__(name =name, prompt = prompt, strategy=strategy, response=response, kwargs = kwargs)
+        super().__init__(name =name, prompt = prompt, strategy=strategy, response=response, judge_prompt=judge_prompt, kwargs = kwargs)
 
     def __getattr__(self, name: str) -> Any:
         """
