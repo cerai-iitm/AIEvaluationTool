@@ -75,9 +75,49 @@ class User(Base):
 
     def __repr__(self) -> str:
         return f"User(username={self.username!r}, age={self.age!r}, addresses={self.addresses!r})"
+    
+class TestPlans(Base):
+    """ORM model for the TestPlans table.
+    This class defines the structure of the TestPlans table in the database.
+    """
+    __tablename__ = 'TestPlans'
+    
+    plan_name = Column(String(255), nullable=False, unique=True)  # Unique name for the test plan
+    plan_description = Column(Text, nullable=True)  # Optional description for the test plan
+
+    metrics = relationship("Metrics", secondary="TestPlanMetricMapping", back_populates="plans")
+    
+    def __repr__(self) -> str:
+        return f"TestPlans(plan_name={self.plan_name})"
+
+class Metrics(Base):
+    """ORM model for the Metrics table.
+    This class defines the structure of the Metrics table in the database.
+    """
+    __tablename__ = 'Metrics'
+    
+    metric_name = Column(String(255), nullable=False, unique=True)
+    metric_source = Column(String(255), nullable=True)
+    metric_benchmark = Column(String(255), nullable=True)
+
+    #plan_id = Column(Integer, ForeignKey('TestPlans.id'), nullable=False)
+    plans = relationship("TestPlans", secondary="TestPlanMetricMapping", back_populates="metrics")
+
+    def __repr__(self) -> str:
+        return f"Metrics(metric_name={self.metric_name})"
+    
+class TestPlanMetricMapping(Base):
+    """ORM model for the TestPlanMetricMapping table.
+    This class defines the structure of the TestPlanMetricMapping table in the database.
+    It maps test plans to metrics.
+    """
+    __tablename__ = 'TestPlanMetricMapping'
+    
+    plan_id = Column(Integer, ForeignKey('TestPlans.id'), nullable=False)  # Foreign key to TestPlans
+    metric_id = Column(Integer, ForeignKey('Metrics.id'), nullable=False)  # Foreign key to Metrics
 
 
-engine = create_engine("mariadb+mariadbconnector://root:ATmega32*@localhost:3306/aieval", echo=True, pool_size=10, max_overflow=30)
+engine = create_engine("mariadb+mariadbconnector://root:ATmega32*@localhost:3306/test", echo=True, pool_size=10, max_overflow=30)
 # Create all tables in the database
 # This will create the tables defined in the ORM models if they do not exist.
 Base.metadata.create_all(engine)
@@ -85,6 +125,65 @@ Base.metadata.create_all(engine)
 # A scoped session is a thread-safe session that can be used across multiple threads.
 #session = scoped_session(sessionmaker(bind=engine))
 
+# Create or get Metrics objects from the database to ensure they are persistent
+def get_or_create_metric(session, metric_name):
+    metric = session.query(Metrics).filter_by(metric_name=metric_name).first()
+    if not metric:
+        metric = Metrics(metric_name=metric_name)
+        session.add(metric)
+        session.commit()
+    return metric
+
+m4 = Metrics(metric_name="m4", metric_source="source4", metric_benchmark="benchmark4")
+p3 = TestPlans(plan_name="p3", plan_description="Test plan for p3")
+
+Session = sessionmaker(bind=engine)
+session = Session()
+try:
+    # Fetch the existing TestPlans object from the database
+    existing_plan = session.query(TestPlans).filter_by(plan_name="p3").first()
+    if existing_plan:
+        # Assign only persistent Metrics objects
+        m1_db = session.query(Metrics).filter_by(metric_name="m1").first()
+        m2_db = session.query(Metrics).filter_by(metric_name="m2").first()
+        existing_plan.metrics = [m1_db, m2_db, m4]  # Add m4 to the existing plan's metrics
+        # No need to add existing_plan again; just commit
+    else:
+        # If not found, create a new one and add it
+        session.add(p3)
+    session.commit()
+except IntegrityError as e: 
+    session.rollback()
+    print(f"IntegrityError: {e}")
+    session.close()    
+
+"""
+        # Example: Remove m4 from existing_plan.metrics if it exists
+        #if existing_plan and m4 in existing_plan.metrics:
+        #    existing_plan.metrics.remove(m4)
+        #    session.add(existing_plan)
+
+
+    #session.add_all([m1, m2, m3, p1, p2])
+    session.commit()
+except IntegrityError as e: 
+    session.rollback()
+    print(f"IntegrityError: {e}")
+    session.close()    
+"""
+
+tp = session.query(TestPlans).first()
+mets = [metric.metric_name for metric in getattr(tp, "metrics")]
+print(",".join(mets))
+
+met = session.query(Metrics).first()
+plans = [plan.plan_name for plan in getattr(met, "plans")]
+print(",".join(plans))
+
+out = session.query(Metrics).filter(Metrics.plans.any(plan_name="p2")).all()
+print(out)
+
+"""
 a1 = Address(state="California", zip_code="90001")
 a2 = Address(state="New York", zip_code="10001")
 a3 = Address(state="Texas", zip_code="73301")
@@ -107,6 +206,7 @@ except IntegrityError as e:
     session.close()    
 
 u1.addresses
+"""
 
 #if __name__ == "__main__":
 #    main()
