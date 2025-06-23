@@ -1,5 +1,22 @@
 from .strategy_base import Strategy
 from typing import Optional
+from opik.evaluation.metrics import GEval
+import logging
+import warnings
+from langchain_ollama.llms import OllamaLLM
+
+logging.basicConfig(
+    level=logging.INFO,  
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.StreamHandler(),  
+        logging.FileHandler("analyzer_log.log")  
+    ]
+)
+
+logger = logging.getLogger(__name__)
+
+warnings.filterwarnings("ignore")
 
 # This module implements "llm as a judge" strategy to analyze the agent response.
 class LLMJudgeStrategy(Strategy):
@@ -7,8 +24,9 @@ class LLMJudgeStrategy(Strategy):
         super().__init__(name, kwargs=kwargs)
         # uses Llama3 by default
         self.__model_name = kwargs.get("model_name", "llama3")
+        self.model = OllamaLLM(model=self.__model_name)
 
-    def evaluate(self, agent_response: str, expected_response: Optional[str] = None) -> float:
+    def evaluate(self, metric_name:str, prompt: str, system_prompt: str, agent_response: str, judge_prompt: str, expected_response: Optional[str] = None) -> float:
         """
         Evaluate the agent's response using a language model.
         
@@ -16,5 +34,25 @@ class LLMJudgeStrategy(Strategy):
         :param expected_response: The expected response to compare against.
         :return: A score representing the quality of the agent's response.
         """
-        # Placeholder for actual LLM evaluation logic
-        return 0.0  # Replace with actual evaluation logic
+        logger.info("Evaluating agent response using LLM judge...")
+        eval_criteria = judge_prompt.strip.split(".")
+        if eval_criteria[-1] == "":
+            eval_criteria = eval_criteria[-2]
+        else:
+            eval_criteria = eval_criteria[-1]
+        intro_prompt = judge_prompt.replace(eval_criteria+".", "")
+        metric = GEval(
+            name=metric_name,
+            task_introduction=intro_prompt,
+            evaluation_criteria=eval_criteria,
+            model=f'ollama_chat/{self.__model_name}'
+        )
+        logger.info(f"Using metric: {metric_name} to compute the score:")
+        score = metric.score(
+            input=prompt,
+            output=agent_response,
+            expected_output=expected_response,
+            context=system_prompt
+        )
+        logger.info(f"Score: {score}")
+        return score

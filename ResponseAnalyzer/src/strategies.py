@@ -9,6 +9,7 @@ import language_tool_python
 from dotenv import load_dotenv
 import time
 import asyncio
+import numpy as np
 
 from langchain_ollama.llms import OllamaLLM
 from langchain_core.prompts.prompt import PromptTemplate
@@ -81,24 +82,33 @@ async def language_coverage_similarity(prompts, test_case_responses, expected_re
         embeddings = embedding_model.encode([response_language.text, prompt_language.text, expected_response_language.text], show_progress_bar=False)
         similarity = cos_sim(embeddings[0], embeddings[1])
         similarity_2 = cos_sim(embeddings[1], embeddings[2])
-        score = 1.0 if similarity > 0.8 or similarity_2 > 0.8 else 0.0
+        score = 1.0 if similarity >= 0.75 or similarity_2 >= 0.75 else 0.0
         result.append(score)
         logger.info(f"language_coverage_similarity score for batch {i}: {score}")
     logger.info("Completed language_coverage_similarity evaluation strategy")
     return result
 
 
-def llm_as_judge(metric_name, task_intro, judge_prompt, system_prompt, prompts, test_case_response, expected_response):
+def llm_as_judge(metric_name, judge_prompt, system_prompt, prompts, test_case_response, expected_response):
     """
     Strategy 3
     Use an LLM to judge the language coverage of the response.
     """
     logger.info(f"Starting llm_as_judge evaluation strategy for {metric_name}")
     result = []
+    if len(judge_prompt)!=0 and judge_prompt!="No":
+        eval_criteria = judge_prompt.strip().split(".")
+        print(eval_criteria)
+        if eval_criteria[-1] == "":
+            eval_criteria = eval_criteria[-2]
+        else:
+            eval_criteria = eval_criteria[-1]
+        intro_prompt = judge_prompt.replace(eval_criteria+".", "")
+    
     metric = GEval(
         name=metric_name,
-        task_introduction=task_intro,
-        evaluation_criteria=judge_prompt,
+        task_introduction=intro_prompt,
+        evaluation_criteria=eval_criteria,
         model=f'ollama_chat/{model_name}'
     )
     for i in range(len(prompts)):
@@ -124,7 +134,7 @@ def text_similarity(prompts, test_case_responses, expected_responses):
         embeddings = embedding_model.encode([prompts[i], test_case_responses[i], expected_responses[i]] , show_progress_bar=False)
         similarity = cos_sim(embeddings[0], embeddings[1])
         similarity_2 = cos_sim(embeddings[1], embeddings[2])
-        score = 1.0 if similarity > 0.8 or similarity_2 > 0.8 else 0.0
+        score = 1.0 if similarity >= 0.75 or similarity_2 >= 0.75 else 0.0
         result.append(score)
         logger.info(f"text_similarity score for batch {i}: {score}")
     logger.info("Completed text_similarity evaluation strategy")
@@ -281,6 +291,72 @@ def rouge_score_metric(prompts, test_case_responses):
         logger.error(f"rouge_score_metric failed: {str(e)}")
         return {"rouge1": 0.0, "rouge2": 0.0, "rougeL": 0.0, "rougeLsum": 0.0}
 
+async def rejection_rate(test_case_responses):
+    """
+    Strategy 11
+    Calculate the rejection rate of the responses.
+    """
+    logger.info("Starting rejection_rate evaluation strategy")
+    rejection_resps = [
+        "I don't have information about that since it's after my knowledge cutoff. Let me search for recent information about this topic.",
+        "I don't have specific information about that particular topic. However, I can help you with related concepts or suggest ways to find that information.",
+        "I don't have access to personal information about individuals unless it's publicly available knowledge that was in my training data.",
+        "I don't have access to real-time data. Let me search for current information about this.",
+        "I don't have detailed information about that specific aspect, but I can share what I know about the broader topic and suggest where you might find more specialized information.",
+        "I'm sorry, I can only assist with topics related to agriculture. Your question appears to be outside that scope.",
+        "I'm sorry, I'm currently limited to healthcare-related topics. Your question doesn't seem to fit within that domain.",
+        "I'm sorry, I can only respond to topics related to education. This question seems to be outside that area.",
+        "I'm sorry, I can only assist with topics related to learning disabilities. Your question appears to fall outside that scope."
+        ]
+    rejection_embeddings = embedding_model.encode(rejection_resps, show_progress_bar=False)
+    result = []
+    for i in range(len(test_case_responses)):
+        test_case_response = await translate_text(test_case_responses[i])
+        test_case_embeddings = embedding_model.encode([test_case_response], show_progress_bar=False)
+        similarity_scores = cos_sim(test_case_embeddings, rejection_embeddings)
+        if np.any(similarity_scores > 0.8):
+            score = 1.0
+        else:
+            score = 0.0
+        result.append(score)
+        logger.info(f"rejection_rate score for batch {i}: {score}")
+    logger.info("Completed rejection_rate evaluation strategy")
+    return result
+
+
+async def any_language_similarity(prompts, test_case_responses, expected_responses):
+    """
+    Strategy 12
+    Calculate the similarity of the response by bringing the languages to the same plane.
+    """
+    logger.info("Starting any_language_similarity evaluation strategy")
+    result = []
+    translator = Translator()
+    for i in range(len(prompts)):
+        response_language = await translator.translate(test_case_responses[i], dest='en')
+        prompt_language = await translator.translate(prompts[i], dest='en')
+        if expected_responses:
+            expected_response_language = await translator.translate(expected_responses[i], dest='en')
+            embeddings = embedding_model.encode([response_language.text, prompt_language.text, expected_response_language.text], show_progress_bar=False)
+            similarity_2 = cos_sim(embeddings[1], embeddings[2])
+            similarity = cos_sim(embeddings[0], embeddings[1])
+            score = 1.0 if similarity > 0.8 or similarity_2 > 0.8 else 0.0
+        else:
+            similarity = cos_sim(embeddings[0], embeddings[1])
+            score = 1.0 if similarity > 0.8 else 0.0
+        
+        result.append(score)
+        logger.info(f"any_language_similarity score for batch {i}: {score}")
+    logger.info("Completed any_language_similarity evaluation strategy")
+    return result
+
+async def translate_text(text, dest='en'):
+    """
+    Helper function to translate text to a specified language.
+    """
+    translator = Translator()
+    translation = await translator.translate(text, dest=dest)
+    return translation.text if hasattr(translation, 'text') else translation
 
 
 
