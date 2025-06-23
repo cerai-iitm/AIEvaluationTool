@@ -7,7 +7,7 @@ import evaluate
 import warnings
 from sentence_transformers.util import cos_sim
 from evaluate import load
-from bart_score import BARTScorer
+from utils.utils import BARTScorer
 
 logging.basicConfig(
     level=logging.INFO,  
@@ -101,7 +101,7 @@ class SimilarityMatchStrategy(Strategy):
             return {"rouge1": 0.0, "rouge2": 0.0, "rougeL": 0.0, "rougeLsum": 0.0}
         
 
-    def evaluate_similarity(self, agent_response: str, expected_response: Optional[str] = None) -> float:
+    def evaluate(self, agent_response: str, expected_response: Optional[str] = None) -> float:
         """
         Evaluate the agent's response using similarity matching.
         
@@ -134,8 +134,5 @@ class SimilarityMatchStrategy(Strategy):
                 return score[0]
             case _:
                 raise ValueError(f"Unknown metric name: {self.__metric_name}")
-        
-                
-        # Placeholder for actual similarity matching logic
 
         return 0.0  # Replace with actual evaluation logic
