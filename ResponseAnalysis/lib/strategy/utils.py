@@ -71,7 +71,7 @@ def sarvam_translate(text: str, target_lang: str = "en") -> str:
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForCausalLM.from_pretrained(model_name).to('cuda:0')
     messages = [
-        {"role": "system", "content": f"Translate the text below to {target_lang}."},
+        {"role": "system", "content": f"Translate    the text below to {target_lang}."},
         {"role": "user", "content": text}
     ]
     text = tokenizer.apply_chat_template(

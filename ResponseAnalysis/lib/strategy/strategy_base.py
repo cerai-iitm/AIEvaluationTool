@@ -28,7 +28,7 @@ class Strategy(ABC):
         """
         pass
 
-    @abstractmethod
+    # @abstractmethod
     def evaluate_concurrent(self, prompt:list, agent_response: list, expected_response: Optional[list]=None) -> float:
         """
         Evaluate the agent's response against the list of expected responses.

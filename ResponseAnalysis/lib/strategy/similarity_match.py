@@ -7,7 +7,8 @@ import evaluate
 import warnings
 from sentence_transformers.util import cos_sim
 from evaluate import load
-from utils.utils import BARTScorer
+from bart_score import BARTScorer
+from sentence_transformers import SentenceTransformer
 
 logging.basicConfig(
     level=logging.INFO,  
@@ -28,9 +29,10 @@ class SimilarityMatchStrategy(Strategy):
         super().__init__(name, kwargs=kwargs)
         # Initialize the metric name for similarity matching
         # `metric_name` can be "bert_similarity", "cosine_similarity", or "rouge_similarity", "meteor_similarity", "bleu_similarity", "bart_score_similarity"
-        self.__metric_name = kwargs.get("metric_name", "bert_similarity")
+        self.__metric_name = kwargs.get("metric_name")
+        #self.embedding_model = SentenceTransformer('sentence-transformers/distiluse-base-multilingual-cased-v1')
 
-    def bleu_score_metric(predictions, references):
+    def bleu_score_metric(self, predictions, references):
         """
         Calculates the BLEU score between predicted and reference texts.
         Parameters:
@@ -48,11 +50,11 @@ class SimilarityMatchStrategy(Strategy):
             score = sentence_bleu([ref_tokens], pred_tokens, smoothing_function=smoothie)
         except Exception:
             score = 0.0
-        logger.info(f"bleu_score_metric score {i}: {score}")
+        logger.info(f"bleu_score_metric score: {score}")
         logger.info("Completed bleu_score_metric evaluation strategy")
         return score
     
-    def meteor_metric(prompts, test_case_responses):
+    def meteor_metric(self, prompts, test_case_responses):
         """
         Compute METEOR score for each predicted sentence vs. its reference.
         Parameters:
@@ -78,9 +80,10 @@ class SimilarityMatchStrategy(Strategy):
         return score
 
 
-    def rouge_score_metric(prompts, test_case_responses):
+    def rouge_score_metric(self, test_case_responses, expected_responses):
         """
-        Compute average ROUGE scores over a batch of predictions and references.
+        Com
+        pute average ROUGE scores over a batch of predictions and references.
         Parameters:
         - prompts (list of str): Reference (ground truth) sentences.
         - test_case_responses (list of str): Predicted/generated responses.
@@ -92,14 +95,23 @@ class SimilarityMatchStrategy(Strategy):
             rouge = evaluate.load("rouge")
             # all_scores = {'rouge1': 0.0, 'rouge2': 0.0, 'rougeL': 0.0, 'rougeLsum': 0.0}
             prediction = test_case_responses
-            reference = prompts
+            reference = expected_responses
             results = rouge.compute(predictions=[prediction], references=[reference])
             logger.info(f"rouge_score_metric scores: {results}")
             return results
         except Exception as e:
             logger.error(f"rouge_score_metric failed: {str(e)}")
             return {"rouge1": 0.0, "rouge2": 0.0, "rougeL": 0.0, "rougeLsum": 0.0}
-        
+    
+    def cosine_similarity_metric(self, agent_response:str, expected_response:str) -> float:
+        """
+        Computes the cosine similarity between 2 sentences using sentence transformers embeddings.
+        """
+        embedding_model = SentenceTransformer('sentence-transformers/distiluse-base-multilingual-cased-v1')
+        embeddings = embedding_model.encode([agent_response,expected_response])
+        similarity = cos_sim(embeddings[0],embeddings[1])
+        return similarity[0][0]
+
 
     def evaluate(self, agent_response: str, expected_response: Optional[str] = None) -> float:
         """
@@ -112,11 +124,11 @@ class SimilarityMatchStrategy(Strategy):
 
         match self.__metric_name:
             case "bert_similarity":
-                bertscore = load("bert_score")
+                bertscore = load("bertscore")
                 results = bertscore.compute(predictions=[agent_response], references=[expected_response], lang="en")
                 return results['f1'][0]  # Return the F1 score from BERTScore
             case "cosine_similarity":
-                cos_sim_score = cos_sim(agent_response,expected_response)
+                cos_sim_score = self.cosine_similarity_metric(agent_response,expected_response)
                 return cos_sim_score
             case "rouge_similarity":
                 score = self.rouge_score_metric(expected_response, agent_response)
@@ -136,3 +148,14 @@ class SimilarityMatchStrategy(Strategy):
                 raise ValueError(f"Unknown metric name: {self.__metric_name}")
 
         return 0.0  # Replace with actual evaluation logic
+    
+#Test
+# sm_instance = SimilarityMatchStrategy(metric_name="bart_score_similarity")
+# score = sm_instance.evaluate("hello world","gomenasai")
+# print(f"Score: {score}")
+# score = sm_instance.evaluate("hello world","hello gokul")
+# print(f"Score: {score}")
+# score = sm_instance.evaluate("hello world","hello world")
+# print(f"Score: {score}")
+# del sm_instance
+## Similarity Score have been tested and works well.

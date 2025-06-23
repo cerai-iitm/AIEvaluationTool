@@ -6,7 +6,7 @@ import warnings
 from sentence_transformers.util import cos_sim
 from sentence_transformers import SentenceTransformer
 from similarity_match import SimilarityMatchStrategy
-from utils.utils import detect_text, google_lang_translate, language_detection, sarvam_translate
+from utils import detect_text, google_lang_translate, language_detection, sarvam_translate
 
 logging.basicConfig(
     level=logging.INFO,  
@@ -56,8 +56,8 @@ class LanguageStrategies(Strategy):
         logger.info("Evaluating language coverage...")
         response_language = language_detection(agent_response)
         prompt_language = language_detection(prompt)
-        score = 1.0 if response_language.lang == prompt_language.lang else 0.0
-        logger.info(f"Response language: {response_language.lang}, Prompt language: {prompt_language.lang}, Score: {score}")
+        score = 1.0 if response_language == prompt_language else 0.0
+        logger.info(f"Response language: {response_language}, Prompt language: {prompt_language}, Score: {score}")
         return score
     
     async def language_similarity_gt(self, agent_response: str, expected_response: Optional[str] = None) -> float:
@@ -101,11 +101,12 @@ class LanguageStrategies(Strategy):
         logger.info("Evaluating language similarity...")
         response_language = language_detection(agent_response)
         text_list = []
-        if response_language.lang !="en":
+        if response_language !="en":
             response_translated = sarvam_translate(agent_response)
         else:
             response_translated = agent_response
-        if expected_response.lang != "en":
+        expected_language = language_detection(expected_response)
+        if expected_language != "en":
             expected_response_translated = sarvam_translate(expected_response)
         else:
             expected_response_translated = expected_response
@@ -120,5 +121,20 @@ class LanguageStrategies(Strategy):
             score = 0.0
         return score
         
-    def evaluate(self, agent_response: str, expected_response: Optional[str] = None) -> float:
-        pass
+    async def evaluate(self, agent_response: str, expected_response: Optional[str] = None) -> float:
+        score = self.language_detect_gt(agent_response, expected_response)
+        print("Language Detection GT:", score)
+        score = self.language_detect_langdetect(agent_response, expected_response)
+        print("Language Detection:", score)
+        score = self.language_similarity_gt(agent_response, expected_response)
+        print("Language Similarity GT:", score)
+        # score = self.language_similarity_sarvam(agent_response, expected_response)
+        # print("Language Similarity Sarvam:", score)
+
+#Test
+lg_instance = LanguageStrategies()
+result = asyncio.run(lg_instance.evaluate("இந்தியா என்பது பரந்த பாரம்பரியமும் பண்பாடும் கொண்ட நாடாகும். இங்கு பல மதங்கள், மொழிகள் மற்றும் கலாசாரங்கள் ஒன்றிணைந்து வாழ்கின்றன.அது உலகிலேயே மிகப்பெரிய ஜனநாயக நாடாகும்.","இந்தியா ஒரு பன்முகம் கொண்ட கலாச்சார நாடு. மொழி, மதம், உணவு மற்றும் உடைமுறை அனைத்திலும் வெவ்வேறு பண்புகள் காணப்படுகின்றன. இது உலகின் மிகப் பெரிய ஜனநாயகமானது."))
+#print("#########")
+#lg_instance.evaluate("இந்தியா என்பது பரந்த பாரம்பரியமும் பண்பாடும் கொண்ட நாடாகும். இங்கு பல மதங்கள், மொழிகள் மற்றும் கலாசாரங்கள் ஒன்றிணைந்து வாழ்கின்றன.அது உலகிலேயே மிகப்பெரிய ஜனநாயக நாடாகும்.","India is a land of vast heritage and culture. It is the largest democracy in the world with many religions, languages and cultures living together.")
+del lg_instance
+# Language Strategy to be fixed! - Language Similarity GT: <coroutine object LanguageStrategies.language_similarity_gt at 0x7434965e70a0>
