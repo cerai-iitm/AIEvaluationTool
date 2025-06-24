@@ -218,7 +218,7 @@ class DB:
                 return getattr(new_domain, "domain_id")
         except IntegrityError as e:
             self.logger.error(f"Domain '{domain_name}' already exists. Error: {e}")
-            return None
+            return -1
 
     def get_domain_name(self, domain_id: int) -> Optional[str]:
         """
@@ -437,7 +437,7 @@ class DB:
                 return -1
             
             # If a response is provided, create a Responses object
-            response_id = self.add_response(response, prompt_id) if response else None
+            response_id = self.add_or_get_response(response, prompt_id) if response else None
 
             with self.Session() as session:
                 self.logger.debug(f"Creating test case (name:{testcase_name}) ..")
@@ -755,7 +755,7 @@ class DB:
                 
                 # Add the new metric to the session
                 #session.add(new_metric)
-                
+
                 # Commit the session to save all changes
                 session.commit()
                 
