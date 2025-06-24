@@ -6,7 +6,7 @@ import json
 # setup the relative import path for data module.
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from data import Prompt, TestCase, Response, TestPlan, Metric
+from data import Prompt, TestCase, Response, TestPlan, Metric, LLMJudgePrompt
 
 # __len__ __getitem__ __setitem__ __delitem__ __iter__ __contains__
 # __enter__ __exit__  contextual management methods for the DB class
@@ -19,6 +19,8 @@ prompts = json.load(open('Data/DataPoints.json', 'r'))
 
 domain_general = db.add_or_get_domain_id(domain_name='general')
 domain_agriculture = db.add_or_get_domain_id(domain_name='agriculture')
+
+lang_auto = db.add_or_get_language_id(language_name='auto')
 
 metrics_lookup = {}
 
@@ -35,11 +37,51 @@ for plan in plans.keys():
 
     db.add_testplan_and_metrics(plan=test_plan, metrics=metrics_list)
 
+for met in prompts.keys():
+    if met not in metrics_lookup:
+        print(f"Warning: Metric '{met}' not found in plans. Skipping...")
+        continue
+    metric_name = metrics_lookup.get(met)
+    metric_obj = Metric(metric_name=str(metric_name), domain_id=domain_general)
 
+    testcases = prompts[met]["cases"]
 
+    tcases = []
+    for case in testcases:
+        if 'DOMAIN' in case:
+            domain_id = db.add_or_get_domain_id(domain_name=case['DOMAIN'])
+        else:
+            domain_id = domain_general
+        
+        prompt = Prompt(system_prompt=case['SYSTEM_PROMPT'], 
+                      user_prompt=case['PROMPT'], 
+                      domain_id=domain_id, 
+                      lang_id=lang_auto)
+
+        strategy = 'auto'
+        judge_prompt = None
+        if 'LLM_AS_JUDGE' in case and case['LLM_AS_JUDGE'] != "No":
+            strategy = 'llm_as_judge'
+            judge_prompt = LLMJudgePrompt(prompt=case['LLM_AS_JUDGE'])
+
+        response = None
+        if 'EXPECTED_OUTPUT' in case:
+            response = Response(response_text=case['EXPECTED_OUTPUT'], 
+                                response_type='GT', 
+                                lang_id=lang_auto)
+        
+        tc = TestCase(name=case['PROMPT_ID'], 
+                      prompt=prompt, 
+                      strategy=strategy, 
+                      response=response, 
+                      judge_prompt=judge_prompt)
+        tcases.append(tc)
+    db.add_metric_and_testcases(testcases=tcases, metric=metric_obj)
+
+        
 #print("\n".join([repr(_) for _ in db.languages]))
 #print(db.get_language_name(2))
-lang_english = db.get_language_id('english')
+lang_english = db.add_or_get_language_id('english')
 domain_id = db.add_or_get_domain_id('agriculture')
 strategy_id = db.add_or_get_strategy_id('auto')
 

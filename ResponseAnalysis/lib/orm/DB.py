@@ -94,7 +94,7 @@ class DB:
                              strategy_id=getattr(strategy, 'strategy_id')) for strategy in session.query(Strategies).all()]
         return None
     
-    def add_or_get_strategy_id(self, strategy_name: str) -> Optional[int]:
+    def add_or_get_strategy_id(self, strategy_name: str) -> int:
         """
         Fetches the ID of a strategy by its name.
         
@@ -122,10 +122,6 @@ class DB:
             # Return the ID of the newly added strategy
             return getattr(new_strategy, "strategy_id")
         
-            #sql = select(Strategies).where(Strategies.strategy_name == strategy_name)
-            #result = session.execute(sql).scalar_one_or_none()
-            #return getattr(result, 'strategy_id', None) if result else None
-        
     def get_strategy_name(self, strategy_id: int) -> Optional[str]:
         """
         Fetches the name of a strategy by its ID.
@@ -141,38 +137,40 @@ class DB:
             result = session.execute(sql).scalar_one_or_none()
             return getattr(result, 'strategy_name', None) if result else None
 
-    def add_language(self, lang_name: str) -> Optional[int]:
-        with self.Session() as session:
-            new_lang = Languages(lang_name=lang_name)
-            try:
-                session.add(new_lang)
-                session.commit()
-                # Ensure lang_id is populated
-                session.refresh(new_lang)  
-                self.logger.debug(f"Language added successfully: {new_lang.lang_id}")
-                
-                # Return the ID of the newly added response
-                return getattr(new_lang, "lang_id")
-            except IntegrityError as e:
-                self.logger.error(f"Language '{lang_name}' already exists. Error: {e}")
-                return None
-
-    def get_language_id(self, lang_name: str) -> Optional[int]:
+    def add_or_get_language_id(self, language_name: str) -> Optional[int]:
         """
-        Fetches the ID of a language by its name.
+        Adds a new language to the database or fetches its ID if it already exists.
         
         Args:
-            lang_name (str): The name of the language to fetch.
+            language_name (str): The name of the language to be added or fetched.
         
         Returns:
-            Optional[int]: The ID of the language if found, otherwise None.
+            Optional[int]: The ID of the language if found or added, otherwise None.
         """
-        with self.Session() as session:
-            sql = select(Languages).where(Languages.lang_name == lang_name)
-            result = session.execute(sql).scalar_one_or_none()
-            return getattr(result, 'lang_id', None) if result else None
-            #return result.lang_id if result else None
-    
+        try:
+            with self.Session() as session:
+                # Check if the language already exists in the database.
+                existing_language = session.query(Languages).filter_by(lang_name=language_name).first()
+                if existing_language:
+                    self.logger.debug(f"Returning the existing language ID: {existing_language.lang_id}")
+                    # Return the ID of the existing language
+                    return getattr(existing_language, "lang_id")
+                
+                self.logger.debug(f"Adding new language: {language_name}")
+                # If the language does not exist, create a new one
+                new_language = Languages(lang_name=language_name)
+                session.add(new_language)
+                session.commit()
+                # Ensure lang_id is populated
+                session.refresh(new_language)  
+                self.logger.debug(f"Language added successfully: {new_language.lang_id}")
+                
+                # Return the ID of the newly added language
+                return getattr(new_language, "lang_id")
+        except IntegrityError as e:
+            self.logger.error(f"Language '{language_name}' already exists. Error: {e}")
+            return None
+
     def get_language_name(self, lang_id: int) -> Optional[str]:
         """
         Fetches the name of a language by its ID.
@@ -189,7 +187,7 @@ class DB:
             #return result.lang_name if result else None
             return getattr(result, 'lang_name', None) if result else None
         
-    def add_or_get_domain_id(self, domain_name: str) -> Optional[int]:
+    def add_or_get_domain_id(self, domain_name: str) -> int:
         """
         Adds a new domain to the database.
         
@@ -204,7 +202,7 @@ class DB:
                 # check if the domain already exists in the database.
                 existing_domain = session.query(Domains).filter_by(domain_name=domain_name).first()
                 if existing_domain:
-                    self.logger.debug(f"Returning the existing domain ID: {existing_domain.domain_id}")
+                    self.logger.debug(f"Returning the existing domain ({domain_name}) ID: {existing_domain.domain_id}")
                     # Return the ID of the existing domain
                     return getattr(existing_domain, "domain_id")
                 
@@ -460,6 +458,50 @@ class DB:
             self.logger.error(f"Test case (name:{testcase_name}) cannot be added. Error: {e}")
             return -1
         
+    def add_or_get_response(self, response: Response, prompt_id:Optional[int] = None) -> int:
+        """
+        Adds a new response to the database or fetches its ID if it already exists.
+        
+        Args:
+            response (Response): The Response object to be added.
+        
+        Returns:
+            int: The ID of the newly added response, or -1 if it already exists.
+        """
+        try:
+            with self.Session() as session:
+                # Check if the response already exists in the database.
+                existing_response = session.query(Responses).filter_by(hash_value=response.digest).first()
+                if existing_response:
+                    self.logger.debug(f"Returning the existing response ID: {existing_response.response_id}")
+                    # Return the ID of the existing response
+                    return getattr(existing_response, "response_id")
+                
+                self.logger.debug(f"Adding new response: {response.response_text}")
+                # create the orm object for the response to insert into the database table.
+                new_response = Responses(response_text=response.response_text, 
+                                         response_type=response.response_type,
+                                         prompt_id=prompt_id if prompt_id else getattr(response, 'prompt_id'),  # Get the prompt ID
+                                         # Get the language ID from kwargs if provided
+                                         lang_id=getattr(response, "lang_id", Language.autodetect),  
+                                         hash_value=response.digest)
+                
+                # Add the new response to the session
+                session.add(new_response)
+                # Commit the session to save the new response
+                session.commit()
+                # Ensure response_id is populated
+                session.refresh(new_response)  
+
+                self.logger.debug(f"Response added successfully: {new_response.response_id}")
+                
+                # Return the ID of the newly added response
+                return getattr(new_response, "response_id")
+        except IntegrityError as e:
+            # Handle the case where the response already exists
+            self.logger.error(f"Response already exists: {response}. Error: {e}")
+            return -1
+        
     def get_response(self, response_id: int) -> Optional[Response]:
         """
         Fetches a response by its ID.
@@ -482,44 +524,6 @@ class DB:
                             prompt_id=result.prompt_id,
                             lang_id=result.lang_id,
                             digest=result.hash_value)
-        
-    def add_response(self, response: Response, prompt_id: int) -> int:
-        """
-        Adds a new response to the database.
-        
-        Args:
-            response (Response): The Response object to be added.
-        
-        Returns:
-            int: The ID of the newly added response, or -1 if it already exists.
-        """
-        try:
-            with self.Session() as session:
-                # Default to the default language ID if not provided
-                lang_id = response.kwargs.get("lang_id", Language.autodetect)  # Get the language ID from kwargs if provided
-
-                # create the orm object for the response to insert into the database table.
-                new_response = Responses(response_text=response.response_text, 
-                                         response_type=response.response_type,
-                                         prompt_id=prompt_id,  # Get the prompt ID
-                                         lang_id=lang_id,
-                                         hash_value=response.digest)
-                
-                # Add the new response to the session
-                session.add(new_response)
-                # Commit the session to save the new response
-                session.commit()
-                # Ensure response_id is populated
-                session.refresh(new_response)  
-
-                self.logger.debug(f"Response added successfully: {new_response.response_id}")
-                
-                # Return the ID of the newly added response
-                return getattr(new_response, "response_id")
-        except IntegrityError as e:
-            # Handle the case where the response already exists
-            self.logger.error(f"Response already exists: {response}. Error: {e}")
-            return -1
         
     def get_judge_prompt(self, judge_prompt_id: int) -> Optional[LLMJudgePrompt]:
         """
@@ -610,6 +614,8 @@ class DB:
         
         Args:
             prompt (Prompt): The Prompt object to be added.
+            returns:
+            int: The ID of the newly added prompt, or -1 if it already exists.
         """
         try:
             with self.Session() as session:
@@ -718,24 +724,38 @@ class DB:
                         return False
                     
                     # If a response is provided, create a Responses object
-                    response_id = self.add_response(testcase.response, prompt_id) if testcase.response else None
+                    response_id = self.add_or_get_response(testcase.response, prompt_id) if testcase.response else None
                     # If the response already exists, use its ID
                     if response_id == -1:
                         self.logger.error(f"Response '{getattr(testcase.response, "response_text")}' already exists. Cannot add test case.")
                         return False
                     
-                    # Create the TestCases object
-                    new_testcase = TestCases(testcase_name=testcase.name, 
-                                             prompt_id=prompt_id, 
-                                             response_id=response_id,
-                                             strategy_id=testcase.strategy,
-                                             metric=new_metric)  # Associate the metric with the test case
-                    
-                    # Add the new test case to the session
-                    session.add(new_testcase)
+                    # check if the test case is already present
+                    existing_testcase = session.query(TestCases).filter_by(testcase_name=testcase.name).first()
+                    if existing_testcase:
+                        # we need to update the existing test case with the new metric
+                        self.logger.debug(f"Test case '{testcase.name}' already exists. Updating with new metric.")
+                        existing_testcase.metrics.append(new_metric)
+                    else:
+                        # If the test case does not exist, create a new one
+                        self.logger.debug(f"Creating new test case '{testcase.name}' ..")
+                        # Create the TestCases object with the prompt_id and response_id
+                        # and the strategy and judge_prompt_id if provided.
+                            
+                        # Create the TestCases object
+                        new_testcase = TestCases(testcase_name=testcase.name, 
+                                                prompt_id=prompt_id, 
+                                                response_id=response_id,
+                                                strategy_id=testcase.strategy,
+                                                judge_prompt_id=judge_prompt_id,
+                                                metrics=[new_metric])  # Associate the metric with the test case
+                        
+                        # Add the new test case to the session
+                        session.add(new_testcase)
                 
                 # Add the new metric to the session
-                session.add(new_metric)
+                #session.add(new_metric)
+                
                 # Commit the session to save all changes
                 session.commit()
                 
@@ -788,7 +808,51 @@ class DB:
             # Check if the metric already exists in the database
             metric = session.query(Metrics).filter_by(metric_name=metric_name).first()
             if not metric:
+                self.logger.debug(f"Metric '{metric_name}' does not exist. Creating a new one.")
                 metric = Metrics(metric_name=metric_name, domain_id=domain_id, metric_description=metric_description)
                 session.add(metric)
                 session.commit()
+            self.logger.debug(f"Returning metric ID: {metric.metric_id} for metric '{metric_name}'")
             return metric
+        
+    def add_or_get_llm_judge_prompt(self, judge_prompt: LLMJudgePrompt) -> int:
+        """
+        Adds a new LLM judge prompt to the database or fetches its ID if it already exists.
+        
+        Args:
+            judge_prompt (LLMJudgePrompt): The LLMJudgePrompt object to be added.
+        
+        Returns:
+            int: The ID of the newly added judge prompt, or -1 if it already exists.
+        """
+        try:
+            with self.Session() as session:
+                # Check if the judge prompt already exists in the database
+                existing_judge_prompt = session.query(LLMJudgePrompts).filter_by(hash_value=judge_prompt.digest).first()
+                if existing_judge_prompt:
+                    self.logger.debug(f"Returning the existing judge prompt ID: {existing_judge_prompt.prompt_id}")
+                    # Return the ID of the existing judge prompt
+                    return getattr(existing_judge_prompt, "prompt_id")
+                
+                self.logger.debug(f"Adding new judge prompt: {judge_prompt.prompt}")
+
+                # Create the LLMJudgePrompts object
+                new_judge_prompt = LLMJudgePrompts(prompt_text=judge_prompt.prompt, 
+                                                   lang_id=getattr(judge_prompt, "lang_id", Language.autodetect),  # Get the language ID from kwargs if provided
+                                                   hash_value=judge_prompt.digest)
+                
+                # Add the new judge prompt to the session
+                session.add(new_judge_prompt)
+                # Commit the session to save the new judge prompt
+                session.commit()
+                # Ensure prompt_id is populated
+                session.refresh(new_judge_prompt)  
+
+                self.logger.debug(f"Judge prompt added successfully: {new_judge_prompt.prompt_id}")
+                
+                # Return the ID of the newly added judge prompt
+                return getattr(new_judge_prompt, "prompt_id")
+        except IntegrityError as e:
+            # Handle the case where the judge prompt already exists
+            self.logger.error(f"Judge prompt already exists: {judge_prompt}. Error: {e}")
+            return -1
