@@ -385,7 +385,7 @@ class DB:
         strategy_id = strategy
         if isinstance(strategy, str):
             # If strategy is a string, fetch the strategy ID from the database
-            strategy_id = self.get_strategy_id(strategy)
+            strategy_id = self.add_or_get_strategy_id(strategy)
             if strategy_id is None:
                 self.logger.error(f"Strategy '{strategy}' does not exist.")
                 return -1
@@ -426,7 +426,7 @@ class DB:
         strategy_id = strategy
         if isinstance(strategy, str):
             # If strategy is a string, fetch the strategy ID from the database
-            strategy_id = self.get_strategy_id(strategy)
+            strategy_id = self.add_or_get_strategy_id(strategy)
             if strategy_id is None:
                 self.logger.error(f"Strategy '{strategy}' does not exist.")
                 return -1
