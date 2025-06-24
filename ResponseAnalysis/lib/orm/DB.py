@@ -94,7 +94,7 @@ class DB:
                              strategy_id=getattr(strategy, 'strategy_id')) for strategy in session.query(Strategies).all()]
         return None
     
-    def get_strategy_id(self, strategy_name: str) -> Optional[int]:
+    def add_or_get_strategy_id(self, strategy_name: str) -> Optional[int]:
         """
         Fetches the ID of a strategy by its name.
         
@@ -105,9 +105,26 @@ class DB:
             Optional[int]: The ID of the strategy if found, otherwise None.
         """
         with self.Session() as session:
-            sql = select(Strategies).where(Strategies.strategy_name == strategy_name)
-            result = session.execute(sql).scalar_one_or_none()
-            return getattr(result, 'strategy_id', None) if result else None
+            # Check if the strategy already exists in the database.
+            existing_strategy = session.query(Strategies).filter_by(strategy_name=strategy_name).first()
+            if existing_strategy:
+                self.logger.debug(f"Returning the existing strategy ID: {existing_strategy.strategy_id}")
+                # Return the ID of the existing strategy
+                return getattr(existing_strategy, "strategy_id") 
+            self.logger.debug(f"Adding new strategy: {strategy_name}")
+            # If the strategy does not exist, create a new one
+            new_strategy = Strategies(strategy_name=strategy_name)
+            session.add(new_strategy)
+            session.commit()
+            # Ensure strategy_id is populated
+            session.refresh(new_strategy)
+            self.logger.debug(f"Strategy added successfully: {new_strategy.strategy_id}")
+            # Return the ID of the newly added strategy
+            return getattr(new_strategy, "strategy_id")
+        
+            #sql = select(Strategies).where(Strategies.strategy_name == strategy_name)
+            #result = session.execute(sql).scalar_one_or_none()
+            #return getattr(result, 'strategy_id', None) if result else None
         
     def get_strategy_name(self, strategy_id: int) -> Optional[str]:
         """
@@ -172,7 +189,7 @@ class DB:
             #return result.lang_name if result else None
             return getattr(result, 'lang_name', None) if result else None
         
-    def add_domain(self, domain_name: str) -> Optional[int]:
+    def add_or_get_domain_id(self, domain_name: str) -> Optional[int]:
         """
         Adds a new domain to the database.
         
@@ -184,6 +201,14 @@ class DB:
         """
         try:
             with self.Session() as session:
+                # check if the domain already exists in the database.
+                existing_domain = session.query(Domains).filter_by(domain_name=domain_name).first()
+                if existing_domain:
+                    self.logger.debug(f"Returning the existing domain ID: {existing_domain.domain_id}")
+                    # Return the ID of the existing domain
+                    return getattr(existing_domain, "domain_id")
+                
+                self.logger.debug(f"Adding new domain: {domain_name}")
                 new_domain = Domains(domain_name=domain_name)
                 session.add(new_domain)
                 session.commit()
@@ -197,22 +222,6 @@ class DB:
             self.logger.error(f"Domain '{domain_name}' already exists. Error: {e}")
             return None
 
-    def get_domain_id(self, domain_name: str) -> Optional[int]:
-        """
-        Fetches the ID of a domain by its name.
-        
-        Args:
-            domain_name (str): The name of the domain to fetch.
-        
-        Returns:
-            Optional[int]: The ID of the domain if found, otherwise None.
-        """
-        with self.Session() as session:
-            sql = select(Domains).where(Domains.domain_name == domain_name)
-            result = session.execute(sql).scalar_one_or_none()
-            #return result.domain_id if result else None
-            return getattr(result, 'domain_id', None) if result else None
-    
     def get_domain_name(self, domain_id: int) -> Optional[str]:
         """
         Fetches the name of a domain by its ID.
@@ -424,7 +433,7 @@ class DB:
 
         try:
             # Add the prompt to the database and get its ID
-            prompt_id = self.add_prompt(prompt)  
+            prompt_id = self.add_or_get_prompt(prompt)  
             if prompt_id == -1:
                 self.logger.error(f"Prompt '{prompt.user_prompt}' already exists. Cannot create test case.")
                 return -1
@@ -528,7 +537,7 @@ class DB:
             if result is None:
                 self.logger.error(f"Judge prompt with ID '{judge_prompt_id}' does not exist.")
                 return None
-            return LLMJudgePrompt(judge_prompt=str(result.judge_prompt),
+            return LLMJudgePrompt(judge_prompt=str(result.prompt),
                                   lang_id=getattr(result, 'lang_id', Language.autodetect),  # Get the language ID from kwargs if provided
                                   digest=result.hash_value)
         
@@ -550,9 +559,9 @@ class DB:
                     # Return the ID of the existing judge prompt
                     return getattr(existing_judge_prompt, "prompt_id")
                     
-                self.logger.debug(f"Adding new judge prompt: {judge_prompt.judge_prompt}")
+                self.logger.debug(f"Adding new judge prompt: {judge_prompt.prompt}")
                 # create the orm object for the judge prompt to insert into the database table.
-                new_judge_prompt = LLMJudgePrompts(prompt_text=judge_prompt.judge_prompt, 
+                new_judge_prompt = LLMJudgePrompts(prompt_text=judge_prompt.prompt, 
                                                    lang_id=getattr(judge_prompt, "lang_id", Language.autodetect),  # Get the language ID from kwargs if provided
                                                    hash_value=judge_prompt.digest)
                 
@@ -698,21 +707,21 @@ class DB:
                 # Add each test case associated with the metric
                 for testcase in testcases:
                     # Ensure the prompt is added first
-                    prompt_id = self.add_prompt(testcase.prompt)
+                    prompt_id = self.add_or_get_prompt(testcase.prompt)
                     if prompt_id == -1:
                         self.logger.error(f"Prompt '{testcase.prompt.user_prompt}' already exists. Cannot add test case.")
                         return False
                     
-                    judge_prompt_id = self.add_judge_prompt(testcase.judge_prompt) if testcase.judge_prompt else None
+                    judge_prompt_id = self.add_or_get_judge_prompt(testcase.judge_prompt) if testcase.judge_prompt else None
                     if judge_prompt_id == -1:
-                        self.logger.error(f"Judge prompt '{testcase.judge_prompt.judge_prompt}' already exists. Cannot add test case.")
+                        self.logger.error(f"Judge prompt '{getattr(testcase.judge_prompt, "prompt")}' already exists. Cannot add test case.")
                         return False
                     
                     # If a response is provided, create a Responses object
                     response_id = self.add_response(testcase.response, prompt_id) if testcase.response else None
                     # If the response already exists, use its ID
                     if response_id == -1:
-                        self.logger.error(f"Response '{testcase.response.response_text}' already exists. Cannot add test case.")
+                        self.logger.error(f"Response '{getattr(testcase.response, "response_text")}' already exists. Cannot add test case.")
                         return False
                     
                     # Create the TestCases object

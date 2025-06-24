@@ -17,8 +17,8 @@ db = DB(db_url="mariadb+mariadbconnector://root:ATmega32*@localhost:3306/eval", 
 plans = json.load(open('Data/plans.json', 'r'))
 prompts = json.load(open('Data/DataPoints.json', 'r'))
 
-domain_general = db.add_domain(domain_name='general')
-#db.add_domain(domain_name='agriculture')
+domain_general = db.add_or_get_domain_id(domain_name='general')
+domain_agriculture = db.add_or_get_domain_id(domain_name='agriculture')
 
 metrics_lookup = {}
 
@@ -40,8 +40,8 @@ for plan in plans.keys():
 #print("\n".join([repr(_) for _ in db.languages]))
 #print(db.get_language_name(2))
 lang_english = db.get_language_id('english')
-domain_id = db.get_domain_id('agriculture')
-strategy_id = db.get_strategy_id('Auto')
+domain_id = db.add_or_get_domain_id('agriculture')
+strategy_id = db.add_or_get_strategy_id('auto')
 
 newPrompt = Prompt(system_prompt="Answer yes or no to the following question.", 
                    user_prompt="Can cotton grow in red soil?",

@@ -9,7 +9,7 @@ class LLMJudgePrompt(BaseModel):
         judge_prompt (str): The prompt to use while judging an AI agent response.
         kwargs (dict): Additional keyword arguments for future extensibility.
     """
-    judge_prompt: str = Field(..., description="The prompt to use while judging an AI agent response.")
+    prompt: str = Field(..., description="The prompt to use while judging an AI agent response.")
     kwargs: dict = Field(default_factory=dict, description="Additional keyword arguments for future extensibility.")
 
     def __init__(self, judge_prompt: str, **kwargs):
@@ -35,13 +35,13 @@ class LLMJudgePrompt(BaseModel):
         """
         Returns a string representation of the judge prompt.
         """
-        return f"Judge Prompt: '{self.judge_prompt}'"
+        return f"Judge Prompt: '{self.prompt}'"
     
     def __repr__(self):
         """
         Returns a string representation of the LLMJudgePrompt instance for debugging.
         """
-        return f"LLMJudgePrompt(judge_prompt='{self.judge_prompt!r}')"
+        return f"LLMJudgePrompt(judge_prompt='{self.prompt!r}')"
     
     def __eq__(self, other):
         """
@@ -50,14 +50,14 @@ class LLMJudgePrompt(BaseModel):
         """
         if not isinstance(other, LLMJudgePrompt):
             return False
-        return self.judge_prompt == other.judge_prompt
+        return self.prompt == other.prompt
     
     def __hash__(self):
         """
         Returns a hash of the LLMJudgePrompt instance.
         Uses the judge_prompt to generate a unique hash.
         """
-        return hash(self.judge_prompt)
+        return hash(self.prompt)
     
     @property
     def digest(self) -> str:
@@ -65,4 +65,4 @@ class LLMJudgePrompt(BaseModel):
         Returns a SHA-1 digest of the judge prompt.
         This can be used for quick comparisons or checksums.
         """
-        return hashlib.sha1(self.judge_prompt.encode('utf-8')).hexdigest()
+        return hashlib.sha1(self.prompt.encode('utf-8')).hexdigest()

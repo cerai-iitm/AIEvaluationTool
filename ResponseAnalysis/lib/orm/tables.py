@@ -31,7 +31,7 @@ class LLMJudgePrompts(Base):
     __tablename__ = 'LLMJudgePrompts'
     
     prompt_id = Column(Integer, primary_key=True)
-    judge_prompt = Column(Text, nullable=False)  # Text of the judge prompt
+    prompt = Column(Text, nullable=False)  # Text of the judge prompt
     lang_id = Column(Integer, ForeignKey('Languages.lang_id'), nullable=False)  # Foreign key to Languages
     hash_value = Column(String(100), nullable=False, unique=True)  # Hash value for the prompt
 
