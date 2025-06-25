@@ -12,8 +12,8 @@ class LLMJudgePrompt(BaseModel):
     prompt: str = Field(..., description="The prompt to use while judging an AI agent response.")
     kwargs: dict = Field(default_factory=dict, description="Additional keyword arguments for future extensibility.")
 
-    def __init__(self, judge_prompt: str, **kwargs):
-        super().__init__(judge_prompt=judge_prompt, kwargs=kwargs)
+    def __init__(self, prompt: str, **kwargs):
+        super().__init__(prompt=prompt, kwargs=kwargs)
 
     def __getattr__(self, name: str) -> Any:
         """

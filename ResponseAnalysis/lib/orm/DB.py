@@ -541,7 +541,7 @@ class DB:
             if result is None:
                 self.logger.error(f"Judge prompt with ID '{judge_prompt_id}' does not exist.")
                 return None
-            return LLMJudgePrompt(judge_prompt=str(result.prompt),
+            return LLMJudgePrompt(prompt=str(result.prompt),
                                   lang_id=getattr(result, 'lang_id', Language.autodetect),  # Get the language ID from kwargs if provided
                                   digest=result.hash_value)
         
@@ -565,7 +565,7 @@ class DB:
                     
                 self.logger.debug(f"Adding new judge prompt: {judge_prompt.prompt}")
                 # create the orm object for the judge prompt to insert into the database table.
-                new_judge_prompt = LLMJudgePrompts(prompt_text=judge_prompt.prompt, 
+                new_judge_prompt = LLMJudgePrompts(prompt=judge_prompt.prompt, 
                                                    lang_id=getattr(judge_prompt, "lang_id", Language.autodetect),  # Get the language ID from kwargs if provided
                                                    hash_value=judge_prompt.digest)
                 
@@ -837,7 +837,7 @@ class DB:
                 self.logger.debug(f"Adding new judge prompt: {judge_prompt.prompt}")
 
                 # Create the LLMJudgePrompts object
-                new_judge_prompt = LLMJudgePrompts(prompt_text=judge_prompt.prompt, 
+                new_judge_prompt = LLMJudgePrompts(prompt=judge_prompt.prompt, 
                                                    lang_id=getattr(judge_prompt, "lang_id", Language.autodetect),  # Get the language ID from kwargs if provided
                                                    hash_value=judge_prompt.digest)
                 
