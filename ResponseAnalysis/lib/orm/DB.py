@@ -710,6 +710,8 @@ class DB:
                                                         metric.domain_id, 
                                                         metric.metric_description)
                 
+                new_testcases = []
+
                 # Add each test case associated with the metric
                 for testcase in testcases:
                     # Ensure the prompt is added first
@@ -730,12 +732,21 @@ class DB:
                         self.logger.error(f"Response '{getattr(testcase.response, "response_text")}' already exists. Cannot add test case.")
                         return False
                     
+                    strategy_id = self.add_or_get_strategy_id(testcase.strategy) if isinstance(testcase.strategy, str) else testcase.strategy
+
                     # check if the test case is already present
                     existing_testcase = session.query(TestCases).filter_by(testcase_name=testcase.name).first()
                     if existing_testcase:
                         # we need to update the existing test case with the new metric
-                        self.logger.debug(f"Test case '{testcase.name}' already exists. Updating with new metric.")
-                        existing_testcase.metrics.append(new_metric)
+                        self.logger.debug(f"Test case '{testcase.name}' already exists. Checking for metrics ..")
+                        # collect the metric names
+                        metric_names = set([m.metric_name for m in existing_testcase.metrics])
+                        if new_metric.metric_name not in metric_names:
+                            # If the metric is not already associated with the test case, append it
+                            self.logger.debug(f"Adding metric '{new_metric.metric_name}' to existing test case '{testcase.name}' ..")
+                            existing_testcase.metrics.append(new_metric)
+                        else:
+                            self.logger.debug(f"Metric '{new_metric.metric_name}' already exists for test case '{testcase.name}'. Skipping ..")
                     else:
                         # If the test case does not exist, create a new one
                         self.logger.debug(f"Creating new test case '{testcase.name}' ..")
@@ -746,20 +757,27 @@ class DB:
                         new_testcase = TestCases(testcase_name=testcase.name, 
                                                 prompt_id=prompt_id, 
                                                 response_id=response_id,
-                                                strategy_id=testcase.strategy,
+                                                strategy_id=strategy_id,
                                                 judge_prompt_id=judge_prompt_id,
                                                 metrics=[new_metric])  # Associate the metric with the test case
                         
                         # Add the new test case to the session
-                        session.add(new_testcase)
+                        new_testcases.append(new_testcase)
+                        #session.add(new_testcase)
+                
+                if len(new_testcases) == 0:
+                    self.logger.debug(f"No new test cases to add for metric '{metric.metric_name}'.")
+                    return True
                 
                 # Add the new metric to the session
                 #session.add(new_metric)
+                # Add all new test cases at once
+                session.add_all(new_testcases)
 
                 # Commit the session to save all changes
                 session.commit()
                 
-                self.logger.debug(f"Metric '{metric.metric_name}' and its test cases added successfully.")
+                self.logger.debug(f"Metric '{metric.metric_name}' and its test cases added/updated successfully.")
                 return True
         except IntegrityError as e:
             self.logger.error(f"Metric '{metric.metric_name}' already exists. Error: {e}")
