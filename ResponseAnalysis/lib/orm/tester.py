@@ -12,7 +12,7 @@ from data import Prompt, TestCase, Response, TestPlan, Metric, LLMJudgePrompt
 # __enter__ __exit__  contextual management methods for the DB class
 # __iter__ __next__ methods for iterating over languages (raise StopIteration when done)
 
-db = DB(db_url="mariadb+mariadbconnector://root:ATmega32*@localhost:3306/eval", debug=False)
+db = DB(db_url="mariadb+mariadbconnector://root:ATmega32*@localhost:3306/eval", debug=True)
 
 plans = json.load(open('Data/plans.json', 'r'))
 prompts = json.load(open('Data/DataPoints.json', 'r'))
@@ -22,8 +22,10 @@ domain_agriculture = db.add_or_get_domain_id(domain_name='agriculture')
 
 lang_auto = db.add_or_get_language_id(language_name='auto')
 
-metrics_lookup = {}
+db.get_testcases(metric_name='Language_Coverage')
 
+"""
+metrics_lookup = {}
 for plan in plans.keys():
     record = plans[plan]
     plan_name = record['TestPlan_name']
@@ -77,7 +79,9 @@ for met in prompts.keys():
                       judge_prompt=judge_prompt)
         tcases.append(tc)
     db.add_metric_and_testcases(testcases=tcases, metric=metric_obj)
+"""
 
+"""
         
 #print("\n".join([repr(_) for _ in db.languages]))
 #print(db.get_language_name(2))
@@ -113,4 +117,4 @@ print(f"Test case created with ID: {tc}")
 #print(tc_name)
 tc = db.fetch_testcase("tc2")
 print (f"Fetched TestCase: {tc}")
-
+"""
