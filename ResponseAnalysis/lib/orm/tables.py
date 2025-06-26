@@ -22,6 +22,7 @@ class Prompts(Base):
     lang_id = Column(Integer, ForeignKey('Languages.lang_id'), nullable=False)    # Foreign key to Languages
     domain_id = Column(Integer, ForeignKey('Domains.domain_id'), nullable=False)  # Foreign key to Domains
     hash_value = Column(String(100), nullable=False, unique=True)  # Hash value for the prompt
+    test_cases = relationship("TestCases", back_populates="prompt")  # Relationship to TestCases
 
 class LLMJudgePrompts(Base):
     """ORM model for the LLMJudgePrompts table.
@@ -34,6 +35,7 @@ class LLMJudgePrompts(Base):
     prompt = Column(Text, nullable=False)  # Text of the judge prompt
     lang_id = Column(Integer, ForeignKey('Languages.lang_id'), nullable=False)  # Foreign key to Languages
     hash_value = Column(String(100), nullable=False, unique=True)  # Hash value for the prompt
+    test_cases = relationship("TestCases", back_populates="judge_prompt")  # Relationship to TestCases
 
 class Strategies(Base):
     """ORM model for the Strategies table.
@@ -75,6 +77,7 @@ class Responses(Base):
     prompt_id = Column(Integer, ForeignKey('Prompts.prompt_id'), nullable=False) # Foreign key to Prompts
     lang_id = Column(Integer, ForeignKey('Languages.lang_id'), nullable=False) # Foreign key to Languages
     hash_value = Column(String(100), nullable=False, unique=True)  # Hash value for the prompt
+    test_cases = relationship("TestCases", back_populates="response")  # Relationship to TestCases
 
 class TestCases(Base):
     """ORM model for the TestCases table.
@@ -89,6 +92,9 @@ class TestCases(Base):
     strategy_id = Column(Integer, ForeignKey('Strategies.strategy_id'), nullable=False)  # Foreign key to Strategies
     judge_prompt_id = Column(Integer, ForeignKey('LLMJudgePrompts.prompt_id'), nullable=True)  # Foreign key to LLMJudgePrompts
     metrics = relationship("Metrics", secondary="MetricTestCaseMapping", back_populates="cases")
+    prompt = relationship("Prompts", back_populates="test_cases")
+    response = relationship("Responses", back_populates="test_cases")
+    judge_prompt = relationship("LLMJudgePrompts", back_populates="test_cases")
 
 class TestPlans(Base):
     """ORM model for the TestPlans table.
