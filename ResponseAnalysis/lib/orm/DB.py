@@ -654,6 +654,42 @@ class DB:
             # Handle the case where the prompt already exists
             self.logger.error(f"Prompt already exists: {prompt} Error: {e}")
             return -1
+        
+    def get_testcases(self, metric_name:str, lang_name:Optional[str] = None, domain_name:Optional[str] = None) -> List[TestCase]:
+        """
+        Fetches test cases based on the metric name, language name, and domain name.
+        
+        Args:
+            metric_name (str): The name of the metric to filter test cases.
+            lang_name (Optional[str]): The name of the language to filter test cases.
+            domain_name (Optional[str]): The name of the domain to filter test cases.
+        
+        Returns:
+            List[TestCase]: A list of TestCase objects that match the criteria.
+        """
+        with self.Session() as session:
+            sql = select(TestCases).join(Metrics, TestCases.metrics).where(Metrics.metric_name == metric_name) # .join(Prompts, TestCases.prompt_id == Prompts.prompt_id)
+
+            if lang_name:
+                sql = sql.join(Languages, Languages.lang_name == lang_name)
+            if domain_name:
+                sql = sql.join(Domains, Domains.domain_name == domain_name)
+            
+            result = session.execute(sql).scalars().all()
+
+            return [TestCase(name=getattr(tc, 'testcase_name'),
+                             testcase_id=getattr(tc, 'testcase_id'),
+                             prompt=Prompt(prompt_id=getattr(tc.prompt, 'prompt_id'),
+                                           user_prompt=str(tc.prompt.user_prompt),
+                                           system_prompt=str(tc.prompt.system_prompt),
+                                           lang_id=getattr(tc.prompt, 'lang_id')),
+                             response=Response(response_text=str(tc.response.response_text),
+                                               response_type=tc.response.response_type,
+                                               response_id=getattr(tc.response, 'response_id'),
+                                               prompt_id=tc.response.prompt_id,
+                                               lang_id=tc.response.lang_id,
+                                               digest=tc.response.hash_value) if tc.response else None,
+                             strategy=getattr(tc, "strategy_id")) for tc in result]
 
     def sample_prompts(self, 
                        lang_id: Optional[int] = None,
