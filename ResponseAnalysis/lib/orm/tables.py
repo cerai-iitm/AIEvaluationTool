@@ -56,6 +56,8 @@ class Languages(Base):
     lang_id = Column(Integer, primary_key=True)
     lang_name = Column(String(255), nullable=False)
 
+    targets = relationship("Targets", secondary="TargetLanguages", back_populates="langs")
+
 class Domains(Base):
     """ORM model for the Domains table.
     This class defines the structure of the Domains table in the database.
@@ -64,6 +66,8 @@ class Domains(Base):
     
     domain_id = Column(Integer, primary_key=True)   
     domain_name = Column(String(255), nullable=False)
+
+    targets = relationship("Targets", back_populates="domain")
 
 class Responses(Base):
     """ORM model for the Responses table.
@@ -95,6 +99,8 @@ class TestCases(Base):
     prompt = relationship("Prompts", back_populates="test_cases")
     response = relationship("Responses", back_populates="test_cases")
     judge_prompt = relationship("LLMJudgePrompts", back_populates="test_cases")
+    run_details = relationship("TestRunDetails", back_populates="testcase")  # Relationship to TestRunDetails
+    conversations = relationship("Conversations", back_populates="testcase")  # Relationship to Conversations
 
 class TestPlans(Base):
     """ORM model for the TestPlans table.
@@ -106,6 +112,7 @@ class TestPlans(Base):
     plan_name = Column(String(255), nullable=False, unique=True)  # Unique name for the test plan
     plan_description = Column(Text, nullable=True)  # Optional description for the test plan
     metrics = relationship("Metrics", secondary="TestPlanMetricMapping", back_populates="plans")
+    run_details = relationship("TestRunDetails", back_populates="plan")  # Relationship to TestRuns
 
 class Metrics(Base):
     """ORM model for the Metrics table.
@@ -121,6 +128,7 @@ class Metrics(Base):
     metric_benchmark = Column(String(255), nullable=True)
     plans = relationship("TestPlans", secondary="TestPlanMetricMapping", back_populates="metrics")
     cases = relationship("TestCases", secondary="MetricTestCaseMapping", back_populates="metrics")
+    run_details = relationship("TestRunDetails", back_populates="metric")  # Relationship to TestRunDetails
 
 class TestPlanMetricMapping(Base):
     """ORM model for the TestPlanMetricMapping table.
@@ -144,16 +152,6 @@ class MetricTestCaseMapping(Base):
     testcase_id = Column(Integer, ForeignKey('TestCases.testcase_id'), nullable=False)  # Foreign key to TestCases
     metric_id = Column(Integer, ForeignKey('Metrics.metric_id'), nullable=False)  # Foreign key to Metrics
 
-class TargetSessions(Base):
-    """ORM model for the TargetSessions table.
-    This class defines the structure of the TargetSessions table in the database.
-    """
-    __tablename__ = 'TargetSessions'
-    
-    session_id = Column(Integer, primary_key=True)
-    session_name = Column(String(255), nullable=False)  # Name of the session
-    target_id = Column(Integer, ForeignKey('Targets.target_id'), nullable=False)  # Foreign key to Targets
-
 class Targets(Base):
     """ORM model for the Targets table.
     This class defines the structure of the Targets table in the database.
@@ -161,10 +159,16 @@ class Targets(Base):
     __tablename__ = 'Targets'
     
     target_id = Column(Integer, primary_key=True)
-    target_name = Column(String(255), nullable=False)  # Name of the target
-    target_type = Column(String(100), nullable=False)  # Type of the target
+    target_name = Column(String(255), nullable=False, unique=True)  # Name of the target
+    target_type = Column(Enum('WhatsApp', 'WebApp', 'API'), nullable=False, index=True)  # Type of the target
+    target_description = Column(Text, nullable=True)  # Description of the target
     target_url = Column(String(255), nullable=False)  # URL of the target (if applicable)
     domain_id = Column(Integer, ForeignKey('Domains.domain_id'), nullable=False)  # Foreign key to Domains
+
+    langs = relationship("Languages", secondary="TargetLanguages", back_populates="targets")
+    domain = relationship("Domains", back_populates="targets")
+    runs = relationship("TestRuns", back_populates="target")  # Relationship to TargetSessions
+    conversations = relationship("Conversations", back_populates="target")  # Relationship to Conversations
 
 class Conversations(Base):
     """ORM model for the Conversations table.
@@ -178,6 +182,9 @@ class Conversations(Base):
     agent_response = Column(Text, nullable=True)  # Name of the conversation
     prompt_ts = Column(DateTime, nullable=True)  # Start timestamp of the conversation
     response_ts = Column(DateTime, nullable=True)  # End timestamp of the conversation
+
+    target = relationship("Targets", back_populates="conversations")  # Relationship to Targets
+    testcase = relationship("TestCases", back_populates="conversations")  # Relationship to
 
 class TargetLanguages(Base):
     """ORM model for the TargetLanguages table.
@@ -198,11 +205,15 @@ class TestRuns(Base):
     __tablename__ = 'TestRuns'
     
     run_id = Column(Integer, primary_key=True)
+    run_name = Column(String(255), nullable=False, unique=True)  # Name of the test run
     target_id = Column(Integer, ForeignKey('Targets.target_id'), nullable=False)  # Foreign key to Targets   
-    session_id = Column(Integer, ForeignKey('TargetSessions.session_id'), nullable=False)  # Foreign key to TargetSessions
+    #session_id = Column(Integer, ForeignKey('TargetSessions.session_id'), nullable=False)  # Foreign key to TargetSessions
     start_ts = Column(DateTime, nullable=True)  # Start timestamp of the test run
     end_ts = Column(DateTime, nullable=True)  # End timestamp of the test run
     status = Column(Enum('NEW', 'RUNNING', 'COMPLETED', 'FAILED'), nullable=False)  # Status of the test run
+
+    run_details = relationship("TestRunDetails", back_populates="run")  # Relationship to TestRunDetails
+    target = relationship("Targets", back_populates="runs")  # Relationship to Targets
 
 class TestRunDetails(Base):
     """ORM model for the TestRunDetails table.
@@ -214,8 +225,11 @@ class TestRunDetails(Base):
     detail_id = Column(Integer, primary_key=True)
     run_id = Column(Integer, ForeignKey('TestRuns.run_id'), nullable=False)  # Foreign key to TestRuns
     plan_id = Column(Integer, ForeignKey('TestPlans.plan_id'), nullable=False)  # Foreign key to TestPlans
-    plan_status = Column(Enum('NEW', 'RUNNING', 'COMPLETED', 'FAILED'), nullable=False)  # Status of the test plan in the run
     metric_id = Column(Integer, ForeignKey('Metrics.metric_id'), nullable=False)  # Foreign key to Metrics
-    metric_status = Column(Enum('NEW', 'RUNNING', 'COMPLETED', 'FAILED'), nullable=False)  # Status of the metric in the run
     testcase_id = Column(Integer, ForeignKey('TestCases.testcase_id'), nullable=False)  # Foreign key to TestCases
     testcase_status = Column(Enum('NEW', 'RUNNING', 'COMPLETED', 'FAILED'), nullable=False)  # Status of the test case in the run
+
+    run = relationship("TestRuns", back_populates="run_details")
+    metric = relationship("Metrics", back_populates="run_details")
+    plan = relationship("TestPlans", back_populates="run_details")
+    testcase = relationship("TestCases", back_populates="run_details")
