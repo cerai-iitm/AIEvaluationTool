@@ -7,3 +7,8 @@ from .language import Language
 from .prompt import Prompt
 from .strategy import Strategy
 from .llm_judge_prompt import LLMJudgePrompt
+from .target import Target
+from .conversation import Conversation
+from .run import Run
+from .run_detail import RunDetail
+

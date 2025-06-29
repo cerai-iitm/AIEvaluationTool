@@ -1,3 +1,8 @@
+# @author: Sudarsun
+# @date: 2025-06-15
+#
+# This module defines the TestCase class, which represents a test case in the evaluation system.
+
 from .prompt import Prompt
 from .response import Response
 from .llm_judge_prompt import LLMJudgePrompt
