@@ -2,11 +2,12 @@ from DB import DB
 import sys
 import os
 import json
+from datetime import datetime
 
 # setup the relative import path for data module.
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from data import Prompt, TestCase, Response, TestPlan, Metric, LLMJudgePrompt
+from data import Prompt, TestCase, Response, TestPlan, Metric, LLMJudgePrompt, Target, Run, RunDetail
 
 # __len__ __getitem__ __setitem__ __delitem__ __iter__ __contains__
 # __enter__ __exit__  contextual management methods for the DB class
@@ -22,7 +23,33 @@ domain_agriculture = db.add_or_get_domain_id(domain_name='agriculture')
 
 lang_auto = db.add_or_get_language_id(language_name='auto')
 
-db.get_testcases(metric_name='Language_Coverage')
+# https://www-help-gooey-ai.filesusr.com/html/7f7b6d_ba05c78336ab53c8fe3fcb339272b40f.html
+tgt = Target(target_name="Gooey AI", 
+             target_type="WhatsApp", 
+             target_url="https://www.help.gooey.ai/farmerchat", 
+             target_description="Gooey AI is a WhatsApp-based AI assistant for farmers, providing information and assistance on agricultural practices and crop management.",
+             target_domain="agriculture",
+             target_languages=["english", "telugu", "bhojpuri", "hindi"])    
+target_id = db.add_or_get_target(target = tgt)
+
+now = datetime.now().isoformat()
+run = Run(target="Gooey AI", 
+          run_name="Gooey AI Run #1", 
+          start_ts=now)
+
+run_id = db.add_or_update_testrun(run=run)
+
+#run.end_ts = datetime.now().isoformat()
+run.status = "RUNNING"
+
+run_id = db.add_or_update_testrun(run=run)
+
+run.end_ts = datetime.now().isoformat()
+run.status = "COMPLETED"
+
+run_id = db.add_or_update_testrun(run=run)
+
+db.get_testcases(metric_name='Language_Coverage', n=10)
 
 """
 metrics_lookup = {}

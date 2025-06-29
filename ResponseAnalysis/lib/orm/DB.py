@@ -1,4 +1,4 @@
-from tables import Base, Languages, Domains, Metrics, Responses, TestCases, TestPlans, Prompts, Strategies, LLMJudgePrompts
+from tables import Base, Languages, Domains, Metrics, Responses, TestCases, TestPlans, Prompts, Strategies, LLMJudgePrompts, Targets, TargetLanguages, Conversations, TestRuns, TestRunDetails
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.exc import IntegrityError
@@ -13,7 +13,7 @@ import logging
 sys.path.append(os.path.dirname(__file__) + '/..')
 
 from data import Prompt, Language, Domain, Response, TestCase, TestPlan, \
-    Strategy, Metric, LLMJudgePrompt
+    Strategy, Metric, LLMJudgePrompt, Target, Conversation, Run, RunDetail
 
 class DB:    
     """
@@ -136,25 +136,24 @@ class DB:
             sql = select(Strategies).where(Strategies.strategy_id == strategy_id)
             result = session.execute(sql).scalar_one_or_none()
             return getattr(result, 'strategy_name', None) if result else None
-
-    def add_or_get_language_id(self, language_name: str) -> Optional[int]:
+        
+    def __add_or_get_language(self, language_name:str) -> Optional[Languages]:
         """
-        Adds a new language to the database or fetches its ID if it already exists.
+        Adds a new language to the database or fetches it if it already exists.
         
         Args:
             language_name (str): The name of the language to be added or fetched.
         
         Returns:
-            Optional[int]: The ID of the language if found or added, otherwise None.
+            Optional[Languages]: The Languages object if found or added, otherwise None.
         """
         try:
             with self.Session() as session:
                 # Check if the language already exists in the database.
                 existing_language = session.query(Languages).filter_by(lang_name=language_name).first()
                 if existing_language:
-                    self.logger.debug(f"Returning the existing language ID: {existing_language.lang_id}")
-                    # Return the ID of the existing language
-                    return getattr(existing_language, "lang_id")
+                    self.logger.debug(f"Returning the existing language: {existing_language.lang_name}")
+                    return existing_language
                 
                 self.logger.debug(f"Adding new language: {language_name}")
                 # If the language does not exist, create a new one
@@ -165,12 +164,27 @@ class DB:
                 session.refresh(new_language)  
                 self.logger.debug(f"Language added successfully: {new_language.lang_id}")
                 
-                # Return the ID of the newly added language
-                return getattr(new_language, "lang_id")
+                return new_language
         except IntegrityError as e:
             self.logger.error(f"Language '{language_name}' already exists. Error: {e}")
             return None
 
+    def add_or_get_language_id(self, language_name: str) -> Optional[int]:
+        """
+        Adds a new language to the database or fetches its ID if it already exists.
+        Args:
+            language_name (str): The name of the language to be added or fetched.
+        Returns:
+            Optional[int]: The ID of the language if found or added, otherwise None.
+        """
+        lang = self.__add_or_get_language(language_name)
+        if lang:
+            self.logger.debug(f"Returning the language ID: {lang.lang_id}")
+            return getattr(lang, "lang_id")
+        # If the language could not be added or fetched, log an error and return None
+        self.logger.error(f"Failed to add or get language '{language_name}'.")
+        return None
+    
     def get_language_name(self, lang_id: int) -> Optional[str]:
         """
         Fetches the name of a language by its ID.
@@ -655,12 +669,13 @@ class DB:
             self.logger.error(f"Prompt already exists: {prompt} Error: {e}")
             return -1
         
-    def get_testcases(self, metric_name:str, lang_name:Optional[str] = None, domain_name:Optional[str] = None) -> List[TestCase]:
+    def get_testcases(self, metric_name:str, n:int = 0, lang_name:Optional[str] = None, domain_name:Optional[str] = None) -> List[TestCase]:
         """
         Fetches test cases based on the metric name, language name, and domain name.
         
         Args:
             metric_name (str): The name of the metric to filter test cases.
+            n (int): The number of test cases to fetch. If 0, fetches all matching test cases.
             lang_name (Optional[str]): The name of the language to filter test cases.
             domain_name (Optional[str]): The name of the domain to filter test cases.
         
@@ -668,16 +683,18 @@ class DB:
             List[TestCase]: A list of TestCase objects that match the criteria.
         """
         with self.Session() as session:
-            sql = select(TestCases).join(Metrics, TestCases.metrics).where(Metrics.metric_name == metric_name) # .join(Prompts, TestCases.prompt_id == Prompts.prompt_id)
+            sql = select(TestCases).join(Metrics, TestCases.metrics).where(Metrics.metric_name == metric_name)
 
             if lang_name:
                 sql = sql.join(Languages, Languages.lang_name == lang_name)
             if domain_name:
                 sql = sql.join(Domains, Domains.domain_name == domain_name)
+            if n > 0:
+                sql = sql.limit(n)
             
             result = session.execute(sql).scalars().all()
 
-            return [TestCase(name=getattr(tc, 'testcase_name'),
+            testcases = [TestCase(name=getattr(tc, 'testcase_name'),
                              testcase_id=getattr(tc, 'testcase_id'),
                              prompt=Prompt(prompt_id=getattr(tc.prompt, 'prompt_id'),
                                            user_prompt=str(tc.prompt.user_prompt),
@@ -690,6 +707,7 @@ class DB:
                                                lang_id=tc.response.lang_id,
                                                digest=tc.response.hash_value) if tc.response else None,
                              strategy=getattr(tc, "strategy_id")) for tc in result]
+            return testcases
 
     def sample_prompts(self, 
                        lang_id: Optional[int] = None,
@@ -909,4 +927,182 @@ class DB:
         except IntegrityError as e:
             # Handle the case where the judge prompt already exists
             self.logger.error(f"Judge prompt already exists: {judge_prompt}. Error: {e}")
+            return -1
+        
+    def add_or_get_target(self, target: Target) -> int:
+        """
+        Adds a new target to the database or fetches its ID if it already exists.
+        
+        Args:
+            target (Target): The Target object to be added.
+        
+        Returns:
+            int: The ID of the newly added target, or -1 if it already exists.
+        """
+        try:
+            with self.Session() as session:
+                # Check if the target already exists in the database
+                existing_target = session.query(Targets).filter_by(target_name=target.target_name).first()
+                if existing_target:
+                    self.logger.debug(f"Returning the existing target ID: {existing_target.target_id}")
+                    # Return the ID of the existing target
+                    return getattr(existing_target, "target_id")
+                
+                self.logger.debug(f"Adding new target: {target.target_name}")
+
+                # get the domain ID if provided, otherwise use None
+                domain_id = self.add_or_get_domain_id(target.target_domain) if target.target_domain else None
+                # get the language objects for the target languages, if provided
+                langs = [self.__add_or_get_language(lang) for lang in target.target_languages] if target.target_languages else None
+
+                # Create the Targets object
+                new_target = Targets(target_name=target.target_name,
+                                     target_type=target.target_type,
+                                     target_description=target.target_description,
+                                     target_url=target.target_url,
+                                     domain_id=domain_id,  # Use the domain ID if provided
+                                     langs = langs)
+                
+                # Add the new target to the session
+                session.add(new_target)
+                # Commit the session to save the new target
+                session.commit()
+                # Ensure target_id is populated
+                session.refresh(new_target)  
+
+                self.logger.debug(f"Target added successfully: {new_target.target_id}")
+                
+                # Return the ID of the newly added target
+                return getattr(new_target, "target_id")
+        except IntegrityError as e:
+            # Handle the case where the target already exists
+            self.logger.error(f"Target already exists: {target}. Error: {e}")
+            return -1
+    
+    def get_target_id(self, target_name: str) -> Optional[int]:
+        """
+        Fetches the ID of a target by its name.
+        
+        Args:
+            target_name (str): The name of the target to fetch.
+        
+        Returns:
+            Optional[int]: The ID of the target if found, otherwise None.
+        """
+        target = self.__get_target(target_name)
+        if target:
+            return getattr(target, "target_id")
+        return None
+        
+    def __get_target(self, target_name:str) -> Optional[Targets]:
+        """
+        Fetches a target by its name.
+        
+        Args:
+            target_name (str): The name of the target to fetch.
+        
+        Returns:
+            Optional[Targets]: The Targets object if found, otherwise None.
+        """
+        with self.Session() as session:
+            sql = select(Targets).where(Targets.target_name == target_name)
+            result = session.execute(sql).scalar_one_or_none()
+            if result is None:
+                self.logger.error(f"Target with name '{target_name}' does not exist.")
+                return None
+            # Return a Targets object with the fetched data
+            return Targets(target_id=getattr(result, 'target_id'),
+                           target_name=str(result.target_name),
+                           target_type=str(result.target_type),
+                           target_description=str(result.target_description),
+                           target_url=str(result.target_url),
+                           domain_id=getattr(result, 'domain_id'),
+                           langs=result.langs)
+        
+    def __status_compare(self, status1: str, status2: str) -> int:
+        """
+        Compares two statuses to determine if they are the same.
+        
+        Args:
+            status1 (str): The first status to compare.
+            status2 (str): The second status to compare.
+        
+        Returns:
+            int: 0 if the statuses are the same (case-insensitive), 1 if status1 is greater, -1 if status2 is greater. -2 if either status is invalid.
+        """
+        lookup = {"new": 0, "running": 1, "completed": 3, "failed": 2}
+        s1 = lookup.get(status1.lower(), -1)
+        s2 = lookup.get(status2.lower(), -1)
+        if s1 == -1 or s2 == -1:
+            self.logger.error(f"Invalid status comparison: {status1} vs {status2}")
+            return -2
+        if s1 == s2:
+            return 0
+        return 1 if s1 > s2 else -1
+        
+    def add_or_update_testrun(self, run: Run) -> int:
+        """
+        Adds a new test run to the database or fetches its ID if it already exists.
+        
+        Args:
+            run (Run): The Run object to be added.
+        
+        Returns:
+            int: The ID of the newly added run, or -1 if it already exists.
+        """
+        try:
+            with self.Session() as session:
+                # Check if the run already exists in the database
+                existing_run = session.query(TestRuns).filter_by(run_name=run.run_name).first()
+                if existing_run:
+                    if run.status == "NEW":
+                        self.logger.error(f"TestRun (name={run.run_name}) already exists.")
+                        return -1  # Return -1 if the run already exists and is not being updated
+                    
+                    if self.__status_compare(run.status, existing_run.status) <= 0:
+                        self.logger.debug(f"Run '{run.run_name}:{existing_run.status}' already exists, can't update with '{run.status}'. Returning existing run ID: {existing_run.run_id}")
+                        # Return the ID of the existing run if the status is the same
+                        return getattr(existing_run, "run_id")
+                    
+                    # update the existing run with new details
+                    self.logger.debug(f"Run '{run.run_name}' already exists. Updating existing run details (Status: {existing_run.status} -> {run.status}, TS: {existing_run.end_ts} -> {run.end_ts}) ..")
+                    existing_run.end_ts = run.end_ts
+                    existing_run.status = run.status
+                    # Commit the session to save the updated run
+                    session.commit()
+                    # Ensure run_id is populated
+                    session.refresh(existing_run)   
+                    # Log the existing run ID
+                    self.logger.debug(f"Returning the ID of the updated run ID: {existing_run.run_id}")
+                    # Return the ID of the existing run
+                    return getattr(existing_run, "run_id")
+                
+                self.logger.debug(f"Adding a run: {run.run_name} with status: {run.status}")
+
+                # Fetch the target object from the database
+                # If the target does not exist, it will return None
+                #target_obj = self.__get_target(run.target)
+                target_id = self.get_target_id(run.target) if run.target else None
+
+                # Create the Runs object
+                new_run = TestRuns(run_name=run.run_name,
+                                   target_id = target_id,  # Use the target ID if the target exists
+                                   start_ts=run.start_ts,
+                                   end_ts=run.end_ts,
+                                   status=run.status)
+                
+                # Add the new run to the session
+                session.add(new_run)
+                # Commit the session to save the new run
+                session.commit()
+                # Ensure run_id is populated
+                session.refresh(new_run)  
+
+                self.logger.debug(f"Run added successfully: {new_run.run_id}")
+                
+                # Return the ID of the newly added run
+                return getattr(new_run, "run_id")
+        except IntegrityError as e:
+            # Handle the case where the run already exists
+            self.logger.error(f"Run already exists: {run}. Error: {e}")
             return -1
