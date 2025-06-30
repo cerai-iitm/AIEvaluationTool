@@ -19,6 +19,9 @@ warnings.filterwarnings("ignore")
 
 # this module compute mean time between failures from the log file generated during interaction with AI agents
 class Compute_MTBF(Strategy):
+    def __init__(self, name: str = "compute_mtbf", **kwargs) -> None:
+        super().__init__(name, kwargs=kwargs)
+
     def extract_failure_timestamps(log_path, keyword="ERROR"):
         """
         Extracts timestamps of log entries containing a specified keyword from a log file

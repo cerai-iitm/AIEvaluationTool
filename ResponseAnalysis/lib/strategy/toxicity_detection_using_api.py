@@ -8,6 +8,9 @@ dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 
 class ToxicityDetectionUsingAPI(Strategy):
+    def __init__(self, name: str = "detect_toxicity_using_perspective_api", **kwargs) -> None:
+        super().__init__(name, kwargs=kwargs)
+
     def detect_toxicity_using_perspective_api(input_string: str, API_KEY: str):
         client = discovery.build(
             "commentanalyzer",
