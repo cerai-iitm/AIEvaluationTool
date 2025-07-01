@@ -3,6 +3,9 @@ import warnings
 from langdetect import detect
 from googletrans import Translator
 from transformers import AutoModelForCausalLM, AutoTokenizer
+import json
+import os
+
 
 logging.basicConfig(
     level=logging.INFO,  
@@ -36,7 +39,9 @@ async def google_lang_translate(text: str, target_lang: str = "en") -> str:
     """
     Helper function to translate text to english language using Google Translate.
     :param text: The text to be translated.
-    :param target_lang: The target language code (default is English
+ import json
+import os
+   :param target_lang: The target language code (default is English
     return: The translated text in english
     """
     translator = Translator()
@@ -95,3 +100,12 @@ def sarvam_translate(text: str, target_lang: str = "en") -> str:
     output_text = tokenizer.decode(output_ids, skip_special_tokens=True)
     logger.info(f"Translated text: {output_text}")
     return output_text
+
+def load_json(file_path):
+    with open(file_path, 'r', encoding='utf-8') as f:
+        return json.load(f)
+
+
+def save_json(data, file_path):
+    with open(file_path, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)

@@ -14,22 +14,12 @@ logger = get_logger("robustness")
 
 warnings.filterwarnings("ignore")
 
-# This module implements "llm as a judge" strategy to analyze the agent response.
+# This module implements "Robustness Adversarial GLUE" strategy to analyze the agent response.
 class Robustness_AdvGLUE(Strategy):
-    def __init__(self, name: str = "robustness", **kwargs) -> None:
+    def __init__(self, name: str = "robustness_advglue", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
         self.__task = kwargs.get("task")
-        # uses Llama3 by default
-        # self.__model_name = kwargs.get("model_name")
-        # base_url = kwargs.get("base_url")
-        # if base_url:
-        #     logger.info("Used Base URL!")
-        #     self.model = Ollama(model=self.__model_name or "llama3.1", base_url=base_url)
-        # else:
-        #     logger.info("Used Base URL!")
-        #     self.model = Ollama(model=self.__model_name or "llama3.1")
-        # # self.model = OllamaLLM(model="llama3.1", base_url="http://10.21.186.219:11434")
-    
+
     def match_kw(self, text, keyword_list):
         pattern = r'\b(?:' + '|'.join(keyword_list) + r')\b'
         match = re.search(pattern, text, re.IGNORECASE)
