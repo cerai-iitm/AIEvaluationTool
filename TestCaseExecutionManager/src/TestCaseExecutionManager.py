@@ -6,6 +6,7 @@ from typing import List, Dict, Union
 import sys, os
 import logging
 from pathlib import Path
+import random
 
 sys.path.append(os.path.relpath("../.."))
 from InterfaceManager import InterfaceManagerClient
@@ -210,32 +211,39 @@ class TestCaseExecutionManager:
         with open(self.test_plan_file, 'r', encoding='utf-8') as case_file:
             all_cases_by_metric = json.load(case_file)
 
-        total_collected = 0
-        for metric_id in metric_ids:
-            if self.limit and total_collected >= self.limit:
-                break
+        # Balanced sampling logic
+        num_metrics = len(metric_ids)
+        if self.limit:
+            base_per_metric = self.limit // num_metrics
+            remainder = self.limit % num_metrics
+        else:
+            base_per_metric = None
+            remainder = 0
 
+        total_collected = 0
+        for idx, metric_id in enumerate(metric_ids):
             metric_data = all_cases_by_metric.get(metric_id)
             if not metric_data:
                 continue
-
             cases = metric_data.get("cases", [])
             logger.info(f"Metric ID: {metric_id} -> {plan_entry.get('metrics', {}).get(metric_id, metric_id)} has {len(cases)} test cases")
-            
 
-            for idx, test_case in enumerate(cases):
-                if self.limit and total_collected >= self.limit:
-                    break
+            # Determine how many to sample from this metric
+            if self.limit:
+                n_to_sample = base_per_metric + (1 if idx < remainder else 0)
+                n_to_sample = min(n_to_sample, len(cases))
+                sampled_cases = random.sample(cases, n_to_sample) if n_to_sample > 0 else []
+            else:
+                sampled_cases = cases
 
+            for test_case in sampled_cases:
                 logger.info(f"Lining up prompt (PROMPT_ID: {test_case.get('PROMPT_ID')}, metric: {plan_entry.get('metrics', {}).get(metric_id, metric_id)})")
                 logger.info(f"Prompt to be sent: {test_case.get('PROMPT')}")
-                logger.info("\n")
 
                 test_case_id = test_case.get('PROMPT_ID')
                 system_prompt = str(test_case.get('SYSTEM_PROMPT', '')).replace("\n", "")
                 prompt = str(test_case.get('PROMPT', '')).replace("\n", "")
                 prompt_text = f"{system_prompt.strip()} {prompt.strip()}".strip()
-                
 
                 dedup_key = test_case_id or prompt_text
                 logger.debug(f"Processing test_case_id: {test_case_id}, dedup_key: {dedup_key}")
@@ -258,44 +266,19 @@ class TestCaseExecutionManager:
         else:
             try:
                 chat_id = self.assign_chat_id()
-                # Sending as a list of strings
-                for idx, (pid, prompt) in enumerate(zip(prompt_id_list, prompt_list)):
-                    # Retrieve the original test_case for this prompt_id
-                    test_case = None
-                    for metric_id in metric_ids:
-                        metric_data = all_cases_by_metric.get(metric_id)
-                        if not metric_data:
-                            continue
-                        cases = metric_data.get("cases", [])
-                        for case in cases:
-                            if case.get('PROMPT_ID') == pid:
-                                test_case = case
-                                break
-                        if test_case:
-                            break
-                system_prompt = test_case.get('SYSTEM_PROMPT', '') if test_case else ''
-                user_prompt = test_case.get('PROMPT', '') if test_case else ''
-                logger.info(f"Processing prompt (PROMPT_ID: {pid}) - Sending to the agent...")
-                logger.info(f"Prompt to be sent: {system_prompt}{user_prompt}")
                 response = self.client.chat(chat_id=chat_id, prompt_list=prompt_list)
                 data = response.json()
                 if isinstance(data, dict) and "response" in data:
-                    resp = data["response"]
-                    if isinstance(resp, list) and all(isinstance(r, dict) for r in resp):
-                        for pid, r in zip(prompt_id_list, resp):
-                            results.append({
-                                "prompt_id": pid,
-                                "test_plan_id": self.test_plan_id,
-                                "response": r.get("response", "")
-                            })
-                    else:
+                    resp_list = data["response"]
+                    for pid, resp, prompt in zip(prompt_id_list, resp_list, prompt_list):
+                        response_text = resp.get("response", "") if isinstance(resp, dict) else str(resp)
                         results.append({
-                            "prompt_id": prompt_id_list[0],
+                            "prompt_id": pid,
                             "test_plan_id": self.test_plan_id,
-                            "response": str(resp)
+                            "response": response_text
                         })
                 else:
-                    logger.warning("Unexpected response format")
+                    logger.warning("Unexpected response format for batch prompts")
             except Exception as e:
                 logger.error(f"Exception occurred during chat: {e}")
                 for pid in prompt_id_list:
