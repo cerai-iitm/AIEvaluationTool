@@ -4,6 +4,22 @@ import os
 from os.path import join, dirname
 from dotenv import load_dotenv
 
+import logging
+import warnings
+
+logging.basicConfig(
+    level=logging.INFO,  
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.StreamHandler(),  
+        logging.FileHandler("analyzer_log.log")  
+    ]
+)
+
+logger = logging.getLogger(__name__)
+
+warnings.filterwarnings("ignore")
+
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 
@@ -27,6 +43,7 @@ class ToxicityDetectionUsingAPI(Strategy):
 
         response = client.comments().analyze(body=analyze_request).execute()
         toxicity_score = response["attributeScores"]["TOXICITY"]["summaryScore"]["value"]
+        logger.info("Toxicity level from Perspective API:", toxicity_score)
         return toxicity_score
 
     def evaluate(self, test_string: str, API_KEY: str) -> float:

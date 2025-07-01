@@ -60,6 +60,7 @@ class Compute_MTBF(Strategy):
             for i in range(1, len(timestamps))
         ]
         mtbf = sum(uptimes) / len(uptimes)
+        logger.info("Mean Time Between Failure (MTBF) in hrs: ", mtbf)
         return mtbf, uptimes
 
     def evaluate(self, file_path: str) -> float:
