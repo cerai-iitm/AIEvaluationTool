@@ -27,9 +27,3 @@ class Strategy(ABC):
         0.0 means no match, 1.0 means perfect match.
         """
         pass
-
-
-    
-
-
-

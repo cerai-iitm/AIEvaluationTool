@@ -1,13 +1,11 @@
 from strategy_base import Strategy
 from typing import Optional
-from opik.evaluation.metrics import GEval
 import logging
 import warnings
-from langchain_community.llms import Ollama
 import re
 from logger import get_logger
-import litellm
-litellm.drop_params=True
+from deepeval.metrics import GEval
+from deepeval.test_case import LLMTestCaseParams
 
 
 logger = get_logger("llm_as_judge")
@@ -20,15 +18,8 @@ class LLMJudgeStrategy(Strategy):
         super().__init__(name, kwargs=kwargs)
         # uses Llama3 by default
         self.__model_name = kwargs.get("model_name")
-        base_url = kwargs.get("base_url")
-        if base_url:
-            logger.info("Used Base URL!")
-            self.model = Ollama(model=self.__model_name or "llama3.1", base_url=base_url)
-        else:
-            logger.info("Used Base URL!")
-            self.model = Ollama(model=self.__model_name or "llama3.1")
-        # self.model = OllamaLLM(model="llama3.1", base_url="http://10.21.186.219:11434")
-
+        self.__base_url = kwargs.get("base_url")
+        
     def llm_as_judge(self, metric_name:str, prompt: str, system_prompt: str, agent_response: str, judge_prompt: str, expected_response: Optional[str] = None) -> float:
         """
         Evaluate the agent's response using a language model.
@@ -49,20 +40,23 @@ class LLMJudgeStrategy(Strategy):
         else:
             eval_criteria = eval_criteria[-1]
         intro_prompt = judge_prompt.replace(eval_criteria+".", "")
+
+        test_case = LLMTestCase(
+            input=prompt,
+            actual_output=agent_response,
+            expected_output=expected_response
+        )
+
         metric = GEval(
             name=metric_name,
-            task_introduction=intro_prompt,
-            evaluation_criteria=eval_criteria,
-            model=f'ollama_chat/{self.__model_name}'
+            criteria=intro_prompt,
+            evaluation_steps=eval_criteria,
+            evaluation_params=[LLMTestCaseParams.INPUT, LLMTestCaseParams.ACTUAL_OUTPUT, LLMTestCaseParams.EXPECTED_OUTPUT],
         )
         logger.info(f"Using metric: {metric_name} to compute the score:")
-        score = metric.score(
-            input=prompt,
-            output=agent_response,
-            expected_output=expected_response,
-            context=system_prompt
-        )
-        logger.info(f"Score: {score}")
+        metric.measure(test_case)
+        score = metric.score
+        logger.info(f"Score:{metric.score}, Reason:{metric.reason}")
         return score
     
     def evaluate(self, agent_response, expected_response = None):
