@@ -17,9 +17,9 @@
     "test_plan_name": "Inappropriate Content Detection",
     "n": 5,
     "action": "send_all_prompts",
-    "test_plan_file": "/store/github/AIEvaluationTool/Data/DataPoints.json",
+    "test_plan_file": "C:\\Users\\nithy\\AIEvaluationTool\\Data\\DataPoints.json",
     "run_mode": "single_window",
     "agent_name": "Gooey AI",
-    "test_plan_id": "T2",
-    "test_case_count": 4
+    "test_plan_id": "T1",
+    "test_case_count": 2
 }

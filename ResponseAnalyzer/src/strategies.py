@@ -41,8 +41,7 @@ logger = logging.getLogger(__name__)
 warnings.filterwarnings("ignore")
 load_dotenv()
 litellm.drop_params = True
-model_name = "llama3.2:1b"
-llm = OllamaLLM(model=model_name)
+llm =  OllamaLLM(model="llama3.1", base_url="http://10.21.186.219:11434")
 
 embedding_model = SentenceTransformer("thenlper/gte-small")
 
