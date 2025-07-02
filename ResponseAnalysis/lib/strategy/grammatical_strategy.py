@@ -7,7 +7,7 @@ from sentence_transformers.util import cos_sim
 from sentence_transformers import SentenceTransformer
 from googletrans import Translator
 import language_tool_python
-from language_strategies import LanguageStrategies
+from utils import language_detection
 
 logging.basicConfig(
     level=logging.INFO,  
@@ -42,16 +42,18 @@ class GrammaticalStrategy(Strategy):
         :return: A score representing the quality of the agent's response.
         """
         logger.info("Evaluating Grammatical Errors...")
-        ls = LanguageStrategies()
-        if ls.language_detection(agent_response[0]) == "en":
+        if language_detection(agent_response[0]) == "en":
             grammar_check = GrammaticalStrategy.grammarChecker(agent_response[0])
-            score = 0.0 if len(grammar_check) > 1 else 1.0
+            print("Grammar Check:",grammar_check)
+            score = 0.0 if len(grammar_check) >= 1 else 1.0
             logger.info(f"Grammatical Score: {score}")
             return score
     
 
 #Test
-strategy = GrammaticalStrategy()
-response = "This is a test response with a grammatical error"
-score = strategy.evaluate([response])
-print(f"Grammatical Score: {score}")
+# strategy = GrammaticalStrategy()
+# response = "They is doing well"
+# score = strategy.evaluate([response])
+# print(f"Grammatical Score: {score}")
+# del strategy
+# This is working good!
