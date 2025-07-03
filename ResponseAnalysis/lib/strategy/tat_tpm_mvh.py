@@ -25,6 +25,16 @@ class TAT_TPM_MVH(Strategy):
     """
 
     def __init__(self, name: str = "tat_tpm_mvh", **kwargs) -> None:
+        """
+        Initializes the TAT_TPM_MVH strategy.
+
+        Parameters:
+        - name (str): Strategy name.
+        - kwargs: Additional parameters including:
+            - metric_name (str): The metric to be evaluated.
+            - log_file_path (str): The path to the log file to be analyzed.
+            - time_period_minutes (int): Time window for the MVH metric.
+        """
         super().__init__(name, kwargs=kwargs)
         self.__metric_name = kwargs.get("metric_name")
         self.log_file_path = kwargs.get("log_file_path", "whatsapp_driver.log")
@@ -33,14 +43,38 @@ class TAT_TPM_MVH(Strategy):
         self.time_period_minutes = kwargs.get("time_period_minutes", 1)
 
     def parse_log_file(self) -> list:
+        """
+        Reads and parses the log file into a list of log lines.
+
+        Returns:
+        - list: List of log lines.
+        """
         with open(self.log_file_path, 'r', encoding='utf-8') as file:
             return file.readlines()
 
     def extract_timestamp(self, log_line: str) -> datetime:
+        """
+        Extracts timestamp from a log line.
+
+        Parameters:
+        - log_line (str): Log entry containing a timestamp.
+
+        Returns:
+        - datetime: Extracted timestamp as a datetime object.
+        """
         timestamp_match = re.match(r'\[(.*?)\]', log_line)
         return datetime.strptime(timestamp_match.group(1), "%Y-%m-%d %H:%M:%S,%f")
 
     def average_tat(self, log_lines: list) -> float:
+        """
+        Calculates the average Turn Around Time (TAT) from the log file.
+
+        Parameters:
+        - log_lines (list): List of log entries.
+
+        Returns:
+        - float: Average TAT in seconds.
+        """
         logger.info("Starting Turn Around Time evaluation strategy")
         tat_list = []
         prompt_time = None
@@ -66,6 +100,15 @@ class TAT_TPM_MVH(Strategy):
         return average_tat
 
     def transactions_per_minute(self, log_lines: list) -> float:
+        """
+        Calculates Transactions Per Minute (TPM) from the log file.
+
+        Parameters:
+        - log_lines (list): List of log entries.
+
+        Returns:
+        - float: TPM value rounded down to the nearest whole number.
+        """
         logger.info("Starting Transactions Per Minute evaluation strategy")
         prompt_times = []
         response_times = []
@@ -97,6 +140,15 @@ class TAT_TPM_MVH(Strategy):
         return math.floor(transactions_per_minute)
 
     def message_volume_handling(self, log_lines: list) -> float:
+        """
+        Calculates the number of messages handled in the specified time window.
+
+        Parameters:
+        - log_lines (list): List of log entries.
+
+        Returns:
+        - float: Number of messages handled per specified time window (rounded down).
+        """
         logger.info("Starting Message Volume Handling evaluation strategy")
 
         prompt_times = []
@@ -137,11 +189,14 @@ class TAT_TPM_MVH(Strategy):
 
     def evaluate(self, agent_response: str, expected_response: Optional[str] = None) -> float:
         """
-        Evaluate the agent log based on the selected metric.
-        Supported metrics:
-            - 'turn_around_time'
-            - 'transactions_per_minute'
-            - 'message_volume_handling'
+        Evaluates the selected metric based on log file data.
+
+        Parameters:
+        - agent_response (str): Not used in this evaluation.
+        - expected_response (str, optional): Not used in this evaluation.
+
+        Returns:
+        - float: Calculated metric value.
         """
         log_lines = self.parse_log_file()
 

@@ -17,15 +17,31 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 class HallucinationStrategy(Strategy):
+    """
+    Strategy for evaluating hallucination metrics across different task types.
+    Supports: QA, summarization, dialogue, and multiple-choice tasks.
+    """
+
     def __init__(self, name: str = "hallucination", **kwargs) -> None:
         """
-        Strategy for evaluating hallucination based on different source types.
+        Initializes the HallucinationStrategy.
+
+        Parameters:
+        - name (str): Name of the strategy.
+        - kwargs: Additional parameters.
         """
         super().__init__(name, kwargs=kwargs)
 
     def _extract_prediction(self, response: str, source_type: str) -> str:
         """
         Extracts the predicted answer from the agent response based on the source type.
+
+        Parameters:
+        - response (str): Agent's response text.
+        - source_type (str): Type of source (halu_qa, halu_summ, halu_dial, mc).
+
+        Returns:
+        - str: Extracted prediction (yes/no/option/na).
         """
         response = response.strip().lower()
 
@@ -48,7 +64,13 @@ class HallucinationStrategy(Strategy):
 
     def _translate_if_needed(self, text: str) -> str:
         """
-        Translates the text to English if the detected language is not English.
+        Translates the given text to English if it is in another language.
+
+        Parameters:
+        - text (str): Text to be translated.
+
+        Returns:
+        - str: Translated text in English.
         """
         lang = asyncio.run(detect_text(text))
         if lang == "en":
@@ -58,6 +80,16 @@ class HallucinationStrategy(Strategy):
             return translated_text
 
     def halu_qa(self, agent_responses: List[str], expected_responses: List[str]) -> float:
+        """
+        Evaluates hallucination for QA tasks.
+
+        Parameters:
+        - agent_responses (List[str]): List of agent-generated responses.
+        - expected_responses (List[str]): List of expected ground-truth answers.
+
+        Returns:
+        - float: Average accuracy score for hallucination detection in QA.
+        """
         scores = []
         for agent_resp, expected_resp in zip(agent_responses, expected_responses):
             translated_resp = self._translate_if_needed(agent_resp)
@@ -68,6 +100,16 @@ class HallucinationStrategy(Strategy):
         return avg_score
 
     def halu_summ(self, agent_responses: List[str], expected_responses: List[str]) -> float:
+        """
+        Evaluates hallucination for summarization tasks.
+
+        Parameters:
+        - agent_responses (List[str]): List of agent-generated summaries.
+        - expected_responses (List[str]): List of expected ground-truth summaries.
+
+        Returns:
+        - float: Average accuracy score for hallucination detection in summarization.
+        """
         scores = []
         for agent_resp, expected_resp in zip(agent_responses, expected_responses):
             translated_resp = self._translate_if_needed(agent_resp)
@@ -78,6 +120,16 @@ class HallucinationStrategy(Strategy):
         return avg_score
 
     def halu_dial(self, agent_responses: List[str], expected_responses: List[str]) -> float:
+        """
+        Evaluates hallucination for dialogue tasks.
+
+        Parameters:
+        - agent_responses (List[str]): List of agent-generated dialogue responses.
+        - expected_responses (List[str]): List of expected ground-truth responses.
+
+        Returns:
+        - float: Average accuracy score for hallucination detection in dialogue.
+        """
         scores = []
         for agent_resp, expected_resp in zip(agent_responses, expected_responses):
             translated_resp = self._translate_if_needed(agent_resp)
@@ -88,6 +140,16 @@ class HallucinationStrategy(Strategy):
         return avg_score
 
     def mc(self, agent_responses: List[str], expected_responses: List[str]) -> float:
+        """
+        Evaluates hallucination for multiple-choice tasks.
+
+        Parameters:
+        - agent_responses (List[str]): List of agent-generated multiple-choice answers.
+        - expected_responses (List[str]): List of expected correct options (A, B, C, D).
+
+        Returns:
+        - float: Average accuracy score for hallucination detection in multiple-choice tasks.
+        """
         scores = []
         for agent_resp, expected_resp in zip(agent_responses, expected_responses):
             translated_resp = self._translate_if_needed(agent_resp)
@@ -99,7 +161,13 @@ class HallucinationStrategy(Strategy):
 
     def evaluate(self, data_points: List[Dict]) -> Dict[str, float]:
         """
-        Evaluates all hallucination metrics and returns the average score for each.
+        Evaluates all supported hallucination tasks and computes accuracy for each.
+
+        Parameters:
+        - data_points (List[Dict]): List of test cases containing agent response, expected response, and source type.
+
+        Returns:
+        - Dict[str, float]: Dictionary containing average scores for each hallucination type.
         """
         grouped_data = {"halu_qa": [], "halu_summ": [], "halu_dial": [], "mc": []}
 
@@ -131,6 +199,7 @@ class HallucinationStrategy(Strategy):
             results["mc"] = self.mc(agent_responses, expected_responses)
 
         return results
+   
 #test
 '''
 from hallucination import HallucinationStrategy

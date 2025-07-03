@@ -25,7 +25,18 @@ warnings.filterwarnings("ignore")
 
 
 class SafetyStrategy(Strategy):
+    """
+    Strategy for evaluating safety-related risks in chatbot responses.
+    Supports misuse detection, jailbreak attempts, and exaggerated safety behaviors.
+    """
     def __init__(self, name: str = "safety", **kwargs) -> None:
+        """
+        Initializes the SafetyStrategy and loads the safety evaluation model.
+
+        Parameters:
+        - name (str): Name of the strategy.
+        - kwargs: Additional parameters including metric_name and user_prompt.
+        """
         super().__init__(name, kwargs=kwargs)
         self.__metric_name = kwargs.get("metric_name", "misuse")
         self.__user_prompt = kwargs.get("user_prompt", "")
@@ -49,6 +60,9 @@ class SafetyStrategy(Strategy):
         }
 
     def load_model(self):
+        """
+        Loads the ShieldGemma model .
+        """
         logger.info(f"Loading model: {self.model_name} on device: {self.device} with disk offloading.")
         try:
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
@@ -85,19 +99,37 @@ class SafetyStrategy(Strategy):
 
     def detect_language(self, text: str) -> str:
         """
-        Synchronous wrapper to detect language using the async detect_text function.
+        Detects the language of the given text.
+
+        Parameters:
+        - text (str): Input text.
+
+        Returns:
+        - str: Detected language code.
         """
         return asyncio.run(detect_text(text))
 
     def translate_to_english(self, text: str) -> str:
         """
-        Synchronous wrapper to translate text using the async google_lang_translate function.
+        Translates the text to English if needed.
+
+        Parameters:
+        - text (str): Input text.
+
+        Returns:
+        - str: Translated text in English.
         """
         return asyncio.run(google_lang_translate(text))
 
     def preprocess_prompt(self, prompt: str) -> str:
         """
-        Detects language and translates to English if necessary.
+        Preprocesses the user prompt by translating it to English if required.
+
+        Parameters:
+        - prompt (str): User's original prompt.
+
+        Returns:
+        - str: Preprocessed (possibly translated) prompt.
         """
         detected_lang = self.detect_language(prompt)
         if detected_lang == "en":
@@ -107,6 +139,15 @@ class SafetyStrategy(Strategy):
             return translated_prompt
 
     def misuse(self, agent_responses: List[str]) -> float:
+        """
+        Evaluates misuse risk in agent responses.
+
+        Parameters:
+        - agent_responses (List[str]): List of agent-generated responses.
+
+        Returns:
+        - float: Average misuse score across all responses.
+        """
         logger.info("Starting misuse evaluation with ShieldGemma")
 
         processed_prompt = self.preprocess_prompt(self.__user_prompt)
@@ -123,6 +164,15 @@ class SafetyStrategy(Strategy):
         return avg_score
 
     def jailbreak(self, agent_responses: List[str]) -> float:
+        """
+        Evaluates jailbreak risk in agent responses.
+
+        Parameters:
+        - agent_responses (List[str]): List of agent-generated responses.
+
+        Returns:
+        - float: Average jailbreak score across all responses.
+        """
         logger.info("Starting jailbreak evaluation with ShieldGemma")
 
         processed_prompt = self.preprocess_prompt(self.__user_prompt)
@@ -139,6 +189,15 @@ class SafetyStrategy(Strategy):
         return avg_score
 
     def exaggerated_safety(self, agent_responses: List[str]) -> float:
+        """
+        Evaluates jailbreak risk in agent responses.
+
+        Parameters:
+        - agent_responses (List[str]): List of agent-generated responses.
+
+        Returns:
+        - float: Average jailbreak score across all responses.
+        """
         logger.info("Starting exaggerated safety evaluation with ShieldGemma")
 
         processed_prompt = self.preprocess_prompt(self.__user_prompt)
@@ -155,6 +214,15 @@ class SafetyStrategy(Strategy):
         return avg_score
 
     def _get_violation_score(self, combined_input: str) -> float:
+        """
+        Computes the probability of policy violation in the given input.
+
+        Parameters:
+        - combined_input (str): Combined user prompt and agent response.
+
+        Returns:
+        - float: Probability score indicating a policy violation.
+        """
         safety_policy_text = self.safety_policies.get(self.__metric_name)
         if not safety_policy_text:
             raise ValueError(f"No safety policy defined for metric: {self.__metric_name}")
