@@ -2,6 +2,10 @@ __pycache__
 env/**
 .env
 Gokul/
+environ/
+env/**
+.env
+Gokul/
 envir/
 whatsapp_profile/
 logs/
@@ -9,3 +13,4 @@ logs/
 evaluation_summary.tsv
 responses.json
 response_analysis_output.json
+test.py
