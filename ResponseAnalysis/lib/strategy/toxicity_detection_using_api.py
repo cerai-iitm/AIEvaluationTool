@@ -1,4 +1,4 @@
-from .strategy_base import Strategy
+from strategy_base import Strategy
 from googleapiclient import discovery
 import os
 from os.path import join, dirname
