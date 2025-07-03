@@ -1,4 +1,4 @@
-from .strategy_base import Strategy
+from strategy_base import Strategy
 
 from datetime import datetime
 import logging
