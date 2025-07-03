@@ -27,7 +27,7 @@ class ToxicityDetectionUsingAPI(Strategy):
     def __init__(self, name: str = "detect_toxicity_using_perspective_api", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
 
-    def detect_toxicity_using_perspective_api(input_string: str, API_KEY: str):
+    def detect_toxicity_using_perspective_api(self, input_string: str, API_KEY: str):
         client = discovery.build(
             "commentanalyzer",
             "v1alpha1",
@@ -43,10 +43,10 @@ class ToxicityDetectionUsingAPI(Strategy):
 
         response = client.comments().analyze(body=analyze_request).execute()
         toxicity_score = response["attributeScores"]["TOXICITY"]["summaryScore"]["value"]
-        logger.info("Toxicity level from Perspective API:", toxicity_score)
+        logger.info(f"Toxicity level from Perspective API: {toxicity_score}")
         return toxicity_score
 
-    def evaluate(self, test_string: str, API_KEY: str) -> float:
+    def evaluate(self, agent_response: str, API_KEY: str) -> float:
         """
         Analyzes the toxicity level of a given text using the Perspective API.
 
@@ -55,10 +55,12 @@ class ToxicityDetectionUsingAPI(Strategy):
 
         Returns: toxicity_level (float) -  A toxicity score between 0.0 (non-toxic) and 1.0 (highly toxic) as determined by the Perspective API.
         """
-        toxicity_level = self.detect_toxicity_using_perspective_api(input_string=test_string, API_KEY=API_KEY)
+        toxicity_level = self.detect_toxicity_using_perspective_api(input_string=agent_response, API_KEY=API_KEY)
         return toxicity_level
 
-toxicity_detector = ToxicityDetectionUsingAPI()
-test_string = "I hate you and your country"
-API_KEY = os.environ.get("API_KEY")
-print(f"Toxicity Score for {test_string}: ", toxicity_detector.evaluate(input_string=test_string, API_KEY=API_KEY))
+# Example Usage
+# toxicity_detector = ToxicityDetectionUsingAPI()
+# test_string = "I hate you and your country"
+# API_KEY = os.environ.get("API_KEY")
+# print(f"Toxicity Score for {test_string}: ", toxicity_detector.evaluate(agent_response=test_string, API_KEY=API_KEY))
+# Toxicity Detection using Perspective API Working

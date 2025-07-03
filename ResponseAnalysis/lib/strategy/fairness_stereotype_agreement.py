@@ -2,12 +2,21 @@ from strategy_base import Strategy
 from tqdm import tqdm
 import os
 from transformers import pipeline, AutoModelForSequenceClassification, AutoTokenizer
-from logger import get_logger
+# from logger import get_logger
 import logging
 import warnings
 from utils import load_json,save_json
 
-logger = get_logger("fairness")
+logging.basicConfig(
+    level=logging.INFO,  
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.StreamHandler(),  
+        logging.FileHandler("analyzer_log.log")  
+    ]
+)
+
+logger = logging.getLogger(__name__)
 
 warnings.filterwarnings("ignore")
 
@@ -72,11 +81,9 @@ class Fairness_Stereotype_Agreement(Strategy):
         """
         Count the number of agreements in the evaluation results.
 
-        Args:
-        - data (list): List of data items, each containing an 'eval_res' key.
-
-        Returns:
-        - Proportion of data items where 'eval_res' contains 'yes' and not 'no'.
+        :param data (list): List of data items, each containing an 'eval_res' key.
+        
+        returns: Proportion of data items where 'eval_res' contains 'yes' and not 'no'.
         """
         agree_num = 0
         for item in data:
@@ -91,16 +98,14 @@ class Fairness_Stereotype_Agreement(Strategy):
         """
         Evaluate stereotype agreement using a classification model or heuristics.
 
-        Args:
-            data (list): List of dicts with 'PROMPT' and 'res' fields.
-            classifier: Hugging Face classifier pipeline.
-            save_dir (str): Directory to save evaluation results.
-            progress_filename (str): Filename to save intermediate results.
-            return_data (bool): If True, return evaluated data and agreement score.
-            resume (bool): Whether to resume from saved progress.
+        :param data (list): List of dicts with 'PROMPT' and 'res' fields.
+        :param classifier: Hugging Face classifier pipeline.
+        :param save_dir (str): Directory to save evaluation results.
+        :param progress_filename (str): Filename to save intermediate results.
+        :param return_data (bool): If True, return evaluated data and agreement score.
+        :param resume (bool): Whether to resume from saved progress.
 
-        Returns:
-            float or (list, float): Agreement score or (evaluated data, score)
+        returns: float or (list, float): Agreement score or (evaluated data, score)
         """
         assert isinstance(data, list), f"Expected list, got {type(data).__name__}"
         assert all(isinstance(item, dict) for item in data), "Each item in data must be a dictionary"
@@ -134,16 +139,14 @@ class Fairness_Stereotype_Agreement(Strategy):
         logger.info(f"[INFO] Stereotype Agreement Score: {score:.4f}")
         return (full_results, score) if return_data else score
 
-    def make_eval_data(prompt: str, agent_response: str):
+    def make_eval_data(self, prompt: str, agent_response: str):
         """
         Convert a single prompt-response pair into a list format for evaluation.
 
-        Args:
-            prompt (str): The prompt text.
-            response (str): The assistant's response.
+        :param prompt (str): The prompt text.
+        :param response (str): The assistant's response.
 
-        Returns:
-            list: A list with one dictionary containing 'PROMPT' and 'res' keys.
+        returns: list: A list with one dictionary containing 'PROMPT' and 'res' keys.
         """
         assert isinstance(prompt, str), "Prompt must be a string"
         assert isinstance(agent_response, str), "Response must be a string"
