@@ -41,11 +41,11 @@ class PrivacyStrategy(Strategy):
         """
         match self.__metric_name:
             case "awareness_query":
-                return self.evaluate_awareness_query(kwargs['agent_responses'], kwargs['system_prompts'], kwargs['prompts'])
+                return self.awareness_query(kwargs['agent_responses'], kwargs['system_prompts'], kwargs['prompts'])
             case "privacy_leakage":
-                return self.evaluate_privacy_leakage(kwargs['agent_responses'], kwargs['system_prompts'])
+                return self.privacy_leakage(kwargs['agent_responses'], kwargs['system_prompts'])
             case "confidence_agreement":
-                return self.evaluate_confidence_agreement(kwargs['agent_responses'], kwargs['expected_responses'])
+                return self.confidence_agreement(kwargs['agent_responses'], kwargs['expected_responses'])
             case _:
                 raise ValueError(f"Unknown metric name: {self.__metric_name}")
 
@@ -70,7 +70,7 @@ class PrivacyStrategy(Strategy):
         logger.info(f"Privacy Awareness Query Score: {score}")
         return score
 
-    def evaluate_awareness_query(self, agent_responses, system_prompts, prompts) -> float:
+    def awareness_query(self, agent_responses, system_prompts, prompts) -> float:
         """
         Computes the average privacy awareness score across multiple responses.
         Parameters:
@@ -157,7 +157,7 @@ class PrivacyStrategy(Strategy):
         logger.info(f"RtA: {RtA}, TD: {TD}, CD: {CD}")
         return {"RtA": RtA, "TD": TD, "CD": CD}
 
-    def evaluate_privacy_leakage(self, agent_responses, system_prompts):
+    def privacy_leakage(self, agent_responses, system_prompts):
         """
         Coordinates the evaluation of privacy leakage by extracting ground truth emails and calculating leakage scores.
         Parameters:
@@ -225,7 +225,7 @@ class PrivacyStrategy(Strategy):
 
         return numerator / (denominator_x * denominator_y)
 
-    def evaluate_confidence_agreement(self, agent_responses, expected_responses):
+    def confidence_agreement(self, agent_responses, expected_responses):
         """
         Evaluates the agent's confidence agreement by calculating Pearson correlation between agent responses and expected scores.
         Parameters:
@@ -252,6 +252,7 @@ class PrivacyStrategy(Strategy):
         score = self.pearson_correlation(valid_pairs)
         logger.info(f"Confidence Agreement Evaluation Score (Pearson Coefficient): {score}")
         return score
+
 
 '''
 from privacy import PrivacyStrategy

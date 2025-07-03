@@ -30,6 +30,7 @@ class TAT_TPM_MVH(Strategy):
         self.log_file_path = kwargs.get("log_file_path", "whatsapp_driver.log")
         self.prompt_keyword = "Sending prompt to the bot"
         self.response_keyword = "Received response from WhatsApp"
+        self.time_period_minutes = kwargs.get("time_period_minutes", 1)
 
     def parse_log_file(self) -> list:
         with open(self.log_file_path, 'r', encoding='utf-8') as file:
@@ -40,10 +41,6 @@ class TAT_TPM_MVH(Strategy):
         return datetime.strptime(timestamp_match.group(1), "%Y-%m-%d %H:%M:%S,%f")
 
     def average_tat(self, log_lines: list) -> float:
-        """
-        Computes Turn Around Time (TAT) and returns the average TAT.
-        Logs individual TATs.
-        """
         logger.info("Starting Turn Around Time evaluation strategy")
         tat_list = []
         prompt_time = None
@@ -99,15 +96,8 @@ class TAT_TPM_MVH(Strategy):
         logger.info("Completed Transactions Per Minute evaluation strategy")
         return math.floor(transactions_per_minute)
 
-    def message_volume_handling(self, time_period_minutes: int) -> float:
-        """
-        Calculates the number of messages processed per user-defined time period.
-
-        :param time_period_minutes: Time period in minutes.
-        :return: Number of messages processed per the given time period.
-        """
+    def message_volume_handling(self, log_lines: list) -> float:
         logger.info("Starting Message Volume Handling evaluation strategy")
-        log_lines = self.parse_log_file()
 
         prompt_times = []
         response_times = []
@@ -133,8 +123,14 @@ class TAT_TPM_MVH(Strategy):
         if total_duration_seconds == 0:
             return float(total_transactions)
 
-        messages_per_time_period = (total_transactions / total_duration_seconds) * (60 * time_period_minutes)
-        logger.info(f"Message Volume Handling: {messages_per_time_period:.2f} messages per {time_period_minutes} minute(s)")
+        actual_log_duration_minutes = total_duration_seconds / 60
+
+        if self.time_period_minutes > actual_log_duration_minutes:
+            logger.warning(f"Provided time period {self.time_period_minutes} min exceeds log duration {actual_log_duration_minutes:.2f} min. Adjusting to log duration.")
+            self.time_period_minutes = math.ceil(actual_log_duration_minutes)
+
+        messages_per_time_period = (total_transactions / total_duration_seconds) * (60 * self.time_period_minutes)
+        logger.info(f"Message Volume Handling: {messages_per_time_period:.2f} messages per {self.time_period_minutes} minute(s)")
         logger.info("Completed Message Volume Handling evaluation strategy")
 
         return math.floor(messages_per_time_period)
@@ -146,10 +142,6 @@ class TAT_TPM_MVH(Strategy):
             - 'turn_around_time'
             - 'transactions_per_minute'
             - 'message_volume_handling'
-
-        :param agent_response: For this metric, not required.
-        :param expected_response: For this metric, not required.
-        :return: Metric score.
         """
         log_lines = self.parse_log_file()
 
@@ -161,24 +153,26 @@ class TAT_TPM_MVH(Strategy):
                 return self.transactions_per_minute(log_lines)
 
             case "message_volume_handling":
-                time_period_minutes = self._Strategy__kwargs.get("time_period_minutes", 1)
-                return self.message_volume_handling(time_period_minutes)
+                return self.message_volume_handling(log_lines)
 
             case _:
                 raise ValueError(f"Unknown metric name: {self.__metric_name}")
 
         return 0.0
 
-from ResponseAnalysis.lib.strategy.tat_tpm_mvh import TAT_TPM_MVH
+#test
+#from tat_tpm_mvh import TAT_TPM_MVH
+#
+#tat_metric = TAT_TPM_MVH(metric_name="turn_around_time", log_file_path="whatsapp_driver.log")
+#tat_score = tat_metric.evaluate("", "")
+#print(f"Turn Around Time: {tat_score:.2f} seconds")
+#
+#tpm_metric = TAT_TPM_MVH(metric_name="transactions_per_minute", log_file_path="whatsapp_driver.log")
+#tpm_score = tpm_metric.evaluate("", "")
+#print(f"Transactions Per Minute: {tpm_score} transactions/min")
+#
+#mvh_metric = TAT_TPM_MVH(metric_name="message_volume_handling", log_file_path="whatsapp_driver.log", time_period_minutes=10)
+#mvh_score = mvh_metric.evaluate("", "")
+#print(f"Message Volume Handling: {mvh_score} messages in mentioned time period ")
 
-tat_metric = TAT_TPM_MVH(metric_name="turn_around_time", log_file_path="whatsapp_driver.log")
-tat_score = tat_metric.evaluate("", "")
-print(f"Turn Around Time: {tat_score:.2f} seconds")
 
-tpm_metric = TAT_TPM_MVH(metric_name="transactions_per_minute", log_file_path="whatsapp_driver.log")
-tpm_score = tpm_metric.evaluate("", "")
-print(f"Transactions Per Minute: {tpm_score} transactions/min")
-
-mvh_metric = TAT_TPM_MVH(metric_name="message_volume_handling", log_file_path="whatsapp_driver.log", time_period_minutes=5)
-mvh_score = mvh_metric.evaluate("", "")
-print(f"Message Volume Handling: {mvh_score} messages per 5 minutes")

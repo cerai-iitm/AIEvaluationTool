@@ -57,7 +57,7 @@ class HallucinationStrategy(Strategy):
             translated_text = asyncio.run(google_lang_translate(text))
             return translated_text
 
-    def evaluate_halu_qa(self, agent_responses: List[str], expected_responses: List[str]) -> float:
+    def halu_qa(self, agent_responses: List[str], expected_responses: List[str]) -> float:
         scores = []
         for agent_resp, expected_resp in zip(agent_responses, expected_responses):
             translated_resp = self._translate_if_needed(agent_resp)
@@ -67,7 +67,7 @@ class HallucinationStrategy(Strategy):
         avg_score = sum(scores) / len(scores) if scores else 0.0
         return avg_score
 
-    def evaluate_halu_summ(self, agent_responses: List[str], expected_responses: List[str]) -> float:
+    def halu_summ(self, agent_responses: List[str], expected_responses: List[str]) -> float:
         scores = []
         for agent_resp, expected_resp in zip(agent_responses, expected_responses):
             translated_resp = self._translate_if_needed(agent_resp)
@@ -77,7 +77,7 @@ class HallucinationStrategy(Strategy):
         avg_score = sum(scores) / len(scores) if scores else 0.0
         return avg_score
 
-    def evaluate_halu_dial(self, agent_responses: List[str], expected_responses: List[str]) -> float:
+    def halu_dial(self, agent_responses: List[str], expected_responses: List[str]) -> float:
         scores = []
         for agent_resp, expected_resp in zip(agent_responses, expected_responses):
             translated_resp = self._translate_if_needed(agent_resp)
@@ -87,7 +87,7 @@ class HallucinationStrategy(Strategy):
         avg_score = sum(scores) / len(scores) if scores else 0.0
         return avg_score
 
-    def evaluate_mc(self, agent_responses: List[str], expected_responses: List[str]) -> float:
+    def mc(self, agent_responses: List[str], expected_responses: List[str]) -> float:
         scores = []
         for agent_resp, expected_resp in zip(agent_responses, expected_responses):
             translated_resp = self._translate_if_needed(agent_resp)
@@ -113,59 +113,57 @@ class HallucinationStrategy(Strategy):
         if grouped_data["halu_qa"]:
             agent_responses = [dp["agent_response"] for dp in grouped_data["halu_qa"]]
             expected_responses = [dp["expected_response"] for dp in grouped_data["halu_qa"]]
-            results["halu_qa"] = self.evaluate_halu_qa(agent_responses, expected_responses)
+            results["halu_qa"] = self.halu_qa(agent_responses, expected_responses)
 
         if grouped_data["halu_summ"]:
             agent_responses = [dp["agent_response"] for dp in grouped_data["halu_summ"]]
             expected_responses = [dp["expected_response"] for dp in grouped_data["halu_summ"]]
-            results["halu_summ"] = self.evaluate_halu_summ(agent_responses, expected_responses)
+            results["halu_summ"] = self.halu_summ(agent_responses, expected_responses)
 
         if grouped_data["halu_dial"]:
             agent_responses = [dp["agent_response"] for dp in grouped_data["halu_dial"]]
             expected_responses = [dp["expected_response"] for dp in grouped_data["halu_dial"]]
-            results["halu_dial"] = self.evaluate_halu_dial(agent_responses, expected_responses)
+            results["halu_dial"] = self.halu_dial(agent_responses, expected_responses)
 
         if grouped_data["mc"]:
             agent_responses = [dp["agent_response"] for dp in grouped_data["mc"]]
             expected_responses = [dp["expected_response"] for dp in grouped_data["mc"]]
-            results["mc"] = self.evaluate_mc(agent_responses, expected_responses)
+            results["mc"] = self.mc(agent_responses, expected_responses)
 
         return results
-
+#test
+'''
 from hallucination import HallucinationStrategy
 
 def test_hallucination_strategy_multilingual():
     strategy = HallucinationStrategy()
 
-    # Prepare 10 test samples covering all sources and mixed languages
     test_data = [
         # halu_qa
-        {"source": "halu_qa", "agent_response": "Yes", "expected_response": "yes"},  # English
-        {"source": "halu_qa", "agent_response": "हाँ", "expected_response": "yes"},   # Hindi (will be translated)
-        {"source": "halu_qa", "agent_response": "No", "expected_response": "no"},     # English
-        {"source": "halu_qa", "agent_response": "नहीं", "expected_response": "no"},   # Hindi (will be translated)
+        {"source": "halu_qa", "agent_response": "Yes", "expected_response": "yes"},
+        {"source": "halu_qa", "agent_response": "हाँ", "expected_response": "yes"},   
+        {"source": "halu_qa", "agent_response": "No", "expected_response": "no"},   
+        {"source": "halu_qa", "agent_response": "नहीं", "expected_response": "no"},  
 
         # halu_summ
-        {"source": "halu_summ", "agent_response": "No", "expected_response": "no"},   # English
-        {"source": "halu_summ", "agent_response": "हाँ", "expected_response": "yes"},  # Hindi
-        {"source": "halu_summ", "agent_response": "No", "expected_response": "yes"},  # Incorrect
+        {"source": "halu_summ", "agent_response": "No", "expected_response": "no"},   
+        {"source": "halu_summ", "agent_response": "हाँ", "expected_response": "yes"},  
+        {"source": "halu_summ", "agent_response": "No", "expected_response": "yes"},
 
         # halu_dial
-        {"source": "halu_dial", "agent_response": "Yes", "expected_response": "yes"},  # English
-        {"source": "halu_dial", "agent_response": "नहीं", "expected_response": "no"},   # Hindi
+        {"source": "halu_dial", "agent_response": "Yes", "expected_response": "yes"}, 
+        {"source": "halu_dial", "agent_response": "नहीं", "expected_response": "no"},   
 
         # mc
-        {"source": "mc", "agent_response": "A", "expected_response": "A"},            # English
-        {"source": "mc", "agent_response": "बी", "expected_response": "B"},            # Hindi (बी = B) - this should ideally fail unless you handle Hindi options specifically
+        {"source": "mc", "agent_response": "A", "expected_response": "A"},            
+        {"source": "mc", "agent_response": "बी", "expected_response": "B"},            
     ]
-
-    # Run evaluation
     results = strategy.evaluate(test_data)
 
-    # Print results
     print("Hallucination Strategy Multilingual Test Results:")
     for metric, score in results.items():
         print(f"{metric}: Average Score = {score:.2f}")
 
 if __name__ == "__main__":
     test_hallucination_strategy_multilingual()
+'''

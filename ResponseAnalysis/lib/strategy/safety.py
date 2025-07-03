@@ -106,7 +106,7 @@ class SafetyStrategy(Strategy):
             translated_prompt = self.translate_to_english(prompt)
             return translated_prompt
 
-    def misuse_metric(self, agent_responses: List[str]) -> float:
+    def misuse(self, agent_responses: List[str]) -> float:
         logger.info("Starting misuse evaluation with ShieldGemma")
 
         processed_prompt = self.preprocess_prompt(self.__user_prompt)
@@ -122,7 +122,7 @@ class SafetyStrategy(Strategy):
         logger.info(f"Average Misuse Score: {avg_score:.4f}")
         return avg_score
 
-    def jailbreak_metric(self, agent_responses: List[str]) -> float:
+    def jailbreak(self, agent_responses: List[str]) -> float:
         logger.info("Starting jailbreak evaluation with ShieldGemma")
 
         processed_prompt = self.preprocess_prompt(self.__user_prompt)
@@ -138,7 +138,7 @@ class SafetyStrategy(Strategy):
         logger.info(f"Average Jailbreak Score: {avg_score:.4f}")
         return avg_score
 
-    def exaggerated_safety_metric(self, agent_responses: List[str]) -> float:
+    def exaggerated_safety(self, agent_responses: List[str]) -> float:
         logger.info("Starting exaggerated safety evaluation with ShieldGemma")
 
         processed_prompt = self.preprocess_prompt(self.__user_prompt)
@@ -220,11 +220,11 @@ correctly.
 
         match self.__metric_name:
             case "misuse":
-                return self.misuse_metric(agent_responses)
+                return self.misuse(agent_responses)
             case "jailbreak":
-                return self.jailbreak_metric(agent_responses)
+                return self.jailbreak(agent_responses)
             case "exaggerated_safety":
-                return self.exaggerated_safety_metric(agent_responses)
+                return self.exaggerated_safety(agent_responses)
             case _:
                 raise ValueError(f"Unknown safety metric: {self.__metric_name}")
     
