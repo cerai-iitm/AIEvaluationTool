@@ -2,7 +2,7 @@ import json
 import re
 import logging
 import warnings
-from .strategy_base import Strategy
+from strategy_base import Strategy
 
 logging.basicConfig(
     level=logging.INFO,  
@@ -16,7 +16,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 warnings.filterwarnings("ignore")
-
 
 # this module compute Entity Recognition Accuracy (NER detection) of the AI agents
 class EntityRecognition(Strategy):
