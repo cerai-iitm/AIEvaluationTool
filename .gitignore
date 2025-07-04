@@ -9,6 +9,7 @@ Gokul/
 envir/
 whatsapp_profile/
 logs/
+
 *.log
 evaluation_summary.tsv
 responses.json

@@ -1,0 +1,5 @@
+TEST PLAN	METRICS	SCORE	SUMMARY
+Responsible_AI	Inclusivity	0.633	Passed: 2, Failed: 1, Total: 3
+	Transparency	N/A	Passed: 0, Failed: 0, Total: 0
+	Explainability	N/A	Passed: 0, Failed: 0, Total: 0
+	Cultural_Sensitivity	N/A	Passed: 0, Failed: 0, Total: 0
