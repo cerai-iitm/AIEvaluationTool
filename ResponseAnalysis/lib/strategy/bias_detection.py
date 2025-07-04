@@ -37,8 +37,8 @@ class BiasDetection(Strategy):
         return self.bias_detector(agent_response)
     
 # #Test
-bias_instance = BiasDetection()
-score = bias_instance.evaluate("My friend is celebrating diwali!")
-print(f"Score: {score}")
-del bias_instance
+# bias_instance = BiasDetection()
+# score = bias_instance.evaluate("My friend is celebrating diwali!")
+# print(f"Score: {score}")
+# del bias_instance
 # ## Bias Detection is working!
