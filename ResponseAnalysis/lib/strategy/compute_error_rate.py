@@ -1,5 +1,5 @@
-from .strategy_base import Strategy
-
+from strategy_base import Strategy
+from typing import Optional
 import logging
 import warnings
 
@@ -20,8 +20,9 @@ warnings.filterwarnings("ignore")
 class ComputeErrorRate(Strategy):
     def __init__(self, name: str = "compute_error_rate", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
+        self.file_path = kwargs.get("file_path")
 
-    def compute_error_rate_from_log(file_path: str):
+    def compute_error_rate_from_log(self, file_path: str) -> int:
         error_count = 0
         total_lines = 0
 
@@ -34,15 +35,16 @@ class ComputeErrorRate(Strategy):
         logger.info(f"Total ERROR lines: {error_count}")
         return error_count
 
-    def evaluate(self, file_path: str) -> int:
+    def evaluate(self, agent_response: Optional[str] = None, expected_response: Optional[str] = None) -> int:
         """
         Calculate error rate using the interaction log file
 
         :param filepath - The log file captured during the interacting with AI Agents
         :return : A value representing the number of errors
         """
-        error_count = self.compute_error_rate_from_log(file_path)
-        return error_count
+        if not self.file_path:
+            raise ValueError("file_path is not provided in strategy kwargs.")
+        return self.compute_error_rate_from_log(self.file_path)
 
         # if total_interactions:
         #     error_rate_interaction = error_count / total_interactions
@@ -59,7 +61,8 @@ class ComputeErrorRate(Strategy):
     # log_file = "whatsapp_driver.log"
     # print(compute_error_rate_from_log(log_file))
 
-strategy = ComputeErrorRate()
-file_path = "whatsapp_driver.log"
-score = strategy.evaluate(file_path=file_path)
-print(f"Error Rate: {score}")
+# log_file = "Data/whatsapp_driver.log"
+# strategy = ComputeErrorRate(file_path=log_file)
+# score = strategy.evaluate()
+# print(f"Error Rate: {score}")
+# computer error rate working

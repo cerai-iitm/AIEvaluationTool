@@ -1,4 +1,4 @@
-from .strategy_base import Strategy
+from strategy_base import Strategy
 
 from datetime import datetime
 import logging
@@ -22,7 +22,7 @@ class Compute_MTBF(Strategy):
     def __init__(self, name: str = "compute_mtbf", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
 
-    def extract_failure_timestamps(log_path, keyword="ERROR"):
+    def extract_failure_timestamps(self, log_path, keyword="ERROR"):
         """
         Extracts timestamps of log entries containing a specified keyword from a log file
 
@@ -45,7 +45,7 @@ class Compute_MTBF(Strategy):
                         logger.info(f"Skipping line: {line.strip()} -> Error: {e}")
         return timestamps
 
-    def calculate_mtbf_from_timestamps(timestamps):
+    def calculate_mtbf_from_timestamps(self, timestamps):
         """
         Calculates the Mean Time Between Failures (MTBF) from a list of failure timestamps
 
@@ -60,6 +60,7 @@ class Compute_MTBF(Strategy):
             for i in range(1, len(timestamps))
         ]
         mtbf = sum(uptimes) / len(uptimes)
+        logger.info(f"Mean Time Between Failure (MTBF) in hrs: {mtbf}")
         return mtbf, uptimes
 
     def evaluate(self, file_path: str) -> float:
@@ -73,10 +74,11 @@ class Compute_MTBF(Strategy):
         mtbf_time, uptime = self.calculate_mtbf_from_timestamps(timestamps)
         return mtbf_time, uptime
 
-strategy = Compute_MTBF()
-file_path = "whatsapp_driver.log"
-mtbf_time = strategy.evaluate(file_path=file_path)
-print(f"Mean time Between Failure (in Hrs): {mtbf_time}")
+# Example usage
+# strategy = Compute_MTBF()
+# file_path = "Data/whatsapp_driver.log"
+# mtbf_time = strategy.evaluate(file_path=file_path)
+# print(f"Mean time Between Failure (in Hrs): {mtbf_time}")
 
 # # example usage
 # log_file_path = "whatsapp_driver.log" 
