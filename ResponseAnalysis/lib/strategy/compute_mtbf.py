@@ -1,19 +1,9 @@
 from strategy_base import Strategy
-
 from datetime import datetime
-import logging
 import warnings
+from logger import get_logger
 
-logging.basicConfig(
-    level=logging.INFO,  
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.StreamHandler(),  
-        logging.FileHandler("analyzer_log.log")  
-    ]
-)
-
-logger = logging.getLogger(__name__)
+logger = get_logger("compute_mtbf")
 
 warnings.filterwarnings("ignore")
 
@@ -80,12 +70,3 @@ class Compute_MTBF(Strategy):
 # mtbf_time = strategy.evaluate(file_path=file_path)
 # print(f"Mean time Between Failure (in Hrs): {mtbf_time}")
 
-# # example usage
-# log_file_path = "whatsapp_driver.log" 
-# failures = extract_failure_timestamps(log_file_path)
-
-# if failures:
-#     mtbf, uptimes = calculate_mtbf_from_timestamps(failures)
-#     logger.info(f"MTBF: {mtbf:.2f} hours")
-# else:
-#     logger.debug("No ERROR events found.")
