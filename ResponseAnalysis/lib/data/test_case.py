@@ -69,11 +69,11 @@ class TestCase(BaseModel):
 
     def __str__(self):
         """Returns a string representation of the test case."""
-        return f"TestCase(prompt=\"{self.prompt}\", response=\"{self.response}\")"
+        return f"TestCase(prompt=\"{self.prompt}\", response=\"{self.response}\", strategy=\"{self.strategy}\", judge_prompt=\"{self.judge_prompt}\")"
     
     def __repr__(self):
         """Returns a string representation of the TestCase instance for debugging."""
-        return f"TestCase(prompt=\"{self.prompt!r}\", response=\"{self.response!r}\")"
+        return f"TestCase(prompt=\"{self.prompt!r}\", response=\"{self.response!r}\", strategy=\"{self.strategy!r}\", judge_prompt=\"{self.judge_prompt!r}\")"
     
     def __eq__(self, other):
         """
@@ -83,11 +83,13 @@ class TestCase(BaseModel):
         if not isinstance(other, TestCase):
             return False
         return (self.prompt == other.prompt and
-                self.response == other.response)
+                self.response == other.response and
+                self.strategy == other.strategy and
+                self.judge_prompt == other.judge_prompt)
     
     def __hash__(self):
         """
         Returns a hash of the TestCase instance.
         Uses the hash of both prompt and response.
         """
-        return hash((self.prompt, self.response))
+        return hash((self.prompt, self.response, self.strategy, self.judge_prompt))

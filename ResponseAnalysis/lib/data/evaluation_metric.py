@@ -81,4 +81,7 @@ class Metric(BaseModel):
         return total / len(self.test_cases)
 
     def __str__(self):
-        return f"EvaluationMetric(name={self.name}, description={self.desc})"
+        return f"EvaluationMetric(name={self.metric_name}, description={self.metric_description})"
+    
+    def __repr__(self):
+        return f"EvaluationMetric(metric_name='{self.metric_name}', domain_id={self.domain_id}, metric_description='{self.metric_description}')"

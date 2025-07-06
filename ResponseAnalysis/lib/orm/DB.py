@@ -9,6 +9,7 @@ import sys
 import os
 import logging
 import random
+from datetime import datetime
 
 # setup the relative import path for data module.
 sys.path.append(os.path.dirname(__file__) + '/..')
@@ -89,11 +90,138 @@ class DB:
             List[Strategy]: A list of Strategy objects or None if no strategies are found.
         """
         with self.Session() as session:
-            sql = select(Strategies)
+            self.logger.debug("Fetching all strategies ..")
             return [Strategy(name=getattr(strategy, 'strategy_name'), 
                              description=getattr(strategy, 'strategy_description'),
                              strategy_id=getattr(strategy, 'strategy_id')) for strategy in session.query(Strategies).all()]
         return None
+    
+    @property
+    def plans(self) -> List[TestPlan]:
+        """
+        Fetches all test plans from the database.
+        
+        Returns:
+            List[TestPlan]: A list of TestPlan objects or None if no plans are found.
+        """
+        with self.Session() as session:
+            self.logger.debug("Fetching all test plans ..")
+            return [TestPlan(plan_name=getattr(plan, 'plan_name'), 
+                             plan_description=getattr(plan, 'plan_description'),
+                             plan_id=getattr(plan, 'plan_id')) for plan in session.query(TestPlans).all()]
+
+    @property
+    def testcases(self) -> List[TestCase]:
+        """
+        Fetches all test cases from the database.
+        
+        Returns:
+            List[TestCase]: A list of TestCase objects or None if no test cases are found.
+        """
+        with self.Session() as session:
+            self.logger.debug("Fetching all test cases ..")
+            # Fetch all test cases from the database
+            testcases:List[TestCase] = []
+            for testcase in session.query(TestCases).all():
+                name=getattr(testcase, 'testcase_name')
+                testcase_id=getattr(testcase, 'testcase_id')
+
+                prompt=Prompt(system_prompt=getattr(testcase.prompt, 'system_prompt'), 
+                                user_prompt=getattr(testcase.prompt, 'user_prompt'),
+                                domain_id=getattr(testcase.prompt, 'domain_id'),
+                                lang_id=getattr(testcase.prompt, 'lang_id'))
+                strategy=getattr(testcase, 'strategy')
+                response=Response(response_text=getattr(testcase.response, 'response_text'), 
+                                               response_type=getattr(testcase.response, 'response_type'),
+                                               lang_id=getattr(testcase.response, 'lang_id')) if testcase.response else None
+                judge_prompt=LLMJudgePrompt(prompt=getattr(testcase.judge_prompt, 'prompt')) if testcase.judge_prompt else None
+
+                test_case = TestCase(name=name,
+                                     metric="Unknown",  # Metric is not fetched here, can be set later
+                                     prompt=prompt,
+                                     strategy=strategy.strategy_name,
+                                     response=response,
+                                     judge_prompt=judge_prompt,
+                                     testcase_id=testcase_id)
+                # Add test cases to the list
+                testcases.append(test_case)
+            self.logger.debug(f"Total test cases fetched: {len(testcases)}")
+            # Return the list of test cases
+            return testcases            
+
+    @property
+    def metrics(self) -> List[Metric]:
+        """
+        Fetches all metrics from the database.
+        
+        Returns:
+            List[Metric]: A list of Metric objects or None if no metrics are found.
+        """
+        with self.Session() as session:
+            self.logger.debug("Fetching all metrics ..")
+            return [Metric(metric_name=getattr(metric, 'metric_name'), 
+                           metric_description=getattr(metric, 'metric_description'),
+                           metric_id=getattr(metric, 'metric_id'),
+                           domain_id=getattr(metric, 'domain_id')) for metric in session.query(Metrics).all()]
+        
+    @property
+    def targets(self) -> List[Target]:
+        """
+        Fetches all targets from the database.
+        
+        Returns:
+            List[Target]: A list of Target objects or None if no targets are found.
+        """
+        with self.Session() as session:
+            self.logger.debug("Fetching all targets ..")
+            targets:List[Target] = []
+            for target in session.query(Targets).all():
+                target_name = getattr(target, 'target_name')
+                target_description = getattr(target, 'target_description')
+                target_id = getattr(target, 'target_id')
+                target_type = getattr(target, 'target_type')
+                target_url = getattr(target, 'target_url')
+                target_domain = target.domain.domain_name
+                target_langs = [lang.lang_name for lang in target.langs]
+                tgt = Target(target_name=target_name,
+                             target_type=target_type,
+                             target_description=target_description,
+                             target_domain=target_domain,
+                             target_url=target_url,
+                             target_languages=target_langs,
+                             target_id=target_id)
+                targets.append(tgt)
+            
+            return targets
+        
+    @property
+    def runs(self) -> List[Run]:
+        """
+        Fetches all test runs from the database.
+        
+        Returns:
+            List[Run]: A list of Run objects or None if no runs are found.
+        """
+        with self.Session() as session:
+            self.logger.debug("Fetching all test runs ..")
+            runs:List[Run] = []
+            # Fetch all test runs from the database
+            self.logger.debug("Fetching all test runs ..")
+            for run in session.query(TestRuns).all():
+                run_name = getattr(run, 'run_name')
+                run_id = getattr(run, 'run_id')
+                run_status = getattr(run, 'status')
+                start_ts = getattr(run, 'start_ts')
+                start_ts = start_ts.isoformat() if isinstance(start_ts, datetime) else start_ts
+                # end_ts can be None if the run is still ongoing
+                end_ts = getattr(run, 'end_ts')
+                end_ts = end_ts.isoformat() if isinstance(end_ts, datetime) else end_ts
+                # Count the number of test run details associated with this run
+                run_count = session.query(func.count(TestRunDetails.detail_id)).filter(TestRunDetails.run_id == run_id).scalar()
+                target = run.target.target_name
+                r = Run(target=target, run_name=run_name, run_id=run_id, status=run_status, start_ts=start_ts, end_ts=end_ts, run_count=run_count)
+                runs.append(r)
+            return runs
     
     def add_or_get_strategy_id(self, strategy_name: str) -> int:
         """
@@ -1490,3 +1618,5 @@ class DB:
             # Handle the case where the conversation already exists
             self.logger.error(f"Conversation already exists: {conversation}. Error: {e}")
             return -1
+
+    

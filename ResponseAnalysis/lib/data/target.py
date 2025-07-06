@@ -52,10 +52,10 @@ class Target(BaseModel):
         return self.kwargs.get(name)
     
     def __repr__(self):
-        return f"Target(name='{self.target_name}', type='{self.target_type}', url='{self.target_url}')"
+        return f"Target(name='{self.target_name}', type='{self.target_type}', url='{self.target_url}', description='{self.target_description}', domain='{self.target_domain}', languages={self.target_languages})"
     
     def __str__(self):
-        return f"Target name: '{self.target_name}'\tTarget type: '{self.target_type}'\tTarget URL: '{self.target_url}'\tTarget description: '{self.target_description}'"
+        return f"Target name: '{self.target_name}'\tTarget type: '{self.target_type}'\tTarget URL: '{self.target_url}'\tTarget description: '{self.target_description}'\tTarget domain: '{self.target_domain}'\tSupported languages: {', '.join(self.target_languages)}"
     
     def __eq__(self, other):
         """
@@ -66,6 +66,7 @@ class Target(BaseModel):
             return (self.target_name == other.target_name and 
                     self.target_type == other.target_type and 
                     self.target_description == other.target_description and
+                    self.target_domain == other.target_domain and
                     self.target_url == other.target_url)
         return False    
     
@@ -74,5 +75,5 @@ class Target(BaseModel):
         Returns a hash of the Target instance.
         This allows Target instances to be used as keys in dictionaries or added to sets.
         """
-        return hash((self.target_name, self.target_type, self.target_description, self.target_url))
+        return hash((self.target_name, self.target_type, self.target_description, self.target_url, self.target_domain, tuple(self.target_languages)))
     

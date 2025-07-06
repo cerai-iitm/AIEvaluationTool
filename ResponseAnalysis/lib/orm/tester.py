@@ -15,6 +15,11 @@ from data import Prompt, TestCase, Response, TestPlan, Metric, LLMJudgePrompt, T
 
 db = DB(db_url="mariadb+mariadbconnector://root:ATmega32*@localhost:3306/eval", debug=False)
 
+print("\n".join([str(m) for m in db.metrics]))
+print("\n".join([str(m) for m in db.targets]))
+print("\n".join([str(m) for m in db.runs]))
+print("\n".join([str(m) for m in db.testcases]))
+
 print(db.get_status_by_run_detail_id(1))
 print(db.get_status_by_run_id(1))
 print(db.get_run_detail_status(run_name="Gooey AI Run #1", testcase_name="P701"))
