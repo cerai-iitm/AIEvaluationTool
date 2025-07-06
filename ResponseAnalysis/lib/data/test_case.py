@@ -14,6 +14,7 @@ class TestCase(BaseModel):
     Represents a test case in the response analysis system.
     Attributes:
         name (str): The name of the test case.
+        metric (str): The name of the metric associated with the test case.
         prompt (Prompt): The prompt associated with the test case.
         response (Response): The response associated with the test case.
         strategy (str|int): The strategy name or id used for the test case.
@@ -21,22 +22,27 @@ class TestCase(BaseModel):
         kwargs (dict): Additional keyword arguments for future extensibility.
     """
     name: str = Field(..., description="The name of the test case.")
+    metric: str = Field(..., description="The name of the metric associated with the test case.")
     prompt: Prompt = Field(..., description="The prompt for the test case.")
     response: Optional[Response] = Field(None, description="The response for the test case.")
-    strategy: str|int = Field(..., description="The strategy name or id used for the test case")
+    strategy: str = Field(..., description="The strategy name used for the test case")
     judge_prompt: Optional[LLMJudgePrompt] = Field(None, description="The judge prompt for the test case, if applicable.")
     kwargs: dict = Field(default_factory=dict, description="Additional keyword arguments for future extensibility")
     
-    def __init__(self, name:str, prompt: Prompt, strategy: str|int, response: Optional[Response] = None, judge_prompt:Optional[LLMJudgePrompt]=None, **kwargs):
+    def __init__(self, name:str, metric:str, prompt: Prompt, strategy: str|int, response: Optional[Response] = None, judge_prompt:Optional[LLMJudgePrompt]=None, **kwargs):
         """
         Initializes a TestCase instance.
 
         Args:
+            metric (str): The name of the metric associated with the test case.
+            name (str): The name of the test case.
+            strategy (str|int): The strategy name or id used for the test case.
+            judge_prompt (LLMJudgePrompt): The judge prompt for the test case, if applicable
             prompt (Prompt): The prompt for the test case.
             response (Response): The response for the test case.
             kwargs: Additional keyword arguments for future extensibility.
         """
-        super().__init__(name =name, prompt = prompt, strategy=strategy, response=response, judge_prompt=judge_prompt, kwargs = kwargs)
+        super().__init__(name =name, metric=metric, prompt = prompt, strategy=strategy, response=response, judge_prompt=judge_prompt, kwargs = kwargs)
 
     def __getattr__(self, name: str) -> Any:
         """
