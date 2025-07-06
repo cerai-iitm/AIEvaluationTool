@@ -1340,6 +1340,88 @@ class DB:
             self.logger.error(f"RunDetail already exists: {run_detail}. Error: {e}")
             return -1
         
+    def get_run_detail_status(self, run_name: str, testcase_name: str) -> Optional[str]:
+        """
+        Fetches the status of a run detail based on the run name and test case name.
+        
+        Args:
+            run_name (str): The name of the run to fetch the detail for.
+            testcase_name (str): The name of the test case to fetch the detail for.
+        
+        Returns:
+            Optional[str]: The status of the run detail if found, otherwise None.
+        """
+        with self.Session() as session:
+            self.logger.debug(f"Fetching RunDetail status for Run '{run_name}' and TestCase '{testcase_name}' ..")
+            sql = select(TestRunDetails).join(TestRuns, TestRunDetails.run_id == TestRuns.run_id) \
+                                         .join(TestCases, TestRunDetails.testcase_id == TestCases.testcase_id) \
+                                         .where(TestRuns.run_name == run_name, TestCases.testcase_name == testcase_name)
+            result = session.execute(sql).scalar_one_or_none()
+            if result is None:
+                self.logger.error(f"RunDetail for Run '{run_name}' and TestCase '{testcase_name}' does not exist.")
+                return None
+            return getattr(result, 'testcase_status')
+        
+    def get_run_status(self, run_name: str) -> Optional[str]:
+        """
+        Fetches the status of a test run based on its name.
+        
+        Args:
+            run_name (str): The name of the test run to fetch the status for.
+        
+        Returns:
+            Optional[str]: The status of the test run if found, otherwise None.
+        """
+        with self.Session() as session:
+            self.logger.debug(f"Fetching status for TestRun with name: {run_name}")
+            sql = select(TestRuns).where(TestRuns.run_name == run_name)
+            result = session.execute(sql).scalar_one_or_none()
+            if result is None:
+                self.logger.error(f"TestRun with name '{run_name}' does not exist.")
+                return None
+            return getattr(result, 'status')
+        
+    def get_status_by_run_id(self, run_id: int) -> Optional[str]:
+        """
+        Fetches the status of a test run based on its ID.
+        
+        Args:
+            run_id (int): The ID of the test run to fetch the status for.
+        
+        Returns:
+            Optional[str]: The status of the test run if found, otherwise None.
+        """
+        with self.Session() as session:
+            # Fetch the TestRuns object based on the run_id
+            self.logger.debug(f"Fetching status for TestRun with ID: {run_id}")
+            sql = select(TestRuns).where(TestRuns.run_id == run_id)
+            result = session.execute(sql).scalar_one_or_none()
+            if result is None:
+                self.logger.error(f"TestRun with ID '{run_id}' does not exist.")
+                return None
+            return getattr(result, 'status')
+        
+    def get_status_by_run_detail_id(self, run_detail_id: int) -> Optional[str]:
+        """
+        Fetches the status of a test run detail based on its ID.
+        
+        Args:
+            run_detail_id (int): The ID of the test run detail to fetch the status for.
+        
+        Returns:
+            Optional[str]: The status of the test run detail if found, otherwise None.
+        """
+        with self.Session() as session:
+            # Fetch the TestRunDetails object based on the run_detail_id
+            # and return the testcase_status attribute.
+            self.logger.debug(f"Fetching status for TestRunDetail with ID: {run_detail_id}")
+            sql = select(TestRunDetails).where(TestRunDetails.detail_id == run_detail_id)
+            result = session.execute(sql).scalar_one_or_none()
+            if result is None:
+                self.logger.error(f"TestRunDetail with ID '{run_detail_id}' does not exist.")
+                return None
+            return getattr(result, 'testcase_status')
+        
     def add_or_update_conversation(self, conversation: Conversation) -> int:
         """
         Adds a new conversation to the database or fetches its ID if it already exists.

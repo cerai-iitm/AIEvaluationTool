@@ -13,7 +13,12 @@ from data import Prompt, TestCase, Response, TestPlan, Metric, LLMJudgePrompt, T
 # __enter__ __exit__  contextual management methods for the DB class
 # __iter__ __next__ methods for iterating over languages (raise StopIteration when done)
 
-db = DB(db_url="mariadb+mariadbconnector://root:ATmega32*@localhost:3306/eval", debug=True)
+db = DB(db_url="mariadb+mariadbconnector://root:ATmega32*@localhost:3306/eval", debug=False)
+
+print(db.get_status_by_run_detail_id(1))
+print(db.get_status_by_run_id(1))
+print(db.get_run_detail_status(run_name="Gooey AI Run #1", testcase_name="P701"))
+print(db.get_run_status(run_name="Gooey AI Run #1"))
 
 plans = json.load(open('Data/plans.json', 'r'))
 prompts = json.load(open('Data/DataPoints.json', 'r'))
@@ -58,14 +63,14 @@ for testcase in tcs:
         conv.agent_response = agent_response
         conv.response_ts = datetime.now().isoformat()
         db.add_or_update_conversation(conversation=conv)
+        rundetail.status = "COMPLETED"
+        detail_id = db.add_or_update_testrun_detail(run_detail=rundetail)
+
     except Exception as e:
         print(f"Error during conversation processing: {e}")
         rundetail.status = "FAILED"
         detail_id = db.add_or_update_testrun_detail(run_detail=rundetail)
         continue
-
-    rundetail.status = "COMPLETED"
-    detail_id = db.add_or_update_testrun_detail(run_detail=rundetail)
 
 now = datetime.now().isoformat()
 run = Run(target="Gooey AI", 
