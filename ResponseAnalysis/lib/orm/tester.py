@@ -23,6 +23,8 @@ domain_agriculture = db.add_or_get_domain_id(domain_name='agriculture')
 
 lang_auto = db.add_or_get_language_id(language_name='auto')
 
+tc = db.fetch_testcase("P601")
+
 # https://www-help-gooey-ai.filesusr.com/html/7f7b6d_ba05c78336ab53c8fe3fcb339272b40f.html
 tgt = Target(target_name="Gooey AI", 
              target_type="WhatsApp", 
@@ -31,6 +33,13 @@ tgt = Target(target_name="Gooey AI",
              target_domain="agriculture",
              target_languages=["english", "telugu", "bhojpuri", "hindi"])    
 target_id = db.add_or_get_target(target = tgt)
+
+tcs = db.get_testcases_by_testplan(plan_name='Language_Support', n=10)
+for testcase in tcs:
+    print(f"TestCase: {testcase.name}")
+    rundetail = RunDetail(run_name="Gooey AI Run #1", plan_name="Language_Support", testcase_name=testcase.name, metric_name=testcase.metric, status="NEW")
+    detail_id = db.add_or_update_testrun_detail(run_detail=rundetail)
+
 
 now = datetime.now().isoformat()
 run = Run(target="Gooey AI", 
@@ -48,10 +57,8 @@ run.end_ts = datetime.now().isoformat()
 run.status = "COMPLETED"
 
 run_id = db.add_or_update_testrun(run=run)
-
-db.get_testcases(metric_name='Language_Coverage', n=10)
-
 """
+
 metrics_lookup = {}
 for plan in plans.keys():
     record = plans[plan]
