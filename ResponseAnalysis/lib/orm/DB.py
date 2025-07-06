@@ -1,13 +1,14 @@
-from tables import Base, Languages, Domains, Metrics, Responses, TestCases, TestPlans, Prompts, Strategies, LLMJudgePrompts, Targets, TargetLanguages, Conversations, TestRuns, TestRunDetails
+from tables import Base, Languages, Domains, Metrics, Responses, TestCases, TestPlans, Prompts, Strategies, LLMJudgePrompts, Targets, TargetLanguages, Conversations, TestRuns, TestRunDetails, MetricTestCaseMapping
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import select
 from typing import List, Optional, Union
+from  sqlalchemy.sql.expression import func
 import sys
 import os
-import hashlib # For hashing prompts
 import logging
+import random
 
 # setup the relative import path for data module.
 sys.path.append(os.path.dirname(__file__) + '/..')
@@ -295,6 +296,16 @@ class DB:
             self.logger.debug(f"Test case name for ID '{testcase_id}' is '{testcase_name}'.")
             return testcase_name
         
+    def __strategy_name(self, strategy_id: int) -> str:
+        """
+        Helper function to get the strategy name from the strategy ID.
+        """
+        strategy = self.get_strategy_name(strategy_id)
+        if strategy:
+            return strategy
+        
+        raise ValueError(f"Strategy with ID {strategy_id} does not exist.")
+        
     def fetch_testcase(self, testcase: int|str) -> Optional[TestCase]:
         """
         Fetches a test case by its ID or NAME
@@ -338,7 +349,10 @@ class DB:
             if result:
                 testcase_name = result[2].testcase_name
                 testcase_id = result[2].testcase_id
-                testcase_strategy = result[2].strategy_id
+                testcase_strategy = result[2].strategy.strategy_name
+                # we will use the first metric associated with the test case
+                testcase_metrics = result[2].metrics
+
                 # Create a Prompt object from the result
                 prompt = Prompt(prompt_id=getattr(result[0], "prompt_id"),
                                 lang_id=getattr(result[0], "lang_id"),
@@ -360,6 +374,7 @@ class DB:
                     
                 self.logger.debug(f"Test case '{testcase_name}' (ID: {testcase_id}) found with prompt ID: {prompt.prompt_id}")
                 return TestCase(name=testcase_name,
+                                metric=testcase_metrics[0].metric_name,
                                 testcase_id=testcase_id,
                                 prompt=prompt,
                                 prompt_id=prompt.prompt_id,
@@ -669,7 +684,64 @@ class DB:
             self.logger.error(f"Prompt already exists: {prompt} Error: {e}")
             return -1
         
-    def get_testcases(self, metric_name:str, n:int = 0, lang_name:Optional[str] = None, domain_name:Optional[str] = None) -> List[TestCase]:
+    def get_testcases_by_testplan(self, plan_name: str, n:int = 0, lang_name:Optional[str] = None, domain_name:Optional[str] = None) -> List[TestCase]:
+        """
+        Fetches test cases associated with a specific test plan.
+        
+        Args:
+            plan_name (str): The name of the test plan to filter test cases.
+            n (int): The number of test cases to fetch. If 0, fetches all matching test cases.
+        
+        Returns:
+            List[TestCase]: A list of TestCase objects that match the criteria.
+        """
+        with self.Session() as session:
+            # Construct the SQL query to fetch test plan associated with the specified test plan name
+            existing_testplan = session.query(TestPlans).filter_by(plan_name=plan_name).first()
+            if not existing_testplan:
+                self.logger.error(f"Test plan '{plan_name}' does not exist.")
+                return []
+
+            self.logger.debug(f"Fetching test cases for test plan '{plan_name}' with limit {n} ..")
+            # If the test plan exists, we will fetch the metrics associated with it
+            metrics = existing_testplan.metrics
+            if not metrics:
+                self.logger.warning(f"No metrics found for test plan '{plan_name}'. Returning empty list.")
+                return []
+            
+            self.logger.debug(f"Test plan '{plan_name}' has {len(metrics)} metrics associated with it.")
+            
+            # when we have more than one metric, we will fetch n/2 test cases for each metric.
+            # If n is 0, we will fetch all test cases for each metric.
+            n_metrics = len(metrics)
+            if n_metrics > 1 and n > 0:
+                n_per_metric = n // 2
+            else:
+                n_per_metric = n
+
+            # Fetch the test cases associated with the specified test plan
+            all_testcases = []
+            # If there are multiple metrics, we will fetch test cases for each metric
+            for metric in metrics:
+                testcases = self.get_testcases_by_metric(metric.metric_name, n=n_per_metric, lang_name=lang_name, domain_name=domain_name)
+                all_testcases.extend(testcases)
+
+            self.logger.debug(f"Fetched {len(all_testcases)} test cases for test plan '{plan_name}'.")
+
+            # If n is specified, we will return a random sample of n test cases
+            if n > 0:
+                # If n is specified, we will return a random sample of n test cases
+                if len(all_testcases) < n:
+                    self.logger.warning(f"Requested {n} test cases, but only {len(all_testcases)} are available. Returning all available test cases.")
+                    return all_testcases
+                else:
+                    self.logger.debug(f"Returning a random sample of {n} test cases from {len(all_testcases)} available test cases.")
+                    return random.sample(all_testcases, n)
+               
+            # If n is 0, we return all test cases, otherwise we return a random sample of n test cases
+            return all_testcases
+        
+    def get_testcases_by_metric(self, metric_name:str, n:int = 0, lang_name:Optional[str] = None, domain_name:Optional[str] = None) -> List[TestCase]:
         """
         Fetches test cases based on the metric name, language name, and domain name.
         
@@ -683,6 +755,7 @@ class DB:
             List[TestCase]: A list of TestCase objects that match the criteria.
         """
         with self.Session() as session:
+            self.logger.debug(f"Fetching test cases for metric '{metric_name}' with limit {n} ..")
             sql = select(TestCases).join(Metrics, TestCases.metrics).where(Metrics.metric_name == metric_name)
 
             if lang_name:
@@ -690,23 +763,26 @@ class DB:
             if domain_name:
                 sql = sql.join(Domains, Domains.domain_name == domain_name)
             if n > 0:
-                sql = sql.limit(n)
+                # If n is specified, we order them randomly and limit the number of test cases returned
+                sql = sql.order_by(func.random()).limit(n)
             
             result = session.execute(sql).scalars().all()
-
-            testcases = [TestCase(name=getattr(tc, 'testcase_name'),
-                             testcase_id=getattr(tc, 'testcase_id'),
-                             prompt=Prompt(prompt_id=getattr(tc.prompt, 'prompt_id'),
-                                           user_prompt=str(tc.prompt.user_prompt),
-                                           system_prompt=str(tc.prompt.system_prompt),
-                                           lang_id=getattr(tc.prompt, 'lang_id')),
-                             response=Response(response_text=str(tc.response.response_text),
-                                               response_type=tc.response.response_type,
-                                               response_id=getattr(tc.response, 'response_id'),
-                                               prompt_id=tc.response.prompt_id,
-                                               lang_id=tc.response.lang_id,
-                                               digest=tc.response.hash_value) if tc.response else None,
-                             strategy=getattr(tc, "strategy_id")) for tc in result]
+            testcases = [  TestCase(name=getattr(tc, 'testcase_name'),
+                                    metric=metric_name,
+                                    testcase_id=getattr(tc, 'testcase_id'),
+                                    prompt=Prompt(prompt_id=getattr(tc.prompt, 'prompt_id'),
+                                                user_prompt=str(tc.prompt.user_prompt),
+                                                system_prompt=str(tc.prompt.system_prompt),
+                                                lang_id=getattr(tc.prompt, 'lang_id')),
+                                    response=Response(response_text=str(tc.response.response_text),
+                                                    response_type=tc.response.response_type,
+                                                    response_id=getattr(tc.response, 'response_id'),
+                                                    prompt_id=tc.response.prompt_id,
+                                                    lang_id=tc.response.lang_id,
+                                                    digest=tc.response.hash_value) if tc.response else None,
+                                    strategy=tc.strategy.strategy_name) for tc in result]
+            
+            self.logger.debug(f"Fetched {len(testcases)} test cases for metric '{metric_name}'.")
             return testcases
 
     def sample_prompts(self, 
@@ -1059,15 +1135,16 @@ class DB:
                         self.logger.error(f"TestRun (name={run.run_name}) already exists.")
                         return -1  # Return -1 if the run already exists and is not being updated
                     
-                    if self.__status_compare(run.status, existing_run.status) <= 0:
+                    if self.__status_compare(run.status, getattr(existing_run, "status")) <= 0:
                         self.logger.debug(f"Run '{run.run_name}:{existing_run.status}' already exists, can't update with '{run.status}'. Returning existing run ID: {existing_run.run_id}")
                         # Return the ID of the existing run if the status is the same
                         return getattr(existing_run, "run_id")
                     
                     # update the existing run with new details
                     self.logger.debug(f"Run '{run.run_name}' already exists. Updating existing run details (Status: {existing_run.status} -> {run.status}, TS: {existing_run.end_ts} -> {run.end_ts}) ..")
-                    existing_run.end_ts = run.end_ts
-                    existing_run.status = run.status
+                    setattr(existing_run, "end_ts", run.end_ts)  # Update the end timestamp
+                    setattr(existing_run, "status", run.status)  # Update the status
+
                     # Commit the session to save the updated run
                     session.commit()
                     # Ensure run_id is populated
@@ -1105,4 +1182,143 @@ class DB:
         except IntegrityError as e:
             # Handle the case where the run already exists
             self.logger.error(f"Run already exists: {run}. Error: {e}")
+            return -1
+        
+    def get_run_id(self, run_name: str) -> Optional[int]:
+        """
+        Fetches the ID of a test run by its name.
+        
+        Args:
+            run_name (str): The name of the test run to fetch.
+        
+        Returns:
+            Optional[int]: The ID of the test run if found, otherwise None.
+        """
+        with self.Session() as session:
+            sql = select(TestRuns).where(TestRuns.run_name == run_name)
+            result = session.execute(sql).scalar_one_or_none()
+            if result is None:
+                self.logger.error(f"TestRun with name '{run_name}' does not exist.")
+                return None
+            return getattr(result, 'run_id')
+        
+    def get_testcase_id(self, testcase_name: str) -> Optional[int]:
+        """
+        Fetches the ID of a test case by its name.
+        
+        Args:
+            testcase_name (str): The name of the test case to fetch.
+        
+        Returns:
+            Optional[int]: The ID of the test case if found, otherwise None.
+        """
+        with self.Session() as session:
+            sql = select(TestCases).where(TestCases.testcase_name == testcase_name)
+            result = session.execute(sql).scalar_one_or_none()
+            if result is None:
+                self.logger.error(f"TestCase with name '{testcase_name}' does not exist.")
+                return None
+            return getattr(result, 'testcase_id')
+        
+    def get_metric_id(self, metric_name: str) -> Optional[int]:
+        """
+        Fetches the ID of a metric by its name.
+        
+        Args:
+            metric_name (str): The name of the metric to fetch.
+        
+        Returns:
+            Optional[int]: The ID of the metric if found, otherwise None.
+        """
+        with self.Session() as session:
+            sql = select(Metrics).where(Metrics.metric_name == metric_name)
+            result = session.execute(sql).scalar_one_or_none()
+            if result is None:
+                self.logger.error(f"Metric with name '{metric_name}' does not exist.")
+                return None
+            return getattr(result, 'metric_id')
+        
+    def get_plan_id(self, plan_name: str) -> Optional[int]:
+        """
+        Fetches the ID of a test plan by its name.
+        
+        Args:
+            plan_name (str): The name of the test plan to fetch.
+        
+        Returns:
+            Optional[int]: The ID of the test plan if found, otherwise None.
+        """
+        with self.Session() as session:
+            sql = select(TestPlans).where(TestPlans.plan_name == plan_name)
+            result = session.execute(sql).scalar_one_or_none()
+            if result is None:
+                self.logger.error(f"TestPlan with name '{plan_name}' does not exist.")
+                return None
+            return getattr(result, 'plan_id')
+        
+    def add_or_update_testrun_detail(self, run_detail: RunDetail) -> int:
+        """
+        Adds a new test run detail to the database or fetches its ID if it already exists.
+        
+        Args:
+            run_detail (RunDetail): The RunDetail object to be added.
+        
+        Returns:
+            int: The ID of the newly added run detail, or -1 if it already exists.
+        """
+        try:
+            # First, ensure the run exists and get its ID
+            run_id = self.get_run_id(run_detail.run_name)
+            if run_id is None:
+                self.logger.error(f"Run with name '{run_detail.run_name}' does not exist. Cannot add run detail.")
+                return -1
+            
+            testcase_id = self.get_testcase_id(run_detail.testcase_name)
+            if testcase_id is None:
+                self.logger.error(f"TestCase with name '{run_detail.testcase_name}' does not exist. Cannot add run detail.")
+                return -1
+            
+            metric_id = self.get_metric_id(run_detail.metric_name)
+            if metric_id is None:
+                self.logger.error(f"Metric with name '{run_detail.metric_name}' does not exist. Cannot add run detail.")
+                return -1
+            
+            plan_id = self.get_plan_id(run_detail.plan_name)
+            if plan_id is None:
+                self.logger.error(f"TestPlan with name '{run_detail.plan_name}' does not exist. Cannot add run detail.")
+                return -1
+
+            with self.Session() as session:
+                existing_run_detail = session.query(TestRunDetails).join(TestRuns, TestRuns.run_id == TestRunDetails.run_id).filter_by(run_name=run_detail.run_name).first()
+                existing_run_detail = session.query(TestRunDetails).filter_by(run_id=run_id, testcase_id=testcase_id).first()
+                # Check if the run detail already exists in the database
+                #existing_run_detail = session.query(TestRunDetails).filter_by(run_id=run_detail.run_id, testcase_id=run_detail.testcase_id).first()
+                if existing_run_detail:
+                    self.logger.debug(f"RunDetail for Run ID {run_id} and TestCase ID {testcase_id} already exists. Returning existing detail ID: {existing_run_detail.detail_id}")
+                    # Return the ID of the existing run detail
+                    return getattr(existing_run_detail, "detail_id")
+                
+                self.logger.debug(f"Adding new RunDetail for Run (ID:{run_id}, {run_detail.run_name}), Plan (ID:{plan_id}, {run_detail.plan_name}), Metric (ID:{metric_id}, {run_detail.metric_name}), and TestCase (ID:{testcase_id}, {run_detail.testcase_name})")
+
+                # Create the TestRunDetails object
+                new_run_detail = TestRunDetails(run_id=run_id,
+                                                testcase_id=testcase_id,
+                                                testcase_status=run_detail.status,
+                                                plan_id=plan_id,
+                                                metric_id=metric_id)
+                
+                # Add the new run detail to the session
+                session.add(new_run_detail)
+                # Commit the session to save the new run detail
+                session.commit()
+                # Ensure detail_id is populated
+                session.refresh(new_run_detail)  
+
+                self.logger.debug(f"RunDetail added successfully: {new_run_detail.detail_id}")
+                
+                # Return the ID of the newly added run detail
+                return getattr(new_run_detail, "detail_id")
+        except IntegrityError as e:
+            # Handle the case where the run detail already exists
+            self.logger.error(f"RunDetail already exists: {run_detail}. Error: {e}")
             return -1
