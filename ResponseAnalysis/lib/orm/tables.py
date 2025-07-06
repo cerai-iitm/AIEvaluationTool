@@ -47,6 +47,8 @@ class Strategies(Base):
     strategy_name = Column(String(255), nullable=False, unique=True)  # Name of the strategy
     strategy_description = Column(Text, nullable=True)  # Optional description of the strategy
 
+    testcase = relationship("TestCases", back_populates="strategy")  # Relationship to TestCases
+
 class Languages(Base):
     """ORM model for the Languages table.
     This class defines the structure of the Languages table in the database.
@@ -101,6 +103,7 @@ class TestCases(Base):
     judge_prompt = relationship("LLMJudgePrompts", back_populates="test_cases")
     run_details = relationship("TestRunDetails", back_populates="testcase")  # Relationship to TestRunDetails
     conversations = relationship("Conversations", back_populates="testcase")  # Relationship to Conversations
+    strategy = relationship("Strategies", back_populates="testcase")  # Relationship to Strategies
 
 class TestPlans(Base):
     """ORM model for the TestPlans table.
