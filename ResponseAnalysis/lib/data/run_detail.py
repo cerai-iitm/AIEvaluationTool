@@ -24,7 +24,7 @@ class RunDetail(BaseModel):
     status: str = Field(..., description="Status of the run, e.g., 'completed', 'failed', 'running', or 'new'.")
     kwargs: dict = Field(default_factory=dict, description="Additional keyword arguments for future extensibility")
 
-    def __init__(self, run_name: str, plan_name: str, metric_name: str, testcase_name: str, status: str, **kwargs):
+    def __init__(self, run_name: str, plan_name: str, metric_name: str, testcase_name: str, status: str = "NEW", **kwargs):
         """
         Initializes a RunDetail instance.
         Args:

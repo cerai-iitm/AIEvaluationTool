@@ -102,7 +102,6 @@ class TestCases(Base):
     response = relationship("Responses", back_populates="test_cases")
     judge_prompt = relationship("LLMJudgePrompts", back_populates="test_cases")
     run_details = relationship("TestRunDetails", back_populates="testcase")  # Relationship to TestRunDetails
-    conversations = relationship("Conversations", back_populates="testcase")  # Relationship to Conversations
     strategy = relationship("Strategies", back_populates="testcase")  # Relationship to Strategies
 
 class TestPlans(Base):
@@ -181,13 +180,13 @@ class Conversations(Base):
     
     conversation_id = Column(Integer, primary_key=True)
     target_id = Column(Integer, ForeignKey('Targets.target_id'), nullable=False)  # Foreign key to Targets
-    testcase_id = Column(Integer, ForeignKey('TestCases.testcase_id'), nullable=False)  # Foreign key to TestCases
+    detail_id = Column(Integer, ForeignKey('TestRunDetails.detail_id'), nullable=False)  # Foreign key to TestRunDetails
     agent_response = Column(Text, nullable=True)  # Name of the conversation
     prompt_ts = Column(DateTime, nullable=True)  # Start timestamp of the conversation
     response_ts = Column(DateTime, nullable=True)  # End timestamp of the conversation
 
     target = relationship("Targets", back_populates="conversations")  # Relationship to Targets
-    testcase = relationship("TestCases", back_populates="conversations")  # Relationship to
+    detail = relationship("TestRunDetails", back_populates="conversation")  # Relationship to TestRunDetails
 
 class TargetLanguages(Base):
     """ORM model for the TargetLanguages table.
@@ -236,3 +235,4 @@ class TestRunDetails(Base):
     metric = relationship("Metrics", back_populates="run_details")
     plan = relationship("TestPlans", back_populates="run_details")
     testcase = relationship("TestCases", back_populates="run_details")
+    conversation = relationship("Conversations", back_populates="detail")  # Relationship to Conversations

@@ -1289,14 +1289,31 @@ class DB:
                 return -1
 
             with self.Session() as session:
-                existing_run_detail = session.query(TestRunDetails).join(TestRuns, TestRuns.run_id == TestRunDetails.run_id).filter_by(run_name=run_detail.run_name).first()
-                existing_run_detail = session.query(TestRunDetails).filter_by(run_id=run_id, testcase_id=testcase_id).first()
                 # Check if the run detail already exists in the database
-                #existing_run_detail = session.query(TestRunDetails).filter_by(run_id=run_detail.run_id, testcase_id=run_detail.testcase_id).first()
+                existing_run_detail = session.query(TestRunDetails).filter_by(run_id=run_id, testcase_id=testcase_id).first()
                 if existing_run_detail:
-                    self.logger.debug(f"RunDetail for Run ID {run_id} and TestCase ID {testcase_id} already exists. Returning existing detail ID: {existing_run_detail.detail_id}")
+                    # check if the status is the same or higher.
+                    if self.__status_compare(run_detail.status, getattr(existing_run_detail, "testcase_status")) <= 0:
+                        # If the run detail already exists and the status is the same or lower, return the existing detail ID
+                        self.logger.debug(f"RunDetail for Run ID {run_id} and TestCase ID {testcase_id} already exists with status '{existing_run_detail.testcase_status}'. Returning existing detail ID: {existing_run_detail.detail_id}")
+                        # Return the ID of the existing run detail
+                        return getattr(existing_run_detail, "detail_id")
+                    # If the run detail exists but the status is higher, we will update the existing run detail
+                    self.logger.debug(f"RunDetail for Run ID {run_id} and TestCase ID {testcase_id} exists with status '{existing_run_detail.testcase_status}'. Updating existing detail with status '{run_detail.status}' ..")
+                    # Update the existing run detail with the new status
+                    setattr(existing_run_detail, "testcase_status", run_detail.status)
+                    # Commit the session to save the updated run detail
+                    session.commit()
+                    # Ensure detail_id is populated
+                    session.refresh(existing_run_detail)  
+                    self.logger.debug(f"Returning the ID of the updated run detail: {existing_run_detail.detail_id}")
                     # Return the ID of the existing run detail
                     return getattr(existing_run_detail, "detail_id")
+
+                # If the run detail does not exist, we will create a new one
+                self.logger.debug(f"RunDetail for Run ID {run_id} and TestCase ID {testcase_id} does not exist. Creating a new one.")
+                # forcing the status to be "NEW"
+                run_detail.status = "NEW"
                 
                 self.logger.debug(f"Adding new RunDetail for Run (ID:{run_id}, {run_detail.run_name}), Plan (ID:{plan_id}, {run_detail.plan_name}), Metric (ID:{metric_id}, {run_detail.metric_name}), and TestCase (ID:{testcase_id}, {run_detail.testcase_name})")
 
@@ -1321,4 +1338,73 @@ class DB:
         except IntegrityError as e:
             # Handle the case where the run detail already exists
             self.logger.error(f"RunDetail already exists: {run_detail}. Error: {e}")
+            return -1
+        
+    def add_or_update_conversation(self, conversation: Conversation) -> int:
+        """
+        Adds a new conversation to the database or fetches its ID if it already exists.
+        Updates the conversation with the agent response and time stamps, if it already exists.
+        
+        Args:
+            conversation (Conversation): The Conversation object to be added.
+        
+        Returns:
+            int: The ID of the newly added conversation, or -1 if it already exists.
+        """
+        try:
+            target_id = self.get_target_id(conversation.target) if conversation.target else None
+            if target_id is None:
+                self.logger.error(f"Target '{conversation.target}' does not exist. Cannot add conversation.")
+                return -1
+            
+            with self.Session() as session:
+                # Check if the conversation already exists in the database
+                existing_conversation = session.query(Conversations).filter_by(detail_id=conversation.run_detail_id).first()
+                if existing_conversation:
+                    if existing_conversation.prompt_ts is None and conversation.prompt_ts is not None:
+                        self.logger.debug(f"Updating existing conversation details (Prompt timestamp: {conversation.prompt_ts}) ..")
+                    elif existing_conversation.agent_response is None and conversation.agent_response is not None:
+                        self.logger.debug(f"Updating existing conversation details (Agent Response: {conversation.agent_response}, Response timestamp: {conversation.response_ts}) ..")
+                    else:
+                        self.logger.debug(f"Existing conversation (RunDetailId:{conversation.run_detail_id}) will not be updated. Returning conversation ID: {existing_conversation.conversation_id}")
+                        # Return the ID of the existing conversation if it already exists
+                        return getattr(existing_conversation, "conversation_id")
+
+                    # Update the existing conversation with the new details
+                    setattr(existing_conversation, "agent_response", conversation.agent_response)
+                    setattr(existing_conversation, "prompt_ts", conversation.prompt_ts)
+                    setattr(existing_conversation, "response_ts", conversation.response_ts)
+                    
+                    # Commit the session to save the updated conversation
+                    session.commit()
+                    # Ensure conversation_id is populated
+                    session.refresh(existing_conversation)   
+                    # Log the existing conversation ID
+                    self.logger.debug(f"Returning the ID of the updated conversation: {existing_conversation.conversation_id}")
+                    # Return the ID of the existing conversation
+                    return getattr(existing_conversation, "conversation_id")
+                
+                self.logger.debug(f"Adding a new conversation with run detail ID: {conversation.run_detail_id}")
+
+                # Create the Conversations object
+                new_conversation = Conversations(target_id=target_id,
+                                                 detail_id=conversation.run_detail_id,
+                                                 agent_response=conversation.agent_response,
+                                                 prompt_ts=conversation.prompt_ts,
+                                                 response_ts=conversation.response_ts)
+                
+                # Add the new conversation to the session
+                session.add(new_conversation)
+                # Commit the session to save the new conversation
+                session.commit()
+                # Ensure conversation_id is populated
+                session.refresh(new_conversation)  
+
+                self.logger.debug(f"Conversation added successfully: {new_conversation.conversation_id}")
+                
+                # Return the ID of the newly added conversation
+                return getattr(new_conversation, "conversation_id")
+        except IntegrityError as e:
+            # Handle the case where the conversation already exists
+            self.logger.error(f"Conversation already exists: {conversation}. Error: {e}")
             return -1

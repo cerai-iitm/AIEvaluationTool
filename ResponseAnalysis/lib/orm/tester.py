@@ -7,7 +7,7 @@ from datetime import datetime
 # setup the relative import path for data module.
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from data import Prompt, TestCase, Response, TestPlan, Metric, LLMJudgePrompt, Target, Run, RunDetail
+from data import Prompt, TestCase, Response, TestPlan, Metric, LLMJudgePrompt, Target, Run, RunDetail, Conversation
 
 # __len__ __getitem__ __setitem__ __delitem__ __iter__ __contains__
 # __enter__ __exit__  contextual management methods for the DB class
@@ -37,9 +37,35 @@ target_id = db.add_or_get_target(target = tgt)
 tcs = db.get_testcases_by_testplan(plan_name='Language_Support', n=10)
 for testcase in tcs:
     print(f"TestCase: {testcase.name}")
-    rundetail = RunDetail(run_name="Gooey AI Run #1", plan_name="Language_Support", testcase_name=testcase.name, metric_name=testcase.metric, status="NEW")
+    rundetail = RunDetail(run_name="Gooey AI Run #1", plan_name="Language_Support", testcase_name=testcase.name, metric_name=testcase.metric)
+    detail_id = db.add_or_update_testrun_detail(run_detail=rundetail)
+    conv = Conversation(target=tgt.target_name, 
+                        run_detail_id=detail_id, 
+                        testcase=testcase.name)
+    conv_id = db.add_or_update_conversation(conversation=conv)
+
+    rundetail.status = "RUNNING"
     detail_id = db.add_or_update_testrun_detail(run_detail=rundetail)
 
+    try:
+        # Simulate sending the prompt to the agent
+        conv.prompt_ts = datetime.now().isoformat()
+        db.add_or_update_conversation(conversation=conv)
+
+        # Simulate receiving the agent's response
+        # In a real scenario, this would be replaced with the actual agent's response.
+        agent_response = "This is a sample response from the agent."
+        conv.agent_response = agent_response
+        conv.response_ts = datetime.now().isoformat()
+        db.add_or_update_conversation(conversation=conv)
+    except Exception as e:
+        print(f"Error during conversation processing: {e}")
+        rundetail.status = "FAILED"
+        detail_id = db.add_or_update_testrun_detail(run_detail=rundetail)
+        continue
+
+    rundetail.status = "COMPLETED"
+    detail_id = db.add_or_update_testrun_detail(run_detail=rundetail)
 
 now = datetime.now().isoformat()
 run = Run(target="Gooey AI", 
