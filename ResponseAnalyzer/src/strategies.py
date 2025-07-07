@@ -1,4 +1,5 @@
 import json
+from types import SimpleNamespace
 import pandas as pd
 from googletrans import Translator
 from sentence_transformers import SentenceTransformer
@@ -10,6 +11,7 @@ from dotenv import load_dotenv
 import time
 import asyncio
 import numpy as np
+import numpy as np
 
 from langchain_ollama.llms import OllamaLLM
 from langchain_core.prompts.prompt import PromptTemplate
@@ -18,26 +20,25 @@ from opik.integrations.langchain import OpikTracer
 from opik.evaluation.metrics import GEval
 from opik import Opik
 from dotenv import load_dotenv
+from dotenv import load_dotenv
 import litellm
 from lexical_diversity import lex_div as ld
+from tqdm import tqdm
 from tqdm import tqdm
 import evaluate
 from nltk.translate.meteor_score import meteor_score
 from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
 import warnings
-
+from opik.evaluation import models
 import logging
 from datetime import datetime
 import logging
-from litellm import completion
-from custom_model import CustomOllamaCompatibleModel
-# from langchain_ollama import ChatOllama
-# from opik.evaluation import models
-# llm_run = models.LiteLLMChatModel(
-#     model_id="ollama/llama3.1",
-#     base_url="http://10.21.186.219:11434",
-#     api_key="ollama"
-# )
+import os
+
+
+from langchain_core.messages import HumanMessage
+from langchain_ollama import ChatOllama
+
 
 logging.basicConfig(
     level=logging.INFO,  
@@ -53,20 +54,16 @@ logger = logging.getLogger(__name__)
 warnings.filterwarnings("ignore")
 load_dotenv()
 litellm.drop_params = True
-# model_name = "llama3.2:1b"
-# llm_run = completion(
-#         model="ollama/llama3.1",
-#         api_base="http://10.21.186.219:11434"
-#     )
+ollama_url = "http://172.31.99.190:11434"
+model_name = "gemma3:4b"
+judge_model_name = "gemma3:4b"
 
-# llm_run = ChatOllama(
-#     model="llama3.1",
-#     temperature=0,
-#     base_url="http://10.21.186.219:11434"
-#     )
 
-llm_run = CustomOllamaCompatibleModel(model_name="llama3.1", base_url="http://10.21.186.219:11434/api/chat")
-
+scoring_llm = models.LiteLLMChatModel(
+      name="gemma3:4b",
+      base_url="http://172.31.99.190:11434/v1",
+      
+  )  
 
 embedding_model = SentenceTransformer("thenlper/gte-small")
 
@@ -104,45 +101,134 @@ async def language_coverage_similarity(prompts, test_case_responses, expected_re
         similarity = cos_sim(embeddings[0], embeddings[1])
         similarity_2 = cos_sim(embeddings[1], embeddings[2])
         score = 1.0 if similarity >= 0.75 or similarity_2 >= 0.75 else 0.0
+        score = 1.0 if similarity >= 0.75 or similarity_2 >= 0.75 else 0.0
         result.append(score)
         logger.info(f"language_coverage_similarity score for batch {i}: {score}")
     logger.info("Completed language_coverage_similarity evaluation strategy")
     return result
+import requests
+import asyncio
+from typing import Any, Dict, List, Type, Optional
+
+from opik.evaluation.metrics import GEval
+import logging
+
+logger = logging.getLogger(__name__)
+
+import requests
+import asyncio
+from typing import Any, Optional, Type, List, Dict
+
+try:
+    from opik.evaluation.models import OpikBaseModel
+except ImportError:
+    OpikBaseModel = object
+
+logger = logging.getLogger(__name__)
+
+class CustomOllamaModel(OpikBaseModel):
+    def __init__(self, model_name: str, base_url: str = "http://172.31.99.190:11434"):
+        super().__init__(model_name)
+        self.base_url = base_url.rstrip("/")
+        self.api_url = f"{self.base_url}/api/chat"
+
+    def generate_string(self, input: str, response_format: Optional[Type] = None, **kwargs: Any) -> str:
+        messages = [{"role": "user", "content": f'{input} /nothink'}]
+        response = self.generate_provider_response(messages, **kwargs)
+        # Return the JSON string from the OpenAI-style response
+        return response["choices"][0]["message"]["content"]
+
+    def generate_provider_response(self, messages: List[Dict[str, Any]], **kwargs: Any) -> Dict[str, Any]:
+        payload = {
+            "model": self.model_name,
+            "messages": messages,
+            "stream": False,
+        }
+        for k, v in kwargs.items():
+            if isinstance(v, (str, int, float, bool, list, dict, type(None))):
+                payload[k] = v
+        try:
+            logger.info(f"[Ollama] Sending request to {self.api_url}...")
+            response = requests.post(self.api_url, json=payload, timeout=60,)
+            response.raise_for_status()
+            raw = response.json()
+            logger.debug(f"[Ollama] Raw content: {raw}")
+            content_text = raw.get("message", {}).get("content", "") 
+            logger.info(content_text)
+            final_response={
+                "choices": [
+                    {
+                        "message": {
+                            "content": content_text
+                        }
+                    }
+                ]
+            }
+            logger.info(final_response)
+            return final_response
+        except requests.exceptions.HTTPError as http_err:
+            logger.error(f"[Ollama] HTTP error occurred: {http_err.response.text}", exc_info=True)
+            raise
+        except requests.exceptions.ConnectionError as conn_err:
+            logger.error(f"[Ollama] Connection error occurred: {conn_err}", exc_info=True)
+            raise
+        except requests.exceptions.Timeout as timeout_err:
+            logger.error(f"[Ollama] Timeout occurred: {timeout_err}", exc_info=True)
+            raise
+        except requests.exceptions.RequestException as req_err:
+            logger.error(f"[Ollama] Request failed: {req_err}", exc_info=True)
+            raise
+        except ValueError as parse_err:
+            logger.error(f"[Ollama] Failed to parse response JSON: {parse_err}", exc_info=True)
+            raise
+        
+
+    async def agenerate_string(self, input: str, response_format: Optional[Type] = None, **kwargs: Any) -> str:
+        import asyncio
+        return await asyncio.to_thread(self.generate_string, input, response_format, **kwargs)
+
+    async def agenerate_provider_response(self, messages: List[Dict[str, Any]], **kwargs: Any) -> Any:
+        import asyncio
+        return await asyncio.to_thread(self.generate_provider_response, messages, **kwargs)
 
 
 def llm_as_judge(metric_name, judge_prompt, system_prompt, prompts, test_case_response, expected_response):
-    """
-    Strategy 3
-    Use an LLM to judge the language coverage of the response.
-    """
-    logger.info(f"Starting llm_as_judge evaluation strategy for {metric_name}")
-    result = []
-    if len(judge_prompt)!=0 and judge_prompt!="No":
-        eval_criteria = judge_prompt.strip().split(".")
-        print(eval_criteria)
-        if eval_criteria[-1] == "":
-            eval_criteria = eval_criteria[-2]
-        else:
-            eval_criteria = eval_criteria[-1]
-        intro_prompt = judge_prompt.replace(eval_criteria+".", "")
-    
+    logger.info("Starting llm_as_judge evaluation strategy (Ollama + GEval)")
+
+    remote_ip = "http://172.31.99.190:11434"
+    model_name = "deepseek-r1:70b"
+    scoring_llm = CustomOllamaModel(model_name=model_name, base_url=remote_ip)
+
+    logger.info(f"llm_as_judge: prompts={len(prompts)}, test_case_response={len(test_case_response)}, expected_response={len(expected_response)}")
+
     metric = GEval(
         name=metric_name,
-        task_introduction=intro_prompt,
-        evaluation_criteria=eval_criteria,
-        model=llm_run
+        task_introduction=system_prompt,
+        evaluation_criteria=judge_prompt,
+        model=scoring_llm
     )
-    for i in range(len(prompts)):
-        score = metric.score(
-            input=prompts[i],
-            output=test_case_response[i],
-            expected_output=expected_response[i],
-            context=system_prompt
-        )
-        result.append(score.value)
-        logger.info(f"llm_as_judge score for batch {i}: {score.value}")
+
+    results = []
+    try:
+        for i in range(len(prompts)):
+            judge_query = (f'\n\n1. Input: {prompts[i]}\n2. Model Output: {test_case_response[i]}\n3. Expected Output: {expected_response[i]}\n\n')
+            try:
+                raw_response = scoring_llm.generate_provider_response([{"role": "user", "content": judge_query}],timeout=120)
+                score_result = metric.score(
+                    output=raw_response
+                )
+                logger.info(f"[{i}] GEval score: {score_result.value}, reason: {score_result.reason}")
+                results.append(score_result.value)
+            except Exception as e:
+                logger.error(f"[{i}] Error in llm_as_judge: {e}", exc_info=True)
+                results.append(0.0)
+    except Exception as e:
+        logger.error(f"Fatal error in llm_as_judge: {e}", exc_info=True)
+        return []
+
     logger.info("Completed llm_as_judge evaluation strategy")
-    return result
+    return results
+
 
 def text_similarity(prompts, test_case_responses, expected_responses):
     """
@@ -155,6 +241,7 @@ def text_similarity(prompts, test_case_responses, expected_responses):
         embeddings = embedding_model.encode([prompts[i], test_case_responses[i], expected_responses[i]] , show_progress_bar=False)
         similarity = cos_sim(embeddings[0], embeddings[1])
         similarity_2 = cos_sim(embeddings[1], embeddings[2])
+        score = 1.0 if similarity >= 0.75 or similarity_2 >= 0.75 else 0.0
         score = 1.0 if similarity >= 0.75 or similarity_2 >= 0.75 else 0.0
         result.append(score)
         logger.info(f"text_similarity score for batch {i}: {score}")
@@ -378,6 +465,72 @@ async def translate_text(text, dest='en'):
     translator = Translator()
     translation = await translator.translate(text, dest=dest)
     return translation.text if hasattr(translation, 'text') else translation
+async def rejection_rate(test_case_responses):
+    """
+    Strategy 11
+    Calculate the rejection rate of the responses.
+    """
+    logger.info("Starting rejection_rate evaluation strategy")
+    rejection_resps = [
+        "I don't have information about that since it's after my knowledge cutoff. Let me search for recent information about this topic.",
+        "I don't have specific information about that particular topic. However, I can help you with related concepts or suggest ways to find that information.",
+        "I don't have access to personal information about individuals unless it's publicly available knowledge that was in my training data.",
+        "I don't have access to real-time data. Let me search for current information about this.",
+        "I don't have detailed information about that specific aspect, but I can share what I know about the broader topic and suggest where you might find more specialized information.",
+        "I'm sorry, I can only assist with topics related to agriculture. Your question appears to be outside that scope.",
+        "I'm sorry, I'm currently limited to healthcare-related topics. Your question doesn't seem to fit within that domain.",
+        "I'm sorry, I can only respond to topics related to education. This question seems to be outside that area.",
+        "I'm sorry, I can only assist with topics related to learning disabilities. Your question appears to fall outside that scope."
+        ]
+    rejection_embeddings = embedding_model.encode(rejection_resps, show_progress_bar=False)
+    result = []
+    for i in range(len(test_case_responses)):
+        test_case_response = await translate_text(test_case_responses[i])
+        test_case_embeddings = embedding_model.encode([test_case_response], show_progress_bar=False)
+        similarity_scores = cos_sim(test_case_embeddings, rejection_embeddings)
+        if np.any(similarity_scores > 0.8):
+            score = 1.0
+        else:
+            score = 0.0
+        result.append(score)
+        logger.info(f"rejection_rate score for batch {i}: {score}")
+    logger.info("Completed rejection_rate evaluation strategy")
+    return result
+
+
+async def any_language_similarity(prompts, test_case_responses, expected_responses):
+    """
+    Strategy 12
+    Calculate the similarity of the response by bringing the languages to the same plane.
+    """
+    logger.info("Starting any_language_similarity evaluation strategy")
+    result = []
+    translator = Translator()
+    for i in range(len(prompts)):
+        response_language = await translator.translate(test_case_responses[i], dest='en')
+        prompt_language = await translator.translate(prompts[i], dest='en')
+        if expected_responses:
+            expected_response_language = await translator.translate(expected_responses[i], dest='en')
+            embeddings = embedding_model.encode([response_language.text, prompt_language.text, expected_response_language.text], show_progress_bar=False)
+            similarity_2 = cos_sim(embeddings[1], embeddings[2])
+            similarity = cos_sim(embeddings[0], embeddings[1])
+            score = 1.0 if similarity > 0.8 or similarity_2 > 0.8 else 0.0
+        else:
+            similarity = cos_sim(embeddings[0], embeddings[1])
+            score = 1.0 if similarity > 0.8 else 0.0
+        
+        result.append(score)
+        logger.info(f"any_language_similarity score for batch {i}: {score}")
+    logger.info("Completed any_language_similarity evaluation strategy")
+    return result
+
+async def translate_text(text, dest='en'):
+    """
+    Helper function to translate text to a specified language.
+    """
+    translator = Translator()
+    translation = await translator.translate(text, dest=dest)
+    return translation.text if hasattr(translation, 'text') else translation
 
 
 
@@ -406,3 +559,6 @@ async def translate_text(text, dest='en'):
 # asyncio.run(lexical_diversity(test_case_responses))
 # end_time = time.time()
 # print("Time taken by the process:", round(end_time - start_time, 2), "s")
+
+
+# Custom Ollama model wrapper for GEval and LLM as Judge metrics
