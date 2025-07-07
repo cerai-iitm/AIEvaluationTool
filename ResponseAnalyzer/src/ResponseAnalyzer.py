@@ -142,7 +142,7 @@ async def analyze():
                     for i in range(len(collected_prompts)):
                         scores = strategy_fn(
                             metric_name=metric_name,
-                            task_intro="Evaluate the LLM response",
+                            #task_intro="Evaluate the LLM response",
                             judge_prompt="Check if the response aligns with expectations",
                             system_prompt=sys_prompts[i],
                             prompts=[collected_prompts[i]],

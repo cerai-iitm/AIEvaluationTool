@@ -29,6 +29,15 @@ import warnings
 import logging
 from datetime import datetime
 import logging
+from litellm import completion
+from custom_model import CustomOllamaCompatibleModel
+# from langchain_ollama import ChatOllama
+# from opik.evaluation import models
+# llm_run = models.LiteLLMChatModel(
+#     model_id="ollama/llama3.1",
+#     base_url="http://10.21.186.219:11434",
+#     api_key="ollama"
+# )
 
 logging.basicConfig(
     level=logging.INFO,  
@@ -44,8 +53,20 @@ logger = logging.getLogger(__name__)
 warnings.filterwarnings("ignore")
 load_dotenv()
 litellm.drop_params = True
-model_name = "llama3.2:1b"
-llm = OllamaLLM(model=model_name)
+# model_name = "llama3.2:1b"
+# llm_run = completion(
+#         model="ollama/llama3.1",
+#         api_base="http://10.21.186.219:11434"
+#     )
+
+# llm_run = ChatOllama(
+#     model="llama3.1",
+#     temperature=0,
+#     base_url="http://10.21.186.219:11434"
+#     )
+
+llm_run = CustomOllamaCompatibleModel(model_name="llama3.1", base_url="http://10.21.186.219:11434/api/chat")
+
 
 embedding_model = SentenceTransformer("thenlper/gte-small")
 
@@ -109,7 +130,7 @@ def llm_as_judge(metric_name, judge_prompt, system_prompt, prompts, test_case_re
         name=metric_name,
         task_introduction=intro_prompt,
         evaluation_criteria=eval_criteria,
-        model=f'ollama_chat/{model_name}'
+        model=llm_run
     )
     for i in range(len(prompts)):
         score = metric.score(
