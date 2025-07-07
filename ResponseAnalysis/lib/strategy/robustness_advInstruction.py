@@ -26,7 +26,7 @@ class Robustness_AdvInstruction(Strategy):
         return self.similarity_checker.evaluate(agent_response,expected_response)
     
 # #Test
-# rbadv_instance = Robustness_AdvInstruction(task="mnli")
+# rbadv_instance = Robustness_AdvInstruction()
 # score = rbadv_instance.evaluate("The cat sat on the warm windowsill in the afternoon sun.","The dog lay on the cozy cushion in the morning light.")
 # print(f"Score: {score}")
 # del rbadv_instance
