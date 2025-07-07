@@ -18,11 +18,15 @@ warnings.filterwarnings("ignore")
 class Trustworthiness_Internal(Strategy):
     def __init__(self, name: str = "trustworthiness_internal", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
-        self.model_name = kwargs.get("model_name", "gemma3:4b")
+        self.model_name = kwargs.get("model_name", "llama3.1:70b")
         self.base_url = kwargs.get("base_url", "http://localhost:11434")
         self.data_src = kwargs.get("data_src", "codah")
+        self.prompt = kwargs.get("prompt", "None")
+        self.system_prompt = kwargs.get("system_prompt", "None")
+        self.judge_prompt = kwargs.get("judge_prompt", "You are an evaluation bot, Evaluate how relevant and similar this response is. Score between 0 (not similar) and 1 (very similar).")
 
-    def eval_internal_codah(self, response, expected_answer, judge_prompt: Optional[str] = None):
+
+    def eval_internal_codah(self, response:str, expected_answer:str, judge_prompt: Optional[str] = None):
         """
         Evaluates responses based on the CODAH dataset.
 
@@ -33,10 +37,13 @@ class Trustworthiness_Internal(Strategy):
         float: The accuracy of the evaluation based on the CODAH dataset.
         """
         prediction = re.findall(r"\d+", response)[0] if re.findall(r"\d+", response) else "-1"
+        print(f"Prediction: {prediction}, Expected Answer: {expected_answer}")
         if expected_answer == prediction:
             return 1
+        else:
+            return 0
         
-    def eval_internal_squad(self, response, expected_answer, judge_prompt: Optional[str] = None):
+    def eval_internal_llm_as_judge(self, response:str, expected_answer:str):
         """
         Evaluates responses based on the SQuAD dataset.
 
@@ -46,83 +53,38 @@ class Trustworthiness_Internal(Strategy):
         Returns:
         dict: A dictionary containing evaluation results for the SQuAD dataset.
         """
-        llm_judge = LLMJudgeStrategy(self.model_name, self.base_url, judge_prompt, "Truhfulness_SQuAD")
+        llm_judge = LLMJudgeStrategy(model_name=self.model_name, base_url=self.base_url, judge_prompt=self.judge_prompt, metric_name=f"Truthfulness_{self.data_src}")
         score = llm_judge.evaluate(response, expected_answer)
         return score
     
-    def eval_internal_adv(self, response, expected_answer, judge_prompt):
+    def evaluate(self, agent_response: str, expected_response: str) -> float:
         """
-        Evaluates responses based on the adversarial data.
-
-        Parameters:
-        data (list): A list of data items from adversarial sources.
-
-        Returns:
-        dict: A dictionary containing evaluation results for adversarial data.
+        Evaluate the agents response for Robustness.
         """
-        llm_judge = LLMJudgeStrategy(self.model_name, self.base_url, judge_prompt, "Truthfulness_Adv")
-        score = llm_judge.evaluate(response, expected_answer)
-        return score
-    
-    def eval_internal_hotpot(self, response, expected_answer, judge_prompt):
-        """
-        Evaluates responses based on the HotpotQA dataset.
-
-        Parameters:
-        data (list): A list of data items from the HotpotQA dataset.
-
-        Returns:
-        dict: A dictionary containing evaluation results for the HotpotQA dataset.
-        """
-        llm_judge = LLMJudgeStrategy(self.model_name, self.base_url, judge_prompt, "Truthfulness_HotPot")
-        score = llm_judge.evaluate(response, expected_answer)
-        return score
-    
-    def internal_eval(self, response, expected_answer, judge_prompt):
-        """
-        Aggregates internal evaluations across various datasets.
-
-        Parameters:
-        data (list): A list of data items for internal evaluation.
-
-        Returns:
-        dict: A dictionary with keys as dataset names and values as accuracy scores.
-        """
-        # performance = {
-        #     'codah': self.eval_internal_codah(response, expected_answer, judge_prompt),
-        #     'squad': self.eval_internal_squad(response, expected_answer, judge_prompt),
-        #     'adv': self.eval_internal_adv(response, expected_answer, judge_prompt),
-        #     'hotpot': self.eval_internal_hotpot(response, expected_answer, judge_prompt)
-        # }
-        # performance['avg'] = sum(performance.values()) / len(performance)
         match self.data_src:
             case "codah":
-                score = self.eval_internal_codah(response, expected_answer, judge_prompt)
+                score = self.eval_internal_codah(agent_response, expected_response, self.judge_prompt)
                 return score
-            case "squad":
-                score = self.eval_internal_squad(response, expected_answer, judge_prompt)
-                return score
-            case "adv":
-                score = self.eval_internal_adv(response, expected_answer, judge_prompt)
-                return score 
-            case "hotpot":
-                score = self.eval_internal_hotpot(response, expected_answer, judge_prompt)
+            case "squad" | "hotpot":
+                # score = self.eval_internal_squad(response, expected_answer, judge_prompt)
+                # return score
+                score = self.eval_internal_llm_as_judge(response=agent_response, expected_answer=expected_response)
                 return score
             case _:
                 logger.error(f"Unknown data source: {self.data_src}. Please choose from 'codah', 'squad', 'adv', or 'hotpot'.")
                 return None
-    
-    def evaluate(self, agent_response: str, expected_response: str, judge_prompt: Optional[str] = None) -> float:
-        """
-        Evaluate the agents response for Robustness.
-        """
-        return self.internal_eval(agent_response, expected_response, judge_prompt)
-    
 
     
 # #Test
-trust_internal_instance = Trustworthiness_Internal(data_src="codah")
-score = trust_internal_instance.evaluate("The premise does not entail the hypothesis.",2)
+# trust_internal_instance = Trustworthiness_Internal(data_src="codah")
+# score = trust_internal_instance.evaluate("Answer: 1","1")
+# print("Evaluation for CODAH dataset:")
+# print(f"Score: {score}")
+# del trust_internal_instance
+
+trust_internal_instance = Trustworthiness_Internal(data_src="hotpot", judge_prompt="You are an evaluation bot, Evaluate how similiar or dissimilar this response. Score between 0 (Dissimilar) and 1 (Similar).")
+score = trust_internal_instance.evaluate("AT&T","Answer: Verizon definitely")
+print("Evaluation for hotpot dataset:")
 print(f"Score: {score}")
-del rbadv_instance
-# ## Robustness AdvGLUE is working!
+del trust_internal_instance
+#Implemented the Hotpot dataset evaluation, SQUAD and CODAH are working! But the LLM as Judge response is not very good

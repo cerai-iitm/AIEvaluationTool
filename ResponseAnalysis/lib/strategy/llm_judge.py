@@ -22,7 +22,7 @@ class LLMJudgeStrategy(Strategy):
         self,
         judge_prompt: str,
         metric_name: str,
-        model_name: str = "gemma3:4b",
+        model_name: str = "deepseek-r1:70b",
         base_url: str = "http://172.31.99.190:11434",
         name: str = "llm_judge"
     ) -> None:

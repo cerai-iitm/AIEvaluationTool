@@ -20,6 +20,6 @@
     "test_plan_file": "/home/gk_cerai/Desktop/Gk_Work/AIEvaluationTool/Data/DataPoints.json",
     "run_mode": "single_window",
     "agent_name": "Gooey AI",
-    "test_plan_id": "T4",
-    "test_case_count": 10
+    "test_plan_id": "T2",
+    "test_case_count": 2
 }
