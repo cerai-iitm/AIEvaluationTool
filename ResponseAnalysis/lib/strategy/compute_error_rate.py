@@ -38,7 +38,7 @@ class ComputeErrorRate(Strategy):
         return self.compute_error_rate_from_log(self.file_path)
 
 # log_file = "Data/whatsapp_driver.log"
-# strategy = ComputeErrorRate(file_path=log_file)
-# score = strategy.evaluate()
+# error_rate = ComputeErrorRate(file_path=log_file)
+# score = error_rate.evaluate()
 # print(f"Error Rate: {score}")
 # computer error rate working
