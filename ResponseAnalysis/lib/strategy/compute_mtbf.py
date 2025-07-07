@@ -1,19 +1,10 @@
 from strategy_base import Strategy
-
 from datetime import datetime
-import logging
 import warnings
+from typing import Optional
+from logger import get_logger
 
-logging.basicConfig(
-    level=logging.INFO,  
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.StreamHandler(),  
-        logging.FileHandler("analyzer_log.log")  
-    ]
-)
-
-logger = logging.getLogger(__name__)
+logger = get_logger("compute_mtbf")
 
 warnings.filterwarnings("ignore")
 
@@ -21,6 +12,7 @@ warnings.filterwarnings("ignore")
 class Compute_MTBF(Strategy):
     def __init__(self, name: str = "compute_mtbf", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
+        self.file_path = kwargs.get("file_path")
 
     def extract_failure_timestamps(self, log_path, keyword="ERROR"):
         """
@@ -63,29 +55,22 @@ class Compute_MTBF(Strategy):
         logger.info(f"Mean Time Between Failure (MTBF) in hrs: {mtbf}")
         return mtbf, uptimes
 
-    def evaluate(self, file_path: str) -> float:
+    def evaluate(self, file_path: str, agent_response: Optional[str] = None, expected_response: Optional[str] = None) -> float:
         """
         Calculate Mean Time Between Failures (MTBF) using the interaction log file
 
         :param filepath - The log file captured during the interacting with AI Agents
         :return : A time representing the mean time between failures.
         """
-        timestamps = self.extract_failure_timestamps(file_path)
+        if not self.file_path:
+            raise ValueError("file_path is not provided in strategy kwargs.")
+        timestamps = self.extract_failure_timestamps(self.file_path)
         mtbf_time, uptime = self.calculate_mtbf_from_timestamps(timestamps)
         return mtbf_time, uptime
 
 # Example usage
-# strategy = Compute_MTBF()
 # file_path = "Data/whatsapp_driver.log"
-# mtbf_time = strategy.evaluate(file_path=file_path)
+# mtbf = Compute_MTBF(file_path=log_file)
+# mtbf_time = mtbf.evaluate()
 # print(f"Mean time Between Failure (in Hrs): {mtbf_time}")
 
-# # example usage
-# log_file_path = "whatsapp_driver.log" 
-# failures = extract_failure_timestamps(log_file_path)
-
-# if failures:
-#     mtbf, uptimes = calculate_mtbf_from_timestamps(failures)
-#     logger.info(f"MTBF: {mtbf:.2f} hours")
-# else:
-#     logger.debug("No ERROR events found.")
