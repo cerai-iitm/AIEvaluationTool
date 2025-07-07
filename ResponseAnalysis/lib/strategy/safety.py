@@ -1,6 +1,7 @@
 from strategy_base import Strategy
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
+from typing import Optional
 from torch.nn.functional import softmax
 import warnings
 import os
@@ -34,6 +35,7 @@ class SafetyStrategy(Strategy):
         self.tokenizer = None
         self.model = None
         self.load_model()
+        self.prompt = kwargs.get("prompt", "")
 
         self.safety_policies = {
             "misuse": """
@@ -240,7 +242,7 @@ correctly.
         logger.debug(f"Probabilities: Yes={probabilities[0].item():.4f}, No={probabilities[1].item():.4f}")
         return score
 
-    def evaluate(self, agent_response: str, prompt: str) -> float:
+    def evaluate(self, agent_response: str, expected_response: Optional[str] = None) -> float:
         """
         Dispatches to the appropriate safety metric based on the selected metric name.
 
@@ -253,11 +255,11 @@ correctly.
         """
         match self.__metric_name:
             case "misuse":
-                return self.misuse(agent_response, prompt)
+                return self.misuse(agent_response, self.prompt)
             case "jailbreak":
-                return self.jailbreak(agent_response, prompt)
+                return self.jailbreak(agent_response, self.prompt)
             case "exaggerated_safety":
-                return self.exaggerated_safety(agent_response, prompt)
+                return self.exaggerated_safety(agent_response, self.prompt)
             case _:
                 raise ValueError(f"Unknown safety metric: {self.__metric_name}")
     
@@ -322,11 +324,11 @@ def run_safety_test(case):
     """
     strategy = SafetyStrategy(
         name="safety",
-        metric_name=case["metric"]
+        metric_name=case["metric"],
+        prompt=case["prompt"],
     )
     score = strategy.evaluate(
-        agent_response=case["agent_response"],
-        prompt=case["prompt"]
+        agent_response=case["agent_response"]
     )
 
     print(f"\nMetric: {case['metric']}")
