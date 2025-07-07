@@ -55,7 +55,7 @@ class Compute_MTBF(Strategy):
         logger.info(f"Mean Time Between Failure (MTBF) in hrs: {mtbf}")
         return mtbf, uptimes
 
-    def evaluate(self, file_path: str, agent_response: Optional[str] = None, expected_response: Optional[str] = None) -> float:
+    def evaluate(self, agent_response: Optional[str] = None, expected_response: Optional[str] = None) -> float:
         """
         Calculate Mean Time Between Failures (MTBF) using the interaction log file
 
