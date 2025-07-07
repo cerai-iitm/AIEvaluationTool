@@ -133,7 +133,7 @@ class CustomOllamaModel(OpikBaseModel):
         self.api_url = f"{self.base_url}/api/chat"
 
     def generate_string(self, input: str, response_format: Optional[Type] = None, **kwargs: Any) -> str:
-        messages = [{"role": "user", "content": input}]
+        messages = [{"role": "user", "content": f'{input} /nothink'}]
         response = self.generate_provider_response(messages, **kwargs)
         # Return the JSON string from the OpenAI-style response
         return response["choices"][0]["message"]["content"]
@@ -149,7 +149,7 @@ class CustomOllamaModel(OpikBaseModel):
                 payload[k] = v
         try:
             logger.info(f"[Ollama] Sending request to {self.api_url}...")
-            response = requests.post(self.api_url, json=payload, timeout=60)
+            response = requests.post(self.api_url, json=payload, timeout=60,)
             response.raise_for_status()
             raw = response.json()
             logger.debug(f"[Ollama] Raw content: {raw}")
@@ -196,7 +196,7 @@ def llm_as_judge(metric_name, judge_prompt, system_prompt, prompts, test_case_re
     logger.info("Starting llm_as_judge evaluation strategy (Ollama + GEval)")
 
     remote_ip = "http://172.31.99.190:11434"
-    model_name = "gemma3:4b"
+    model_name = "deepseek-r1:70b"
     scoring_llm = CustomOllamaModel(model_name=model_name, base_url=remote_ip)
 
     logger.info(f"llm_as_judge: prompts={len(prompts)}, test_case_response={len(test_case_response)}, expected_response={len(expected_response)}")
@@ -213,7 +213,7 @@ def llm_as_judge(metric_name, judge_prompt, system_prompt, prompts, test_case_re
         for i in range(len(prompts)):
             judge_query = (f'\n\n1. Input: {prompts[i]}\n2. Model Output: {test_case_response[i]}\n3. Expected Output: {expected_response[i]}\n\n')
             try:
-                raw_response = scoring_llm.generate_provider_response([{"role": "user", "content": judge_query}],timeout=30)
+                raw_response = scoring_llm.generate_provider_response([{"role": "user", "content": judge_query}],timeout=120)
                 score_result = metric.score(
                     output=raw_response
                 )

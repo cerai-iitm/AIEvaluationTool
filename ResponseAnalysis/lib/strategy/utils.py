@@ -169,12 +169,12 @@ class SarvamModel:
         self.tokenizer = AutoTokenizer.from_pretrained(model_id)
 
         if torch.cuda.is_available():
-            logger.info("Using GPU for SarvamModel")
+            logger.info("Using GPU for hosting SarvamModel")
             self.model = AutoModelForCausalLM.from_pretrained(
                 model_id, torch_dtype=torch.float16, device_map="auto"
             )
         else:
-            logger.info("Using CPU for SarvamModel")
+            logger.info("Using CPU for hosting SarvamModel")
             self.model = AutoModelForCausalLM.from_pretrained(
                 model_id, torch_dtype=torch.float32
             ).to("cpu")
@@ -198,6 +198,6 @@ class SarvamModel:
         inputs = self.tokenizer(text, return_tensors="pt", truncation=True, max_length=512).to(self.device)
         with torch.no_grad():
             outputs = self.model(**inputs, output_hidden_states=True)
-            last_hidden = outputs.hidden_states[-1]  # (batch_size, seq_len, hidden_dim)
+            last_hidden = outputs.hidden_states[-1] 
             embedding = last_hidden.mean(dim=1).squeeze()
         return embedding.cpu()

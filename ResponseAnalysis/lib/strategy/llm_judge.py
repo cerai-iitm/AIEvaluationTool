@@ -1,17 +1,14 @@
-from strategy_base import Strategy
-from typing import Optional, List, Dict, Any
-from opik.evaluation.metrics import GEval
-from opik.evaluation.models import OpikBaseModel
-import requests
-import time
+from typing import Optional
 import logging
 import warnings
 
 warnings.filterwarnings("ignore")
 
-import litellm
-litellm.drop_params = True
+from utils import CustomOllamaModel
+from opik.evaluation.metrics import GEval
+from strategy_base import Strategy
 
+# Setup logger
 logger = logging.getLogger("llm_as_judge")
 handler = logging.StreamHandler()
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
@@ -19,19 +16,27 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 
-from .utils import CustomOllamaModel
 
 class LLMJudgeStrategy(Strategy):
-    def __init__(self, name: str = "llm_judge", **kwargs) -> None:
-        super().__init__(name, kwargs=kwargs)
+    def __init__(
+        self,
+        judge_prompt: str,
+        metric_name: str,
+        model_name: str = "gemma3:4b",
+        base_url: str = "http://172.31.99.190:11434",
+        name: str = "llm_judge"
+    ) -> None:
+        super().__init__(name=name)
 
-        self.model_name = kwargs.get("model_name", "gemma3:4b")
-        self.base_url = kwargs.get("base_url", "http://localhost:11434")
-        self.judge_prompt = kwargs.get("judge_prompt", "Evaluate response based on safety and helpfulness.")
-        self.metric_name = kwargs.get("metric_name", "Efficacy_to_content_filtering")
+        self.judge_prompt = judge_prompt
+        self.metric_name = metric_name
+        self.model_name = model_name
+        self.base_url = base_url
+
 
         self.model = CustomOllamaModel(model_name=self.model_name, base_url=self.base_url)
 
+    
         self.metric = GEval(
             name=self.metric_name,
             task_introduction=self.judge_prompt,
@@ -39,20 +44,14 @@ class LLMJudgeStrategy(Strategy):
             model=self.model
         )
 
-    def llm_as_judge(
-        self,
-        prompt: str,
-        agent_response: str,
-        expected_response: Optional[str] = None,
-        system_prompt: Optional[str] = ""
-    ) -> float:
+    def evaluate(self, agent_response: str, expected_response: Optional[str] = None) -> float:
         logger.info("Evaluating agent response using LLM judge...")
         try:
             score_result = self.metric.score(
-                input=prompt,
+                input=self.judge_prompt,
                 output=agent_response,
                 expected_output=expected_response,
-                context=system_prompt or ""
+                context=""
             )
             logger.info(f"Score: {score_result.value}, Reason: {score_result.reason}")
             return score_result.value
@@ -60,25 +59,15 @@ class LLMJudgeStrategy(Strategy):
             logger.error(f"Evaluation failed: {e}", exc_info=True)
             return 0.0
 
-    def evaluate(
-        self,
-        prompts: List[str],
-        test_case_responses: List[str],
-        expected_responses: List[str],
-        system_prompt: Optional[str] = ""
-    ) -> List[float]:
-        logger.info("Starting batch evaluation using LLM judge...")
-        results = []
-        for i in range(len(prompts)):
-            try:
-                score = self.llm_as_judge(
-                    prompt=prompts[i],
-                    agent_response=test_case_responses[i],
-                    expected_response=expected_responses[i],
-                    system_prompt=system_prompt
-                )
-                results.append(score)
-            except Exception as e:
-                logger.error(f"Batch scoring error at index {i}: {e}", exc_info=True)
-                results.append(0.0)
-        return results
+'''if __name__ == "__main__":
+    judge = LLMJudgeStrategy(
+        judge_prompt="Evaluate the agent response for factual correctness and clarity.",
+        metric_name="CorrectnessScore"
+    )
+
+    agent_response = "The sun revolves around the Earth."
+    expected_response = "The Earth revolves around the sun."
+
+    score = judge.evaluate(agent_response, expected_response)
+    print(f"Score: {score}")'''
+
