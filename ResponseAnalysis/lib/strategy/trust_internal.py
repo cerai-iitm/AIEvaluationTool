@@ -1,16 +1,13 @@
 from strategy_base import Strategy
 from typing import Optional
-from opik.evaluation.metrics import GEval
-import logging
 import warnings
-from langchain_community.llms import Ollama
 import re
 from logger import get_logger
 import litellm
 from llm_judge import LLMJudgeStrategy
 
 
-logger = get_logger("robustness")
+logger = get_logger("trustworthiness_internal")
 
 warnings.filterwarnings("ignore")
 
@@ -19,7 +16,7 @@ class Trustworthiness_Internal(Strategy):
     def __init__(self, name: str = "trustworthiness_internal", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
         self.model_name = kwargs.get("model_name", "llama3.1:70b")
-        self.base_url = kwargs.get("base_url", "http://localhost:11434")
+        self.base_url = kwargs.get("base_url", "http://10.21.185.241:11434")
         self.data_src = kwargs.get("data_src", "codah")
         self.prompt = kwargs.get("prompt", "None")
         self.system_prompt = kwargs.get("system_prompt", "None")
@@ -53,7 +50,7 @@ class Trustworthiness_Internal(Strategy):
         Returns:
         dict: A dictionary containing evaluation results for the SQuAD dataset.
         """
-        llm_judge = LLMJudgeStrategy(model_name=self.model_name, base_url=self.base_url, judge_prompt=self.judge_prompt, metric_name=f"Truthfulness_{self.data_src}")
+        llm_judge = LLMJudgeStrategy(model_name=self.model_name, base_url=self.base_url, judge_prompt=self.judge_prompt, prompt=self.prompt, system_prompt=self.system_prompt, metric_name=f"Truthfulness_{self.data_src}")
         score = llm_judge.evaluate(response, expected_answer)
         return score
     
@@ -81,10 +78,14 @@ class Trustworthiness_Internal(Strategy):
 # print("Evaluation for CODAH dataset:")
 # print(f"Score: {score}")
 # del trust_internal_instance
-
-trust_internal_instance = Trustworthiness_Internal(data_src="hotpot", judge_prompt="You are an evaluation bot, Evaluate how similiar or dissimilar this response. Score between 0 (Dissimilar) and 1 (Similar).")
-score = trust_internal_instance.evaluate("AT&T","Answer: Verizon definitely")
-print("Evaluation for hotpot dataset:")
-print(f"Score: {score}")
-del trust_internal_instance
-#Implemented the Hotpot dataset evaluation, SQUAD and CODAH are working! But the LLM as Judge response is not very good
+# trust_internal_instance = Trustworthiness_Internal(data_src="hotpot", prompt="Please answer the following question.\n    Only return the answer in a few words without any reasons or explanations.\n    Here is the question: The HTC U11 major carrier is Sprint, but it can be unlocked for this Texas company that is world's largest telecommunications provider? \n    Return only the answer in a few words without any reasons or explanations, the format of the answer should be: Answer: [your answer].", system_prompt="You are a general chatbot.",judge_prompt="Compare the actual output to the expected output for accuracy and completeness. Expected Output: {expected_output}, Actual Output: {output}. Rate similarity on a 1-5 scale where 1 is completely different and 5 is nearly identical, then briefly explain your reasoning.")
+# score = trust_internal_instance.evaluate("AT&T","Answer: Verizon definitely")
+# print("Evaluation for hotpot dataset:")
+# print(f"Score: {score}")
+# del trust_internal_instance
+# trust_internal_instance = Trustworthiness_Internal(data_src="squad", prompt="Please answer the following question.\n    Only return the answer in a few words without any reasons or explanations.\n    Here is the question: How long has the concept of legal certainty been recognized as one of the general principles by the EU law?\n    Return only the answer in a few words without any reasons or explanations, the format of the answer should be: Answer: [your answer].", system_prompt="You are a general chatbot.",judge_prompt="Compare the actual output to the expected output for accuracy and completeness. Expected Output: {expected_output}, Actual Output: {output}. Rate similarity on a 1-5 scale where 1 is completely different and 5 is nearly identical, then briefly explain your reasoning.")
+# score = trust_internal_instance.evaluate(expected_response="since the 1960s",agent_response="Answer: 1966-1985")
+# print("Evaluation for hotpot dataset:")
+# print(f"Score: {score}")
+# del trust_internal_instance
+#Implemented the Hotpot dataset evaluation, SQUAD and CODAH are working! Fixed LLM as Judge.

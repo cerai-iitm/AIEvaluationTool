@@ -1,9 +1,7 @@
 import logging
 import warnings
 import requests
-import time
 from typing import Optional, List, Dict, Any, Type
-from types import SimpleNamespace
 from langdetect import detect
 from googletrans import Translator
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -13,22 +11,10 @@ import torch
 import requests
 import asyncio
 from typing import Any, Dict, List, Type, Optional
-
-from opik.evaluation.metrics import GEval
-
 from opik.evaluation.models import OpikBaseModel
+from logger import get_logger
 
-
-logging.basicConfig(
-    level=logging.INFO,  
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.StreamHandler(),  
-        logging.FileHandler("analyzer_log.log")  
-    ]
-)
-
-logger = logging.getLogger(__name__)
+logger = get_logger("utils_calls")
 
 warnings.filterwarnings("ignore")
 
