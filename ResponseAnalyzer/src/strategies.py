@@ -111,13 +111,10 @@ import asyncio
 from typing import Any, Dict, List, Type, Optional
 
 from opik.evaluation.metrics import GEval
-import logging
+
 
 logger = logging.getLogger(__name__)
 
-import requests
-import asyncio
-from typing import Any, Optional, Type, List, Dict
 
 try:
     from opik.evaluation.models import OpikBaseModel
@@ -135,7 +132,7 @@ class CustomOllamaModel(OpikBaseModel):
     def generate_string(self, input: str, response_format: Optional[Type] = None, **kwargs: Any) -> str:
         messages = [{"role": "user", "content": f'{input} /nothink'}]
         response = self.generate_provider_response(messages, **kwargs)
-        # Return the JSON string from the OpenAI-style response
+    
         return response["choices"][0]["message"]["content"]
 
     def generate_provider_response(self, messages: List[Dict[str, Any]], **kwargs: Any) -> Dict[str, Any]:
