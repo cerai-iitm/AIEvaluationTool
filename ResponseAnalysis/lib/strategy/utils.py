@@ -9,7 +9,13 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 import json
 import os
 import torch
+import requests
+import asyncio
+from typing import Any, Dict, List, Type, Optional
 
+from opik.evaluation.metrics import GEval
+
+from opik.evaluation.models import OpikBaseModel
 
 
 logging.basicConfig(
@@ -113,15 +119,25 @@ def save_json(data, file_path):
     with open(file_path, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
-class CustomOllamaModel:
-    def __init__(self, model_name: str, base_url: str):
-        self.model_name = model_name
+
+
+
+try:
+    from opik.evaluation.models import OpikBaseModel
+except ImportError:
+    OpikBaseModel = object
+
+
+class CustomOllamaModel(OpikBaseModel):
+    def __init__(self, model_name: str, base_url: str = "http://172.31.99.190:11434"):
+        super().__init__(model_name)
         self.base_url = base_url.rstrip("/")
         self.api_url = f"{self.base_url}/api/chat"
 
     def generate_string(self, input: str, response_format: Optional[Type] = None, **kwargs: Any) -> str:
-        messages = [{"role": "user", "content": input}]
+        messages = [{"role": "user", "content": f'{input} /nothink'}]
         response = self.generate_provider_response(messages, **kwargs)
+    
         return response["choices"][0]["message"]["content"]
 
     def generate_provider_response(self, messages: List[Dict[str, Any]], **kwargs: Any) -> Dict[str, Any]:
@@ -130,17 +146,18 @@ class CustomOllamaModel:
             "messages": messages,
             "stream": False,
         }
-        payload.update({k: v for k, v in kwargs.items() if isinstance(v, (str, int, float, bool, list, dict, type(None)))})
+        for k, v in kwargs.items():
+            if isinstance(v, (str, int, float, bool, list, dict, type(None))):
+                payload[k] = v
         try:
-            logging.info(f"[Ollama] Sending request to {self.api_url}...")
-            start = time.time()
-            response = requests.post(self.api_url, json=payload, timeout=60)
-            elapsed = time.time() - start
+            logger.info(f"[Ollama] Sending request to {self.api_url}...")
+            response = requests.post(self.api_url, json=payload, timeout=60,)
             response.raise_for_status()
             raw = response.json()
-            logging.info(f"[Ollama] Received response in {elapsed:.2f}s")
-            content_text = raw.get("message", {}).get("content", "")
-            return {
+            logger.debug(f"[Ollama] Raw content: {raw}")
+            content_text = raw.get("message", {}).get("content", "") 
+            logger.info(content_text)
+            final_response={
                 "choices": [
                     {
                         "message": {
@@ -149,9 +166,24 @@ class CustomOllamaModel:
                     }
                 ]
             }
-        except requests.RequestException as e:
-            logging.error(f"[Ollama] Request failed: {e}", exc_info=True)
+            logger.info(final_response)
+            return final_response
+        except requests.exceptions.HTTPError as http_err:
+            logger.error(f"[Ollama] HTTP error occurred: {http_err.response.text}", exc_info=True)
             raise
+        except requests.exceptions.ConnectionError as conn_err:
+            logger.error(f"[Ollama] Connection error occurred: {conn_err}", exc_info=True)
+            raise
+        except requests.exceptions.Timeout as timeout_err:
+            logger.error(f"[Ollama] Timeout occurred: {timeout_err}", exc_info=True)
+            raise
+        except requests.exceptions.RequestException as req_err:
+            logger.error(f"[Ollama] Request failed: {req_err}", exc_info=True)
+            raise
+        except ValueError as parse_err:
+            logger.error(f"[Ollama] Failed to parse response JSON: {parse_err}", exc_info=True)
+            raise
+        
 
     async def agenerate_string(self, input: str, response_format: Optional[Type] = None, **kwargs: Any) -> str:
         import asyncio
@@ -160,8 +192,6 @@ class CustomOllamaModel:
     async def agenerate_provider_response(self, messages: List[Dict[str, Any]], **kwargs: Any) -> Any:
         import asyncio
         return await asyncio.to_thread(self.generate_provider_response, messages, **kwargs)
-
-
 
 class SarvamModel:
     def __init__(self, model_id: str = "sarvamai/sarvam-2b-v0.5"):
