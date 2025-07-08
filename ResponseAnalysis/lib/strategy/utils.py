@@ -3,6 +3,7 @@ import warnings
 import requests
 import time
 from typing import Optional, List, Dict, Any, Type
+from types import SimpleNamespace
 from langdetect import detect
 from googletrans import Translator
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -127,6 +128,20 @@ try:
 except ImportError:
     OpikBaseModel = object
 
+class DotDict:
+    def __init__(self, data):
+        if isinstance(data, dict):
+            for key, value in data.items():
+                setattr(self, key, self._convert(value))
+       
+    def _convert(self, value):
+        if isinstance(value, dict):
+            return DotDict(value)
+        elif isinstance(value, list):
+            return [self._convert(item) for item in value]
+        else:
+            return value
+
 
 class CustomOllamaModel(OpikBaseModel):
     def __init__(self, model_name: str, base_url: str = "http://172.31.99.190:11434"):
@@ -134,11 +149,12 @@ class CustomOllamaModel(OpikBaseModel):
         self.base_url = base_url.rstrip("/")
         self.api_url = f"{self.base_url}/api/chat"
 
-    def generate_string(self, input: str, response_format: Optional[Type] = None, **kwargs: Any) -> str:
+    def generate_string(self, input: str, response_format: Optional[Type] = None, **kwargs: Any) -> Any:
         messages = [{"role": "user", "content": f'{input} /nothink'}]
         response = self.generate_provider_response(messages, **kwargs)
-    
-        return response["choices"][0]["message"]["content"]
+        #response = DotDict(response)
+        return response.choices[0].message.content
+        # return response["choices"][0]["message"]["content"]
 
     def generate_provider_response(self, messages: List[Dict[str, Any]], **kwargs: Any) -> Dict[str, Any]:
         payload = {
@@ -154,6 +170,7 @@ class CustomOllamaModel(OpikBaseModel):
             response = requests.post(self.api_url, json=payload, timeout=60,)
             response.raise_for_status()
             raw = response.json()
+            print(raw)
             logger.debug(f"[Ollama] Raw content: {raw}")
             content_text = raw.get("message", {}).get("content", "") 
             logger.info(content_text)
@@ -167,6 +184,7 @@ class CustomOllamaModel(OpikBaseModel):
                 ]
             }
             logger.info(final_response)
+            final_response= DotDict(final_response)
             return final_response
         except requests.exceptions.HTTPError as http_err:
             logger.error(f"[Ollama] HTTP error occurred: {http_err.response.text}", exc_info=True)
