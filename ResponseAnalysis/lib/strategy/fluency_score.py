@@ -3,6 +3,9 @@ from strategy_base import Strategy
 import numpy as np
 from nltk.tokenize import sent_tokenize
 from typing import Optional
+from logger import get_logger
+
+logger = get_logger("fleuncy_score")
 
 class IndianLanguageFluencyScorer(Strategy):
     def __init__(self, model=None, name="indian_lang_fluency", **kwargs):

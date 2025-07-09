@@ -5,10 +5,15 @@ import nltk
 from utils import SarvamModel
 from strategy_base import Strategy
 from typing import Optional
+
+from logger import get_logger
+
+logger = get_logger("indian_lang_grammatical_check")
+
 nltk.download('punkt')
 
 class IndianLangGrammaticalCheck(Strategy):
-    def __init__(self, model=None, tokenizer=None, name="indian_lang_grammatical", **kwargs):
+    def __init__(self, model=None, tokenizer=None, name="indian_lang_grammatical_check", **kwargs):
         super().__init__(name, **kwargs)
         self.model = SarvamModel() if model is None else model
 
@@ -43,8 +48,8 @@ Corrected Sentence:
         grammar_score = round(1.0 - (corrections / total_words), 2) if total_words > 0 else 0.0
         return grammar_score
 
-if __name__ == "__main__":
-    checker = IndianLangGrammaticalCheck()
-    test_sentence = "यह एक गलत वाक्य है।"
-    score = checker.evaluate(test_sentence)
-    print(f"Grammar score for test sentence: {score}")
+# if __name__ == "__main__":
+#     checker = IndianLangGrammaticalCheck()
+#     test_sentence = "यह एक गलत वाक्य है।"
+#     score = checker.evaluate(test_sentence)
+#     print(f"Grammar score for test sentence: {score}")

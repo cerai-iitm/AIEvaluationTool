@@ -3,23 +3,11 @@ from typing import Optional
 import asyncio
 import logging
 import warnings
-from sentence_transformers.util import cos_sim
-from sentence_transformers import SentenceTransformer
-from googletrans import Translator
 import language_tool_python
 from utils import language_detection
+from logger import get_logger
 
-logging.basicConfig(
-    level=logging.INFO,  
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.StreamHandler(),  
-        logging.FileHandler("analyzer_log.log")  
-    ]
-)
-
-logger = logging.getLogger(__name__)
-
+logger = get_logger("grammatical_strategy")
 warnings.filterwarnings("ignore")
 
 
@@ -34,7 +22,7 @@ class GrammaticalStrategy(Strategy):
         result = tool.check(text)
         return result
     
-    def evaluate(self, agent_response: str, expected_response = None) -> float:
+    def evaluate(self, agent_response: str, expected_response: None) -> float:
         """
         Check the grammatical correctness in the response
         :param prompt: The prompt sent to the agent to generate the response.

@@ -3,7 +3,7 @@ from typing import Optional
 import warnings
 import re
 from logger import get_logger
-import litellm
+import os
 from llm_judge import LLMJudgeStrategy
 
 
@@ -16,7 +16,7 @@ class Truthfulness_Internal(Strategy):
     def __init__(self, name: str = "truthfulness_internal", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
         self.model_name = kwargs.get("model_name", "llama3.1:70b")
-        self.base_url = kwargs.get("base_url", "http://10.21.185.241:11434")
+        self.base_url = kwargs.get("base_url",os.getenv("OLLAMA_URL", "http://localhost:11434"))
         self.data_src = kwargs.get("data_src", "codah")
         self.prompt = kwargs.get("prompt", "None")
         self.system_prompt = kwargs.get("system_prompt", "None")

@@ -54,14 +54,14 @@ logger = logging.getLogger(__name__)
 warnings.filterwarnings("ignore")
 load_dotenv()
 litellm.drop_params = True
-ollama_url = "http://172.31.99.190:11434"
+ollama_url = os.getenv("OLLAMA_URL", "http://localhost:11434")
 model_name = "gemma3:4b"
 judge_model_name = "gemma3:4b"
 
 
 scoring_llm = models.LiteLLMChatModel(
       name="gemma3:4b",
-      base_url="http://172.31.99.190:11434/v1",
+      base_url=f"{ollama_url}/v1",
       
   )  
 
@@ -124,7 +124,7 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 class CustomOllamaModel(OpikBaseModel):
-    def __init__(self, model_name: str, base_url: str = "http://172.31.99.190:11434"):
+    def __init__(self, model_name: str, base_url: str = "http://localhost:11434"):
         super().__init__(model_name)
         self.base_url = base_url.rstrip("/")
         self.api_url = f"{self.base_url}/api/chat"
