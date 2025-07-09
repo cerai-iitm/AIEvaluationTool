@@ -17,3 +17,4 @@ responses.json
 response_analysis_output.json
 test.py
 strategy_test.py
+saved_evaluations/**
