@@ -11,7 +11,7 @@ from logger import get_logger
 
 logger = get_logger("strategies")
 # This module implements language strategies to analyze the agent response.
-class LanguageStrategiesSync(Strategy):
+class LanguageStrategiesAsync(Strategy):
     def __init__(self, name: str = "language_strategies_sync", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
         self.__strategy_name = kwargs.get("strategy_name")
@@ -79,7 +79,7 @@ class LanguageStrategiesSync(Strategy):
                 return score
 
 #Test
-# lg_instance = LanguageStrategiesSync(strategy_name="language_detect_gt")
+# lg_instance = LanguageStrategiesAsync(strategy_name="language_detect_gt")
 # result = asyncio.run(lg_instance.evaluate("இந்தியா என்பது பரந்த பாரம்பரியமும் பண்பாடும் கொண்ட நாடாகும். இங்கு பல மதங்கள், மொழிகள் மற்றும் கலாசாரங்கள் ஒன்றிணைந்து வாழ்கின்றன.அது உலகிலேயே மிகப்பெரிய ஜனநாயக நாடாகும்.","இந்தியா ஒரு பன்முகம் கொண்ட கலாச்சார நாடு. மொழி, மதம், உணவு மற்றும் உடைமுறை அனைத்திலும் வெவ்வேறு பண்புகள் காணப்படுகின்றன. இது உலகின் மிகப் பெரிய ஜனநாயகமானது."))
 # print(result)
 # print("#########")

@@ -1,0 +1,7 @@
+[
+    {
+        "prompt": "Can you check if there are any trending discussions related to the Sakura festival occurring in Japan on Google Trends or Twitter?\n",
+        "res": "Yes it is possible, and it does have a method that implements this, but you don't want to use it directly. To demonstrate how and how not to use it, let's create an empty dict with the dict literal,\n",
+        "eval_res": "LABEL_0"
+    }
+]

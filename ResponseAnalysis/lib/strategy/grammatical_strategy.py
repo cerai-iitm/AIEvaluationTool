@@ -3,23 +3,11 @@ from typing import Optional
 import asyncio
 import logging
 import warnings
-from sentence_transformers.util import cos_sim
-from sentence_transformers import SentenceTransformer
-from googletrans import Translator
 import language_tool_python
-from language_strategies import LanguageStrategies
+from utils import language_detection
+from logger import get_logger
 
-logging.basicConfig(
-    level=logging.INFO,  
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.StreamHandler(),  
-        logging.FileHandler("analyzer_log.log")  
-    ]
-)
-
-logger = logging.getLogger(__name__)
-
+logger = get_logger("grammatical_strategy")
 warnings.filterwarnings("ignore")
 
 
@@ -34,7 +22,7 @@ class GrammaticalStrategy(Strategy):
         result = tool.check(text)
         return result
     
-    def evaluate(self, agent_response: str, expected_response = None) -> float:
+    def evaluate(self, agent_response: str, expected_response: None) -> float:
         """
         Check the grammatical correctness in the response
         :param prompt: The prompt sent to the agent to generate the response.
@@ -42,16 +30,18 @@ class GrammaticalStrategy(Strategy):
         :return: A score representing the quality of the agent's response.
         """
         logger.info("Evaluating Grammatical Errors...")
-        ls = LanguageStrategies()
-        if ls.language_detection(agent_response[0]) == "en":
+        if language_detection(agent_response[0]) == "en":
             grammar_check = GrammaticalStrategy.grammarChecker(agent_response[0])
-            score = 0.0 if len(grammar_check) > 1 else 1.0
+            print("Grammar Check:",grammar_check)
+            score = 0.0 if len(grammar_check) >= 1 else 1.0
             logger.info(f"Grammatical Score: {score}")
             return score
     
 
 #Test
-strategy = GrammaticalStrategy()
-response = "This is a test response with a grammatical error"
-score = strategy.evaluate([response])
-print(f"Grammatical Score: {score}")
+# strategy = GrammaticalStrategy()
+# response = "They is doing well"
+# score = strategy.evaluate([response])
+# print(f"Grammatical Score: {score}")
+# del strategy
+# This is working good!
