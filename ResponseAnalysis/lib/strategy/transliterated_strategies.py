@@ -48,8 +48,8 @@ class TransliteratedStrategy(Strategy):
         return score
 
 #Test
-tl_instance = TransliteratedStrategy()
-result = tl_instance.evaluate("என் தந்தை அவரது அறையில் இருக்கிறார்", "என் அப்பா அவர்களுடைய அறையில் உள்ளார்.")
-print(result)
-del tl_instance
+# tl_instance = TransliteratedStrategy()
+# result = tl_instance.evaluate("என் தந்தை அவரது அறையில் இருக்கிறார்", "என் அப்பா அவர்களுடைய அறையில் உள்ளார்.")
+# print(result)
+# del tl_instance
 # Language Strategy is fixed!
