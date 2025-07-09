@@ -6,6 +6,7 @@ from typing import List, Dict, Union
 import sys, os
 import logging
 from pathlib import Path
+import random
 
 sys.path.append(os.path.relpath("../.."))
 from InterfaceManager import InterfaceManagerClient
@@ -61,6 +62,7 @@ parser.add_argument(
 parser.add_argument("--test_case_count", type=int, help="Number of Prompts to run in a Test Plan", default=2)
 parser.add_argument("--action", type=str, help="Send all Prompts", default="send_all_prompts")
 parser.add_argument("--test_plan_file", default=str(data_points_path), help="Default json file")
+parser.add_argument("--domain", type=str, help="Filter prompts based on domain")
 
 args = parser.parse_args()
 
@@ -96,13 +98,14 @@ elif args.application_type == "OPENUI":
         parser.error(f"Missing required arguments for 'OPENUI': {', '.join(missing)}")
 
 class TestCaseExecutionManager:
-    def __init__(self, test_plan_file, test_plan_id, limit=None, **client_args):
+    def __init__(self, test_plan_file, test_plan_id, limit=None, domain=None, **client_args):
         self.test_plan_file = test_plan_file
         self.test_plan_id = test_plan_id
         self.limit = limit
         self.test_plan_name = ""
         self.test_cases = self.load_test_cases()
         self.chat_id_count= 0
+        self.domain = domain 
 
         if client_args.get("base_url"):
             self.client = InterfaceManagerClient(**client_args)
@@ -210,23 +213,34 @@ class TestCaseExecutionManager:
         with open(self.test_plan_file, 'r', encoding='utf-8') as case_file:
             all_cases_by_metric = json.load(case_file)
 
-        total_collected = 0
-        for metric_id in metric_ids:
-            if self.limit and total_collected >= self.limit:
-                break
+        # Balanced sampling logic
+        # num_metrics = len(metric_ids)
+        # if self.limit:
+        #     base_per_metric = self.limit // num_metrics
+        #     remainder = self.limit % num_metrics
+        # else:
+        #     base_per_metric = None
+        #     remainder = 0
+        prompts_per_metric = self.limit
 
+        total_collected = 0
+        for idx, metric_id in enumerate(metric_ids):
             metric_data = all_cases_by_metric.get(metric_id)
             if not metric_data:
                 continue
-
             cases = metric_data.get("cases", [])
+            if self.domain:
+                cases = [c for c in cases if c.get("DOMAIN", "").lower() == self.domain.lower()]
             logger.info(f"Metric ID: {metric_id} -> {plan_entry.get('metrics', {}).get(metric_id, metric_id)} has {len(cases)} test cases")
-            
 
-            for idx, test_case in enumerate(cases):
-                if self.limit and total_collected >= self.limit:
-                    break
+            # Determine how many to sample from this metric
+            if self.limit:
+                n_to_sample = min(prompts_per_metric, len(cases))
+                sampled_cases = random.sample(cases, n_to_sample) if n_to_sample > 0 else []
+            else:
+                sampled_cases = cases
 
+            for test_case in sampled_cases:
                 logger.info(f"Lining up prompt (PROMPT_ID: {test_case.get('PROMPT_ID')}, metric: {plan_entry.get('metrics', {}).get(metric_id, metric_id)})")
                 logger.info(f"Prompt to be sent: {test_case.get('PROMPT')}")
 
@@ -234,7 +248,6 @@ class TestCaseExecutionManager:
                 system_prompt = str(test_case.get('SYSTEM_PROMPT', '')).replace("\n", "")
                 prompt = str(test_case.get('PROMPT', '')).replace("\n", "")
                 prompt_text = f"{system_prompt.strip()} {prompt.strip()}".strip()
-                
 
                 dedup_key = test_case_id or prompt_text
                 logger.debug(f"Processing test_case_id: {test_case_id}, dedup_key: {dedup_key}")
@@ -307,6 +320,7 @@ manager = TestCaseExecutionManager(
         test_plan_file=args.test_plan_file,
         test_plan_id=args.test_plan_id,
         limit=args.test_case_count,
+        domain=args.domain,
         **client_args
     )
 
