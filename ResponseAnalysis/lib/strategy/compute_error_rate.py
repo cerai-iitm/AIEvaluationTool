@@ -1,18 +1,9 @@
 from strategy_base import Strategy
 from typing import Optional
-import logging
 import warnings
+from logger import get_logger
 
-logging.basicConfig(
-    level=logging.INFO,  
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.StreamHandler(),  
-        logging.FileHandler("analyzer_log.log")  
-    ]
-)
-
-logger = logging.getLogger(__name__)
+logger = get_logger("computer_error_rate")
 
 warnings.filterwarnings("ignore")
 
@@ -46,23 +37,8 @@ class ComputeErrorRate(Strategy):
             raise ValueError("file_path is not provided in strategy kwargs.")
         return self.compute_error_rate_from_log(self.file_path)
 
-        # if total_interactions:
-        #     error_rate_interaction = error_count / total_interactions
-        #     logger.info(f"Error Rate per Interaction: {error_rate_interaction:.2%}")
-
-        # if total_time_seconds:
-        #     error_rate_time = error_count / total_time_seconds
-        #     logger.info(f"Error Rate per Second: {error_rate_time:.4f} errors/sec")
-
-        # if not total_interactions and not total_time_seconds:
-        #     logger.warning("Provide total_interactions or total_time_seconds to compute error rate.")
-
-    # Testing
-    # log_file = "whatsapp_driver.log"
-    # print(compute_error_rate_from_log(log_file))
-
 # log_file = "Data/whatsapp_driver.log"
-# strategy = ComputeErrorRate(file_path=log_file)
-# score = strategy.evaluate()
+# error_rate = ComputeErrorRate(file_path=log_file)
+# score = error_rate.evaluate()
 # print(f"Error Rate: {score}")
 # computer error rate working

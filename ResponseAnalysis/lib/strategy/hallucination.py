@@ -22,6 +22,7 @@ class HallucinationStrategy(Strategy):
         - kwargs: Additional parameters.
         """
         super().__init__(name, kwargs=kwargs)
+        self.source_type = kwargs.get("source_type", "halu_qa")  # Default source type
 
     def _extract_prediction(self, response: str, source_type: str) -> str:
         """
@@ -142,7 +143,7 @@ class HallucinationStrategy(Strategy):
         logger.info(f"Agent Response: {agent_response} | Prediction: {prediction} | Expected: {expected_response} | Score: {score}")
         return score
 
-    def evaluate(self, agent_response: str, expected_response: str, source_type: str) -> float:
+    def evaluate(self, agent_response: str, expected_response: str) -> float:
         """
         Unified evaluation entry point for all hallucination tasks.
 
@@ -154,17 +155,17 @@ class HallucinationStrategy(Strategy):
         Returns:
         - float: Score (1.0 for correct, 0.0 for incorrect).
         """
-        logger.info(f"Evaluating Hallucination for source type: {source_type}")
-        if source_type == "halu_qa":
+        logger.info(f"Evaluating Hallucination for source type: {self.source_type}")
+        if self.source_type == "halu_qa":
             return self.halu_qa(agent_response, expected_response)
-        elif source_type == "halu_summ":
+        elif self.source_type == "halu_summ":
             return self.halu_summ(agent_response, expected_response)
-        elif source_type == "halu_dial":
+        elif self.source_type == "halu_dial":
             return self.halu_dial(agent_response, expected_response)
-        elif source_type == "mc":
+        elif self.source_type == "mc":
             return self.mc(agent_response, expected_response)
         else:
-            logger.warning(f"Unsupported source type: {source_type}")
+            logger.warning(f"Unsupported source type: {self.source_type}")
             return 0.0
    
 #test

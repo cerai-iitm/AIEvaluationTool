@@ -1,11 +1,8 @@
 from strategy_base import Strategy
 from typing import Optional
-import asyncio
 import warnings
 from sentence_transformers.util import cos_sim
-from sentence_transformers import SentenceTransformer
-from similarity_match import SimilarityMatchStrategy
-from utils import detect_text, google_lang_translate, language_detection, sarvam_translate
+from utils import language_detection, sarvam_translate
 from logger import get_logger
 
 logger = get_logger("language-strategies-sync")

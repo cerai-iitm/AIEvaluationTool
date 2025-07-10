@@ -1,6 +1,0 @@
-# config.yaml
-model_list:
-  - model_name: mistral:7b-instruct
-    litellm_params:
-      model: ollama/mistral:7b-instruct
-      api_base: http://10.21.186.219:11434
