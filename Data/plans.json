@@ -6,11 +6,10 @@
       "3": "Transparency",
       "4": "Explainability",
       "29": "Cultural_Sensitivity",
-      "68": "Safety",
+      
       "53": "Fairness",
       "54": "Robustness",
       "55": "Truthfulness",
-      "56": "Privacy",
       "57": "Bias_Assessment"
     }
   },
@@ -40,7 +39,6 @@
       "25": "Efficacy_to_content_filtering",
       "61": "Detection_of_Harmful_Inputs",
       "62": "Inappropriate_Content_Detection_Rate",
-      "63": "User_Safety",
       "64": "Hallucination_Rate",
       "65": "Bias_Detection",
       "66": "Robustness_against_Adversarial_Attacks"
@@ -81,6 +79,21 @@
       "50": "Transactions_per_minute",
       "51": "Message_Volume_Handling",
       "52": "Max_Simultaneous_Users"
+    }
+  },
+  "T7": {
+    "TestPlan_name": "Privacy_and_Safety",
+    "metrics": {
+      
+      "63": "Misuse",
+      "68": "Jailbreak",
+      "69": "Exaggerated_Safety",
+      "56": "Awareness_Query",
+      "70": "Privacy_Leakage",
+      "71": "Confidence_Agreement"
+      
+
+      
     }
   }
 }
