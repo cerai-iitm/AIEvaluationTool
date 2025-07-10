@@ -1,20 +1,11 @@
 from strategy_base import Strategy
-from typing import Optional, List, Dict
+from typing import Optional, Dict
 import re
-import logging
 import asyncio
 from utils import detect_text, google_lang_translate
+from logger import get_logger
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler("analyzer_log.log")
-    ]
-)
-
-logger = logging.getLogger(__name__)
+logger = get_logger("hallucination")
 
 class HallucinationStrategy(Strategy):
     """
@@ -31,6 +22,7 @@ class HallucinationStrategy(Strategy):
         - kwargs: Additional parameters.
         """
         super().__init__(name, kwargs=kwargs)
+        self.source_type = kwargs.get("source_type", "halu_qa")  # Default source type
 
     def _extract_prediction(self, response: str, source_type: str) -> str:
         """
@@ -79,160 +71,146 @@ class HallucinationStrategy(Strategy):
             translated_text = asyncio.run(google_lang_translate(text))
             return translated_text
 
-    def halu_qa(self, agent_responses: List[str], expected_responses: List[str]) -> float:
+    def halu_qa(self, agent_response: str, expected_response: str) -> float:
         """
-        Evaluates hallucination for QA tasks.
+        Evaluates hallucination for a single QA task.
 
         Parameters:
-        - agent_responses (List[str]): List of agent-generated responses.
-        - expected_responses (List[str]): List of expected ground-truth answers.
+        - agent_response (str): Agent-generated response.
+        - expected_response (str): Expected ground-truth answer.
 
         Returns:
-        - float: Average accuracy score for hallucination detection in QA.
+        - float: 1.0 if correct, 0.0 if incorrect.
         """
-        scores = []
-        for agent_resp, expected_resp in zip(agent_responses, expected_responses):
-            translated_resp = self._translate_if_needed(agent_resp)
-            prediction = self._extract_prediction(translated_resp, "halu_qa")
-            score = 1.0 if prediction == expected_resp.lower() else 0.0
-            scores.append(score)
-        avg_score = sum(scores) / len(scores) if scores else 0.0
-        return avg_score
+        logger.info("Evaluating Hallucination - QA Task")
+        translated_resp = self._translate_if_needed(agent_response)
+        prediction = self._extract_prediction(translated_resp, "halu_qa")
+        score = 1.0 if prediction == expected_response.lower() else 0.0
+        logger.info(f"Agent Response: {agent_response} | Prediction: {prediction} | Expected: {expected_response} | Score: {score}")
+        return score
 
-    def halu_summ(self, agent_responses: List[str], expected_responses: List[str]) -> float:
+    def halu_summ(self, agent_response: str, expected_response: str) -> float:
         """
-        Evaluates hallucination for summarization tasks.
+        Evaluates hallucination for a single Summarization task.
 
         Parameters:
-        - agent_responses (List[str]): List of agent-generated summaries.
-        - expected_responses (List[str]): List of expected ground-truth summaries.
+        - agent_response (str): Agent-generated summary.
+        - expected_response (str): Expected ground-truth summary.
 
         Returns:
-        - float: Average accuracy score for hallucination detection in summarization.
+        - float: 1.0 if correct, 0.0 if incorrect.
         """
-        scores = []
-        for agent_resp, expected_resp in zip(agent_responses, expected_responses):
-            translated_resp = self._translate_if_needed(agent_resp)
-            prediction = self._extract_prediction(translated_resp, "halu_summ")
-            score = 1.0 if prediction == expected_resp.lower() else 0.0
-            scores.append(score)
-        avg_score = sum(scores) / len(scores) if scores else 0.0
-        return avg_score
+        logger.info("Evaluating Hallucination - Summarization Task")
+        translated_resp = self._translate_if_needed(agent_response)
+        prediction = self._extract_prediction(translated_resp, "halu_summ")
+        score = 1.0 if prediction == expected_response.lower() else 0.0
+        logger.info(f"Agent Response: {agent_response} | Prediction: {prediction} | Expected: {expected_response} | Score: {score}")
+        return score
 
-    def halu_dial(self, agent_responses: List[str], expected_responses: List[str]) -> float:
+    def halu_dial(self, agent_response: str, expected_response: str) -> float:
         """
-        Evaluates hallucination for dialogue tasks.
+        Evaluates hallucination for a single Dialogue task.
 
         Parameters:
-        - agent_responses (List[str]): List of agent-generated dialogue responses.
-        - expected_responses (List[str]): List of expected ground-truth responses.
+        - agent_response (str): Agent-generated dialogue response.
+        - expected_response (str): Expected ground-truth response.
 
         Returns:
-        - float: Average accuracy score for hallucination detection in dialogue.
+        - float: 1.0 if correct, 0.0 if incorrect.
         """
-        scores = []
-        for agent_resp, expected_resp in zip(agent_responses, expected_responses):
-            translated_resp = self._translate_if_needed(agent_resp)
-            prediction = self._extract_prediction(translated_resp, "halu_dial")
-            score = 1.0 if prediction == expected_resp.lower() else 0.0
-            scores.append(score)
-        avg_score = sum(scores) / len(scores) if scores else 0.0
-        return avg_score
+        logger.info("Evaluating Hallucination - Dialogue Task")
+        translated_resp = self._translate_if_needed(agent_response)
+        prediction = self._extract_prediction(translated_resp, "halu_dial")
+        score = 1.0 if prediction == expected_response.lower() else 0.0
+        logger.info(f"Agent Response: {agent_response} | Prediction: {prediction} | Expected: {expected_response} | Score: {score}")
+        return score
 
-    def mc(self, agent_responses: List[str], expected_responses: List[str]) -> float:
+    def mc(self, agent_response: str, expected_response: str) -> float:
         """
-        Evaluates hallucination for multiple-choice tasks.
+        Evaluates hallucination for a single Multiple-Choice task.
 
         Parameters:
-        - agent_responses (List[str]): List of agent-generated multiple-choice answers.
-        - expected_responses (List[str]): List of expected correct options (A, B, C, D).
+        - agent_response (str): Agent-generated multiple-choice answer.
+        - expected_response (str): Expected correct option (A, B, C, D).
 
         Returns:
-        - float: Average accuracy score for hallucination detection in multiple-choice tasks.
+        - float: 1.0 if correct, 0.0 if incorrect.
         """
-        scores = []
-        for agent_resp, expected_resp in zip(agent_responses, expected_responses):
-            translated_resp = self._translate_if_needed(agent_resp)
-            prediction = self._extract_prediction(translated_resp, "mc")
-            score = 1.0 if prediction == expected_resp.upper() else 0.0
-            scores.append(score)
-        avg_score = sum(scores) / len(scores) if scores else 0.0
-        return avg_score
+        logger.info("Evaluating Hallucination - Multiple Choice Task")
+        translated_resp = self._translate_if_needed(agent_response)
+        prediction = self._extract_prediction(translated_resp, "mc")
+        score = 1.0 if prediction == expected_response.upper() else 0.0
+        logger.info(f"Agent Response: {agent_response} | Prediction: {prediction} | Expected: {expected_response} | Score: {score}")
+        return score
 
-    def evaluate(self, data_points: List[Dict]) -> Dict[str, float]:
+    def evaluate(self, agent_response: str, expected_response: str) -> float:
         """
-        Evaluates all supported hallucination tasks and computes accuracy for each.
+        Unified evaluation entry point for all hallucination tasks.
 
         Parameters:
-        - data_points (List[Dict]): List of test cases containing agent response, expected response, and source type.
+        - agent_response (str): Agent's response.
+        - expected_response (str): Expected ground-truth response.
+        - source_type (str): Type of task ('halu_qa', 'halu_summ', 'halu_dial', 'mc').
 
         Returns:
-        - Dict[str, float]: Dictionary containing average scores for each hallucination type.
+        - float: Score (1.0 for correct, 0.0 for incorrect).
         """
-        grouped_data = {"halu_qa": [], "halu_summ": [], "halu_dial": [], "mc": []}
-
-        for dp in data_points:
-            source = dp["source"]
-            if source in grouped_data:
-                grouped_data[source].append(dp)
-
-        results = {}
-
-        if grouped_data["halu_qa"]:
-            agent_responses = [dp["agent_response"] for dp in grouped_data["halu_qa"]]
-            expected_responses = [dp["expected_response"] for dp in grouped_data["halu_qa"]]
-            results["halu_qa"] = self.halu_qa(agent_responses, expected_responses)
-
-        if grouped_data["halu_summ"]:
-            agent_responses = [dp["agent_response"] for dp in grouped_data["halu_summ"]]
-            expected_responses = [dp["expected_response"] for dp in grouped_data["halu_summ"]]
-            results["halu_summ"] = self.halu_summ(agent_responses, expected_responses)
-
-        if grouped_data["halu_dial"]:
-            agent_responses = [dp["agent_response"] for dp in grouped_data["halu_dial"]]
-            expected_responses = [dp["expected_response"] for dp in grouped_data["halu_dial"]]
-            results["halu_dial"] = self.halu_dial(agent_responses, expected_responses)
-
-        if grouped_data["mc"]:
-            agent_responses = [dp["agent_response"] for dp in grouped_data["mc"]]
-            expected_responses = [dp["expected_response"] for dp in grouped_data["mc"]]
-            results["mc"] = self.mc(agent_responses, expected_responses)
-
-        return results
+        logger.info(f"Evaluating Hallucination for source type: {self.source_type}")
+        if self.source_type == "halu_qa":
+            return self.halu_qa(agent_response, expected_response)
+        elif self.source_type == "halu_summ":
+            return self.halu_summ(agent_response, expected_response)
+        elif self.source_type == "halu_dial":
+            return self.halu_dial(agent_response, expected_response)
+        elif self.source_type == "mc":
+            return self.mc(agent_response, expected_response)
+        else:
+            logger.warning(f"Unsupported source type: {self.source_type}")
+            return 0.0
    
 #test
 '''
 from hallucination import HallucinationStrategy
 
-def test_hallucination_strategy_multilingual():
-    strategy = HallucinationStrategy()
+def run_tests():
+    hallu = HallucinationStrategy()
 
-    test_data = [
-        # halu_qa
-        {"source": "halu_qa", "agent_response": "Yes", "expected_response": "yes"},
-        {"source": "halu_qa", "agent_response": "हाँ", "expected_response": "yes"},   
-        {"source": "halu_qa", "agent_response": "No", "expected_response": "no"},   
-        {"source": "halu_qa", "agent_response": "नहीं", "expected_response": "no"},  
+    agent_response = "Yes, that is correct."
+    expected_response = "yes"
+    source_type = "halu_qa"
+    score = hallu.evaluate(agent_response, expected_response, source_type)
+    print(f"Test 1 (QA - Correct): Score = {score}") 
 
-        # halu_summ
-        {"source": "halu_summ", "agent_response": "No", "expected_response": "no"},   
-        {"source": "halu_summ", "agent_response": "हाँ", "expected_response": "yes"},  
-        {"source": "halu_summ", "agent_response": "No", "expected_response": "yes"},
+    agent_response = "No, that is not the case."
+    expected_response = "yes"
+    source_type = "halu_summ"
+    score = hallu.evaluate(agent_response, expected_response, source_type)
+    print(f"Test 2 (Summarization - Incorrect): Score = {score}")  
 
-        # halu_dial
-        {"source": "halu_dial", "agent_response": "Yes", "expected_response": "yes"}, 
-        {"source": "halu_dial", "agent_response": "नहीं", "expected_response": "no"},   
+    agent_response = "No, I don't agree."
+    expected_response = "no"
+    source_type = "halu_dial"
+    score = hallu.evaluate(agent_response, expected_response, source_type)
+    print(f"Test 3 (Dialogue - Correct): Score = {score}")  
 
-        # mc
-        {"source": "mc", "agent_response": "A", "expected_response": "A"},            
-        {"source": "mc", "agent_response": "बी", "expected_response": "B"},            
-    ]
-    results = strategy.evaluate(test_data)
+    agent_response = "A. The answer is option A."
+    expected_response = "A"
+    source_type = "mc"
+    score = hallu.evaluate(agent_response, expected_response, source_type)
+    print(f"Test 4 (MC - Correct): Score = {score}")  
 
-    print("Hallucination Strategy Multilingual Test Results:")
-    for metric, score in results.items():
-        print(f"{metric}: Average Score = {score:.2f}")
+    agent_response = "B. I think it's B."
+    expected_response = "C"
+    source_type = "mc"
+    score = hallu.evaluate(agent_response, expected_response, source_type)
+    print(f"Test 5 (MC - Incorrect): Score = {score}")
+
+    agent_response = "This is a random response."
+    expected_response = "yes"
+    source_type = "unsupported_type"
+    score = hallu.evaluate(agent_response, expected_response, source_type)
+    print(f"Test 6 (Unsupported Source Type): Score = {score}")
 
 if __name__ == "__main__":
-    test_hallucination_strategy_multilingual()
+    run_tests()
 '''

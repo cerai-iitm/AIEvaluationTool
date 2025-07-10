@@ -123,7 +123,7 @@ class StrategyImplementor:
                 score = np.mean(scores)
                 logger.info(f"Transliterated Language Strategy Score: {score}")
                 return score
-            
+ 
             case "compute_error_rate":
                 strategy = ComputeErrorRate(file_path="logs/whatsapp_driver.log") # Default check for log file
                 return strategy.evaluate()

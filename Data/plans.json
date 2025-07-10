@@ -5,7 +5,13 @@
       "2": "Inclusivity",
       "3": "Transparency",
       "4": "Explainability",
-      "29": "Cultural_Sensitivity"
+      "29": "Cultural_Sensitivity",
+      "68": "Safety",
+      "53": "Fairness",
+      "54": "Robustness",
+      "55": "Truthfulness",
+      "56": "Privacy",
+      "57": "Bias_Assessment"
     }
   },
   "T2": {
@@ -16,7 +22,13 @@
       "13": "Grammatical_Correctness_Rate",
       "14": "Lexical_Diversity",
       "15": "Relevance_and_Information",
-      "16": "Logical_flow_and_Discourse_Structure"
+      "16": "Logical_flow_and_Discourse_Structure",
+      "38": "BLEU",
+      "39": "ROUGE",
+      "40": "METEOR",
+      "58": "NER_performance_for_the_relevant_entities",
+      "59": "Intent_Recognition",
+      "60": "Fluency_Score"
     }
   },
   "T3": {
@@ -25,7 +37,14 @@
       "20": "Response_out_of_scope",
       "21": "Toxicity_Level",
       "23": "Rejection_Rate",
-      "25": "Efficacy_to_content_filtering" 
+      "25": "Efficacy_to_content_filtering",
+      "61": "Detection_of_Harmful_Inputs",
+      "62": "Inappropriate_Content_Detection_Rate",
+      "63": "User_Safety",
+      "64": "Hallucination_Rate",
+      "65": "Bias_Detection",
+      "66": "Robustness_against_Adversarial_Attacks"
+
     }
   },
   "T4": {
@@ -34,7 +53,8 @@
       "27": "Language_Coverage",
       "28": "Ability_to_handle_multiple_Indian_languages_in_one_context",
       "30": "Transliterated_Language_Handling",
-      "31": "Accuracy_per_Language"
+      "31": "Accuracy_per_Language",
+      "67": "Fluency_in_Indian_Languages"
     }
   },
   "T5": {
@@ -44,6 +64,8 @@
       "23": "Rejection_Rate",
       "45": "Accuracy",
       "46": "Average_Interaction_Length"
+
+      
     }
   },
   "T6": {
@@ -52,7 +74,13 @@
       "41": "Turn_Around_Time",
       "42": "Processing_Time",
       "43": "Response_Latency",
-      "44": "Uptime"
+      "44": "Uptime",
+      "47": "Error_Rate",
+      "48": "Mean_Time_Between_Failures",
+      "49": "Concurrent_user_capacity",
+      "50": "Transactions_per_minute",
+      "51": "Message_Volume_Handling",
+      "52": "Max_Simultaneous_Users"
     }
   }
 }

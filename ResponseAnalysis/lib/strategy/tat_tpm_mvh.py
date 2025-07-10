@@ -1,20 +1,11 @@
 from strategy_base import Strategy
 from typing import Optional
-import logging
 from datetime import datetime
 import re
 import math
+from logger import get_logger
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler("analyzer_log.log")
-    ]
-)
-
-logger = logging.getLogger(__name__)
+logger = get_logger("tat_tpm_mvh")
 
 class TAT_TPM_MVH(Strategy):
     """

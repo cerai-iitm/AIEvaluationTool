@@ -18,6 +18,8 @@ from strategies import (
     meteor_metric,
     rouge_score_metric
 )
+from langchain_core.messages import HumanMessage
+from langchain_ollama import ChatOllama
 init(autoreset=True)
 
 litellm_logger = logging.getLogger("LiteLLM")
@@ -36,13 +38,13 @@ logger.addHandler(file_handler)
 litellm_logger = logging.getLogger("LiteLLM")
 litellm_logger.setLevel(logging.WARNING)
 
-with open('../../Data/DataPoints.json', 'r', encoding='utf-8') as f:
+with open('Data/DataPoints.json', 'r', encoding='utf-8') as f:
     datapoints = json.load(f)
-with open('../../Data/plans.json', 'r', encoding='utf-8') as f:
+with open('Data/plans.json', 'r', encoding='utf-8') as f:
     plans = json.load(f)
-with open('../../Data/responses.json', 'r', encoding='utf-8') as f:
+with open('Data/responses.json', 'r', encoding='utf-8') as f:
     responses = json.load(f)
-with open('../../Data/strategy_map.json', 'r', encoding='utf-8') as f:
+with open('Data/strategy_map.json', 'r', encoding='utf-8') as f:
     strategy_map = json.load(f)
 
 strategy_functions = {
@@ -138,18 +140,14 @@ async def analyze():
                 elif fn_name in ["grammarcheck", "lexical_diversity"]:
                     score_list = await strategy_fn(collected_responses)
                 elif fn_name == "llm_as_judge":
-                    score_list = []
-                    for i in range(len(collected_prompts)):
-                        scores = strategy_fn(
-                            metric_name=metric_name,
-                            #task_intro="Evaluate the LLM response",
-                            judge_prompt="Check if the response aligns with expectations",
-                            system_prompt=sys_prompts[i],
-                            prompts=[collected_prompts[i]],
-                            test_case_response=[collected_responses[i]],
-                            expected_response=[expected_outputs[i]]
-                        )
-                        score_list.extend(scores)
+                    score_list = strategy_fn(
+                        metric_name=metric_name,
+                        judge_prompt="Check if the response aligns with expectations",
+                        system_prompt=sys_prompts[0] if sys_prompts else "",
+                        prompts=collected_prompts,
+                        test_case_response=collected_responses,
+                        expected_response=expected_outputs
+                    )
                 elif fn_name == "text_similarity":
                     score_list = strategy_fn(collected_prompts, collected_responses, expected_outputs)
                 elif fn_name == "toxicity_model_result":
@@ -189,7 +187,7 @@ async def analyze():
 
 asyncio.run(analyze())
 
-output_path = "../../Data/response_analysis_output.json"
+output_path = "Data/response_analysis_output.json"
 with open(output_path, "w", encoding='utf-8') as f:
     json.dump(final_results, f, indent=2, ensure_ascii=False)
 
@@ -198,7 +196,7 @@ logger.info(f"Results saved to: {output_path}")
 
 # -----------------Tabulation ---------------------------------------------------------
 MAX_WIDTH = 25
-TSV_OUTPUT_PATH = "../../Data/evaluation_summary.tsv"
+TSV_OUTPUT_PATH = "Data/evaluation_summary.tsv"
 
 def wrap(text, width=MAX_WIDTH):
     return "\n".join(textwrap.wrap(str(text), width=width))
@@ -255,3 +253,4 @@ with open(TSV_OUTPUT_PATH, "w", newline='', encoding='utf-8') as tsvfile:
     writer.writerows(tsv_rows)
 
 print(f"\nTSV file saved at: {TSV_OUTPUT_PATH}")
+

@@ -11,7 +11,10 @@ whatsapp_profile/
 logs/
 
 *.log
+analyzer_log.log
 evaluation_summary.tsv
 responses.json
 response_analysis_output.json
 test.py
+strategy_test.py
+saved_evaluations/**
