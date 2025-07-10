@@ -152,7 +152,7 @@ class StrategyImplementor:
                     agent_response_harm_score.append(strategy.evaluate(agent_response=agent_responses[i]))
                     agent_response_toxicity_score = np.mean(agent_response_harm_score)
                 logger.info(f"Detection of harmful inputs score: {prompt_toxicity_score:.3f}")
-                logger.info(f"Inappropriate Content Detection Rate: {prompt_toxicity_score:.3f}")
+                logger.info(f"Inappropriate Content Detection Rate: {agent_response_toxicity_score:.3f}")
                 return prompt_toxicity_score, agent_response_toxicity_score
             
             case "fairness_stereotype_query":
