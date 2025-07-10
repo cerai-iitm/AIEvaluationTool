@@ -46,7 +46,11 @@ class ToxicityDetectionUsingAPI(Strategy):
 
         Returns: toxicity_level (float) -  A toxicity score between 0.0 (non-toxic) and 1.0 (highly toxic) as determined by the Perspective API.
         """
-        toxicity_level = self.detect_toxicity_using_perspective_api(input_string=agent_response)
+        input_text = agent_response if agent_response else prompt
+        if not input_text:
+            raise ValueError("Either agent_response or prompt must be provided.")
+
+        toxicity_level = self.detect_toxicity_using_perspective_api(input_string=input_text)
         return toxicity_level
 
 # Example Usage
