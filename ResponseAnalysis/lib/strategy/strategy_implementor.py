@@ -32,42 +32,79 @@ class StrategyImplementor:
                 return strategy.evaluate()
             case "entity_recogonition":
                 strategy = EntityRecognition()
-                score = 0
+                score = 0.0
                 for i in range(len(agent_responses)):
                     score += strategy.evaluate(agent_response=agent_responses[i], expected_response=expected_responses[i])
                     ner_score = score / len(agent_responses)
-                logger.info(f"Entity Recognition Accuracy: {ner_score}")
+                logger.info(f"Entity Recognition Accuracy: {ner_score:.3f}")
                 return ner_score
             case "detect_toxicity_using_perspective_api":
                 strategy = ToxicityDetectionUsingAPI()
-                prompt_harm_score = 0
-                agent_response_harm_score = 0
+                prompt_harm_score = 0.0
+                agent_response_harm_score = 0.0
                 for i in range(len(prompts)):
                     prompt_harm_score += strategy.evaluate(prompt=prompts[i])
                     prompt_toxicity_score = prompt_harm_score / len(prompts)
                 for i in range(len(agent_responses)):
                     agent_response_harm_score += strategy.evaluate(agent_response=agent_responses[i])
                     agent_response_toxicity_score = agent_response_harm_score / len(agent_responses)
-                logger.info(f"Detection of harmful inputs score: {prompt_toxicity_score}")
-                logger.info(f"Inappropriate Content Detection Rate: {prompt_toxicity_score}")
+                logger.info(f"Detection of harmful inputs score: {prompt_toxicity_score:.3f}")
+                logger.info(f"Inappropriate Content Detection Rate: {prompt_toxicity_score:.3f}")
                 return prompt_toxicity_score, agent_response_toxicity_score
             case "fairness_stereotype_query":
                 strategy = Fairness_Stereotype_Query()
-                fsq_score = 0
+                fsq_score = 0.0
                 for i in range(agent_responses):
                     fsq_score += strategy.evaluate(agent_response=agent_responses[i], expected_response=expected_responses[i])
                 fairness_stereotype_query_score = fsq_score / len(agent_responses)
-                logger.info(f"Fairness Stereotype Query Score: {fairness_stereotype_query_score}")
+                logger.info(f"Fairness Stereotype Query Score: {fairness_stereotype_query_score}:.3f")
                 return fairness_stereotype_query_score
             case "fairness_stereotype_agreement":
                 strategy = Fairness_Stereotype_Agreement()
-                fsa_score = 0
+                fsa_score = 0.0
                 for i in range(len(prompts)):
                     fsa_score += strategy.evaluate(agent_response=agent_responses[i], prompt=prompts[i])
                 fairness_stereotype_agreement_score = fsa_score / len(prompts)
-                logger.info(f"Fairness Stereotype Agreement Score: {fairness_stereotype_agreement_score}")
+                logger.info(f"Fairness Stereotype Agreement Score: {fairness_stereotype_agreement_score:.3f}")
                 return fairness_stereotype_agreement_score
-
+            case "fairness_preference":
+                fp_score = 0.0
+                count = 0
+                for i in range(len(prompts)):
+                    if count < 5:
+                        eval_type = "plain"
+                        strategy = Fairness_Preference(eval_type=eval_type)
+                        fp_score += strategy.evaluate(agent_response=agent_responses[i], prompt=prompts[i])  
+                    else:
+                        eval_type = "force"
+                        strategy = Fairness_Preference(eval_type=eval_type)
+                        fp_score += strategy.evaluate(agent_response=agent_responses[i], prompt=prompts[i])
+                fairness_preference_score = fp_score / len(prompts)
+                logger.info(f"Fairness Preference Score: {fairness_preference_score:.3f}")
+                return fairness_preference_score
+            case "fairness_stereotype_recognition":
+                fsr_score = 0.0
+                count = 0
+                for i in range(len(prompts)):
+                    if count < 5:
+                        label = "stereotype"
+                        strategy = Fairness_Stereotype_Recognition(label=label)
+                        fsr_score += strategy.evaluate(agent_response=agent_responses[i], prompt=prompts[i])
+                    elif count < 10:
+                        label = "anti-stereotype"
+                        strategy = Fairness_Stereotype_Recognition(label=label)
+                        fsr_score += strategy.evaluate(agent_response=agent_responses[i], prompt=prompts[i])
+                    elif count < 15:
+                        label = "unrelated"
+                        strategy = Fairness_Stereotype_Recognition(label=label)                        
+                        fsr_score += strategy.evaluate(agent_response=agent_responses[i], prompt=prompts[i])
+                fairness_stereotype_recognition_score = fsr_score / len(prompts)
+                logger.info(f"Fairness Stereotype Recognition Score: {fairness_stereotype_recognition_score:.3f}")
+                return fairness_stereotype_recognition_score
+            case _:
+                logger.error(f"Strategy {self.strategy_name} not recognized.")
+                raise ValueError(f"Strategy {self.strategy_name} not recognized.")
+            
 # testing 
 s = StrategyImplementor(strategy_name="entity_recognition")
 
