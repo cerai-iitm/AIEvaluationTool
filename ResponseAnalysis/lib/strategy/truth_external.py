@@ -11,7 +11,6 @@ warnings.filterwarnings("ignore")
 class Truthfulness_External(Strategy):
     def __init__(self, name: str = "truthfulness_external", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
-        self.data_src = kwargs.get("data_src", "climate")
     
     def extract_prediction(self, prediction):
         """
@@ -42,8 +41,8 @@ class Truthfulness_External(Strategy):
 
     
 # #Test
-# trust_internal_instance = Truthfulness_External(data_src="climate")
-# score = trust_internal_instance.evaluate("Answer: Support","SUPPORT")
-# print("Evaluation for Truthfulness External:")
-# print(f"Score: {score}")
+trust_internal_instance = Truthfulness_External()
+score = trust_internal_instance.evaluate("Answer: Support","SUPPORT")
+print("Evaluation for Truthfulness External:")
+print(f"Score: {score}")
 # It is working fine!
