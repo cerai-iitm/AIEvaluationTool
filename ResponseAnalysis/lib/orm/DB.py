@@ -1,8 +1,6 @@
-from tables import Base, Languages, Domains, Metrics, Responses, TestCases, TestPlans, Prompts, Strategies, LLMJudgePrompts, Targets, TargetLanguages, Conversations, TestRuns, TestRunDetails, MetricTestCaseMapping
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import select
 from typing import List, Optional, Union
 from  sqlalchemy.sql.expression import func
 import sys
@@ -16,6 +14,8 @@ sys.path.append(os.path.dirname(__file__) + '/..')
 
 from data import Prompt, Language, Domain, Response, TestCase, TestPlan, \
     Strategy, Metric, LLMJudgePrompt, Target, Conversation, Run, RunDetail
+from .tables import Base, Languages, Domains, Metrics, Responses, TestCases, TestPlans, Prompts, Strategies, LLMJudgePrompts, Targets, TargetLanguages, Conversations, TestRuns, TestRunDetails, MetricTestCaseMapping
+
 
 class DB:    
     """
@@ -1330,6 +1330,24 @@ class DB:
                 return None
             return getattr(result, 'run_id')
         
+    def get_testcase_name(self, testcase_id: int) -> Optional[str]:
+        """
+        Fetches the name of a test case by its ID.
+        
+        Args:
+            testcase_id (int): The ID of the test case to fetch.
+        
+        Returns:
+            Optional[str]: The name of the test case if found, otherwise None.
+        """
+        with self.Session() as session:
+            sql = select(TestCases).where(TestCases.testcase_id == testcase_id)
+            result = session.execute(sql).scalar_one_or_none()
+            if result is None:
+                self.logger.error(f"TestCase with ID '{testcase_id}' does not exist.")
+                return None
+            return getattr(result, 'testcase_name')
+        
     def get_testcase_id(self, testcase_name: str) -> Optional[int]:
         """
         Fetches the ID of a test case by its name.
@@ -1347,6 +1365,24 @@ class DB:
                 self.logger.error(f"TestCase with name '{testcase_name}' does not exist.")
                 return None
             return getattr(result, 'testcase_id')
+        
+    def get_metric_name(self, metric_id: int) -> Optional[str]:
+        """
+        Fetches the name of a metric by its ID.
+        
+        Args:
+            metric_id (int): The ID of the metric to fetch.
+        
+        Returns:
+            Optional[str]: The name of the metric if found, otherwise None.
+        """
+        with self.Session() as session:
+            sql = select(Metrics).where(Metrics.metric_id == metric_id)
+            result = session.execute(sql).scalar_one_or_none()
+            if result is None:
+                self.logger.error(f"Metric with ID '{metric_id}' does not exist.")
+                return None
+            return getattr(result, 'metric_name')
         
     def get_metric_id(self, metric_name: str) -> Optional[int]:
         """
@@ -1366,7 +1402,25 @@ class DB:
                 return None
             return getattr(result, 'metric_id')
         
-    def get_plan_id(self, plan_name: str) -> Optional[int]:
+    def get_testplan_name(self, plan_id: int) -> Optional[str]:
+        """
+        Fetches the name of a test plan by its ID.
+        
+        Args:
+            plan_id (int): The ID of the test plan to fetch.
+        
+        Returns:
+            Optional[str]: The name of the test plan if found, otherwise None.
+        """
+        with self.Session() as session:
+            sql = select(TestPlans).where(TestPlans.plan_id == plan_id)
+            result = session.execute(sql).scalar_one_or_none()
+            if result is None:
+                self.logger.error(f"TestPlan with ID '{plan_id}' does not exist.")
+                return None
+            return getattr(result, 'plan_name')
+        
+    def get_testplan_id(self, plan_name: str) -> Optional[int]:
         """
         Fetches the ID of a test plan by its name.
         
@@ -1411,7 +1465,7 @@ class DB:
                 self.logger.error(f"Metric with name '{run_detail.metric_name}' does not exist. Cannot add run detail.")
                 return -1
             
-            plan_id = self.get_plan_id(run_detail.plan_name)
+            plan_id = self.get_testplan_id(run_detail.plan_name)
             if plan_id is None:
                 self.logger.error(f"TestPlan with name '{run_detail.plan_name}' does not exist. Cannot add run detail.")
                 return -1
