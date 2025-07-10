@@ -5,6 +5,7 @@ from os.path import join, dirname
 from dotenv import load_dotenv
 from logger import get_logger
 import warnings
+from typing import Optional
 
 logger = get_logger("detect_toxicity_using_perspective_api")
 
@@ -36,7 +37,7 @@ class ToxicityDetectionUsingAPI(Strategy):
         logger.info(f"Toxicity level from Perspective API: {toxicity_score}")
         return toxicity_score
 
-    def evaluate(self, agent_response: str) -> float:
+    def evaluate(self, agent_response: str, prompt: str = Optional[str]) -> float:
         """
         Analyzes the toxicity level of a given text using the Perspective API.
 
