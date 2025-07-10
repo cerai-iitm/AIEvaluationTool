@@ -7,7 +7,7 @@ import evaluate
 import warnings
 from sentence_transformers.util import cos_sim
 from evaluate import load
-from bart_score import BARTScorer
+from utils import BARTScorer
 from sentence_transformers import SentenceTransformer
 
 logging.basicConfig(

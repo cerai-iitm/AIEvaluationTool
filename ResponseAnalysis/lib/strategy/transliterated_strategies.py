@@ -6,13 +6,13 @@ from utils import language_detection, sarvam_translate
 from sentence_transformers import SentenceTransformer
 from sentence_transformers.util import cos_sim
 
-logger = get_logger("transliterated-language-strategy")
+logger = get_logger("transliterated_language_strategy")
 warnings.filterwarnings("ignore")
 
 
 # This module implements ltransliterated languages to analyze the agent response.
 class TransliteratedStrategy(Strategy):
-    def __init__(self, name: str = "language_strategies_sync", **kwargs) -> None:
+    def __init__(self, name: str = "transliterated_language_strategy", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
 
     def transliterate_text(self, text: str, expected_response:str) -> float:

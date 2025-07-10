@@ -15,7 +15,6 @@
     "25":["llm_judge"],
     "27":["language_detect_gt","language_detect_langdetect","language_similarity_gt","language_similarity_sarvam"],
     "28":["language_similarity_gt","language_similarity_sarvam"],
-    "30":["language_similarity_gt","language_similarity_sarvam"],
     "31":["language_similarity_gt","language_similarity_sarvam"],
     "34":["llm_judge"],
     "45":["language_similarity_gt","language_similarity_sarvam"],
@@ -23,5 +22,12 @@
     "41":["turn_around_time"],
     "42":["processing_time"],
     "43":["response_latency"],
-    "44": ["uptime"]
+    "44": ["uptime_calculation"],
+    "53":["robustness_advglue","robustness_advins","robustness_ood"],
+    "66":["robustness_advglue","robustness_advins","robustness_ood"],
+    "54":["truthfulness_external","truthfulness_internal","hallucination"],
+    "30": ["transliterated_language_strategy"],
+    "56":["llm_as_judge"],
+    "65":["llm_as_judge"],
+    "58":["language_similarity_gt","language_similarity_sarvam"]
 }
