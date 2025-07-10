@@ -5,7 +5,7 @@ from calculate_uptime import UptimeCalculation
 from robustness_advGLUE import Robustness_AdvGLUE
 from typing import Optional, List
 import numpy as np
-from utils import RtA
+from utils import RtA, extract_from_brackets
 from robustness_advInstruction import Robustness_AdvInstruction
 from robustness_ood import Robustness_OutOfDomain
 from logger import get_logger
@@ -33,14 +33,7 @@ class StrategyImplementor:
             case "robustness_advglue":
                 net_score =[]
                 for i in range(len(prompts)):
-                    if i<4:
-                        ind_task = "qqp"
-                    elif i<8:
-                        ind_task = "sst2"
-                    elif i<12:
-                        ind_task = "qnli"
-                    else:
-                        ind_task = "mnli"
+                    ind_task = extract_from_brackets(prompts[i])
                     strategy = Robustness_AdvGLUE(task=ind_task)
                     net_score.append(strategy.evaluate(agent_responses[i],expected_responses[i]))
                 
@@ -100,15 +93,14 @@ class StrategyImplementor:
             
             case "truthfulness_internal":
                 for i in range(len(prompts)):
-                    if i<2:
-                        ind_task = "codah"
+                    ind_task = extract_from_brackets(prompts[i])
+                    if ind_task == "codah":
                         strategy = Truthfulness_Internal(data_src=ind_task)
-                    elif i<4:
-                        ind_task = "squad"
+                    elif ind_task == "squad" or ind_task == "hotpot":
                         strategy = Truthfulness_Internal(data_src=ind_task, prompt=prompts[i], system_prompt=system_prompts[i],judge_prompt=judge_prompts[i])
                     else:
-                        ind_task = "hotpot"
-                        strategy = Truthfulness_Internal(data_src=ind_task, prompt=prompts[i], system_prompt=system_prompts[i],judge_prompt=judge_prompts[i])
+                        logger.error(f"Unknown data source: {ind_task}. Please choose from 'codah', 'squad', or 'hotpot'.")
+                        return None
 
                     net_score.append(strategy.evaluate(agent_responses[i],expected_responses[i]))
                 score = np.mean(net_score)
