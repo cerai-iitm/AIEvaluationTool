@@ -1,0 +1,15 @@
+{
+    "database": {
+        "host": "localhost",
+        "port": 5432,
+        "user": "root",
+        "password": "ATmega32*",
+        "database": "eval"
+    },
+    "target": {
+        "application_type": "WHATSAPP-WEB",
+        "application_name": "Gooey AI",
+        "application_url": "http://localhost:8000",
+        "agent_name": "Gooey AI"
+    }
+}
