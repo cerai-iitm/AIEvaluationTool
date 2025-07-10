@@ -1,13 +1,14 @@
-from DB import DB
 import sys
 import os
 import json
 from datetime import datetime
 
 # setup the relative import path for data module.
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(os.path.join(os.path.dirname(__file__) + '/../../'))  # Adjust the path to include the parent directory
 
-from data import Prompt, TestCase, Response, TestPlan, Metric, LLMJudgePrompt, Target, Run, RunDetail, Conversation
+from lib.data import Prompt, TestCase, Response, TestPlan, Metric, LLMJudgePrompt, Target, Run, RunDetail, Conversation
+from lib.orm import DB  # Import the DB class from the orm module
+
 
 # __len__ __getitem__ __setitem__ __delitem__ __iter__ __contains__
 # __enter__ __exit__  contextual management methods for the DB class
