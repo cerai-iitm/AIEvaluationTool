@@ -345,7 +345,8 @@ def main():
             run.status = "COMPLETED"
             db.add_or_update_testrun(run=run)
             logger.debug(f"Execution of test plan '{plan_name}' completed successfully.")
-
+    
+        client.close()
 
 if __name__ == "__main__":
     main()

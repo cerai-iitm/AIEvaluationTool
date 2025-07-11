@@ -41,7 +41,13 @@ class InterfaceManagerClient:
 
     def logout(self) -> requests.Response:
         return self._get("logout")
-
+    
+    def close(self) -> requests.Response:
+        """
+        Closes the session and cleans up resources.
+        """
+        return self._get("close")
+    
     def chat(self, chat_id: int, prompt_list: List[str]) -> requests.Response:
         payload = PromptCreate(chat_id=chat_id, prompt_list=prompt_list).dict()
         return self._post("chat", json=payload)
