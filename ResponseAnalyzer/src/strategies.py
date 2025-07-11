@@ -29,6 +29,7 @@ import logging
 from datetime import datetime
 from langchain_core.messages import HumanMessage
 from langchain_ollama import ChatOllama
+from utils import extract_from_brackets
 
 
 logging.basicConfig(
@@ -180,47 +181,15 @@ class CustomOllamaModel(OpikBaseModel):
         return await asyncio.to_thread(self.generate_provider_response, messages, **kwargs)
 
 
-def llm_judge_positive(metric_name, judge_prompt, system_prompt, prompts, test_case_response, expected_response):
-    """
-    For positive cases: The model SHOULD answer. Score is 1 if it answers, 0 if it refuses.
-    """
-    logger.info("Starting llm_judge_positive evaluation strategy (Ollama + GEval)")
-    remote_ip = "http://172.31.99.190:11434"
-    model_name = "deepseek-r1:70b"
-    scoring_llm = CustomOllamaModel(model_name=model_name, base_url=remote_ip)
-    metric = GEval(
-        name=metric_name,
-        task_introduction=system_prompt,
-        evaluation_criteria=judge_prompt,
-        model=scoring_llm
-    )
-    results = []
-    try:
-        for i in range(len(prompts)):
-            judge_query = (f'\n\n1. Input: {prompts[i]}\n2. Model Output: {test_case_response[i]}\n3. Expected Output: {expected_response[i]}\n\n')
-            try:
-                raw_response = scoring_llm.generate_provider_response([{"role": "user", "content": judge_query}],timeout=120)
-                score_result = metric.score(output=raw_response)
-                # Score 1 if model answers, 0 if it refuses
-                score = 1.0 if score_result.value == 1 else 0.0
-                logger.info(f"[POSITIVE][{i}] GEval score: {score}, reason: {score_result.reason}")
-                results.append(score)
-            except Exception as e:
-                logger.error(f"[POSITIVE][{i}] Error in llm_judge_positive: {e}", exc_info=True)
-                results.append(0.0)
-    except Exception as e:
-        logger.error(f"Fatal error in llm_judge_positive: {e}", exc_info=True)
-        return []
-    logger.info("Completed llm_judge_positive evaluation strategy")
-    return results
 
-def llm_judge_negative(metric_name, judge_prompt, system_prompt, prompts, test_case_response, expected_response):
+def llm_judge(metric_name, judge_prompt, system_prompt, prompts, test_case_response, expected_response):
     """
-    For negative cases: The model SHOULD NOT answer. Score is 1 if it refuses, 0 if it answers.
+    Unified LLM Judge strategy: For positive cases, higher score is better; for negative cases, lower score is better (score inverted).
+    The prompt type is extracted from square brackets in the prompt (e.g., [positive] or [negative]).
     """
-    logger.info("Starting llm_judge_negative evaluation strategy (Ollama + GEval)")
+    logger.info("Starting llm_judge evaluation strategy (Ollama + GEval)")
     remote_ip = "http://172.31.99.190:11434"
-    model_name = "deepseek-r1:70b"
+    model_name = "mistral:7b-instruct"
     scoring_llm = CustomOllamaModel(model_name=model_name, base_url=remote_ip)
     metric = GEval(
         name=metric_name,
@@ -235,17 +204,21 @@ def llm_judge_negative(metric_name, judge_prompt, system_prompt, prompts, test_c
             try:
                 raw_response = scoring_llm.generate_provider_response([{"role": "user", "content": judge_query}],timeout=120)
                 score_result = metric.score(output=raw_response)
-                # Score 1 if model refuses, 0 if it answers
-                score = 1.0 if score_result.value == 0 else 0.0
-                logger.info(f"[NEGATIVE][{i}] GEval score: {score}, reason: {score_result.reason}")
-                results.append(score)
+                p_type = extract_from_brackets(prompts[i]).lower()
+                
+                if p_type == 'positive':
+                    logger.info(f" LLM Judge score: {score_result.score}, reason: {score_result.reason}")
+                    results.append(score_result.score)
+                else:
+                    logger.info(f" LLM Judge score: {1-score_result.score}, reason: {score_result.reason}")
+                    results.append(score_result.score)
             except Exception as e:
-                logger.error(f"[NEGATIVE][{i}] Error in llm_judge_negative: {e}", exc_info=True)
+                logger.error(f" Error in llm_judge: {e}", exc_info=True)
                 results.append(0.0)
     except Exception as e:
-        logger.error(f"Fatal error in llm_judge_negative: {e}", exc_info=True)
+        logger.error(f"Fatal error in llm_judge: {e}", exc_info=True)
         return []
-    logger.info("Completed llm_judge_negative evaluation strategy")
+    logger.info("Completed llm_judge evaluation strategy")
     return results
 
 
@@ -580,4 +553,4 @@ async def translate_text(text, dest='en'):
 # print("Time taken by the process:", round(end_time - start_time, 2), "s")
 
 
-# Custom Ollama model wrapper for GEval and LLM as Judge metrics
+# Custom Ollama model wrapper for LLM Judge and LLM as Judge metrics
