@@ -144,6 +144,12 @@ def RtA(data, key='eval_res', refusal_label="LABEL_0", return_count=False):
             return rta_ratio, count
         return rta_ratio
 
+def get_key_by_value(dictionary, value):
+    for key, val in dictionary.items():
+        if val == value:
+            return key
+    return None
+
 
 try:
     from opik.evaluation.models import OpikBaseModel
