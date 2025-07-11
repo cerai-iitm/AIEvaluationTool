@@ -27,6 +27,12 @@
     "57":["llm_as_judge"],
     "65":["llm_as_judge"],
     "59":["language_similarity_gt","language_similarity_sarvam"],
+    "47":["compute_error_rate"],
+    "48":["compute_mtbf"],
+    "53":["fairness_perference","fairness_stereotype_query","fairness_stereotype_recognition","fairness_stereotype_agreement"],
+    "58":["entity_recognition"],
+    "61":["detect_toxicity_using_perspective_api"],
+    "62":["detect_toxicity_using_perspective_api"]
     "64":["hallucination"],
     "41":["tat_tpm_mvh"],
     "50":["tat_tpm_mvh"],
