@@ -24,7 +24,7 @@ class DB:
     It uses SQLAlchemy for ORM and supports MariaDB as the database backend.
     """
 
-    def __init__(self, db_url: str, debug:bool, pool_size:int = 5, max_overflow:int = 10):
+    def __init__(self, db_url: str, debug:bool, pool_size:int = 5, max_overflow:int = 10, loglevel=logging.DEBUG):
         """
         Initializes the DB instance with the provided database URL and host.
         
@@ -45,10 +45,10 @@ class DB:
 
         # Set up logging
         self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.DEBUG)
+        self.logger.setLevel(loglevel)
         # Console handler
         ch = logging.StreamHandler()
-        ch.setLevel(logging.DEBUG)
+        ch.setLevel(loglevel)
         ch_formatter = logging.Formatter("%(asctime)s|%(name)s|%(levelname)s|%(funcName)s|%(message)s")
         ch.setFormatter(ch_formatter)
         self.logger.addHandler(ch)
@@ -1133,6 +1133,31 @@ class DB:
             self.logger.error(f"Judge prompt already exists: {judge_prompt}. Error: {e}")
             return -1
         
+    def get_target_by_id(self, target_id: int) -> Optional[Target]:
+        """
+        Fetches a target by its ID.
+        
+        Args:
+            target_id (int): The ID of the target to fetch.
+        
+        Returns:
+            Optional[Target]: The Target object if found, otherwise None.
+        """
+        with self.Session() as session:
+            sql = select(Targets).where(Targets.target_id == target_id)
+            result = session.execute(sql).scalar_one_or_none()
+            if result is None:
+                self.logger.error(f"Target with ID '{target_id}' does not exist.")
+                return None
+            # Return a Target object with the fetched data
+            return Target(target_id=getattr(result, 'target_id'),
+                          target_name=str(result.target_name),
+                          target_type=str(result.target_type),
+                          target_description=str(result.target_description),
+                          target_url=str(result.target_url),
+                          target_domain=result.domain.domain_name,
+                          target_languages=[lang.lang_name for lang in result.langs])
+        
     def add_or_get_target(self, target: Target) -> int:
         """
         Adds a new target to the database or fetches its ID if it already exists.
@@ -1243,6 +1268,54 @@ class DB:
         if s1 == s2:
             return 0
         return 1 if s1 > s2 else -1
+    
+    def get_run_by_name(self, run_name: str) -> Optional[Run]:
+        """
+        Fetches a test run by its name.
+        
+        Args:
+            run_name (str): The name of the test run to fetch.
+        
+        Returns:
+            Optional[Run]: The Run object if found, otherwise None.
+        """
+        with self.Session() as session:
+            sql = select(TestRuns).where(TestRuns.run_name == run_name)
+            result = session.execute(sql).scalar_one_or_none()
+            if result is None:
+                self.logger.error(f"TestRun with name '{run_name}' does not exist.")
+                return None
+            return Run(target=result.target.target_name,
+                       run_name=str(result.run_name),
+                       target_id=getattr(result, 'target_id'),
+                       start_ts=result.start_ts.isoformat(),
+                       end_ts=result.end_ts.isoformat() if getattr(result, "end_ts") else None,
+                       status=str(result.status),
+                       run_id=getattr(result, 'run_id'))
+    
+    def get_run_by_id(self, run_id: int) -> Optional[Run]:
+        """
+        Fetches a test run by its ID.
+        
+        Args:
+            run_id (int): The ID of the test run to fetch.
+        
+        Returns:
+            Optional[Run]: The Run object if found, otherwise None.
+        """
+        with self.Session() as session:
+            sql = select(TestRuns).where(TestRuns.run_id == run_id)
+            result = session.execute(sql).scalar_one_or_none()
+            if result is None:
+                self.logger.error(f"TestRun with ID '{run_id}' does not exist.")
+                return None
+            return Run(target=result.target.target_name,
+                       run_name=str(result.run_name),
+                       target_id=getattr(result, 'target_id'),
+                       start_ts=result.start_ts.isoformat(),
+                       end_ts=result.end_ts.isoformat(),
+                       status=str(result.status),
+                       run_id=getattr(result, 'run_id'))
         
     def add_or_update_testrun(self, run: Run) -> int:
         """
@@ -1628,7 +1701,7 @@ class DB:
                     if existing_conversation.prompt_ts is None and conversation.prompt_ts is not None:
                         self.logger.debug(f"Updating existing conversation details (Prompt timestamp: {conversation.prompt_ts}) ..")
                     elif existing_conversation.agent_response is None and conversation.agent_response is not None:
-                        self.logger.debug(f"Updating existing conversation details (Agent Response: {conversation.agent_response}, Response timestamp: {conversation.response_ts}) ..")
+                        self.logger.debug(f"Updating existing conversation details (Agent response text and Response timestamp: {conversation.response_ts}) ..")
                     else:
                         self.logger.debug(f"Existing conversation (RunDetailId:{conversation.run_detail_id}) will not be updated. Returning conversation ID: {existing_conversation.conversation_id}")
                         # Return the ID of the existing conversation if it already exists
