@@ -59,6 +59,7 @@ def main():
     parser.add_argument("--testcase-id", "-t", dest="testcase_id", type=int, help="ID of the specific test case to execute")
     parser.add_argument("--max-testcases", "-n", dest="max_testcases", type=int, default=10, help="Maximum number of test cases to execute (default: 10)")
     parser.add_argument("--run-name", "-r", dest="run_name", type=str, help="Run name for the test plan or test case execution")
+    parser.add_argument("--run-continue", "-R", dest="run_continue", default=False, action="store_true", help="Continue an existing run with the provided run name")
     parser.add_argument("--execute", "-e", dest="execute", action="store_true", help="Execute the test plan or test case")
     parser.add_argument("--verbosity", "-v", dest="verbosity", type=int, choices=[0,1,2,3,4,5], help="Enable verbose output", default=5)
 
@@ -246,8 +247,14 @@ def main():
                 logger.error(f"No run found with name '{args.run_name}'")
                 return
             if run.status == "COMPLETED":
-                logger.error(f"Run '{args.run_name}' is already completed!")
-                return
+                if args.run_continue:
+                    run.end_ts = None  # Reset the end timestamp to allow continuation
+                    run.status = "RUNNING"
+                    db.add_or_update_testrun(run=run, override=True)
+                    logger.debug(f"Reopening the COMPLETED run with ID {run.run_id} and name '{run.run_name}'")
+                else:
+                    logger.error(f"Run '{args.run_name}' is already completed!")
+                    return
             logger.debug(f"Using existing run with ID {run.run_id} and name '{run.run_name} with status '{run.status}'")
         
         # Initialize the InterfaceManagerClient with the provided configuration
@@ -277,9 +284,16 @@ def main():
             
             # iterate through the test cases and execute
             for testcase in testcases:
-
+                # create a new run detail entry for each test case
                 rundetail = RunDetail(run_name=args.run_name, plan_name=plan_name, metric_name=testcase.metric, testcase_name=testcase.name)
                 rundetail_id = db.add_or_update_testrun_detail(rundetail)
+                
+                # fetch the run detail status.
+                # if the run detail is already completed, skip the execution.
+                run_status = db.get_status_by_run_detail_id(run_detail_id=rundetail_id)
+                if run_status is not None and run_status == "COMPLETED":
+                    logger.debug(f"Run detail for testcase {testcase.name} (ID: {testcase.testcase_id}) is already completed. Skipping execution.")
+                    continue
 
                 logger.debug(f"Executing Test {testcase.name} (Case ID: {testcase.testcase_id})")
 

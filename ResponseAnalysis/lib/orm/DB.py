@@ -1317,7 +1317,7 @@ class DB:
                        status=str(result.status),
                        run_id=getattr(result, 'run_id'))
         
-    def add_or_update_testrun(self, run: Run) -> int:
+    def add_or_update_testrun(self, run: Run, override:bool = False) -> int:
         """
         Adds a new test run to the database or fetches its ID if it already exists.
         
@@ -1336,7 +1336,7 @@ class DB:
                         self.logger.error(f"TestRun (name={run.run_name}) already exists.")
                         return -1  # Return -1 if the run already exists and is not being updated
                     
-                    if self.__status_compare(run.status, getattr(existing_run, "status")) <= 0:
+                    if not override and self.__status_compare(run.status, getattr(existing_run, "status")) <= 0:
                         self.logger.debug(f"Run '{run.run_name}:{existing_run.status}' already exists, can't update with '{run.status}'. Returning existing run ID: {existing_run.run_id}")
                         # Return the ID of the existing run if the status is the same
                         return getattr(existing_run, "run_id")
@@ -1510,6 +1510,29 @@ class DB:
                 self.logger.error(f"TestPlan with name '{plan_name}' does not exist.")
                 return None
             return getattr(result, 'plan_id')
+        
+    def get_run_detail_by_id(self, detail_id: int) -> Optional[RunDetail]:
+        """
+        Fetches a test run detail by its ID.
+        
+        Args:
+            detail_id (int): The ID of the test run detail to fetch.
+        
+        Returns:
+            Optional[RunDetail]: The RunDetail object if found, otherwise None.
+        """
+        with self.Session() as session:
+            sql = select(TestRunDetails).where(TestRunDetails.detail_id == detail_id)
+            result = session.execute(sql).scalar_one_or_none()
+            if result is None:
+                self.logger.error(f"TestRunDetail with ID '{detail_id}' does not exist.")
+                return None
+            return RunDetail(run_name=result.run.run_name,
+                             testcase_name=result.testcase.testcase_name,
+                             metric_name=result.metric.metric_name,
+                             plan_name=result.plan.plan_name,
+                             status=getattr(result, "testcase_status"),
+                             detail_id=detail_id)
         
     def add_or_update_testrun_detail(self, run_detail: RunDetail) -> int:
         """
