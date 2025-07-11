@@ -17,6 +17,10 @@ from fairness_preference import Fairness_Preference
 from fairness_stereotype_agreement import Fairness_Stereotype_Agreement
 from fairness_stereotype_query import Fairness_Stereotype_Query
 from fairness_stereotype_recognition import Fairness_Stereotype_Recognition
+from hallucination import HallucinationStrategy
+from privacy import PrivacyStrategy
+from safety import SafetyStrategy
+from tat_tpm_mvh import TAT_TPM_MVH
 
 logger = get_logger("strategy_implementor")
 
@@ -28,11 +32,12 @@ class StrategyImplementor:
 
     def __init__(self, strategy_name: str, **kwargs):
         self.strategy_name = strategy_name
-
+        self.__metric_name = kwargs.get("metric_name")
     def execute(self, prompts: Optional[List[str]] = None, expected_responses: Optional[List[str]] = None, agent_responses: Optional[List[str]] = None, system_prompts: Optional[List[str]] = None, judge_prompts: Optional[List[str]] = None) -> float :
         """
         Execute the current strategy with the provided arguments.
         """
+
         match self.strategy_name:
             case "uptime_calculation":
                 strategy = UptimeCalculation(threshold=120) # Default check for 2 mins
@@ -208,6 +213,58 @@ class StrategyImplementor:
                 logger.info(f"Fairness Stereotype Recognition Score: {fairness_stereotype_recognition_score:.3f}")
                 return fairness_stereotype_recognition_score
             
+
+            case "hallucination":
+                scores = []
+                for i in range(len(agent_responses)):
+                    try:
+                        parsed_source = extract_from_brackets(prompts[i])
+                    except Exception as e:
+                        logger.warning(f"Could not extract source_type from prompt[{i}]: {prompts[i]} — {e}")
+                        parsed_source = "unknown"
+                    strategy = HallucinationStrategy(source_type=parsed_source)
+                    score = strategy.evaluate(agent_responses[i],expected_responses[i])
+                    scores.append(score)
+                avg_score = sum(scores) / len(scores) if scores else 0.0
+                logger.info(f"[Hallucination] Average Score: {avg_score}")
+                return avg_score
+
+            case "privacy":
+                strategy = PrivacyStrategy(metric_name=self.__metric_name)
+                scores = []
+                for i in range(len(agent_responses)):
+                    if self.__metric_name == "awareness_query":
+                        score = strategy.evaluate(agent_responses[i],system_prompts[i],prompts[i])
+                    elif self.__metric_name == "privacy_leakage":
+                        result = strategy.evaluate(agent_responses[i],system_prompts[i])
+                        score = (result["RtA"] +result["TD"] +result["CD"]) / 3
+                    elif self.__metric_name == "confidence_agreement":
+                        score = strategy.evaluate(agent_responses[i],expected_responses[i])
+                    else:
+                        logger.warning(f"Unknown Privacy Metric: {self.__metric_name}")
+                        return 0.0
+                    scores.append(score)
+                avg_score = sum(scores) / len(scores) if scores else 0.0
+                logger.info(f"[Privacy] {self.__metric_name} Score: {avg_score}")
+                return avg_score
+
+            case "safety":
+                strategy = SafetyStrategy(metric_name=self.__metric_name)
+                scores = []
+                for i in range(len(agent_responses)):
+                    score = strategy.evaluate(agent_responses[i],prompts[i])
+                    scores.append(score)
+                avg_score = sum(scores) / len(scores) if scores else 0.0
+                logger.info(f"[Safety] {self.__metric_name} Score: {avg_score}")
+                return avg_score
+
+            case "tat_tpm_mvh":
+                strategy = TAT_TPM_MVH(metric_name=self.__metric_name)
+                score = strategy.evaluate(agent_response=None)
+                logger.info(f"[TAT_TPM_MVH] {self.__metric_name} Score: {score}")
+                return score
+
             case _:
                 logger.error(f"Strategy {self.strategy_name} not recognized.")
                 raise ValueError(f"Strategy {self.strategy_name} not recognized.")
+            

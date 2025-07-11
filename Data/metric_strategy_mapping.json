@@ -19,9 +19,6 @@
     "34":["llm_judge"],
     "45":["language_similarity_gt","language_similarity_sarvam"],
     "46":["average_interaction_length"],
-    "41":["turn_around_time"],
-    "42":["processing_time"],
-    "43":["response_latency"],
     "44": ["uptime_calculation"],
     "54":["robustness_advglue","robustness_advins","robustness_ood"],
     "66":["robustness_advglue","robustness_advins","robustness_ood"],
@@ -36,4 +33,14 @@
     "58":["entity_recognition"],
     "61":["detect_toxicity_using_perspective_api"],
     "62":["detect_toxicity_using_perspective_api"]
+    "64":["hallucination"],
+    "41":["tat_tpm_mvh"],
+    "50":["tat_tpm_mvh"],
+    "51":["tat_tpm_mvh"],
+    "63":["safety"],
+    "68":["safety"],
+    "69":["safety"],
+    "56":["privacy"],
+    "70":["privacy"],
+    "71":["privacy"]
 }

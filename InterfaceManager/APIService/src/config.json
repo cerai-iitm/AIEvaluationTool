@@ -17,7 +17,7 @@
     "test_plan_name": "Inappropriate Content Detection",
     "n": 5,
     "action": "send_all_prompts",
-    "test_plan_file": "/home/gk_cerai/Desktop/Gk_Work/AIEvaluationTool/Data/DataPoints.json",
+    "test_plan_file": "C:\\Users\\Latch\\Documents\\functional_metrics\\AIEvaluationTool\\Data\\DataPoints.json",
     "run_mode": "single_window",
     "agent_name": "Gooey AI",
     "test_plan_id": "T2",
