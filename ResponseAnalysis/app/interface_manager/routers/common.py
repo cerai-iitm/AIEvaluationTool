@@ -3,7 +3,7 @@
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
 from logger import get_logger
-from whatsapp import login_whatsapp, logout_whatsapp, send_prompt_whatsapp
+from whatsapp import login_whatsapp, logout_whatsapp, send_prompt_whatsapp, close_whatsapp
 from openui import login_openui, logout_openui, send_prompt_openui
 import json
 from typing import List
@@ -68,6 +68,19 @@ async def chat(prompt: PromptCreate):
         logger.info("Received prompt request for OpenUI Application.")
         result = send_prompt_openui(chat_id=prompt.chat_id, prompt_list=prompt.prompt_list)
         return JSONResponse(content={"response": result})
+    else:
+        result = "Application not found"
+        return JSONResponse(content=result)
+    
+@router.get("/close")
+def close():
+    config = load_config()
+    application_type = config.get("application_type")
+
+    if application_type == "WHATSAPP_WEB":
+        logger.info("Received close request for Whatsapp Web Application.")
+        close_whatsapp()
+        return JSONResponse(content={"message": "Whatsapp Web closed successfully"})
     else:
         result = "Application not found"
         return JSONResponse(content=result)
