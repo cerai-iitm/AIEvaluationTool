@@ -17,7 +17,8 @@
                 "${workspaceFolder}/ResponseAnalysis/app/testcase_executor/config.json",
                 "--testplan-id", "1",
                 "--execute",
-                "--run-name", "place-serious-station-non"
+                "--run-name", "place-serious-station-non",
+                "--run-continue"
             ]
         },
         {
