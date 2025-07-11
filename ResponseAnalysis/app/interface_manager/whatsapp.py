@@ -26,6 +26,9 @@ from typing import List
 
 logger = get_logger("whatsapp_driver")
 
+global cached_driver
+cached_driver = None
+
 def load_config():
     with open('config.json', 'r') as file:
         return json.load(file)
@@ -247,6 +250,9 @@ def is_profile_in_use(profile_path):
     for proc in psutil.process_iter(['name', 'cmdline']):
         try:
             if 'chrome' in proc.info['name'].lower():
+                if proc.info['cmdline'] is None:
+                    continue
+                # Check if the profile path is in the command line arguments
                 cmdline = ' '.join(proc.info['cmdline'])
                 if f"user-data-dir={profile_path}" in cmdline:
                     return True
@@ -260,6 +266,8 @@ def close_chrome_with_profile(profile_path):
     for proc in psutil.process_iter(['name', 'cmdline']):
         try:
             if 'chrome' in proc.info['name'].lower():
+                if proc.info['cmdline'] is None:
+                    continue
                 cmdline = ' '.join(proc.info['cmdline'])
                 if f"user-data-dir={profile_path}" in cmdline:
                     proc.kill()
@@ -276,13 +284,9 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int = 3):
     while attempt < max_retries:
         try:
             if not check_and_recover_connection():
-                return "[Failed: Internet unavailable]"
+                return "Failed: Internet unavailable"
             
             logger.info(f"Sending prompt to the bot: {prompt}")
-            # message_box_xpath = (
-            #     '//*[@id="main"]/footer/div[1]/div/span/div/div[2]/div[1]/div[2]/div[1]/p'
-            # )
-
             message_box_xpath = '//div[@aria-label="Type a message" and @contenteditable="true"]'
             message_box = WebDriverWait(driver, 2).until(
                 EC.presence_of_element_located((By.XPATH, message_box_xpath))
@@ -297,55 +301,69 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int = 3):
                 time.sleep(0.5)
             message_box.send_keys(Keys.RETURN)
 
-            time.sleep(30)
-
-            wait = WebDriverWait(driver, 10)
-            all_messages = wait.until(
-                EC.presence_of_all_elements_located(
-                    (By.CSS_SELECTOR, "div.message-in, div.message-out")
-                )
-            )
-
-            outgoing_msgs = driver.find_elements(By.CSS_SELECTOR, "div.message-out")
-            if not outgoing_msgs:
-                raise Exception("No outgoing messages found.")
-
-            last_outgoing = outgoing_msgs[-1]
-
-            try:
-                last_index = next(
-                    i for i, msg in enumerate(all_messages) if msg == last_outgoing
-                )
-            except StopIteration:
-                raise Exception(
-                    "Last outgoing message not found in all_messages list."
-                )
-
-            responses_after = all_messages[last_index + 1:]
-            responses = [
-                msg
-                for msg in responses_after
-                if "message-in" in str(msg.get_attribute("class"))
-            ]
-
+            #time.sleep(5)  # Wait for the message to be sent and responses to arrive
+            old_response_texts = []
             response_texts = []
-            for msg in responses:
+
+            # setup the wait time counter.
+            wait_time = 0 # seconds
+
+            # wait for the responses from the agent for a maximum of 30 seconds
+            while "".join(old_response_texts) != "".join(response_texts) or len(response_texts) == 0:
+                if wait_time > 30:
+                    logger.warning("No new responses received after 30 seconds. Exiting response retrieval loop.")
+                    break
+                time.sleep(1)  # Wait for responses to appear
+                wait_time += 1
+
+                wait = WebDriverWait(driver, 30)
+                all_messages = wait.until(
+                    EC.presence_of_all_elements_located(
+                        (By.CSS_SELECTOR, "div.message-in, div.message-out")
+                    )
+                )
+
+                outgoing_msgs = driver.find_elements(By.CSS_SELECTOR, "div.message-out")
+                if not outgoing_msgs:
+                    raise Exception("No outgoing messages found.")
+
+                last_outgoing = outgoing_msgs[-1]
+
                 try:
-                    text_elem = msg.find_element(By.CSS_SELECTOR, "span.selectable-text")
-                    text = text_elem.text.strip()
-                    if text:
-                        response_texts.append(text)
-                        logger.info("Received response from WhatsApp: %s", text)
-                except Exception as e:
-                    logger.debug("Could not read response message: %s", e)
-                    continue
+                    last_index = next(
+                        i for i, msg in enumerate(all_messages) if msg == last_outgoing
+                    )
+                except StopIteration:
+                    raise Exception(
+                        "Last outgoing message not found in all_messages list."
+                    )
+
+                responses_after = all_messages[last_index + 1:]
+                responses = [
+                    msg
+                    for msg in responses_after
+                    if "message-in" in str(msg.get_attribute("class"))
+                ]
+
+                old_response_texts = response_texts.copy()
+                response_texts = []
+                for msg in responses:
+                    try:
+                        text_elem = msg.find_element(By.CSS_SELECTOR, "span.selectable-text")
+                        text = text_elem.text.strip()
+                        if text:
+                            response_texts.append(text)
+                            logger.info(f"(Waited:{wait_time}) Received response from WhatsApp: %s", text)
+                    except Exception as e:
+                        logger.debug("Could not read response message: %s", e)
+                        continue
 
             if response_texts:
                 combined_response = " ".join(response_texts)
                 return combined_response
             else:
                 logger.warning("No response message found.")
-                return ["[No response received]"]
+                return ["No response received"]
 
         except Exception as e:
             attempt += 1
@@ -354,46 +372,46 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int = 3):
                 logger.info("Retrying chat...")
                 time.sleep(0.3)
             else:
-                return ["[Error during chat after retries]"]
+                return ["Error during chat after retries"]
 
 def send_prompt_whatsapp(chat_id: int, prompt_list: List[str], mode: str = "single_window") -> list[dict]:
+    global cached_driver
     results = []
 
     if mode == "single_window":
-        #temp_dir = tempfile.gettempdir()
-        #folder_name = "whatsapp_profile"
-        #profile_folder_path = os.path.join(temp_dir, folder_name)
-
         profile_folder_path = os.path.expanduser('~') + "/whatsapp_profile"  # For testing purposes
         logger.info(f"Using profile folder: {profile_folder_path}")
 
-        if is_profile_in_use(profile_folder_path):
-            logger.info("Chrome with this session is already running. Attempting to close it...")
-            if close_chrome_with_profile(profile_folder_path):
-                logger.info("Successfully closed the Chrome instance using this session.")
-            else:
-                logger.error("Failed to close. Possibly due to permission or timing issues.")
+        if is_profile_in_use(profile_folder_path) and cached_driver is not None:
+            driver = cached_driver
+            logger.info("Chrome with this session is already running. Reusing the session.")
         else:
-            logger.info("No Chrome instance is using the session. Safe to launch a new one.")
+            if cached_driver is None:
+                logger.error("Chrome with this session is already running, but driver outdated.  Restarting Chrome with the same profile.")
+                close_chrome_with_profile(profile_folder_path)
+            else:
+                logger.info("No Automated Chrome instance. Safe to launch a new one.")
 
-        opts = Options()
-        opts.add_argument("--no-sandbox")
-        opts.add_argument("--start-maximized")
-        opts.add_argument(f"user-data-dir={profile_folder_path}")
-        opts.add_experimental_option("excludeSwitches", ["enable-logging"])
+            opts = Options()
+            opts.add_argument("--no-sandbox")
+            #opts.add_argument("--headless")  # Uncomment for headless operation
+            opts.add_argument(f"user-data-dir={profile_folder_path}")
+            opts.add_experimental_option("excludeSwitches", ["enable-logging"])
 
-        service = Service(ChromeDriverManager().install())
-        driver = webdriver.Chrome(service=service, options=opts)
+            service = Service(ChromeDriverManager().install())
+            driver = webdriver.Chrome(service=service, options=opts)
+            driver.get(load_config().get("whatsapp_url"))
+            cached_driver = driver  # Cache the driver for reuse
         
         try:
-            driver.get(load_config().get("whatsapp_url"))
-            time.sleep(5)
-
-            chat_found = search_llm(driver=driver)
+            chat_found = False
+            while chat_found is False:
+                logger.debug("Waiting for chat to be found...")
+                time.sleep(0.5)
+                chat_found = search_llm(driver=driver)
             
             for i, prompt in enumerate(prompt_list):
                 result = {"chat_id": chat_id, "prompt": prompt, "response": "Not available"}
-
                 try:
                     if chat_found:
                         response_str = send_message(driver=driver, prompt=prompt)
@@ -407,57 +425,32 @@ def send_prompt_whatsapp(chat_id: int, prompt_list: List[str], mode: str = "sing
                 results.append(result)
         
         finally:
-            driver.quit()
-
-    elif mode == "multi_window":
-        for i, prompt in enumerate(prompt_list):
-            #temp_dir = tempfile.gettempdir()
-            #folder_name = "whatsapp_profile"
-            #profile_folder_path = os.path.join(temp_dir, folder_name)
-
-            profile_folder_path = os.path.expanduser('~') + "/whatsapp_profile"
-            
-            if is_profile_in_use(profile_folder_path):
-                print("Chrome with this session is already running. Attempting to close it...")
-                if close_chrome_with_profile(profile_folder_path):
-                    print("Successfully closed the Chrome instance using this session.")
-                else:
-                    print("Failed to close. Possibly due to permission or timing issues.")
-            else:
-                print("No Chrome instance is using the session. Safe to launch a new one.")
-
-            opts = Options()
-            opts.add_argument("--no-sandbox")
-            opts.add_argument("--start-maximized")
-            opts.add_argument(f"user-data-dir={profile_folder_path}")
-            opts.add_experimental_option("excludeSwitches", ["enable-logging"])
-
-            service = Service(ChromeDriverManager().install())
-            driver = webdriver.Chrome(service=service, options=opts)
-            
-            try:
-                driver.get(load_config().get("whatsapp_url"))
-                time.sleep(5)
-
-                result = {"chat_id": chat_id, "prompt": prompt, "response": "Not available"}
-
-                try:
-                    if search_llm(driver):
-                        result["response"] = send_message(driver, prompt)
-                    else:
-                        result["response"] = "Chat not found"
-                except Exception as e:
-                    result["response"] = f"Error: {e}"
-                
-                results.append(result)
-            
-            finally:
-                driver.quit()
-
+            pass
+            #driver.quit()
     else:
-        raise ValueError("Invalid mode: choose 'single_window' or 'multi_window'.")
+        raise ValueError("Invalid mode: choose 'single_window'.")
 
     return results
+
+def close_whatsapp():
+    """
+    Close the WhatsApp Web session.
+    """
+    global cached_driver
+    if cached_driver is not None:
+        try:
+            cached_driver.quit()
+            logger.info("Closing WhatsApp Web session...")
+            logger.info("WhatsApp Web session closed successfully.")
+            cached_driver = None  # Clear the cached driver
+            profile_folder_path = os.path.expanduser('~') + "/whatsapp_profile"
+            close_chrome_with_profile(profile_folder_path)
+        except Exception as e:
+            logger.error(f"Error closing WhatsApp Web session: {e}")
+    else:
+        logger.warning("No active WhatsApp Web session to close.")
+        profile_folder_path = os.path.expanduser('~') + "/whatsapp_profile"
+        close_chrome_with_profile(profile_folder_path)
 
 def close(driver: webdriver.Chrome):
     """
