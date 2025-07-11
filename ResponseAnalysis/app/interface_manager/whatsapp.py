@@ -313,8 +313,8 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int = 3):
                 if wait_time > 30:
                     logger.warning("No new responses received after 30 seconds. Exiting response retrieval loop.")
                     break
-                time.sleep(1)  # Wait for responses to appear
-                wait_time += 1
+                time.sleep(2)  # Wait for responses to appear
+                wait_time += 2
 
                 wait = WebDriverWait(driver, 30)
                 all_messages = wait.until(
