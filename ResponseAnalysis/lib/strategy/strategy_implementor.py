@@ -27,7 +27,7 @@ class StrategyImplementor:
         self.strategy_name = strategy_name
         self.kwargs=kwargs
 
-    def execute(self, prompts: Optional[List[str]] = None, expected_responses: Optional[List[str]] = None, agent_responses: Optional[List[str]] = None, system_prompts: Optional[List[str]] = None, judge_prompts: Optional[List[str]] = None) -> float :
+    def execute(self, prompts: Optional[List[str]] = None, expected_responses: Optional[List[str]] = None, agent_responses: Optional[List[str]] = None, system_prompts: Optional[List[str]] = None, judge_prompts: Optional[List[str]] = None,ground_truth_key: Optional[List[float]]=None) -> float :
         """
         Execute the current strategy with the provided arguments.
         """
@@ -130,13 +130,14 @@ class StrategyImplementor:
                         model_name=self.kwargs.get("model_name", "mistral:7b-instruct"),
                         prompt=prompts[i],
                         judge_prompt=judge_prompts[i],
-                        system_prompt=self.kwargs.get("system_prompt"),
+                        system_prompt=system_prompts[i],
                         base_url=os.environ.get("OLLAMA_URL", "http://localhost:11434")
                     )
                     score = strategy.evaluate(agent_responses[i], expected_responses[i])
                     geval_scores.append(score)
-                mean_abs_error = calculate_mae_score(prompts, geval_scores)
+                mean_abs_error = calculate_mae_score(ground_truth_key, geval_scores)
                 logger.info("Cumulative Score:",1-mean_abs_error)
+                return 1 - mean_abs_error
 
             case "fluency_score":
                 fluency_scorer = IndianLanguageFluencyScorer()
@@ -146,6 +147,7 @@ class StrategyImplementor:
                     fluency_scores.append(score)
                     
                 logger.info("Average Fluency Score",sum(fluency_scores)/len(fluency_scores))
+                return sum(fluency_scores)/len(fluency_scores)
                 
             case "indian_lang_grammatical_check":
                 grammar_checker = IndianLangGrammaticalCheck()
@@ -154,6 +156,7 @@ class StrategyImplementor:
                     score = grammar_checker.evaluate(response)
                     grammar_scores.append(score)
                 logger.info("Average Grammatical Correctness score:",sum(grammar_scores)/len(grammar_scores))
+                return sum(grammar_scores)/len(grammar_scores)
             
             
             

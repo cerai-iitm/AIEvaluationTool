@@ -380,7 +380,7 @@ class BARTScorer:
 
         print(self.score(src_list, tgt_list, batch_size))
 
-def calculate_mae_score(prompts: list, predicted_scores: list, ground_truth_key: str = "GROUND-TRUTH") -> float:
+def calculate_mae_score( predicted_scores: list, ground_truth_key:list) -> float:
     """
     Calculate Mean Absolute Error (MAE) between predicted and actual scores.
     Args:
@@ -390,8 +390,7 @@ def calculate_mae_score(prompts: list, predicted_scores: list, ground_truth_key:
     Returns:
         MAE score as float
     """
-    actual_scores = [float(prompt.get(ground_truth_key, 0.0)) for prompt in prompts]
     pred_array = np.array(predicted_scores)
-    actual_array = np.array(actual_scores)
+    actual_array = np.array(ground_truth_key)
     mae = np.mean(np.abs(pred_array - actual_array))
     return float(mae)
