@@ -11,11 +11,14 @@ import json
 import logging
 from rich.console import Console
 from rich.table import Table
+from datetime import datetime
+import randomname  # Importing the randomname library for generating random names
 
 sys.path.append(os.path.dirname(__file__) + "/../../")  # Adjust the path to include the "lib" directory
 
 from lib.interface_manager import InterfaceManagerClient  # Import the InterfaceManagerClient from the lib directory
 from lib.orm import DB  # Import the DB class from the ORM module
+from lib.data import Target, Run, RunDetail, Conversation
 
 def main():
     """ Main function to handle command-line arguments and execute test cases.
@@ -34,8 +37,6 @@ def main():
     ch.setFormatter(ch_formatter)
     logger.addHandler(ch)
 
-    logger.info("Starting the Testcase Executor...")
-
     # Set up the argument parser
     ##############################################################################
     # This section defines the command-line arguments that can be passed to the script.
@@ -49,15 +50,36 @@ def main():
     # python main.py --config-file config.json --test-plan-id 1 --testcase-id 2 --max-testcases 5
     ##############################################################################
     parser = argparse.ArgumentParser(description="AI Evaluation Tool :: Testcase Executor")
-    parser.add_argument("--config-file", dest="config", type=str, help="Path to the configuration file containing database connection and target application details.")
-    parser.add_argument("--get-config-template", dest="get_config_template", action="store_true", help="Flag to get the configuration file template")
-    parser.add_argument("--get-plans", dest="get_plans", action="store_true", help="Flag to get all test plans")
-    parser.add_argument("--get-testcases", dest="get_testcases", action="store_true", help="Flag to get all test cases for a specific test plan")
-    parser.add_argument("--test-plan-id", dest="plan_id", type=int, help="ID of the test plan to execute")
-    parser.add_argument("--testcase-id", dest="testcase_id", type=int, help="ID of the specific test case to execute")
-    parser.add_argument("--max-testcases", dest="max_testcases", type=int, default=10, help="Maximum number of test cases to execute (default: 10)")
-    
+    parser.add_argument("--config-file", "-c", dest="config", type=str, help="Path to the configuration file containing database connection and target application details.")
+    parser.add_argument("--get-config-template", "-T", dest="get_config_template", action="store_true", help="Flag to get the configuration file template")
+    parser.add_argument("--get-plans", "-P", dest="get_plans", action="store_true", help="Get all test plans")
+    parser.add_argument("--get-testcases", "-C", dest="get_testcases", action="store_true", help="Get the test cases for a specific test plan or all test cases if no plan ID is provided")
+    parser.add_argument("--get-targets", "-G", dest="get_targets", action="store_true", help="Get all target applications")
+    parser.add_argument("--testplan-id", "-p", dest="plan_id", type=int, help="ID of the test plan to execute")
+    parser.add_argument("--testcase-id", "-t", dest="testcase_id", type=int, help="ID of the specific test case to execute")
+    parser.add_argument("--max-testcases", "-n", dest="max_testcases", type=int, default=10, help="Maximum number of test cases to execute (default: 10)")
+    parser.add_argument("--run-name", "-r", dest="run_name", type=str, help="Run name for the test plan or test case execution")
+    parser.add_argument("--execute", "-e", dest="execute", action="store_true", help="Execute the test plan or test case")
+    parser.add_argument("--verbosity", "-v", dest="verbosity", type=int, choices=[0,1,2,3,4,5], help="Enable verbose output", default=5)
+
     args = parser.parse_args()
+
+    verbosity_levels = {
+        5: logging.DEBUG,  # Verbose output
+        4: logging.INFO,   # Default output
+        3: logging.WARNING,  # Warning output
+        2: logging.ERROR,    # Error output
+        1: logging.CRITICAL,  # Critical output
+        0: logging.NOTSET,    # No output
+    }
+
+    # Set the logging level based on the verbosity argument
+    if args.verbosity in verbosity_levels:
+        loglevel = verbosity_levels[args.verbosity]
+        logger.setLevel(loglevel)
+    else:
+        logger.error(f"Invalid verbosity level: {args.verbosity}. Valid levels are: {list(verbosity_levels.keys())}")
+        return
 
     config = {
         "database": {
@@ -74,6 +96,8 @@ def main():
             "agent_name": "Name of the AI agent",
         }
     }
+
+    logger.info("Starting the Testcase Executor...")
 
     # generate the configuration file template if requested
     if args.get_config_template:
@@ -96,14 +120,54 @@ def main():
         logger.error("No configuration file provided.")
         return
     
+    # setting up the database connection
     db_url = f"mariadb+mariadbconnector://{config['database']['user']}:{config['database']['password']}@{config['database']['host']}:{config['database']['port']}/{config['database']['database']}"
     try:
         logger.info(f"Database URL: {db_url}")
-        db = DB(db_url=db_url, debug=False)
+        db = DB(db_url=db_url, debug=False, loglevel=loglevel)
     except Exception as e:
         logger.error(f"Failed to connect to the database: {e}")
         return
     
+    # list all the known target applications
+    if args.get_targets:
+        # Logic to get all target applications
+        logger.info("Fetching all target applications...")
+        
+        # Create a table to display the target applications
+        table = Table(title="Target Applications")
+        table.add_column("Target ID", justify="right", style="cyan")
+        table.add_column("Name", style="magenta")
+        table.add_column("Type", style="green")
+        table.add_column("Domain", style="yellow")
+        table.add_column("URL", style="blue")
+        
+        # Fetch all targets from the database
+        for target in db.targets:
+            table.add_row(str(target.target_id), target.target_name, target.target_type, target.target_domain, target.target_url)
+        
+        # Print the table of targets
+        Console().print(table)
+        return
+    
+    # setting up the Target Application
+    if "application_name" not in config["target"]:
+        logger.error("Application name not found in the configuration file.")
+        return
+    
+    target_id = db.get_target_id(target_name=config["target"]["application_name"])
+    if target_id is None:
+        logger.error(f"Target application '{config['target']['application_name']}' not found in the database.")
+        return
+    
+    target = db.get_target_by_id(target_id=target_id)
+    if target is None:
+        logger.error(f"Target application with ID {target_id} not found in the database.")
+        return
+    else:
+        logger.info(f"Target application found: {target.target_name} (ID: {target.target_id})")
+    
+    # get the test plans
     if args.get_plans:
         # Logic to get all test plans
         logger.info("Fetching all test plans...")
@@ -144,7 +208,7 @@ def main():
         logger.info(f"Fetching test cases for plan: {plan_name} ({args.plan_id})")
         
         # Create a table to display the test cases
-        table = Table(title=f"Test Cases for Plan ID {args.plan_id}")
+        table = Table(title=f"Test Cases for \"{plan_name}\" (PlanID:{args.plan_id})")
         table.add_column("Test Case ID", justify="right", style="cyan")
         table.add_column("Name", style="magenta")
         table.add_column("Strategy", style="green")
@@ -159,8 +223,114 @@ def main():
         return
 
 
-    # Initialize the InterfaceManagerClient with the provided configuration
-    client = InterfaceManagerClient(base_url="http://localhost:8000", application_type="")
+    if args.execute:
+        # Logic to execute the test case or test plan
+        if args.plan_id is None and args.testcase_id is None:
+            logger.error("Either test plan ID or test case ID must be provided for execution.")
+            return
+        
+        # handle the "run" by creating a new run entry in the database or
+        # using an existing "incomplete run" if the run name is provided
+        if args.run_name is None:
+            # generate a random run name if not provided
+            run_name = randomname.generate('v/*','adj/*','n/*','ip/*')
+            logger.debug(f"Run name not provided, creating a new Run \"{run_name}\"")
+            # Create a new run entry in the database
+            start_time = datetime.now().isoformat()
+            run = Run(target = target.target_name, run_name=run_name, start_ts=start_time)
+            run_id = db.add_or_update_testrun(run=run)
+            logger.debug(f"Created new run with ID {run_id} and name '{run_name}'")
+        else:
+            run = db.get_run_by_name(run_name=args.run_name)
+            if run is None or run.status is None:
+                logger.error(f"No run found with name '{args.run_name}'")
+                return
+            if run.status == "COMPLETED":
+                logger.error(f"Run '{args.run_name}' is already completed!")
+                return
+            logger.debug(f"Using existing run with ID {run.run_id} and name '{run.run_name} with status '{run.status}'")
+        
+        # Initialize the InterfaceManagerClient with the provided configuration
+        client = InterfaceManagerClient(base_url="http://localhost:8000", application_type="WHATSAPP_WEB")
+        
+        # Fetch the test plan name
+        if args.plan_id:
+            plan_name = db.get_testplan_name(plan_id=args.plan_id)
+            if plan_name is None:
+                logger.error(f"No test plan found with ID {args.plan_id}.")
+                return
+            
+            logger.debug(f"Executing test plan: {plan_name} (PlanID: {args.plan_id})")
+            # fetch the test cases of the test plan
+            testcases = db.get_testcases_by_testplan(plan_name=plan_name, n=args.max_testcases)
+            if not testcases:
+                logger.error(f"No test cases found for plan: {plan_name} (PlanID: {args.plan_id})")
+                return
+            
+            # if the run status is NEW, update the starting time.
+            if run.status == "NEW":
+                run.start_ts = datetime.now().isoformat()
+                
+            # change the run status to "RUNNING"
+            run.status = "RUNNING"
+            db.add_or_update_testrun(run=run)
+            
+            # iterate through the test cases and execute
+            for testcase in testcases:
+
+                rundetail = RunDetail(run_name=args.run_name, plan_name=plan_name, metric_name=testcase.metric, testcase_name=testcase.name)
+                rundetail_id = db.add_or_update_testrun_detail(rundetail)
+
+                logger.debug(f"Executing Test {testcase.name} (Case ID: {testcase.testcase_id})")
+
+                # construct the message to send to the agent
+                message_to_agent = testcase.prompt.user_prompt if testcase.prompt.user_prompt else ""
+                if testcase.prompt.system_prompt:
+                    message_to_agent = testcase.prompt.system_prompt + "\n" + message_to_agent
+
+                conv = Conversation(target=target.target_name, 
+                                    run_detail_id=rundetail_id, 
+                                    testcase=testcase.name)
+                conv_id = db.add_or_update_conversation(conversation=conv)
+                logger.debug(f"A new conversation is created with ID: {conv_id}")
+
+                rundetail.status = "RUNNING"
+                db.add_or_update_testrun_detail(rundetail)
+
+                try:
+                
+                    conv.prompt_ts = datetime.now().isoformat()
+                    db.add_or_update_conversation(conversation=conv)
+
+                    response_from_agent = client.chat(chat_id = testcase.testcase_id, prompt_list=[message_to_agent])
+                    agent_response = response_from_agent.json().get("response", "")
+
+                    # Check if the response is empty or indicates a chat not found
+                    # Here, we will leave the Conversation entry dangling in the DB to indicate the the conversation was not successful.
+                    if len(agent_response) == 0 or agent_response[0]['response'] == "Chat not found":
+                        logger.error(f"No response received from the agent for test case {testcase.testcase_id}.")
+                        rundetail.status = "FAILED"
+                        db.add_or_update_testrun_detail(rundetail)
+                        continue
+
+                    conv.response_ts = datetime.now().isoformat()
+                    conv.agent_response = agent_response[0]['response']
+                    db.add_or_update_conversation(conversation=conv)
+
+                    rundetail.status = "COMPLETED"
+                    db.add_or_update_testrun_detail(rundetail)
+
+                except Exception as e:
+                    logger.error(f"Error during execution of test case {testcase.testcase_id}: {e}")
+                    rundetail.status = "FAILED"
+                    db.add_or_update_testrun_detail(rundetail)
+                    continue
+
+            # Update the run status to completed
+            run.end_ts = datetime.now().isoformat()
+            run.status = "COMPLETED"
+            db.add_or_update_testrun(run=run)
+            logger.debug(f"Execution of test plan '{plan_name}' completed successfully.")
 
 
 if __name__ == "__main__":
