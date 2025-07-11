@@ -71,33 +71,39 @@ class StrategyImplementor:
                 return robustness_score
             
             case "robustness_advins":
-                strategy = Robustness_AdvInstruction()
-                similarities=[]
-                for i in range(len(agent_responses)):
-                    similarities.append(strategy.evaluate(agent_responses[0], expected_responses[0]))
-                avg_similarity = np.mean(similarities)
-                logger.info(f"Robustness Adv Instruction Similarities Score: {avg_similarity}")
-                return avg_similarity
+                ind_task = extract_from_brackets(prompts[i])
+                if ind_task == "advins":
+                    strategy = Robustness_AdvInstruction()
+                    similarities=[]
+                    for i in range(len(agent_responses)):
+                        similarities.append(strategy.evaluate(agent_responses[0], expected_responses[0]))
+                    avg_similarity = np.mean(similarities)
+                    logger.info(f"Robustness Adv Instruction Similarities Score: {avg_similarity}")
+                    return avg_similarity
             
             case "robustness_ood":
-                strategy = Robustness_OutOfDomain(device="cpu")
-                results = []
-                for i in range(len(prompts)):
-                    eval_res = strategy.evaluate(agent_response=agent_responses[i], agent_prompt=prompts[i])
-                    results.append(eval_res)
-                RtA_score = RtA(results)
-                logger.info(f"Robustness Out of Domain Score: {RtA_score}")
-                return RtA_score
+                ind_task = extract_from_brackets(prompts[i])
+                if ind_task == "ood":
+                    strategy = Robustness_OutOfDomain(device="cpu")
+                    results = []
+                    for i in range(len(prompts)):
+                        eval_res = strategy.evaluate(agent_response=agent_responses[i], agent_prompt=prompts[i])
+                        results.append(eval_res)
+                    RtA_score = RtA(results)
+                    logger.info(f"Robustness Out of Domain Score: {RtA_score}")
+                    return RtA_score
             
             case "truthfulness_external":
-                strategy = Truthfulness_External()
-                results = []
-                for i in range(len(prompts)):
-                    eval_res = strategy.evaluate(agent_response=agent_responses[i], expected_response=expected_responses[i])
-                    results.append(eval_res)
-                score = np.mean(results)
-                logger.info(f"Truthfulness External Score: {score}")
-                return score
+                ind_task = extract_from_brackets(prompts[i])
+                if ind_task=="ext":
+                    strategy = Truthfulness_External()
+                    results = []
+                    for i in range(len(prompts)):
+                        eval_res = strategy.evaluate(agent_response=agent_responses[i], expected_response=expected_responses[i])
+                        results.append(eval_res)
+                    score = np.mean(results)
+                    logger.info(f"Truthfulness External Score: {score}")
+                    return score
             
             case "truthfulness_internal":
                 for i in range(len(prompts)):
