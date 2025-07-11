@@ -4,18 +4,42 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-
         {
-            "name": "Tester",
+            "name": "Python: Testcase Executor",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/ResponseAnalysis/lib/orm/tester.py",
+            "program": "${workspaceFolder}/ResponseAnalysis/app/testcase_executor/main.py",
             "console": "integratedTerminal",
             "justMyCode": false,
             "env": {},
             "args": [
                 "--config",
-                "${workspaceFolder}/config.json"
+                "${workspaceFolder}/ResponseAnalysis/app/testcase_executor/config.json",
+                "--testplan-id", "1",
+                "--execute",
+                "--run-name", "place-serious-station-non"
+            ]
+        },
+        {
+            "name": "Tester",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/ResponseAnalysis/app/tester/tester.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {},
+            "args": [
+            ]
+        },
+        {
+            "name": "Interface Manager",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/ResponseAnalysis/app/interface_manager/main.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {},
+            "args": [
             ]
         }
     ]
