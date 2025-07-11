@@ -215,7 +215,6 @@ class StrategyImplementor:
             
 
             case "hallucination":
-                strategy = HallucinationStrategy(metric_name=self.__metric_name)
                 scores = []
                 for i in range(len(agent_responses)):
                     try:
@@ -223,7 +222,8 @@ class StrategyImplementor:
                     except Exception as e:
                         logger.warning(f"Could not extract source_type from prompt[{i}]: {prompts[i]} — {e}")
                         parsed_source = "unknown"
-                    score = strategy.evaluate(agent_response=agent_responses[i],expected_response=expected_responses[i],source_type=parsed_source)
+                    strategy = HallucinationStrategy(source_type=parsed_source)
+                    score = strategy.evaluate(agent_responses[i],expected_responses[i])
                     scores.append(score)
                 avg_score = sum(scores) / len(scores) if scores else 0.0
                 logger.info(f"[Hallucination] Average Score: {avg_score}")
@@ -265,6 +265,6 @@ class StrategyImplementor:
                 return score
 
             case _:
-                logger.warning(f"Unknown strategy: {self.strategy_name}")
-                return 0.0
+                logger.error(f"Strategy {self.strategy_name} not recognized.")
+                raise ValueError(f"Strategy {self.strategy_name} not recognized.")
             
