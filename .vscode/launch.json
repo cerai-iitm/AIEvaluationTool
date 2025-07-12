@@ -18,7 +18,8 @@
                 "--testplan-id", "1",
                 "--execute",
                 "--run-name", "place-serious-station-non",
-                "--run-continue"
+                "--run-continue",
+                "--testcase-id", "149"
             ]
         },
         {
