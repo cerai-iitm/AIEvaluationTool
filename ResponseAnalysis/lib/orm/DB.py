@@ -1403,6 +1403,38 @@ class DB:
                 return None
             return getattr(result, 'run_id')
         
+    def get_testcase_by_id(self, testcase_id: int) -> Optional[TestCase]:
+        """
+        Fetches a test case by its ID.
+        
+        Args:
+            testcase_id (int): The ID of the test case to fetch.
+        
+        Returns:
+            Optional[TestCase]: The TestCase object if found, otherwise None.
+        """
+        with self.Session() as session:
+            sql = select(TestCases).where(TestCases.testcase_id == testcase_id)
+            result = session.execute(sql).scalar_one_or_none()
+            if result is None:
+                self.logger.error(f"TestCase with ID '{testcase_id}' does not exist.")
+                return None
+            # Return a TestCase object with the fetched data
+            return TestCase(name=getattr(result, 'testcase_name'),
+                            metric=result.metrics[0].metric_name,  # use the first metric associated with the test case
+                            testcase_id=getattr(result, 'testcase_id'),
+                            prompt=Prompt(prompt_id=getattr(result.prompt, 'prompt_id'),
+                                          user_prompt=str(result.prompt.user_prompt),
+                                          system_prompt=str(result.prompt.system_prompt),
+                                          lang_id=getattr(result.prompt, 'lang_id')),
+                            response=Response(response_text=str(result.response.response_text),
+                                              response_type=result.response.response_type,
+                                              response_id=getattr(result.response, 'response_id'),
+                                              prompt_id=result.response.prompt_id,
+                                              lang_id=result.response.lang_id,
+                                              digest=result.response.hash_value) if result.response else None,
+                            strategy=result.strategy.strategy_name)
+        
     def get_testcase_name(self, testcase_id: int) -> Optional[str]:
         """
         Fetches the name of a test case by its ID.
@@ -1700,7 +1732,7 @@ class DB:
                 return None
             return getattr(result, 'testcase_status')
         
-    def add_or_update_conversation(self, conversation: Conversation) -> int:
+    def add_or_update_conversation(self, conversation: Conversation, override:bool = False) -> int:
         """
         Adds a new conversation to the database or fetches its ID if it already exists.
         Updates the conversation with the agent response and time stamps, if it already exists.
@@ -1725,6 +1757,10 @@ class DB:
                         self.logger.debug(f"Updating existing conversation details (Prompt timestamp: {conversation.prompt_ts}) ..")
                     elif existing_conversation.agent_response is None and conversation.agent_response is not None:
                         self.logger.debug(f"Updating existing conversation details (Agent response text and Response timestamp: {conversation.response_ts}) ..")
+                    elif existing_conversation.response_ts is None and conversation.response_ts is not None:
+                        self.logger.debug(f"Updating existing conversation details (Agent response text and Response timestamp: {conversation.response_ts}) ..")
+                    elif override:
+                        self.logger.debug(f"Updating existing conversation details with the supplied 'override' information. (RunDetailId:{conversation.run_detail_id}) ..")
                     else:
                         self.logger.debug(f"Existing conversation (RunDetailId:{conversation.run_detail_id}) will not be updated. Returning conversation ID: {existing_conversation.conversation_id}")
                         # Return the ID of the existing conversation if it already exists
@@ -1769,4 +1805,27 @@ class DB:
             self.logger.error(f"Conversation already exists: {conversation}. Error: {e}")
             return -1
 
+    def get_conversation_by_id(self, conversation_id: int) -> Optional[Conversation]:
+        """
+        Fetches a conversation by its ID.
+        
+        Args:
+            conversation_id (int): The ID of the conversation to fetch.
+        
+        Returns:
+            Optional[Conversation]: The Conversation object if found, otherwise None.
+        """
+        with self.Session() as session:
+            sql = select(Conversations).where(Conversations.conversation_id == conversation_id)
+            result = session.execute(sql).scalar_one_or_none()
+            if result is None:
+                self.logger.error(f"Conversation with ID '{conversation_id}' does not exist.")
+                return None
+            return Conversation(target=result.target.target_name,
+                                run_detail_id=getattr(result, "detail_id"),
+                                testcase=result.detail.testcase.testcase_name,
+                                agent_response=getattr(result, "agent_response"),
+                                prompt_ts=result.prompt_ts.isoformat() if getattr(result, "prompt_ts") else None,
+                                response_ts=result.response_ts.isoformat() if getattr(result, "response_ts") else None,
+                                conversation_id=getattr(result, 'conversation_id'))
     
