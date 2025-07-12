@@ -257,9 +257,6 @@ def main():
                     return
             logger.debug(f"Using existing run with ID {run.run_id} and name '{run.run_name} with status '{run.status}'")
         
-        # Initialize the InterfaceManagerClient with the provided configuration
-        client = InterfaceManagerClient(base_url="http://localhost:8000", application_type="WHATSAPP_WEB")
-        
         # Fetch the test plan name
         if args.plan_id:
             plan_name = db.get_testplan_name(plan_id=args.plan_id)
@@ -267,86 +264,183 @@ def main():
                 logger.error(f"No test plan found with ID {args.plan_id}.")
                 return
             
-            logger.debug(f"Executing test plan: {plan_name} (PlanID: {args.plan_id})")
-            # fetch the test cases of the test plan
-            testcases = db.get_testcases_by_testplan(plan_name=plan_name, n=args.max_testcases)
-            if not testcases:
-                logger.error(f"No test cases found for plan: {plan_name} (PlanID: {args.plan_id})")
-                return
-            
-            # if the run status is NEW, update the starting time.
-            if run.status == "NEW":
-                run.start_ts = datetime.now().isoformat()
+            # if the testcase is is provided, we will execute the specific test case and skip the test plan execution.
+            if args.testcase_id:
+                # If a specific test case ID is provided, fetch the test case details
+                testcase = db.get_testcase_by_id(testcase_id=args.testcase_id)
+                if testcase is None:
+                    logger.error(f"No test case found with ID {args.testcase_id}.")
+                    return
                 
-            # change the run status to "RUNNING"
-            run.status = "RUNNING"
-            db.add_or_update_testrun(run=run)
-            
-            # iterate through the test cases and execute
-            for testcase in testcases:
-                # create a new run detail entry for each test case
+                logger.debug(f"Executing test case: {testcase.name} (Case ID: {testcase.testcase_id}) from plan: {plan_name} (PlanID: {args.plan_id})")
+                # Create a new run detail entry for the test case
+
+                # if the run status is NEW, update the starting time.
+                if run.status == "NEW":
+                    run.start_ts = datetime.now().isoformat()
+                    
+                # change the run status to "RUNNING"
+                run.status = "RUNNING"
+                db.add_or_update_testrun(run=run)
+
+                # create or update the run detail entry for the test case
                 rundetail = RunDetail(run_name=args.run_name, plan_name=plan_name, metric_name=testcase.metric, testcase_name=testcase.name)
                 rundetail_id = db.add_or_update_testrun_detail(rundetail)
-                
+
                 # fetch the run detail status.
                 # if the run detail is already completed, skip the execution.
                 run_status = db.get_status_by_run_detail_id(run_detail_id=rundetail_id)
                 if run_status is not None and run_status == "COMPLETED":
                     logger.debug(f"Run detail for testcase {testcase.name} (ID: {testcase.testcase_id}) is already completed. Skipping execution.")
-                    continue
+                else:
+                    logger.debug(f"Executing Test {testcase.name} (Case ID: {testcase.testcase_id})")
 
-                logger.debug(f"Executing Test {testcase.name} (Case ID: {testcase.testcase_id})")
+                    conv = Conversation(target=target.target_name, 
+                                        run_detail_id=rundetail_id, 
+                                        testcase=testcase.name)
+                    # even if the conversation already exists, we will override it with the new information.
+                    conv_id = db.add_or_update_conversation(conversation=conv, override=True)
 
-                # construct the message to send to the agent
-                message_to_agent = testcase.prompt.user_prompt if testcase.prompt.user_prompt else ""
-                if testcase.prompt.system_prompt:
-                    message_to_agent = testcase.prompt.system_prompt + "\n" + message_to_agent
+                    # construct the message to send to the agent
+                    message_to_agent = testcase.prompt.user_prompt if testcase.prompt.user_prompt else ""
+                    if testcase.prompt.system_prompt:
+                        message_to_agent = testcase.prompt.system_prompt + "\n" + message_to_agent
 
-                conv = Conversation(target=target.target_name, 
-                                    run_detail_id=rundetail_id, 
-                                    testcase=testcase.name)
-                conv_id = db.add_or_update_conversation(conversation=conv)
-                logger.debug(f"A new conversation is created with ID: {conv_id}")
+                    logger.debug(f"A new conversation is created with ID: {conv_id}")
 
-                rundetail.status = "RUNNING"
-                db.add_or_update_testrun_detail(rundetail)
+                    rundetail.status = "RUNNING"
+                    db.add_or_update_testrun_detail(rundetail)
 
-                try:
+                    # Initialize the InterfaceManagerClient with the provided configuration
+                    client = InterfaceManagerClient(base_url="http://localhost:8000", application_type="WHATSAPP_WEB")
+
+                    try:
+                        conv.prompt_ts = datetime.now().isoformat()
+                        db.add_or_update_conversation(conversation=conv)
+
+                        response_from_agent = client.chat(chat_id = testcase.testcase_id, prompt_list=[message_to_agent])
+                        agent_response = response_from_agent.json().get("response", "")
+
+                        # Check if the response is empty or indicates a chat not found
+                        # Here, we will leave the Conversation entry dangling in the DB to indicate the the conversation was not successful.
+                        if len(agent_response) == 0 or agent_response[0]['response'] == "Chat not found":
+                            logger.error(f"No response received from the agent for test case {testcase.testcase_id}.")
+                            rundetail.status = "FAILED"
+                            db.add_or_update_testrun_detail(rundetail)
+                        else:
+                            conv.response_ts = datetime.now().isoformat()
+                            conv.agent_response = agent_response[0]['response']
+                            db.add_or_update_conversation(conversation=conv)
+
+                            rundetail.status = "COMPLETED"
+                            db.add_or_update_testrun_detail(rundetail)
+
+                            # Update the run status with the end timestamp
+                            run.end_ts = datetime.now().isoformat()
+                            run.status = "COMPLETED"
+                            db.add_or_update_testrun(run=run)
+                            logger.debug(f"Execution of test case '{testcase.name}' completed successfully.")
+
+                    except Exception as e:
+                        logger.error(f"Error during execution of test case {testcase.testcase_id}: {e}")
+                        rundetail.status = "FAILED"
+                        db.add_or_update_testrun_detail(rundetail)
+
+                    finally:
+                        try:
+                            client.close()
+                        except Exception as e:
+                            logger.error(f"Error closing the client connection: {e}")
+
+            # execute the test plan if no specific test case is provided
+            else:
+
+                logger.debug(f"Executing test plan: {plan_name} (PlanID: {args.plan_id})")
+                # fetch the test cases of the test plan
+                testcases = db.get_testcases_by_testplan(plan_name=plan_name, n=args.max_testcases)
+                if not testcases:
+                    logger.error(f"No test cases found for plan: {plan_name} (PlanID: {args.plan_id})")
+                    return
                 
-                    conv.prompt_ts = datetime.now().isoformat()
-                    db.add_or_update_conversation(conversation=conv)
+                # if the run status is NEW, update the starting time.
+                if run.status == "NEW":
+                    run.start_ts = datetime.now().isoformat()
+                    
+                # change the run status to "RUNNING"
+                run.status = "RUNNING"
+                db.add_or_update_testrun(run=run)
+                
+                # iterate through the test cases and execute
+                for testcase in testcases:
+                    # create a new run detail entry for each test case
+                    rundetail = RunDetail(run_name=args.run_name, plan_name=plan_name, metric_name=testcase.metric, testcase_name=testcase.name)
+                    rundetail_id = db.add_or_update_testrun_detail(rundetail)
+                    
+                    # fetch the run detail status.
+                    # if the run detail is already completed, skip the execution.
+                    run_status = db.get_status_by_run_detail_id(run_detail_id=rundetail_id)
+                    if run_status is not None and run_status == "COMPLETED":
+                        logger.debug(f"Run detail for testcase {testcase.name} (ID: {testcase.testcase_id}) is already completed. Skipping execution.")
+                        continue
 
-                    response_from_agent = client.chat(chat_id = testcase.testcase_id, prompt_list=[message_to_agent])
-                    agent_response = response_from_agent.json().get("response", "")
+                    logger.debug(f"Executing Test {testcase.name} (Case ID: {testcase.testcase_id})")
 
-                    # Check if the response is empty or indicates a chat not found
-                    # Here, we will leave the Conversation entry dangling in the DB to indicate the the conversation was not successful.
-                    if len(agent_response) == 0 or agent_response[0]['response'] == "Chat not found":
-                        logger.error(f"No response received from the agent for test case {testcase.testcase_id}.")
+                    # construct the message to send to the agent
+                    message_to_agent = testcase.prompt.user_prompt if testcase.prompt.user_prompt else ""
+                    if testcase.prompt.system_prompt:
+                        message_to_agent = testcase.prompt.system_prompt + "\n" + message_to_agent
+
+                    conv = Conversation(target=target.target_name, 
+                                        run_detail_id=rundetail_id, 
+                                        testcase=testcase.name)
+                    conv_id = db.add_or_update_conversation(conversation=conv)
+                    logger.debug(f"A new conversation is created with ID: {conv_id}")
+
+                    rundetail.status = "RUNNING"
+                    db.add_or_update_testrun_detail(rundetail)
+
+                    # Initialize the InterfaceManagerClient with the provided configuration
+                    client = InterfaceManagerClient(base_url="http://localhost:8000", application_type="WHATSAPP_WEB")
+
+                    try:
+                        conv.prompt_ts = datetime.now().isoformat()
+                        db.add_or_update_conversation(conversation=conv)
+
+                        response_from_agent = client.chat(chat_id = testcase.testcase_id, prompt_list=[message_to_agent])
+                        agent_response = response_from_agent.json().get("response", "")
+
+                        # Check if the response is empty or indicates a chat not found
+                        # Here, we will leave the Conversation entry dangling in the DB to indicate the the conversation was not successful.
+                        if len(agent_response) == 0 or agent_response[0]['response'] == "Chat not found":
+                            logger.error(f"No response received from the agent for test case {testcase.testcase_id}.")
+                            rundetail.status = "FAILED"
+                            db.add_or_update_testrun_detail(rundetail)
+                            continue
+
+                        conv.response_ts = datetime.now().isoformat()
+                        conv.agent_response = agent_response[0]['response']
+                        db.add_or_update_conversation(conversation=conv)
+
+                        rundetail.status = "COMPLETED"
+                        db.add_or_update_testrun_detail(rundetail)
+
+                    except Exception as e:
+                        logger.error(f"Error during execution of test case {testcase.testcase_id}: {e}")
                         rundetail.status = "FAILED"
                         db.add_or_update_testrun_detail(rundetail)
                         continue
 
-                    conv.response_ts = datetime.now().isoformat()
-                    conv.agent_response = agent_response[0]['response']
-                    db.add_or_update_conversation(conversation=conv)
+                    finally:
+                        try:
+                            client.close()
+                        except Exception as e:
+                            logger.error(f"Error closing the client connection: {e}")
 
-                    rundetail.status = "COMPLETED"
-                    db.add_or_update_testrun_detail(rundetail)
-
-                except Exception as e:
-                    logger.error(f"Error during execution of test case {testcase.testcase_id}: {e}")
-                    rundetail.status = "FAILED"
-                    db.add_or_update_testrun_detail(rundetail)
-                    continue
-
-            # Update the run status to completed
-            run.end_ts = datetime.now().isoformat()
-            run.status = "COMPLETED"
-            db.add_or_update_testrun(run=run)
-            logger.debug(f"Execution of test plan '{plan_name}' completed successfully.")
-    
-        client.close()
+                # Update the run status to completed
+                run.end_ts = datetime.now().isoformat()
+                run.status = "COMPLETED"
+                db.add_or_update_testrun(run=run)
+                logger.debug(f"Execution of test plan '{plan_name}' completed successfully.")
 
 if __name__ == "__main__":
     main()
