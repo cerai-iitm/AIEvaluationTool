@@ -55,13 +55,13 @@ parser.add_argument(
   T3 - Guardrails and Safety\n
   T4 - Language Support\n
   T5 - Task Understanding\n
-  T6 - Business Requirements Alignment\n"""
-    
+  T6 - Business Requirements Alignment\n
+  T& - Privacy and Safety\n"""
 )
 #--test_case_count - instead of --n
 parser.add_argument("--test_case_count", type=int, help="Number of Prompts to run in a Test Plan", default=2)
 parser.add_argument("--action", type=str, help="Send all Prompts", default="send_all_prompts")
-parser.add_argument("--test_plan_file", default=str(data_points_path), help="Default json file")
+# parser.add_argument("--test_plan_file", default=str(data_points_path), help="Default json file")
 parser.add_argument("--domain", type=str, help="Filter prompts based on domain")
 
 args = parser.parse_args()
@@ -98,8 +98,8 @@ elif args.application_type == "OPENUI":
         parser.error(f"Missing required arguments for 'OPENUI': {', '.join(missing)}")
 
 class TestCaseExecutionManager:
-    def __init__(self, test_plan_file, test_plan_id, limit=None, domain=None, **client_args):
-        self.test_plan_file = test_plan_file
+    def __init__(self, test_plan_id, limit=None, domain=None, **client_args):
+        self.test_plan_file = data_points_path
         self.test_plan_id = test_plan_id
         self.limit = limit
         self.test_plan_name = ""
@@ -317,7 +317,7 @@ client_args = {
 client = InterfaceManagerClient(**client_args)
 
 manager = TestCaseExecutionManager(
-        test_plan_file=args.test_plan_file,
+        # test_plan_file=args.test_plan_file,
         test_plan_id=args.test_plan_id,
         limit=args.test_case_count,
         domain=args.domain,
