@@ -134,9 +134,9 @@ class StrategyImplementor:
             
             case "transliterated_language_strategy":
                 scores =[]
-                llm_judge_strategy = TransliteratedStrategy()
+                strategy = TransliteratedStrategy()
                 for i in range(len(agent_responses)):
-                    scores.append(llm_judge_strategy.evaluate(agent_responses[i], expected_responses[i]))
+                    scores.append(strategy.evaluate(agent_responses[i], expected_responses[i]))
                 score = np.mean(scores)
                 logger.info(f"Transliterated Language Strategy Score: {score}")
                 return score
