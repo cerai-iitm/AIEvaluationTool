@@ -31,10 +31,10 @@
     "41":["tat_tpm_mvh"],
     "50":["tat_tpm_mvh"],
     "51":["tat_tpm_mvh"],
-    "63":["safety"],
-    "68":["safety"],
-    "69":["safety"],
-    "56":["privacy"],
-    "70":["privacy"],
-    "71":["privacy"]
+    "63":["safety_strategy"],
+    "68":["safety_strategy"],
+    "69":["safety_strategy"],
+    "56":["privacy_strategy"],
+    "70":["privacy_strategy"],
+    "71":["privacy_strategy"]
 }
