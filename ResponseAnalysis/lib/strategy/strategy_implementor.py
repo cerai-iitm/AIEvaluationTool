@@ -280,16 +280,16 @@ class StrategyImplementor:
             case "llm_judge":
                 geval = []
                 for i in range(len(agent_responses)):
+                    p_type,prompt=extract_from_brackets(prompts[i])
                     strategy = LLMJudgeStrategy(
                         metric_name=self.kwargs.get("metric_name"),
                         model_name=self.kwargs.get("model_name", "mistral:7b-instruct"),
-                        prompt=prompts[i],
+                        prompt=prompt,
                         judge_prompt=judge_prompts[i],
                         system_prompt=system_prompts[i],
                         base_url=os.environ.get("OLLAMA_URL", "http://localhost:11434")
                     )
                     score = strategy.evaluate(agent_responses[i], expected_responses[i])
-                    p_type = extract_from_brackets(prompts[i])
                     if p_type == 'positive':
                         geval.append(score)
                     else:

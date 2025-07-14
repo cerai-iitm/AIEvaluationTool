@@ -182,10 +182,7 @@ class CustomOllamaModel(OpikBaseModel):
 
 
 def llm_judge(metric_name, judge_prompt, system_prompt, prompts, test_case_response, expected_response):
-    """
-    Unified LLM Judge strategy: For positive cases, higher score is better; for negative cases, lower score is better (score inverted).
-    The prompt type is extracted from square brackets in the prompt (e.g., [positive] or [negative]).
-    """
+    
     logger.info("Starting llm_judge evaluation strategy (Ollama + GEval)")
     remote_ip = "http://172.31.99.190:11434"
     model_name = "mistral:7b-instruct"
@@ -202,22 +199,19 @@ def llm_judge(metric_name, judge_prompt, system_prompt, prompts, test_case_respo
             judge_query = (f'\n\n1. Input: {prompts[i]}\n2. Model Output: {test_case_response[i]}\n3. Expected Output: {expected_response[i]}\n\n')
             try:
                 raw_response = scoring_llm.generate_provider_response([{"role": "user", "content": judge_query}],timeout=120)
-                score_result = metric.score(output=raw_response)
-                p_type = extract_from_brackets(prompts[i]).lower()
-                
-                if p_type == 'positive':
-                    logger.info(f" LLM Judge score: {score_result.score}, reason: {score_result.reason}")
-                    results.append(score_result.score)
-                else:
-                    logger.info(f" LLM Judge score: {1-score_result.score}, reason: {score_result.reason}")
-                    results.append(score_result.score)
+                score_result = metric.score(
+                    output=raw_response
+                )
+                logger.info(f"[{i}] GEval score: {score_result.value}, reason: {score_result.reason}")
+                results.append(score_result.value)
             except Exception as e:
-                logger.error(f" Error in llm_judge: {e}", exc_info=True)
+                logger.error(f"[{i}] Error in llm_as_judge: {e}", exc_info=True)
                 results.append(0.0)
     except Exception as e:
-        logger.error(f"Fatal error in llm_judge: {e}", exc_info=True)
+        logger.error(f"Fatal error in llm_as_judge: {e}", exc_info=True)
         return []
-    logger.info("Completed llm_judge evaluation strategy")
+
+    logger.info("Completed llm_as_judge evaluation strategy")
     return results
 
 
