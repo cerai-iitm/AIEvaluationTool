@@ -11,19 +11,14 @@ from dotenv import load_dotenv
 import time
 import asyncio
 import numpy as np
-import numpy as np
-
 from langchain_ollama.llms import OllamaLLM
 from langchain_core.prompts.prompt import PromptTemplate
 from langchain_core.prompts import ChatPromptTemplate
 from opik.integrations.langchain import OpikTracer
 from opik.evaluation.metrics import GEval
 from opik import Opik
-from dotenv import load_dotenv
-from dotenv import load_dotenv
 import litellm
 from lexical_diversity import lex_div as ld
-from tqdm import tqdm
 from tqdm import tqdm
 import evaluate
 from nltk.translate.meteor_score import meteor_score
@@ -32,15 +27,11 @@ import warnings
 from opik.evaluation import models
 import logging
 from datetime import datetime
-import logging
-import os
-
-
 from langchain_core.messages import HumanMessage
 from langchain_ollama import ChatOllama
+from ResponseAnalysis.lib.strategy.utils import extract_from_brackets
 
-
-logging.basicConfig(
+logger=logging.basicConfig(
     level=logging.INFO,  
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
@@ -189,22 +180,19 @@ class CustomOllamaModel(OpikBaseModel):
         return await asyncio.to_thread(self.generate_provider_response, messages, **kwargs)
 
 
+
 def llm_as_judge(metric_name, judge_prompt, system_prompt, prompts, test_case_response, expected_response):
-    logger.info("Starting llm_as_judge evaluation strategy (Ollama + GEval)")
-
+    
+    logger.info("Starting llm_judge evaluation strategy (Ollama + GEval)")
     remote_ip = "http://172.31.99.190:11434"
-    model_name = "deepseek-r1:70b"
+    model_name = "mistral:7b-instruct"
     scoring_llm = CustomOllamaModel(model_name=model_name, base_url=remote_ip)
-
-    logger.info(f"llm_as_judge: prompts={len(prompts)}, test_case_response={len(test_case_response)}, expected_response={len(expected_response)}")
-
     metric = GEval(
         name=metric_name,
         task_introduction=system_prompt,
         evaluation_criteria=judge_prompt,
         model=scoring_llm
     )
-
     results = []
     try:
         for i in range(len(prompts)):
@@ -558,4 +546,4 @@ async def translate_text(text, dest='en'):
 # print("Time taken by the process:", round(end_time - start_time, 2), "s")
 
 
-# Custom Ollama model wrapper for GEval and LLM as Judge metrics
+# Custom Ollama model wrapper for LLM Judge and LLM as Judge metrics
