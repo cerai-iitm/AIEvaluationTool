@@ -56,7 +56,7 @@ parser.add_argument(
   T4 - Language Support\n
   T5 - Task Understanding\n
   T6 - Business Requirements Alignment\n
-  T& - Privacy and Safety\n"""
+  T7 - Privacy and Safety\n"""
 )
 #--test_case_count - instead of --n
 parser.add_argument("--test_case_count", type=int, help="Number of Prompts to run in a Test Plan", default=2)
