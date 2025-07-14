@@ -17,6 +17,11 @@ from fairness_preference import Fairness_Preference
 from fairness_stereotype_agreement import Fairness_Stereotype_Agreement
 from fairness_stereotype_query import Fairness_Stereotype_Query
 from fairness_stereotype_recognition import Fairness_Stereotype_Recognition
+from llm_judge import LLMJudgeStrategy
+from indian_lang_grammatical_check import IndianLangGrammaticalCheck
+from fluency_score import IndianLanguageFluencyScorer
+import os
+from utils import extract_from_brackets
 from hallucination import HallucinationStrategy
 from privacy import PrivacyStrategy
 from safety import SafetyStrategy
@@ -30,6 +35,7 @@ class StrategyImplementor:
     It allows for dynamic selection of strategies at runtime.
     """
 
+    
     def __init__(self, strategy_name: str, **kwargs):
         self.strategy_name = strategy_name
         self.__metric_name = kwargs.get("metric_name")
@@ -270,7 +276,55 @@ class StrategyImplementor:
                 logger.info(f"[TAT_TPM_MVH] {self.__metric_name} Score: {score}")
                 return score
 
+            
+            case "llm_judge":
+                geval = []
+                for i in range(len(agent_responses)):
+                    p_type,prompt=extract_from_brackets(prompts[i])
+                    strategy = LLMJudgeStrategy(
+                        metric_name=self.kwargs.get("metric_name"),
+                        model_name=self.kwargs.get("model_name", "mistral:7b-instruct"),
+                        prompt=prompt,
+                        judge_prompt=judge_prompts[i],
+                        system_prompt=system_prompts[i],
+                        base_url=os.environ.get("OLLAMA_URL", "http://localhost:11434")
+                    )
+                    score = strategy.evaluate(agent_responses[i], expected_responses[i])
+                    if p_type == 'positive':
+                        geval.append(score)
+                    else:
+                        geval.append(1.0 - score)
+                return np.mean(geval)
+
+            case "fluency_score":
+                strategy = IndianLanguageFluencyScorer()
+                scores = []
+                for i, response in enumerate(agent_responses):
+                    score = strategy.evaluate(response)
+                    scores.append(score)
+                    
+                logger.info("Average Fluency Score",sum(scores)/len(scores))
+                return sum(scores)/len(scores)
+                
+            case "indian_lang_grammatical_check":
+                strategy = IndianLangGrammaticalCheck()
+                scores = []
+                for i, response in enumerate(agent_responses):
+                    score = strategy.evaluate(response)
+                    scores.append(score)
+                logger.info("Average Grammatical Correctness score:",sum(scores)/len(scores))
+                return sum(scores)/len(scores)
+            
             case _:
                 logger.error(f"Strategy {self.strategy_name} not recognized.")
                 raise ValueError(f"Strategy {self.strategy_name} not recognized.")
             
+            
+            
+            
+            
+
+                
+
+
+                            
