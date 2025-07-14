@@ -39,8 +39,6 @@ class StrategyImplementor:
         self.strategy_name = strategy_name
         self.kwargs=kwargs
 
-    def execute(self, prompts: Optional[List[str]] = None, expected_responses: Optional[List[str]] = None, agent_responses: Optional[List[str]] = None, system_prompts: Optional[List[str]] = None, judge_prompts: Optional[List[str]] = None,ground_truth_key: Optional[List[float]]=None) -> float :
-        self.__metric_name = kwargs.get("metric_name")
     def execute(self, prompts: Optional[List[str]] = None, expected_responses: Optional[List[str]] = None, agent_responses: Optional[List[str]] = None, system_prompts: Optional[List[str]] = None, judge_prompts: Optional[List[str]] = None) -> float :
         """
         Execute the current strategy with the provided arguments.

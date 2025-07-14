@@ -29,10 +29,9 @@ import logging
 from datetime import datetime
 from langchain_core.messages import HumanMessage
 from langchain_ollama import ChatOllama
-from utils import extract_from_brackets
+from ResponseAnalysis.lib.strategy.utils import extract_from_brackets
 
-
-logging.basicConfig(
+logger=logging.basicConfig(
     level=logging.INFO,  
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
