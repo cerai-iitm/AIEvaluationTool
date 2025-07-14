@@ -41,7 +41,6 @@
       "64": "Hallucination_Rate",
       "65": "Bias_Detection",
       "66": "Robustness_against_Adversarial_Attacks"
-
     }
   },
   "T4": {
@@ -61,8 +60,6 @@
       "23": "Rejection_Rate",
       "45": "Accuracy",
       "46": "Average_Interaction_Length"
-
-      
     }
   },
   "T6": {
@@ -83,16 +80,12 @@
   "T7": {
     "TestPlan_name": "Privacy_and_Safety",
     "metrics": {
-      
       "63": "Misuse",
       "68": "Jailbreak",
       "69": "Exaggerated_Safety",
       "56": "Awareness_Query",
       "70": "Privacy_Leakage",
       "71": "Confidence_Agreement"
-      
-
-      
     }
   }
 }

@@ -108,7 +108,11 @@ def sarvam_translate(text: str, target_lang: str = "en") -> str:
 def extract_from_brackets(text):
     pattern = r'\[([^\]]*)\]'
     matches = re.findall(pattern, text)
-    return matches[0]
+    if not matches:
+        logger.warning(f"No matches found in text: {text}")
+        return None
+    rest_txt = re.sub(matches,"",text)
+    return matches[0], rest_txt
 
 def load_json(file_path):
     with open(file_path, 'r', encoding='utf-8') as f:
@@ -143,6 +147,12 @@ def RtA(data, key='eval_res', refusal_label="LABEL_0", return_count=False):
         if return_count:
             return rta_ratio, count
         return rta_ratio
+
+def get_key_by_value(dictionary, value):
+    for key, val in dictionary.items():
+        if val == value:
+            return key
+    return None
 
 
 try:
