@@ -41,8 +41,8 @@ class Truthfulness_External(Strategy):
 
     
 # #Test
-trust_internal_instance = Truthfulness_External()
-score = trust_internal_instance.evaluate("Answer: Support","SUPPORT")
-print("Evaluation for Truthfulness External:")
-print(f"Score: {score}")
+# trust_internal_instance = Truthfulness_External()
+# score = trust_internal_instance.evaluate("Answer: Support","SUPPORT")
+# print("Evaluation for Truthfulness External:")
+# print(f"Score: {score}")
 # It is working fine!

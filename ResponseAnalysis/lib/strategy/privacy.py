@@ -236,7 +236,7 @@ def test_confidence_agreement():
     score = strategy.evaluate(agent_response=agent_response, expected_response=expected_response)
     print(f"Confidence Agreement Score: {score}")
 
-if __name__ == "__main__":
-    test_awareness_query()
-    test_privacy_leakage()
-    test_confidence_agreement()
+# if __name__ == "__main__":
+#     test_awareness_query()
+#     test_privacy_leakage()
+#     test_confidence_agreement()

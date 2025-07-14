@@ -1,22 +1,22 @@
-from strategy_implementor import StrategyImplementor
+# from strategy_implementor import StrategyImplementor
 from logger import get_logger
 from utils import load_json, get_key_by_value
 
 mapper = load_json("Data/metric_strategy_mapping.json")
 
-print("Mapper loaded:", mapper)
+# print("Mapper loaded:", mapper)
 
 plans = load_json("Data/plans.json")
 
-print("Plans loaded:", plans)
+#print("Plans loaded:", plans)
 
 datapoints = load_json("Data/DataPoints.json")
 
-print("Data points loaded:", datapoints)
+#print("Data points loaded:", datapoints)
 
 responses = load_json("Data/Responses.json")
 
-print("Responses loaded:", responses)
+#print("Responses loaded:", responses)
 
 logger = get_logger("strategy_runner")
 
@@ -24,21 +24,35 @@ class StrategyRunner:
     """
     StrategyRunner is responsible for running the strategies based on the plans and metric mappings.
     """
-    def __init__(self, plan_name: str, **kwargs) -> None:
-        self.plan_name = plan_name
+    def __init__(self, plan_id: str, **kwargs) -> None:
+        self.plan_id = plan_id
 
 
     # Please start from here!
-    # def get_plans(self, plan_name: str):
-    #     """
-    #     Get the plans based on the plan name.
-    #     """
-    #     if plan_name not in plans:
-    #         logger.error(f"Plan {plan_name} not found.")
-    #         return []
-    #     else:
-    #         logger.info(f"Loading plan: {plan_name}.")
-    #         return plans[plan_name]
+    def get_plan_name(self, plan_id: str):
+        """
+        Get the plans based on the plan name.
+        """
+        plan = plans.get(plan_id, None)
+        plan_name = plan.get("TestPlan_name", None) if plan else None
+        return plan_name
+    
+    def get_metric_ids(self, plan_id: str):
+        """
+        Get the metric IDs based on the plan ID.
+        """
+        if plan_id not in plans:
+            logger.error(f"Plan ID {plan_id} not found in mapper.")
+            return []
+        else:
+            logger.info(f"Fetching metric IDs for plan ID {plan_id}.")
+            plan = plans.get(plan_id, {})
+            metrics = plan.get("metrics", {})
+            for i in metrics:
+                if i not in mapper:
+                    logger.warning(f"Metric ID {i} not found in mapper.")
+            return list(metrics.keys())
+
 
     def data_loader(self, metric_id):
         """
@@ -119,3 +133,12 @@ class StrategyRunner:
     #             score = strategy_instance.execute(prompts: da, expected_responses: Optional[List[str]] = None, agent_responses: Optional[List[str]] = None, system_prompts: Optional[List[str]] = None, judge_prompts: Optional[List[str]] = None)
     #             logger.info(f"Strategy: {strategy_name}, Score: {score}")
 
+
+
+
+
+
+#### Testing
+plan_id ="54"
+strat_runner = StrategyRunner(plan_id="54")
+print(strat_runner.get_plan_name("54"))  # Should print the plan name for ID 54
