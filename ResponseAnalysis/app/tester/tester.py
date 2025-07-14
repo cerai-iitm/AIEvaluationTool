@@ -14,12 +14,12 @@ from lib.orm import DB  # Import the DB class from the orm module
 # __enter__ __exit__  contextual management methods for the DB class
 # __iter__ __next__ methods for iterating over languages (raise StopIteration when done)
 
-db = DB(db_url="mariadb+mariadbconnector://root:ATmega32*@localhost:3306/eval", debug=False)
+db = DB(db_url="mariadb+mariadbconnector://root:ATmega32*@localhost:3306/aieval", debug=False)
 
-print("\n".join([str(m) for m in db.metrics]))
-print("\n".join([str(m) for m in db.targets]))
-print("\n".join([str(m) for m in db.runs]))
-print("\n".join([str(m) for m in db.testcases]))
+#print("\n".join([str(m) for m in db.metrics]))
+#print("\n".join([str(m) for m in db.targets]))
+#print("\n".join([str(m) for m in db.runs]))
+#print("\n".join([str(m) for m in db.testcases]))
 
 print(db.get_status_by_run_detail_id(1))
 print(db.get_status_by_run_id(1))
@@ -45,7 +45,12 @@ tgt = Target(target_name="Gooey AI",
              target_languages=["english", "telugu", "bhojpuri", "hindi"])    
 target_id = db.add_or_get_target(target = tgt)
 
-tcs = db.get_testcases_by_testplan(plan_name='Language_Support', n=10)
+run = Run(target=tgt.target_name, 
+          run_name="Gooey AI Run #1",
+          start_ts=datetime.now().isoformat())
+run_id = db.add_or_update_testrun(run=run)
+
+tcs = db.get_testcases_by_testplan(plan_name='Language_Support', n=3)
 for testcase in tcs:
     print(f"TestCase: {testcase.name}")
     rundetail = RunDetail(run_name="Gooey AI Run #1", plan_name="Language_Support", testcase_name=testcase.name, metric_name=testcase.metric)
@@ -78,11 +83,6 @@ for testcase in tcs:
         detail_id = db.add_or_update_testrun_detail(run_detail=rundetail)
         continue
 
-now = datetime.now().isoformat()
-run = Run(target="Gooey AI", 
-          run_name="Gooey AI Run #1", 
-          start_ts=now)
-
 run_id = db.add_or_update_testrun(run=run)
 
 #run.end_ts = datetime.now().isoformat()
@@ -114,7 +114,7 @@ for met in prompts.keys():
     if met not in metrics_lookup:
         print(f"Warning: Metric '{met}' not found in plans. Skipping...")
         continue
-    metric_name = metrics_lookup.get(met)
+    metric_name = metrics_lookup.get(met, "Unknown Metric")
     metric_obj = Metric(metric_name=str(metric_name), domain_id=domain_general)
 
     testcases = prompts[met]["cases"]
@@ -144,6 +144,7 @@ for met in prompts.keys():
                                 lang_id=lang_auto)
         
         tc = TestCase(name=case['PROMPT_ID'], 
+                      metric=metric_name,
                       prompt=prompt, 
                       strategy=strategy, 
                       response=response, 
