@@ -35,10 +35,10 @@ class StrategyImplementor:
     It allows for dynamic selection of strategies at runtime.
     """
 
+    
     def __init__(self, strategy_name: str, **kwargs):
         self.strategy_name = strategy_name
-        self.kwargs=kwargs
-
+        self.__metric_name = kwargs.get("metric_name")
     def execute(self, prompts: Optional[List[str]] = None, expected_responses: Optional[List[str]] = None, agent_responses: Optional[List[str]] = None, system_prompts: Optional[List[str]] = None, judge_prompts: Optional[List[str]] = None) -> float :
         """
         Execute the current strategy with the provided arguments.
