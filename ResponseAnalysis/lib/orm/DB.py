@@ -1334,7 +1334,9 @@ class DB:
                 if existing_run:
                     if run.status == "NEW":
                         self.logger.error(f"TestRun (name={run.run_name}) already exists.")
-                        return -1  # Return -1 if the run already exists and is not being updated
+                        #return -1  # Return -1 if the run already exists and is not being updated
+                        # Return the ID of the existing run if the status is the same
+                        return getattr(existing_run, "run_id")
                     
                     if not override and self.__status_compare(run.status, getattr(existing_run, "status")) <= 0:
                         self.logger.debug(f"Run '{run.run_name}:{existing_run.status}' already exists, can't update with '{run.status}'. Returning existing run ID: {existing_run.run_id}")
