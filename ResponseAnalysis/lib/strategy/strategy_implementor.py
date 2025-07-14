@@ -41,7 +41,7 @@ class StrategyImplementor:
             case "robustness_advglue":
                 net_score =[]
                 for i in range(len(prompts)):
-                    ind_task = extract_from_brackets(prompts[i])
+                    ind_task,new_prompt = extract_from_brackets(prompts[i])
                     strategy = Robustness_AdvGLUE(task=ind_task)
                     net_score.append(strategy.evaluate(agent_responses[i],expected_responses[i]))
                 
@@ -71,18 +71,18 @@ class StrategyImplementor:
                 return robustness_score
             
             case "robustness_advins":
-                ind_task = extract_from_brackets(prompts[i])
+                ind_task,new_prompt = extract_from_brackets(prompts[i])
                 if ind_task == "advins":
                     strategy = Robustness_AdvInstruction()
                     similarities=[]
                     for i in range(len(agent_responses)):
-                        similarities.append(strategy.evaluate(agent_responses[0], expected_responses[0]))
+                        similarities.append(strategy.evaluate(agent_responses[i], expected_responses[i]))
                     avg_similarity = np.mean(similarities)
                     logger.info(f"Robustness Adv Instruction Similarities Score: {avg_similarity}")
                     return avg_similarity
             
             case "robustness_ood":
-                ind_task = extract_from_brackets(prompts[i])
+                ind_task,new_prompt = extract_from_brackets(prompts[i])
                 if ind_task == "ood":
                     strategy = Robustness_OutOfDomain(device="cpu")
                     results = []
@@ -94,7 +94,7 @@ class StrategyImplementor:
                     return RtA_score
             
             case "truthfulness_external":
-                ind_task = extract_from_brackets(prompts[i])
+                ind_task,new_prompt = extract_from_brackets(prompts[i])
                 if ind_task=="ext":
                     strategy = Truthfulness_External()
                     results = []
@@ -107,11 +107,11 @@ class StrategyImplementor:
             
             case "truthfulness_internal":
                 for i in range(len(prompts)):
-                    ind_task = extract_from_brackets(prompts[i])
+                    ind_task,new_prompt = extract_from_brackets(prompts[i])
                     if ind_task == "codah":
                         strategy = Truthfulness_Internal(data_src=ind_task)
                     elif ind_task == "squad" or ind_task == "hotpot":
-                        strategy = Truthfulness_Internal(data_src=ind_task, prompt=prompts[i], system_prompt=system_prompts[i],judge_prompt=judge_prompts[i])
+                        strategy = Truthfulness_Internal(data_src=ind_task, prompt=new_prompt, system_prompt=system_prompts[i],judge_prompt=judge_prompts[i])
                     else:
                         logger.error(f"Unknown data source: {ind_task}. Please choose from 'codah', 'squad', or 'hotpot'.")
                         return None
@@ -182,14 +182,14 @@ class StrategyImplementor:
             case "fairness_preference":
                 fp_score = []
                 for i in range(len(prompts)):
-                    eval_type = extract_from_brackets(prompts[i])
+                    eval_type, new_prompt = extract_from_brackets(prompts[i])
                     if eval_type == "plain":
                         strategy = Fairness_Preference(eval_type=eval_type)
-                        fp_score.append(strategy.evaluate(agent_response=agent_responses[i], prompt=prompts[i]))
+                        fp_score.append(strategy.evaluate(agent_response=agent_responses[i], prompt=new_prompt))
                     else:
                         eval_type = "force"
                         strategy = Fairness_Preference(eval_type=eval_type) 
-                        fp_score.append(strategy.evaluate(agent_response=agent_responses[i], prompt=prompts[i]))
+                        fp_score.append(strategy.evaluate(agent_response=agent_responses[i], prompt=new_prompt))
                 fairness_preference_score = np.mean(fp_score)
                 logger.info(f"Fairness Preference Score: {fairness_preference_score:.3f}")
                 return fairness_preference_score
@@ -197,16 +197,16 @@ class StrategyImplementor:
             case "fairness_stereotype_recognition":
                 fsr_score = []
                 for i in range(len(prompts)):
-                    label = extract_from_brackets(prompts[i])
+                    label, new_prompt = extract_from_brackets(prompts[i])
                     if label == "stereotype":
                         strategy = Fairness_Stereotype_Recognition(label=label)
-                        fsr_score.append(strategy.evaluate(agent_response=agent_responses[i], prompt=prompts[i]))
+                        fsr_score.append(strategy.evaluate(agent_response=agent_responses[i], prompt=new_prompt))
                     elif label == "anti-stereotype":
                         strategy = Fairness_Stereotype_Recognition(label=label)
-                        fsr_score.append(strategy.evaluate(agent_response=agent_responses[i], prompt=prompts[i]))
+                        fsr_score.append(strategy.evaluate(agent_response=agent_responses[i], prompt=new_prompt))
                     elif label == "unrelated":
                         strategy = Fairness_Stereotype_Recognition(label=label)                        
-                        fsr_score.append(strategy.evaluate(agent_response=agent_responses[i], prompt=prompts[i]))
+                        fsr_score.append(strategy.evaluate(agent_response=agent_responses[i], prompt=new_prompt))
                     else:
                         logger.error(f"Label {label} not recognized in fairness stereotype recognition.")
                         raise ValueError(f"Label {label} not recognized in fairness stereotype recognition.")

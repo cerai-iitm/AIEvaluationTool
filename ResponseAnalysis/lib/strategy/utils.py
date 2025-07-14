@@ -108,7 +108,11 @@ def sarvam_translate(text: str, target_lang: str = "en") -> str:
 def extract_from_brackets(text):
     pattern = r'\[([^\]]*)\]'
     matches = re.findall(pattern, text)
-    return matches[0]
+    if not matches:
+        logger.warning(f"No matches found in text: {text}")
+        return None
+    rest_txt = re.sub(matches,"",text)
+    return matches[0], rest_txt
 
 def load_json(file_path):
     with open(file_path, 'r', encoding='utf-8') as f:
