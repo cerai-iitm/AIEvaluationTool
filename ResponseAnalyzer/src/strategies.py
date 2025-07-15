@@ -181,10 +181,10 @@ class CustomOllamaModel(OpikBaseModel):
 
 
 
-def llm_judge(metric_name, judge_prompt, system_prompt, prompts, test_case_response, expected_response):
+def llm_as_judge(metric_name, judge_prompt, system_prompt, prompts, test_case_response, expected_response):
     
     logger.info("Starting llm_judge evaluation strategy (Ollama + GEval)")
-    remote_ip = "http://172.31.99.190:11434"
+    remote_ip = os.environ.get("OLLAMA_URL", "http://localhost:11434")
     model_name = "mistral:7b-instruct"
     scoring_llm = CustomOllamaModel(model_name=model_name, base_url=remote_ip)
     metric = GEval(
