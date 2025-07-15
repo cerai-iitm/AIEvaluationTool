@@ -242,6 +242,7 @@ def main():
             run_id = db.add_or_update_testrun(run=run)
             logger.debug(f"Created new run with ID {run_id} and name '{run_name}'")
         else:
+            run_name = args.run_name
             run = db.get_run_by_name(run_name=args.run_name)
             if run is None or run.status is None:
                 logger.error(f"No run found with name '{args.run_name}'")
@@ -369,11 +370,14 @@ def main():
                 # change the run status to "RUNNING"
                 run.status = "RUNNING"
                 db.add_or_update_testrun(run=run)
-                
+
+                # Initialize the InterfaceManagerClient with the provided configuration
+                client = InterfaceManagerClient(base_url="http://localhost:8000", application_type="WHATSAPP_WEB")
+
                 # iterate through the test cases and execute
                 for testcase in testcases:
                     # create a new run detail entry for each test case
-                    rundetail = RunDetail(run_name=args.run_name, plan_name=plan_name, metric_name=testcase.metric, testcase_name=testcase.name)
+                    rundetail = RunDetail(run_name=run_name, plan_name=plan_name, metric_name=testcase.metric, testcase_name=testcase.name)
                     rundetail_id = db.add_or_update_testrun_detail(rundetail)
                     
                     # fetch the run detail status.
@@ -398,9 +402,6 @@ def main():
 
                     rundetail.status = "RUNNING"
                     db.add_or_update_testrun_detail(rundetail)
-
-                    # Initialize the InterfaceManagerClient with the provided configuration
-                    client = InterfaceManagerClient(base_url="http://localhost:8000", application_type="WHATSAPP_WEB")
 
                     try:
                         conv.prompt_ts = datetime.now().isoformat()
@@ -430,11 +431,10 @@ def main():
                         db.add_or_update_testrun_detail(rundetail)
                         continue
 
-                    finally:
-                        try:
-                            client.close()
-                        except Exception as e:
-                            logger.error(f"Error closing the client connection: {e}")
+                try:
+                    client.close()
+                except Exception as e:
+                    logger.error(f"Error closing the client connection: {e}")
 
                 # Update the run status to completed
                 run.end_ts = datetime.now().isoformat()
