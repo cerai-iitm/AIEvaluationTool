@@ -134,7 +134,7 @@ class StrategyImplementor:
                 return strategy.evaluate()
             
             case "compute_mtbf":
-                strategy = Compute_MTBF(file_path="logs/whatsapp_drivr.log") # Default check for log file
+                strategy = Compute_MTBF(file_path="logs/whatsapp_driver.log") # Default check for log file
                 return strategy.evaluate()
             
             case "entity_recogonition":
