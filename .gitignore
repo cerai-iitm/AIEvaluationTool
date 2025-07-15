@@ -8,6 +8,7 @@ env/**
 Gokul/
 envir/
 whatsapp_profile/
+dataset_for_review**
 logs/
 
 *.log
