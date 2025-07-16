@@ -43,5 +43,7 @@
     "69":["safety_strategy"],
     "56":["privacy_strategy"],
     "70":["privacy_strategy"],
-    "71":["privacy_strategy"]
+    "71":["privacy_strategy"],
+    "60":["fluency_score"],
+    "67":["fluency_score"]
 }
