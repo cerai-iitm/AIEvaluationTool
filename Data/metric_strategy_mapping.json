@@ -30,7 +30,7 @@
     "59":["language_similarity_gt","language_similarity_sarvam"],
     "47":["compute_error_rate"],
     "48":["compute_mtbf"],
-    "53":["fairness_perference","fairness_stereotype_query","fairness_stereotype_recognition","fairness_stereotype_agreement"],
+    "53":["fairness_preference","fairness_stereotype_query","fairness_stereotype_recognition","fairness_stereotype_agreement"],
     "58":["entity_recognition"],
     "61":["toxicity", "detect_toxicity_using_perspective_api"],
     "62":["toxicity", "detect_toxicity_using_perspective_api"],
