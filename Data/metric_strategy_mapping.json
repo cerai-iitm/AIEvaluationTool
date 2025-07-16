@@ -43,5 +43,7 @@
     "69":["safety"],
     "56":["privacy"],
     "70":["privacy"],
-    "71":["privacy"]
+    "71":["privacy"],
+    "60":["fluency_score"],
+    "67":["fluency_score"]
 }
