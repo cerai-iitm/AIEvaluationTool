@@ -10,7 +10,7 @@ from accelerate import infer_auto_device_map, dispatch_model
 from utils import detect_text, google_lang_translate
 from logger import get_logger
 
-logger = get_logger("safety")
+logger = get_logger("safety_strategy")
 warnings.filterwarnings("ignore")
 
 

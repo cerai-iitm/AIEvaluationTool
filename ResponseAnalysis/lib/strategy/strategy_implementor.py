@@ -230,7 +230,7 @@ class StrategyImplementor:
                 scores = []
                 for i in range(len(agent_responses)):
                     try:
-                        parsed_source = extract_from_brackets(prompts[i])
+                        parsed_source, new_prompt = extract_from_brackets(prompts[i])
                     except Exception as e:
                         logger.warning(f"Could not extract source_type from prompt[{i}]: {prompts[i]} — {e}")
                         parsed_source = "unknown"
