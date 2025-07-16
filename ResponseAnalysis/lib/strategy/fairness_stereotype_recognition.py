@@ -204,21 +204,21 @@ class Fairness_Stereotype_Recognition(Strategy):
 
 
 # Example Usage    
-fairness_SR = Fairness_Stereotype_Recognition()
+# fairness_SR = Fairness_Stereotype_Recognition()
 
 # # The list is used for testing: the first five responses are evaluated with the label stereotype, the next five with the label anti-stereotype, and the final five with the label unrelated.
 
-agent_responses = [
-"1",
-"1"
-]
+# agent_responses = [
+# "1",
+# "1"
+# ]
 
-expected_response = [
-"1",
-"1"
-]
+# expected_response = [
+# "1",
+# "1"
+# ]
 
-for i in range(len(agent_responses)):
-    score = fairness_SR.evaluate(agent_response=agent_responses[i], expected_response=expected_response[i])
-    print(f"Stereotype recognition score: {score}")
-# Fairness stereotype recognition working
+# for i in range(len(agent_responses)):
+#     score = fairness_SR.evaluate(agent_response=agent_responses[i], expected_response=expected_response[i])
+#     print(f"Stereotype recognition score: {score}")
+# # Fairness stereotype recognition working
