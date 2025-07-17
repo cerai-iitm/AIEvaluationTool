@@ -26,6 +26,14 @@ from hallucination import HallucinationStrategy
 from privacy import PrivacyStrategy
 from safety import SafetyStrategy
 from tat_tpm_mvh import TAT_TPM_MVH
+from bias_detection import BiasDetection
+from similarity_match import SimilarityMatchStrategy
+from grammatical_strategy import GrammaticalStrategy
+from language_strategies_async import LanguageStrategiesAsync
+from language_strategies_sync import LanguageStrategiesSync
+import asyncio
+from lexical_diversity_calc import LexicalDiversity
+from toxicity import Toxicity
 
 logger = get_logger("strategy_implementor")
 
@@ -43,7 +51,7 @@ class StrategyImplementor:
         """
         Execute the current strategy with the provided arguments.
         """
-
+        scores = []
         match self.strategy_name:
             case "uptime_calculation":
                 strategy = UptimeCalculation(threshold=120) # Default check for 2 mins
@@ -227,7 +235,6 @@ class StrategyImplementor:
             
 
             case "hallucination":
-                scores = []
                 for i in range(len(agent_responses)):
                     try:
                         parsed_source, new_prompt = extract_from_brackets(prompts[i])
@@ -243,7 +250,6 @@ class StrategyImplementor:
 
             case "privacy":
                 strategy = PrivacyStrategy(metric_name=self.__metric_name)
-                scores = []
                 for i in range(len(agent_responses)):
                     if self.__metric_name == "awareness_query":
                         score = strategy.evaluate(agent_responses[i],system_prompts[i],prompts[i])
@@ -262,7 +268,6 @@ class StrategyImplementor:
 
             case "safety":
                 strategy = SafetyStrategy(metric_name=self.__metric_name)
-                scores = []
                 for i in range(len(agent_responses)):
                     score = strategy.evaluate(agent_responses[i],prompts[i])
                     scores.append(score)
@@ -292,29 +297,100 @@ class StrategyImplementor:
                     score = strategy.evaluate(agent_responses[i], expected_responses[i])
                     if p_type == 'positive':
                         geval.append(score)
+                        logger.info(f"Positive {self.__metric_name} Use Case Score %s", score)
                     else:
                         geval.append(1.0 - score)
+                        logger.info(f"Negative {self.__metric_name} Use Case Score %s", score)
+                logger.info(f"Mean {self.__metric_name} Use Case Score %s", np.mean(geval))
                 return np.mean(geval)
 
             case "fluency_score":
                 strategy = IndianLanguageFluencyScorer()
-                scores = []
                 for i, response in enumerate(agent_responses):
                     score = strategy.evaluate(response)
                     scores.append(score)
                     
-                logger.info("Average Fluency Score",sum(scores)/len(scores))
+                logger.info("Average Fluency Score: %s",sum(scores)/len(scores))
                 return sum(scores)/len(scores)
                 
             case "indian_lang_grammatical_check":
                 strategy = IndianLangGrammaticalCheck()
-                scores = []
                 for i, response in enumerate(agent_responses):
                     score = strategy.evaluate(response)
                     scores.append(score)
-                logger.info("Average Grammatical Correctness score:",sum(scores)/len(scores))
+                logger.info("Average Grammatical Correctness score: %s",sum(scores)/len(scores))
                 return sum(scores)/len(scores)
             
+            case "bias_detection":
+                strategy = BiasDetection()
+                for response in agent_responses:
+                    score = strategy.evaluate(response)
+                    scores.append(score)
+                logger.info(f"Average Bias Score: {sum(scores)/len(scores)}")
+                return sum(scores)/len(scores)
+
+            case "similarity_match":
+                strategy = SimilarityMatchStrategy(metric_name = self.__metric_name)
+                for i in range(len(agent_responses)):
+                    score = strategy.evaluate(agent_responses[i], expected_responses[i])
+                    scores.append(score)
+                logger.info(f"Average {self.__metric_name} score is: {sum(scores)/len(scores)}" )
+            
+            case "grammatical_strategies":
+                strategy = GrammaticalStrategy()
+                for response in agent_responses:
+                    score = strategy.evaluate([response])
+                    scores.append(score)
+                logger.info(f"Average Grammatical Score: {sum(scores)/len(scores)}")
+                return sum(scores)/len(scores)
+            
+            case "language_detect_gt":
+                strategy = LanguageStrategiesAsync(strategy_name = self.strategy_name)
+                for i in range(len(agent_responses)):
+                    score = asyncio.run(strategy.evaluate(agent_responses[i], expected_responses[i]))
+                    scores.append(score)
+                logger.info(f"Average language detection score is: {sum(scores)/len(scores)}" )
+                return sum(scores)/len(scores)
+            
+            case "language_similarity_gt":
+                strategy = LanguageStrategiesAsync(strategy_name = self.strategy_name)
+                for i in range(len(agent_responses)):
+                    score = asyncio.run(strategy.evaluate(agent_responses[i], expected_responses[i]))
+                    scores.append(score)
+                logger.info(f"Average language similarity score is: {sum(scores)/len(scores)}" )
+                return sum(scores)/len(scores)
+            
+            case "language_detect_langdetect":
+                strategy = LanguageStrategiesSync(strategy_name = self.strategy_name)
+                for i in range(len(agent_responses)):
+                    score = strategy.evaluate(agent_responses[i], expected_responses[i])
+                    scores.append(score)
+                logger.info(f"Average language detection score is: {sum(scores)/len(scores)}" )
+                return sum(scores)/len(scores)
+            
+            case "language_similarity_sarvam":
+                strategy = LanguageStrategiesSync(strategy_name = self.strategy_name)
+                for i in range(len(agent_responses)):
+                    score = strategy.evaluate(agent_responses[i], expected_responses[i])
+                    scores.append(score)
+                logger.info(f"Average language similarity score is: {sum(scores)/len(scores)}" )
+                return sum(scores)/len(scores)
+            
+            case "lexicaldiversity":
+                strategy = LexicalDiversity()
+                for response in agent_responses:
+                    score = strategy.evaluate(response)
+                    scores.append(score)
+                logger.info(f"Average Lexical Diversity Score: {sum(scores)/len(scores)}")
+                return sum(scores)/len(scores)
+            
+            case "toxicity":
+                strategy = Toxicity()
+                for response in agent_responses:
+                    score = strategy.evaluate(response)
+                    scores.append(score)
+                logger.info(f"Average Toxicity Diversity Score: {sum(scores)/len(scores)}")
+                return sum(scores)/len(scores)
             case _:
                 logger.error(f"Strategy {self.strategy_name} not recognized.")
                 raise ValueError(f"Strategy {self.strategy_name} not recognized.")
