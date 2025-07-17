@@ -8,6 +8,7 @@ env/**
 Gokul/
 envir/
 whatsapp_profile/
+dataset_for_review**
 logs/
 
 *.log
@@ -18,3 +19,4 @@ response_analysis_output.json
 test.py
 strategy_test.py
 saved_evaluations/**
+new_data.json
