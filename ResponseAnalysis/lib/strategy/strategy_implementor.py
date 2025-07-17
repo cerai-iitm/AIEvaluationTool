@@ -39,6 +39,7 @@ class StrategyImplementor:
     def __init__(self, strategy_name: str, **kwargs):
         self.strategy_name = strategy_name
         self.__metric_name = kwargs.get("metric_name")
+        
     def execute(self, prompts: Optional[List[str]] = None, expected_responses: Optional[List[str]] = None, agent_responses: Optional[List[str]] = None, system_prompts: Optional[List[str]] = None, judge_prompts: Optional[List[str]] = None) -> float :
         """
         Execute the current strategy with the provided arguments.
@@ -149,7 +150,7 @@ class StrategyImplementor:
                 strategy = Compute_MTBF(file_path="logs/whatsapp_driver.log") # Default check for log file
                 return strategy.evaluate()
             
-            case "entity_recogonition":
+            case "entity_recognition":
                 strategy = EntityRecognition()
                 score = []
                 for i in range(len(agent_responses)):

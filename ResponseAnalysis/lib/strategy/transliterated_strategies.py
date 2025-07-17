@@ -31,7 +31,7 @@ class TransliteratedStrategy(Strategy):
         model = SentenceTransformer('sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
         embeddings = model.encode(sentences)
         similarity = cos_sim(embeddings[0], embeddings[1])
-        logger.info("The text similarity is:",similarity[0][0].item()) 
+        logger.info("The text similarity is: %s",similarity[0][0].item()) 
         
         return similarity[0][0]
         
