@@ -36,7 +36,7 @@
     "35": "truthfulness_internal_codah",
     "36": "truthfulness_internal_squad",
     "37":"fairness_preference_force",
-    "38":"hallucination_qa",
-    "39":"hallucination_summ",
+    "38":"hallucination_haluqa",
+    "39":"hallucination_halusumm",
     "40":"llm_judge_negative"   
 }
