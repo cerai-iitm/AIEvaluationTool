@@ -21,7 +21,6 @@ from llm_judge import LLMJudgeStrategy
 from indian_lang_grammatical_check import IndianLangGrammaticalCheck
 from fluency_score import IndianLanguageFluencyScorer
 import os
-from utils import extract_from_brackets
 from hallucination import HallucinationStrategy
 from privacy import PrivacyStrategy
 from safety import SafetyStrategy
