@@ -1,5 +1,5 @@
 # TestExecutionManager.py
-
+from FunctionalPromptTimer import FunctionalPromptTimer 
 import json
 import argparse
 from typing import List, Dict, Union
@@ -325,6 +325,19 @@ manager = TestCaseExecutionManager(
     )
 
 if args.action == "send_all_prompts":
-    results = manager.send_all_prompts()
+    if args.test_plan_id == "T6":
+        timer = FunctionalPromptTimer(
+            test_plan_id=args.test_plan_id,
+            agent_name=args.agent_name,
+            base_url=args.base_url,
+            run_mode=args.run_mode,
+            test_case_count=args.test_case_count,
+            test_plan_file=str(data_points_path),
+            domain=args.domain
+        )
+        results = timer.collect_prompt_timings()
+    else:
+        results = manager.send_all_prompts()
+
     output_file = str(response_file)
     print(f"Responses saved to {output_file}")
