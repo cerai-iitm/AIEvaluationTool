@@ -389,3 +389,4 @@ class BARTScorer:
         ]
 
         print(self.score(src_list, tgt_list, batch_size))
+
