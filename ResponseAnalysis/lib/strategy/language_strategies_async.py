@@ -12,7 +12,7 @@ from logger import get_logger
 logger = get_logger("strategies")
 # This module implements language strategies to analyze the agent response.
 class LanguageStrategiesAsync(Strategy):
-    def __init__(self, name: str = "language_strategies_sync", **kwargs) -> None:
+    def __init__(self, name: str = "language_strategies_async", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
         self.__strategy_name = kwargs.get("strategy_name")
         self.embedding_model_name = kwargs.get("model_name", "thenlper/gte-small")

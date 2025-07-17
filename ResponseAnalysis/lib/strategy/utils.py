@@ -105,15 +105,6 @@ def sarvam_translate(text: str, target_lang: str = "en") -> str:
     logger.info(f"Translated text: {output_text}")
     return output_text
 
-def extract_from_brackets(text):
-    pattern = r'\[([^\]]*)\]'
-    matches = re.findall(pattern, text)
-    if not matches:
-        logger.warning(f"No matches found in text: {text}")
-        return None
-    rest_txt = re.sub(matches,"",text)
-    return matches[0], rest_txt
-
 def load_json(file_path):
     with open(file_path, 'r', encoding='utf-8') as f:
         return json.load(f)
@@ -153,6 +144,10 @@ def get_key_by_value(dictionary, value):
         if val == value:
             return key
     return None
+
+def extract_from_uds(txt):
+    new_txt = txt.split("_")
+    return new_txt[-1]
 
 
 try:
