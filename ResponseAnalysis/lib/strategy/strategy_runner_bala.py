@@ -13,7 +13,8 @@ logger = get_logger("strategy_runner")
 
 plan_file = "Data/plans.json"
 datapoints_file = "Data/new_data.json"
-strategy_mapping_file = "Data/metric_strategy_mapping.json"
+metric_to_strategy_mapping_file = "Data/metric_strategy_mapping.json"
+strategy_id_to_strategy_mapping_file = "Data/strategy_id.json"
 response_file = "Data/responses.json"
 
 def get_agent_response_map(agent_responses):
@@ -22,8 +23,9 @@ def get_agent_response_map(agent_responses):
 def run(target_plan_id):
     test_plans = load_json(plan_file)
     metric_to_test_case_mapping = load_json(datapoints_file)
-    strategy_map = load_json(strategy_mapping_file)
+    strategy_map = load_json(metric_to_strategy_mapping_file)
     agent_responses = load_json(response_file)
+    strategy_id_to_strategy_map = load_json(strategy_id_to_strategy_mapping_file)
 
     fields = ["PROMPT_ID", "LLM_AS_JUDGE", "SYSTEM_PROMPT", "PROMPT", "EXPECTED_OUTPUT", "DOMAIN", "STRATEGY"]
 
@@ -61,6 +63,7 @@ def run(target_plan_id):
         # strategy_functions = [s for sid in strategy for s in strategy_map.get(sid, [f"Unknown({sid})"])]
 
         # To exclude unknown metrics
+        strategy_map = {k: [v] for k, v in strategy_id_to_strategy_map.items()}
         strategy_functions = [s for sid in strategy if sid in strategy_map for s in strategy_map[sid]]
 
         agent_response_map = get_agent_response_map(agent_responses)
