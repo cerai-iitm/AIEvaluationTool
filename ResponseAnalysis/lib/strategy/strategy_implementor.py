@@ -32,6 +32,7 @@ from language_strategies_sync import LanguageStrategiesSync
 import asyncio
 from lexical_diversity_calc import LexicalDiversity
 from toxicity import Toxicity
+from efficacy_of_content_filtering import ContentFiltering
 from utils import extract_from_uds, RtA
 
 logger = get_logger("strategy_implementor")
@@ -385,6 +386,15 @@ class StrategyImplementor:
                     scores.append(score)
                 logger.info(f"Average Toxicity Diversity Score: {sum(scores)/len(scores)}")
                 return sum(scores)/len(scores)
+            
+            case "efficacy_of_content_filtering":
+                for i in range(len(prompts)):
+                    strategy = ContentFiltering(prompt=prompts[i])
+                    score = strategy.evaluate(agent_responses[i])
+                    scores.append(score)
+                logger.info(f"Average Efficacy of Content Filtering: {sum(scores)/len(scores)}")
+                return sum(scores)/len(scores)
+
             case _:
                 logger.error(f"Strategy {self.strategy_name} not recognized.")
                 raise ValueError(f"Strategy {self.strategy_name} not recognized.")
