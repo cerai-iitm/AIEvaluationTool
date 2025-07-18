@@ -1,165 +1,132 @@
-# from strategy_implementor import StrategyImplementor
+#   @author G Balayogi
+#   @email balayogistark@gmail.com
+#   @create date 2025-07-17 12:11:47
+#   @modify date 2025-07-17 12:11:47
+#   @desc Strategy runner code that executes strategies based on test plans and metrics.
+#   It loads test plans, metric mappings, and agent responses from JSON files.
+
+from strategy_implementor import StrategyImplementor
 from logger import get_logger
 from utils import load_json, get_key_by_value
 
-mapper = load_json("Data/metric_strategy_mapping.json")
-
-# print("Mapper loaded:", mapper)
-
-plans = load_json("Data/plans.json")
-
-#print("Plans loaded:", plans)
-
-datapoints = load_json("Data/DataPoints.json")
-
-#print("Data points loaded:", datapoints)
-
-responses = load_json("Data/responses.json")
-
-#print("Responses loaded:", responses)
-
 logger = get_logger("strategy_runner")
 
-class StrategyRunner:
-    """
-    StrategyRunner is responsible for running the strategies based on the plans and metric mappings.
-    """
-    def __init__(self, plan_id: str, **kwargs) -> None:
-        self.plan_id = plan_id
+plan_file = "Data/plans.json"
+datapoints_file = "Data/new_data.json"
+metric_to_strategy_mapping_file = "Data/metric_strategy_mapping.json"
+strategy_id_to_strategy_mapping_file = "Data/strategy_id.json"
+response_file = "Data/responses.json"
+
+def get_agent_response_map(agent_responses):
+    return {item["prompt_id"]: item["response"] for item in agent_responses}
+
+def get_metric_names_by_test_plan_id(test_plan_id, test_plans):
+    if test_plan_id in test_plans:
+        return [name.lower() for name in test_plans[test_plan_id]["metrics"].values()]
+    else:
+        return []
+
+def run(target_plan_id):
+    test_plans = load_json(plan_file)
+    metric_to_test_case_mapping = load_json(datapoints_file)
+    strategy_map = load_json(metric_to_strategy_mapping_file)
+    agent_responses = load_json(response_file)
+    strategy_id_to_strategy_map = load_json(strategy_id_to_strategy_mapping_file)
+
+    fields = ["PROMPT_ID", "LLM_AS_JUDGE", "SYSTEM_PROMPT", "PROMPT", "EXPECTED_OUTPUT", "DOMAIN", "STRATEGY"]
+
+    result_rows = []
+
+    if target_plan_id in test_plans:
+        plan = test_plans[target_plan_id]
+        plan_name = plan["TestPlan_name"]
+        metrics = plan["metrics"]
+
+        for metric_id, metric_name in metrics.items():
+            if metric_id in metric_to_test_case_mapping:
+                for case in metric_to_test_case_mapping[metric_id]["cases"]:
+                    row = [target_plan_id, plan_name, metric_id, metric_name]
+                    row += [case.get(field, "") for field in fields]
+                    result_rows.append(row)
+
+    else:
+        print(f"Test plan ID '{target_plan_id}' not found.")
+
+    for i, row in enumerate(result_rows, 1):
+        plan_id = row[0]
+        plan_name = row[1]
+        metric_id = row[2]
+        metric_name = row[3]
+        prompt_id = row[4]
+        llm_as_judge = row[5]
+        system_prompt = row[6]
+        prompt = row[7]
+        expected_output = row[8]
+        domain = row[9]
+        strategy = row[10]
+
+        # To include unknown metrics
+        # strategy_functions = [s for sid in strategy for s in strategy_map.get(sid, [f"Unknown({sid})"])]
+
+        # To exclude unknown metrics
+        strategy_map = {k: [v] for k, v in strategy_id_to_strategy_map.items()}
+        strategy_functions = [s for sid in strategy if sid in strategy_map for s in strategy_map[sid]]
+
+        agent_response_map = get_agent_response_map(agent_responses)
+
+        if prompt_id not in agent_response_map:
+            logger.warning(f"Prompt ID {prompt_id} not found in agent responses. Skipping execution.")
+            continue
+
+        agent_response = agent_response_map[prompt_id]
+
+        special_metrics = get_metric_names_by_test_plan_id(test_plan_id=target_plan_id, test_plans=test_plans)
+
+        for strategy_name in strategy_functions:
+            print(f"Executing strategy: {strategy_name} for prompt ID: {prompt_id}")
+
+            try:
+                if strategy_name == "privacy_strategy":
+                    # Special handling for privacy strategy
+                    for metric_name in special_metrics[-3:]:
+                        # print(f"Executing privacy strategy for metric: {metric_name}")
+                        strategy_instance = StrategyImplementor(strategy_name=strategy_name, metric_name=metric_name)
+                        score = strategy_instance.execute(
+                            expected_responses=[expected_output],
+                            agent_responses=[agent_response],
+                            system_prompts=[system_prompt]
+                        )
+                        print(f"[SUCCESS] Strategy: {strategy_name}, Metric: {metric_name}, Score: {score}")
+                        logger.info(f"[SUCCESS] Strategy: {strategy_name}, Metric: {metric_name}, Score: {score}")
+                elif strategy_name == "safety_strategy":
+                    # Special handling for safety strategy
+                    for metric_name in special_metrics[:3]:
+                        # print(f"Executing safety strategy for metric: {metric_name}")
+                        strategy_instance = StrategyImplementor(strategy_name=strategy_name, metric_name=metric_name)
+                        score = strategy_instance.execute(
+                            agent_responses=[agent_response]
+                        )
+                        print(f"[SUCCESS] Strategy: {strategy_name}, Metric: {metric_name}, Score: {score}")
+                        logger.info(f"[SUCCESS] Strategy: {strategy_name}, Metric: {metric_name}, Score: {score}")
+                else:
+                    strategy_instance = StrategyImplementor(strategy_name=strategy_name)
+                    score = strategy_instance.execute(
+                        prompts=[prompt],
+                        expected_responses=[expected_output],
+                        agent_responses=[agent_response],
+                        system_prompts=[system_prompt],
+                        judge_prompts=[llm_as_judge]
+                    )
+
+                    print(f"[SUCCESS] Strategy: {strategy_name}, Score: {score}")
+                    logger.info(f"[SUCCESS] Strategy: {strategy_name}, Score: {score}")
+
+            except Exception as e:
+                error_msg = f"[SKIPPED] Error in strategy '{strategy_name}' for prompt ID '{prompt_id}': {str(e)}"
+                print(error_msg)
+                logger.error(error_msg)
+                continue
 
 
-    # Please start from here!
-    def get_plan_name(self, plan_id: str):
-        """
-        Get the plans based on the plan name.
-        """
-        logger.info(f"Fetching plan name for plan ID: {plan_id}.")
-        plan_name = plans[plan_id].get("TestPlan_name", None)
-        return plan_name
-    
-    def get_metric_ids(self, plan_id: str):
-        """
-        Get the metric IDs based on the plan ID.
-        """
-        if plan_id not in plans:
-            logger.error(f"Plan ID {plan_id} not found in mapper.")
-            return []
-        else:
-            logger.info(f"Fetching metric IDs for plan ID {plan_id}.")
-            plan = plans.get(plan_id, {})
-            metrics = plan.get("metrics", {})
-            for i in metrics:
-                if i not in mapper:
-                    logger.warning(f"Metric ID {i} not found in mapper.")
-            return list(metrics.keys())
-
-
-    def data_loader(self, metric_id):
-        """
-        Load the data points and return them.
-        """
-        if metric_id not in datapoints:
-            logger.error(f"Metric ID {metric_id} not found in data points.")
-            return []
-        else:
-            logger.info(f"Loading data points for metric ID {metric_id}.")
-            return datapoints[metric_id]["cases"]
-    
-    def extract_data_from_datapoints(self, list_of_datapoints):
-        """
-        Extract system prompts, agent responses, and expected responses from the list of data points.
-        """
-        prompt_ids = []
-        judge_prompts = []
-        system_prompts = []
-        prompts = []
-        expected_responses = []
-        domain = []
-        logger.info(f"Fetching data points from list .....")
-        for datapoint in list_of_datapoints:
-            prompt_ids.append(datapoint.get("PROMPT_ID", ""))
-            judge_prompts.append(datapoint.get("LLM_AS_JUDGE", ""))
-            prompts.append(datapoint.get("PROMPT", ""))
-            domain.append(datapoint.get("DOMAIN", ""))
-            system_prompts.append(datapoint.get("SYSTEM_PROMPT", ""))
-            expected_responses.append(datapoint.get("EXPECTED_OUTPUT", ""))
-        return {
-            "prompt_ids": prompt_ids,
-            "judge_prompts": judge_prompts,
-            "system_prompts": system_prompts,
-            "prompts": prompts,
-            "expected_responses": expected_responses,
-            "domain": domain
-        }
-    
-    def extract_responses(self, prompt_ids:list):
-        """
-        Extract agent responses from the responses data.
-        """
-        agent_responses = {}
-        for i, response in enumerate(responses):
-            if response.get("prompt_id", "") in prompt_ids:
-                prompt_id = response.get("prompt_id", "")
-                agent_responses[f"{prompt_id}"] = response.get("response", "")
-        return agent_responses
-    
-    def data_mapper(self, datapoints, response_datapoints):
-        """
-        Map the data points to the responses based on the prompt ID.
-        """
-        mapped_data = []
-        dp_prompts = datapoints["prompt_ids"]
-        print(f"Mapping data points with responses for prompts: {dp_prompts}")
-        for i in range(len(dp_prompts)):
-            print(f"Mapping prompt {dp_prompts[i]} with response {response_datapoints.get(dp_prompts[i], 'No response found')}")
-            if dp_prompts[i] in list(response_datapoints.keys()):
-                mapped_data.append({
-                    "prompt_id": dp_prompts[i],
-                    "system_prompt": datapoints["system_prompts"][i],
-                    "agent_response": response_datapoints[f"{dp_prompts[i]}"],
-                    "expected_response": datapoints["expected_responses"][i],
-                    "judge_prompt": datapoints["judge_prompts"][i],
-                    "domain": datapoints["domain"][i]
-                })
-        return mapped_data
-
-    
-    # def run(self, plan_name:str):
-    #     plan_name = self.plan_name
-    #     plan_id = get_key_by_value(plans, plan_name)
-    #     strategies = mapper[plan_id]
-    #     metric_data = self.data_loader(plan_id)
-    #     if plan_id=="54" or plan_id=="66":
-    #         for strategy_name in strategies:
-    #             strategy_instance = StrategyImplementor(strategy_name=strategy_name)
-    #             score = strategy_instance.execute(prompts: da, expected_responses: Optional[List[str]] = None, agent_responses: Optional[List[str]] = None, system_prompts: Optional[List[str]] = None, judge_prompts: Optional[List[str]] = None)
-    #             logger.info(f"Strategy: {strategy_name}, Score: {score}")
-
-
-
-
-
-
-#### Testing
-# plan_id ="T1"
-# strat_runner = StrategyRunner(plan_id=plan_id)
-# print(strat_runner.get_plan_name(plan_id)) 
-# a = strat_runner.get_metric_ids(plan_id)
-# print(a)
-# print(a[0])
-# print(strat_runner.get_metric_ids(plan_id)) 
-# print(strat_runner.data_loader(metric_id="28"))
-# l = [{'PROMPT_ID': 'P701', 'LLM_AS_JUDGE': 'No', 'SYSTEM_PROMPT': 'You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages', 'PROMPT': 'Duniya का highest रेल पुल and arch bridge कहाँ है?', 'EXPECTED_OUTPUT': 'दुनिया का सबसे ऊँचा रेल पुल और आर्च ब्रिज भारत में चेनाब ब्रिज (Chenab Bridge) है, जो जम्मू-कश्मीर में 359 मीटर की ऊँचाई पर बना है।', 'DOMAIN': 'general'}, {'PROMPT_ID': 'P702', 'LLM_AS_JUDGE': 'No', 'SYSTEM_PROMPT': 'You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.', 'PROMPT': 'Please explain photosynthesis in Gujarati and end with a summary in English.', 'EXPECTED_OUTPUT': 'Gujarati: ફોટોસિન્થેસિસ એ એક પ્રક્રિયા છે જેમાં... Summary in English: Photosynthesis is the process by which plants make food...', 'DOMAIN': 'education'}, {'PROMPT_ID': 'P703', 'LLM_AS_JUDGE': 'No', 'SYSTEM_PROMPT': 'You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.', 'PROMPT': 'Indiavil எத்தனை பயிர் பருவங்கள் உள்ளன?', 'EXPECTED_OUTPUT': 'இந்தியாவில் முக்கியமான 3 பயிர் பருவங்கள் உள்ளன: 1. கரிமை / ரபி (Rabi)...2. கடலை / கபா (Kharif)...3. ஜெயாத் (Zaid)...', 'DOMAIN': 'agriculture'}, {'PROMPT_ID': 'P704', 'LLM_AS_JUDGE': 'No', 'SYSTEM_PROMPT': 'You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.', 'PROMPT': 'Which fruit farming is the most profitable in India thoda telugu mein aur thoda Hindi mein.', 'EXPECTED_OUTPUT': 'భారతదేశంలో, అత్యంత లాభదాయకమైన పండ్ల పంటలలో మామిడి (Mango), దానిమ్మ (Pomegranate), మరియు అరటి (Banana) ప్రముఖమైనవి.  आम भारत में सबसे अधिक लाभदायक फलों में से एक है, खासकर उत्तर प्रदेश, आंध्र प्रदेश और महाराष्ट्र जैसे राज्यों में, क्योंकि इसकी घरेलू और अंतर्राष्ट्रीय दोनों बाजारों में बहुत अधिक मांग है। इसके अलावा, ड्रैगन फ्रूट की खेती भी हाल के वर्षों में काफी लाभदायक साबित हुई है।', 'DOMAIN': 'agriculture'}, {'PROMPT_ID': 'P705', 'LLM_AS_JUDGE': 'No', 'SYSTEM_PROMPT': 'You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.', 'PROMPT': 'ಭಾರತದ ಮೊದಲ prime minister ಯಾರು?', 'EXPECTED_OUTPUT': 'ಭಾರತದ ಮೊದಲ ಪ್ರಧಾನ ಮಂತ್ರಿ ಪಂಡಿತ ಜವಾಹರಲಾಲ್ ನೆಹರು (Jawaharlal Nehru).', 'DOMAIN': 'education'}]
-
-# print(strat_runner.extract_data_from_datapoints(list_of_datapoints=l))
-
-# l = {'prompt_ids': ['P701', 'P702', 'P703', 'P704', 'P705'], 'judge_prompts': ['No', 'No', 'No', 'No', 'No'], 'system_prompts': ['You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages', 'You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.', 'You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.', 'You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.', 'You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.'], 'prompts': ['Duniya का highest रेल पुल and arch bridge कहाँ है?', 'Please explain photosynthesis in Gujarati and end with a summary in English.', 'Indiavil எத்தனை பயிர் பருவங்கள் உள்ளன?', 'Which fruit farming is the most profitable in India thoda telugu mein aur thoda Hindi mein.', 'ಭಾರತದ ಮೊದಲ prime minister ಯಾರು?'], 'expected_responses': ['दुनिया का सबसे ऊँचा रेल पुल और आर्च ब्रिज भारत में चेनाब ब्रिज (Chenab Bridge) है, जो जम्मू-कश्मीर में 359 मीटर की ऊँचाई पर बना है।', 'Gujarati: ફોટોસિન્થેસિસ એ એક પ્રક્રિયા છે જેમાં... Summary in English: Photosynthesis is the process by which plants make food...', 'இந்தியாவில் முக்கியமான 3 பயிர் பருவங்கள் உள்ளன: 1. கரிமை / ரபி (Rabi)...2. கடலை / கபா (Kharif)...3. ஜெயாத் (Zaid)...', 'భారతదేశంలో, అత్యంత లాభదాయకమైన పండ్ల పంటలలో మామిడి (Mango), దానిమ్మ (Pomegranate), మరియు అరటి (Banana) ప్రముఖమైనవి.  आम भारत में सबसे अधिक लाभदायक फलों में से एक है, खासकर उत्तर प्रदेश, आंध्र प्रदेश और महाराष्ट्र जैसे राज्यों में, क्योंकि इसकी घरेलू और अंतर्राष्ट्रीय दोनों बाजारों में बहुत अधिक मांग है। इसके अलावा, ड्रैगन फ्रूट की खेती भी हाल के वर्षों में काफी लाभदायक साबित हुई है।', 'ಭಾರತದ ಮೊದಲ ಪ್ರಧಾನ ಮಂತ್ರಿ ಪಂಡಿತ ಜವಾಹರಲಾಲ್ ನೆಹರು (Jawaharlal Nehru).'], 'domain': ['general', 'education', 'agriculture', 'agriculture', 'education']}
-
-# #print(strat_runner.extract_responses(prompt_ids=['P701', 'P702', 'P703', 'P704', 'P705']))
-# r = {'P701': 'Hi!', 'P702': 'this', 'P703': 'test', 'P704': 'Chat not found', 'P705': 'Bwahahah'}
-# print(strat_runner.data_mapper(datapoints=l, response_datapoints=r))
-
-
-
-
-
+# Example usage:
+run("T2") 
