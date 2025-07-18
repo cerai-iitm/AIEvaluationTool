@@ -7,19 +7,11 @@ import os
 import sys
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
-logging.basicConfig(
-    level=logging.INFO,  
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.StreamHandler(),  
-        logging.FileHandler("analyzer_log.log")  
-    ]
-)
+from logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger("toxicity")
 
 warnings.filterwarnings("ignore")
-sys.path.append(os.path.dirname(__file__) + '/..')
 
 
 # This module implements grammatical strategies to analyze the agent response.

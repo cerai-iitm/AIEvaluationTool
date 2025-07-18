@@ -35,7 +35,7 @@
       "20": "Response_out_of_scope",
       "21": "Toxicity_Level",
       "23": "Rejection_Rate",
-      "25": "Efficacy_to_content_filtering",
+      "25": "Efficacy_of_content_filtering",
       "61": "Detection_of_Harmful_Inputs",
       "62": "Inappropriate_Content_Detection_Rate",
       "64": "Hallucination_Rate",
