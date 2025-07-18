@@ -208,25 +208,12 @@ class StrategyImplementor:
                 return fairness_preference_score
             
             case "fairness_stereotype_recognition":
-                # fsr_score = []
-                # for i in range(len(prompts)):
-                    #label, new_prompt = extract_from_brackets(prompts[i])
-                    # if label == "stereotype":
-                    #     strategy = Fairness_Stereotype_Recognition(label=label)
-                    #     fsr_score.append(strategy.evaluate(agent_response=agent_responses[i], prompt=new_prompt))
-                    # elif label == "anti-stereotype":
-                    #     strategy = Fairness_Stereotype_Recognition(label=label)
-                    #     fsr_score.append(strategy.evaluate(agent_response=agent_responses[i], prompt=new_prompt))
-                    # elif label == "unrelated":
-                    #     strategy = Fairness_Stereotype_Recognition(label=label)                        
-                    #     fsr_score.append(strategy.evaluate(agent_response=agent_responses[i], prompt=new_prompt))
-                    # else:
-                    #     logger.error(f"Label {label} not recognized in fairness stereotype recognition.")
-                    #     raise ValueError(f"Label {label} not recognized in fairness stereotype recognition.")
-                #fairness_stereotype_recognition_score = np.mean(fsr_score)
-                #logger.info(f"Fairness Stereotype Recognition Score: {fairness_stereotype_recognition_score:.3f}")
-                # return fairness_stereotype_recognition_score
-                pass
+                fsr_score = []
+                for i in range(len(prompts)):
+                    fsr_score.append(Fairness_Stereotype_Recognition().evaluate(agent_response=agent_responses[i], prompt=prompts[i]))
+                fairness_stereotype_recognition_score = np.mean(fsr_score)
+                logger.info(f"Fairness Stereotype Recognition Score: {fairness_stereotype_recognition_score:.3f}")
+                return fairness_stereotype_recognition_score
             
 
             case "hallucination_halusumm" | "hallucination_haluqa" | "hallucination_mc":
@@ -243,7 +230,7 @@ class StrategyImplementor:
                 logger.info(f"[Hallucination] Average Score: {avg_score}")
                 return avg_score
 
-            case "privacy":
+            case "privacy_strategy":
                 strategy = PrivacyStrategy(metric_name=self.__metric_name)
                 for i in range(len(agent_responses)):
                     if self.__metric_name == "awareness_query":
@@ -261,7 +248,7 @@ class StrategyImplementor:
                 logger.info(f"[Privacy] {self.__metric_name} Score: {avg_score}")
                 return avg_score
 
-            case "safety":
+            case "safety_strategy":
                 strategy = SafetyStrategy(metric_name=self.__metric_name)
                 for i in range(len(agent_responses)):
                     score = strategy.evaluate(agent_responses[i],prompts[i])

@@ -20,6 +20,12 @@ response_file = "Data/responses.json"
 def get_agent_response_map(agent_responses):
     return {item["prompt_id"]: item["response"] for item in agent_responses}
 
+def get_metric_names_by_test_plan_id(test_plan_id, test_plans):
+    if test_plan_id in test_plans:
+        return [name.lower() for name in test_plans[test_plan_id]["metrics"].values()]
+    else:
+        return []
+
 def run(target_plan_id):
     test_plans = load_json(plan_file)
     metric_to_test_case_mapping = load_json(datapoints_file)
@@ -38,11 +44,11 @@ def run(target_plan_id):
 
         for metric_id, metric_name in metrics.items():
             if metric_id in metric_to_test_case_mapping:
-                for case_group in metric_to_test_case_mapping[metric_id]["cases"]:
-                    for case in case_group:
-                        row = [target_plan_id, plan_name, metric_id, metric_name]
-                        row += [case.get(field, "") for field in fields]
-                        result_rows.append(row)
+                for case in metric_to_test_case_mapping[metric_id]["cases"]:
+                    row = [target_plan_id, plan_name, metric_id, metric_name]
+                    row += [case.get(field, "") for field in fields]
+                    result_rows.append(row)
+
     else:
         print(f"Test plan ID '{target_plan_id}' not found.")
 
@@ -74,26 +80,46 @@ def run(target_plan_id):
 
         agent_response = agent_response_map[prompt_id]
 
+        special_metrics = get_metric_names_by_test_plan_id(test_plan_id=target_plan_id, test_plans=test_plans)
+
         for strategy_name in strategy_functions:
             print(f"Executing strategy: {strategy_name} for prompt ID: {prompt_id}")
 
             try:
-                strategy_instance = StrategyImplementor(strategy_name=strategy_name)
+                if strategy_name == "privacy_strategy":
+                    # Special handling for privacy strategy
+                    for metric_name in special_metrics[-3:]:
+                        # print(f"Executing privacy strategy for metric: {metric_name}")
+                        strategy_instance = StrategyImplementor(strategy_name=strategy_name, metric_name=metric_name)
+                        score = strategy_instance.execute(
+                            expected_responses=[expected_output],
+                            agent_responses=[agent_response],
+                            system_prompts=[system_prompt]
+                        )
+                        print(f"[SUCCESS] Strategy: {strategy_name}, Metric: {metric_name}, Score: {score}")
+                        logger.info(f"[SUCCESS] Strategy: {strategy_name}, Metric: {metric_name}, Score: {score}")
+                elif strategy_name == "safety_strategy":
+                    # Special handling for safety strategy
+                    for metric_name in special_metrics[:3]:
+                        # print(f"Executing safety strategy for metric: {metric_name}")
+                        strategy_instance = StrategyImplementor(strategy_name=strategy_name, metric_name=metric_name)
+                        score = strategy_instance.execute(
+                            agent_responses=[agent_response]
+                        )
+                        print(f"[SUCCESS] Strategy: {strategy_name}, Metric: {metric_name}, Score: {score}")
+                        logger.info(f"[SUCCESS] Strategy: {strategy_name}, Metric: {metric_name}, Score: {score}")
+                else:
+                    strategy_instance = StrategyImplementor(strategy_name=strategy_name)
+                    score = strategy_instance.execute(
+                        prompts=[prompt],
+                        expected_responses=[expected_output],
+                        agent_responses=[agent_response],
+                        system_prompts=[system_prompt],
+                        judge_prompts=[llm_as_judge]
+                    )
 
-                # logger.info(
-                #     f"[RUNNING] strategy '{strategy_name}' on prompt ID '{prompt_id}, System Prompt: {system_prompt}, Prompt: {prompt}, Expected Response: {expected_output}, Agent Response: {agent_response}, LLM Judge: {llm_as_judge}"
-                # )
-
-                score = strategy_instance.execute(
-                    prompts=[prompt],
-                    expected_responses=[expected_output],
-                    agent_responses=[agent_response],
-                    system_prompts=[system_prompt],
-                    judge_prompts=[llm_as_judge]
-                )
-
-                print(f"[SUCCESS] Strategy: {strategy_name}, Score: {score}")
-                logger.info(f"[SUCCESS] Strategy: {strategy_name}, Score: {score}")
+                    print(f"[SUCCESS] Strategy: {strategy_name}, Score: {score}")
+                    logger.info(f"[SUCCESS] Strategy: {strategy_name}, Score: {score}")
 
             except Exception as e:
                 error_msg = f"[SKIPPED] Error in strategy '{strategy_name}' for prompt ID '{prompt_id}': {str(e)}"
@@ -103,4 +129,4 @@ def run(target_plan_id):
 
 
 # Example usage:
-run("T1") 
+run("T7") 
