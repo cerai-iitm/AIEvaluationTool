@@ -45,5 +45,8 @@
     "70":["privacy_strategy"],
     "71":["privacy_strategy"],
     "60":["fluency_score"],
-    "67":["fluency_score"]
+    "67":["fluency_score"],
+    "38":["similarity_match"],
+    "39":["similarity_match"],
+    "40":["similarity_match"]
 }
