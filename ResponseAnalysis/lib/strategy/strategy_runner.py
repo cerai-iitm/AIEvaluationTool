@@ -19,7 +19,7 @@ response_file = "Data/responses.json"
 
 def get_agent_response_map(agent_responses):
     return {item["prompt_id"]: item["response"] for item in agent_responses}
-
+  
 def get_metric_names_by_test_plan_id(test_plan_id, test_plans):
     if test_plan_id in test_plans:
         return [name.lower() for name in test_plans[test_plan_id]["metrics"].values()]
@@ -79,9 +79,7 @@ def run(target_plan_id):
             continue
 
         agent_response = agent_response_map[prompt_id]
-
         special_metrics = get_metric_names_by_test_plan_id(test_plan_id=target_plan_id, test_plans=test_plans)
-
         for strategy_name in strategy_functions:
             print(f"Executing strategy: {strategy_name} for prompt ID: {prompt_id}")
 
