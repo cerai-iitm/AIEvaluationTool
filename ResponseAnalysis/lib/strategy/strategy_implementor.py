@@ -5,7 +5,6 @@ from calculate_uptime import UptimeCalculation
 from robustness_advGLUE import Robustness_AdvGLUE
 from typing import Optional, List
 import numpy as np
-from utils import RtA, extract_from_brackets
 from robustness_advInstruction import Robustness_AdvInstruction
 from robustness_ood import Robustness_OutOfDomain
 from logger import get_logger
@@ -21,11 +20,19 @@ from llm_judge import LLMJudgeStrategy
 from indian_lang_grammatical_check import IndianLangGrammaticalCheck
 from fluency_score import IndianLanguageFluencyScorer
 import os
-from utils import extract_from_brackets
 from hallucination import HallucinationStrategy
 from privacy import PrivacyStrategy
 from safety import SafetyStrategy
 from tat_tpm_mvh import TAT_TPM_MVH
+from bias_detection import BiasDetection
+from similarity_match import SimilarityMatchStrategy
+from grammatical_strategy import GrammaticalStrategy
+from language_strategies_async import LanguageStrategiesAsync
+from language_strategies_sync import LanguageStrategiesSync
+import asyncio
+from lexical_diversity_calc import LexicalDiversity
+from toxicity import Toxicity
+from utils import extract_from_uds, RtA
 
 logger = get_logger("strategy_implementor")
 
@@ -39,20 +46,21 @@ class StrategyImplementor:
     def __init__(self, strategy_name: str, **kwargs):
         self.strategy_name = strategy_name
         self.__metric_name = kwargs.get("metric_name")
+        
     def execute(self, prompts: Optional[List[str]] = None, expected_responses: Optional[List[str]] = None, agent_responses: Optional[List[str]] = None, system_prompts: Optional[List[str]] = None, judge_prompts: Optional[List[str]] = None) -> float :
         """
         Execute the current strategy with the provided arguments.
         """
-
+        scores = []
         match self.strategy_name:
             case "uptime_calculation":
                 strategy = UptimeCalculation(threshold=120) # Default check for 2 mins
                 return strategy.evaluate()
             
-            case "robustness_advglue":
+            case "robustness_advglue_mnli" | "robustness_advglue_qqp " | "robustness_advglue_sst2" | "robustness_advglue_qnli":
                 net_score =[]
                 for i in range(len(prompts)):
-                    ind_task,new_prompt = extract_from_brackets(prompts[i])
+                    ind_task = extract_from_uds(self.strategy_name)
                     strategy = Robustness_AdvGLUE(task=ind_task)
                     net_score.append(strategy.evaluate(agent_responses[i],expected_responses[i]))
                 
@@ -82,47 +90,41 @@ class StrategyImplementor:
                 return robustness_score
             
             case "robustness_advins":
-                ind_task,new_prompt = extract_from_brackets(prompts[i])
-                if ind_task == "advins":
-                    strategy = Robustness_AdvInstruction()
-                    similarities=[]
-                    for i in range(len(agent_responses)):
-                        similarities.append(strategy.evaluate(agent_responses[i], expected_responses[i]))
-                    avg_similarity = np.mean(similarities)
-                    logger.info(f"Robustness Adv Instruction Similarities Score: {avg_similarity}")
-                    return avg_similarity
+                strategy = Robustness_AdvInstruction()
+                similarities=[]
+                for i in range(len(agent_responses)):
+                    similarities.append(strategy.evaluate(agent_responses[i], expected_responses[i]))
+                avg_similarity = np.mean(similarities)
+                logger.info(f"Robustness Adv Instruction Similarities Score: {avg_similarity}")
+                return avg_similarity
             
             case "robustness_ood":
-                ind_task,new_prompt = extract_from_brackets(prompts[i])
-                if ind_task == "ood":
-                    strategy = Robustness_OutOfDomain(device="cpu")
-                    results = []
-                    for i in range(len(prompts)):
-                        eval_res = strategy.evaluate(agent_response=agent_responses[i], agent_prompt=prompts[i])
-                        results.append(eval_res)
-                    RtA_score = RtA(results)
-                    logger.info(f"Robustness Out of Domain Score: {RtA_score}")
-                    return RtA_score
+                strategy = Robustness_OutOfDomain(device="cpu")
+                results = []
+                for i in range(len(prompts)):
+                    eval_res = strategy.evaluate(agent_response=agent_responses[i], agent_prompt=prompts[i])
+                    results.append(eval_res)
+                RtA_score = RtA(results)
+                logger.info(f"Robustness Out of Domain Score: {RtA_score}")
+                return RtA_score
             
             case "truthfulness_external":
-                ind_task,new_prompt = extract_from_brackets(prompts[i])
-                if ind_task=="ext":
-                    strategy = Truthfulness_External()
-                    results = []
-                    for i in range(len(prompts)):
-                        eval_res = strategy.evaluate(agent_response=agent_responses[i], expected_response=expected_responses[i])
-                        results.append(eval_res)
-                    score = np.mean(results)
-                    logger.info(f"Truthfulness External Score: {score}")
-                    return score
-            
-            case "truthfulness_internal":
+                strategy = Truthfulness_External()
+                results = []
                 for i in range(len(prompts)):
-                    ind_task,new_prompt = extract_from_brackets(prompts[i])
+                    eval_res = strategy.evaluate(agent_response=agent_responses[i], expected_response=expected_responses[i])
+                    results.append(eval_res)
+                score = np.mean(results)
+                logger.info(f"Truthfulness External Score: {score}")
+                return score
+            
+            case "truthfulness_internal_hotpot" | "truthfulness_internal_codah" | "truthfulness_internal_squad":
+                for i in range(len(prompts)):
+                    ind_task = extract_from_uds(self.strategy_name)
                     if ind_task == "codah":
                         strategy = Truthfulness_Internal(data_src=ind_task)
                     elif ind_task == "squad" or ind_task == "hotpot":
-                        strategy = Truthfulness_Internal(data_src=ind_task, prompt=new_prompt, system_prompt=system_prompts[i],judge_prompt=judge_prompts[i])
+                        strategy = Truthfulness_Internal(data_src=ind_task, prompt=prompts[i], system_prompt=system_prompts[i],judge_prompt=judge_prompts[i])
                     else:
                         logger.error(f"Unknown data source: {ind_task}. Please choose from 'codah', 'squad', or 'hotpot'.")
                         return None
@@ -149,7 +151,7 @@ class StrategyImplementor:
                 strategy = Compute_MTBF(file_path="logs/whatsapp_driver.log") # Default check for log file
                 return strategy.evaluate()
             
-            case "entity_recogonition":
+            case "entity_recognition":
                 strategy = EntityRecognition()
                 score = []
                 for i in range(len(agent_responses)):
@@ -190,17 +192,17 @@ class StrategyImplementor:
                 logger.info(f"Fairness Stereotype Agreement Score: {fairness_stereotype_agreement_score:.3f}")
                 return fairness_stereotype_agreement_score
             
-            case "fairness_preference":
+            case "fairness_preference_force" | "fairness_preference_plain":
                 fp_score = []
                 for i in range(len(prompts)):
-                    eval_type, new_prompt = extract_from_brackets(prompts[i])
+                    eval_type = extract_from_uds(self.strategy_name)
                     if eval_type == "plain":
                         strategy = Fairness_Preference(eval_type=eval_type)
-                        fp_score.append(strategy.evaluate(agent_response=agent_responses[i], prompt=new_prompt))
+                        fp_score.append(strategy.evaluate(agent_response=agent_responses[i], prompt=prompts[i]))
                     else:
                         eval_type = "force"
                         strategy = Fairness_Preference(eval_type=eval_type) 
-                        fp_score.append(strategy.evaluate(agent_response=agent_responses[i], prompt=new_prompt))
+                        fp_score.append(strategy.evaluate(agent_response=agent_responses[i], prompt=prompts[i]))
                 fairness_preference_score = np.mean(fp_score)
                 logger.info(f"Fairness Preference Score: {fairness_preference_score:.3f}")
                 return fairness_preference_score
@@ -208,29 +210,16 @@ class StrategyImplementor:
             case "fairness_stereotype_recognition":
                 fsr_score = []
                 for i in range(len(prompts)):
-                    label, new_prompt = extract_from_brackets(prompts[i])
-                    if label == "stereotype":
-                        strategy = Fairness_Stereotype_Recognition(label=label)
-                        fsr_score.append(strategy.evaluate(agent_response=agent_responses[i], prompt=new_prompt))
-                    elif label == "anti-stereotype":
-                        strategy = Fairness_Stereotype_Recognition(label=label)
-                        fsr_score.append(strategy.evaluate(agent_response=agent_responses[i], prompt=new_prompt))
-                    elif label == "unrelated":
-                        strategy = Fairness_Stereotype_Recognition(label=label)                        
-                        fsr_score.append(strategy.evaluate(agent_response=agent_responses[i], prompt=new_prompt))
-                    else:
-                        logger.error(f"Label {label} not recognized in fairness stereotype recognition.")
-                        raise ValueError(f"Label {label} not recognized in fairness stereotype recognition.")
+                    fsr_score.append(Fairness_Stereotype_Recognition().evaluate(agent_response=agent_responses[i], prompt=prompts[i]))
                 fairness_stereotype_recognition_score = np.mean(fsr_score)
                 logger.info(f"Fairness Stereotype Recognition Score: {fairness_stereotype_recognition_score:.3f}")
                 return fairness_stereotype_recognition_score
             
 
-            case "hallucination":
-                scores = []
+            case "hallucination_halusumm" | "hallucination_haluqa" | "hallucination_mc":
                 for i in range(len(agent_responses)):
                     try:
-                        parsed_source, new_prompt = extract_from_brackets(prompts[i])
+                        parsed_source = extract_from_uds(self.strategy_name)
                     except Exception as e:
                         logger.warning(f"Could not extract source_type from prompt[{i}]: {prompts[i]} — {e}")
                         parsed_source = "unknown"
@@ -241,9 +230,8 @@ class StrategyImplementor:
                 logger.info(f"[Hallucination] Average Score: {avg_score}")
                 return avg_score
 
-            case "privacy":
+            case "privacy_strategy":
                 strategy = PrivacyStrategy(metric_name=self.__metric_name)
-                scores = []
                 for i in range(len(agent_responses)):
                     if self.__metric_name == "awareness_query":
                         score = strategy.evaluate(agent_responses[i],system_prompts[i],prompts[i])
@@ -260,9 +248,8 @@ class StrategyImplementor:
                 logger.info(f"[Privacy] {self.__metric_name} Score: {avg_score}")
                 return avg_score
 
-            case "safety":
+            case "safety_strategy":
                 strategy = SafetyStrategy(metric_name=self.__metric_name)
-                scores = []
                 for i in range(len(agent_responses)):
                     score = strategy.evaluate(agent_responses[i],prompts[i])
                     scores.append(score)
@@ -277,14 +264,14 @@ class StrategyImplementor:
                 return score
 
             
-            case "llm_judge":
+            case "llm_judge_positive" | "llm_judge_negative":
                 geval = []
                 for i in range(len(agent_responses)):
-                    p_type,prompt=extract_from_brackets(prompts[i])
+                    p_type=extract_from_uds(self.strategy_name)
                     strategy = LLMJudgeStrategy(
                         metric_name=self.kwargs.get("metric_name"),
                         model_name=self.kwargs.get("model_name", "mistral:7b-instruct"),
-                        prompt=prompt,
+                        prompt=prompts[i],
                         judge_prompt=judge_prompts[i],
                         system_prompt=system_prompts[i],
                         base_url=os.environ.get("OLLAMA_URL", "http://localhost:11434")
@@ -292,29 +279,100 @@ class StrategyImplementor:
                     score = strategy.evaluate(agent_responses[i], expected_responses[i])
                     if p_type == 'positive':
                         geval.append(score)
+                        logger.info(f"Positive {self.__metric_name} Use Case Score %s", score)
                     else:
                         geval.append(1.0 - score)
+                        logger.info(f"Negative {self.__metric_name} Use Case Score %s", score)
+                logger.info(f"Mean {self.__metric_name} Use Case Score %s", np.mean(geval))
                 return np.mean(geval)
 
             case "fluency_score":
                 strategy = IndianLanguageFluencyScorer()
-                scores = []
                 for i, response in enumerate(agent_responses):
                     score = strategy.evaluate(response)
                     scores.append(score)
                     
-                logger.info("Average Fluency Score",sum(scores)/len(scores))
+                logger.info("Average Fluency Score: %s",sum(scores)/len(scores))
                 return sum(scores)/len(scores)
                 
             case "indian_lang_grammatical_check":
                 strategy = IndianLangGrammaticalCheck()
-                scores = []
                 for i, response in enumerate(agent_responses):
                     score = strategy.evaluate(response)
                     scores.append(score)
-                logger.info("Average Grammatical Correctness score:",sum(scores)/len(scores))
+                logger.info("Average Grammatical Correctness score: %s",sum(scores)/len(scores))
                 return sum(scores)/len(scores)
             
+            case "bias_detection":
+                strategy = BiasDetection()
+                for response in agent_responses:
+                    score = strategy.evaluate(response)
+                    scores.append(score)
+                logger.info(f"Average Bias Score: {sum(scores)/len(scores)}")
+                return sum(scores)/len(scores)
+
+            case "similarity_match":
+                strategy = SimilarityMatchStrategy(metric_name = self.__metric_name)
+                for i in range(len(agent_responses)):
+                    score = strategy.evaluate(agent_responses[i], expected_responses[i])
+                    scores.append(score)
+                logger.info(f"Average {self.__metric_name} score is: {sum(scores)/len(scores)}" )
+            
+            case "grammatical_strategies":
+                strategy = GrammaticalStrategy()
+                for response in agent_responses:
+                    score = strategy.evaluate([response])
+                    scores.append(score)
+                logger.info(f"Average Grammatical Score: {sum(scores)/len(scores)}")
+                return sum(scores)/len(scores)
+            
+            case "language_detect_gt":
+                strategy = LanguageStrategiesAsync(strategy_name = self.strategy_name)
+                for i in range(len(agent_responses)):
+                    score = asyncio.run(strategy.evaluate(agent_responses[i], expected_responses[i]))
+                    scores.append(score)
+                logger.info(f"Average language detection score is: {sum(scores)/len(scores)}" )
+                return sum(scores)/len(scores)
+            
+            case "language_similarity_gt":
+                strategy = LanguageStrategiesAsync(strategy_name = self.strategy_name)
+                for i in range(len(agent_responses)):
+                    score = asyncio.run(strategy.evaluate(agent_responses[i], expected_responses[i]))
+                    scores.append(score)
+                logger.info(f"Average language similarity score is: {sum(scores)/len(scores)}" )
+                return sum(scores)/len(scores)
+            
+            case "language_detect_langdetect":
+                strategy = LanguageStrategiesSync(strategy_name = self.strategy_name)
+                for i in range(len(agent_responses)):
+                    score = strategy.evaluate(agent_responses[i], expected_responses[i])
+                    scores.append(score)
+                logger.info(f"Average language detection score is: {sum(scores)/len(scores)}" )
+                return sum(scores)/len(scores)
+            
+            case "language_similarity_sarvam":
+                strategy = LanguageStrategiesSync(strategy_name = self.strategy_name)
+                for i in range(len(agent_responses)):
+                    score = strategy.evaluate(agent_responses[i], expected_responses[i])
+                    scores.append(score)
+                logger.info(f"Average language similarity score is: {sum(scores)/len(scores)}" )
+                return sum(scores)/len(scores)
+            
+            case "lexicaldiversity":
+                strategy = LexicalDiversity()
+                for response in agent_responses:
+                    score = strategy.evaluate(response)
+                    scores.append(score)
+                logger.info(f"Average Lexical Diversity Score: {sum(scores)/len(scores)}")
+                return sum(scores)/len(scores)
+            
+            case "toxicity":
+                strategy = Toxicity()
+                for response in agent_responses:
+                    score = strategy.evaluate(response)
+                    scores.append(score)
+                logger.info(f"Average Toxicity Diversity Score: {sum(scores)/len(scores)}")
+                return sum(scores)/len(scores)
             case _:
                 logger.error(f"Strategy {self.strategy_name} not recognized.")
                 raise ValueError(f"Strategy {self.strategy_name} not recognized.")

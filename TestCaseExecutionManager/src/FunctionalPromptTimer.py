@@ -1,3 +1,4 @@
+'''
 import json
 import sys
 from datetime import datetime
@@ -119,3 +120,4 @@ class FunctionalPromptTimer:
                 })
 
         return results
+'''

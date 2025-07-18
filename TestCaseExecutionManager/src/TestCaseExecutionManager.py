@@ -1,5 +1,5 @@
 # TestExecutionManager.py
-from FunctionalPromptTimer import FunctionalPromptTimer 
+
 import json
 import argparse
 from typing import List, Dict, Union
@@ -28,7 +28,7 @@ current_file = Path(__file__).resolve()
 # Setting path to the Data folder
 plans_path = current_file.parents[2] / "Data" / "plans.json"
 
-data_points_path = current_file.parents[2] / "Data" / "DataPoints.json"
+data_points_path = current_file.parents[2] / "Data" / "new_data.json"
 
 response_file = current_file.parents[2] / "Data" / "responses.json"
 
@@ -78,7 +78,8 @@ if args.test_case_count is None:
     total_prompts = 0
     for metric_id in metric_ids:
         metric_data = all_cases_by_metric.get(metric_id, {})
-        cases = metric_data.get('cases', [])
+        cases_nested = metric_data.get("cases", [])
+        cases = [item for sublist in cases_nested for item in sublist]
         total_prompts += len(cases)
     args.test_case_count = total_prompts
 
@@ -136,7 +137,8 @@ class TestCaseExecutionManager:
                 metric_data = all_cases_by_metric.get(metric_id)
                 if not metric_data:
                     continue
-                cases = metric_data.get("cases", [])
+                cases_nested = metric_data.get("cases", [])
+                cases = [item for sublist in cases_nested for item in sublist]
                 all_cases.extend(cases)
 
             return all_cases[:self.limit] if self.limit else all_cases
@@ -228,7 +230,8 @@ class TestCaseExecutionManager:
             metric_data = all_cases_by_metric.get(metric_id)
             if not metric_data:
                 continue
-            cases = metric_data.get("cases", [])
+            cases_nested = metric_data.get("cases", [])
+            cases = [item for sublist in cases_nested for item in sublist]
             if self.domain:
                 cases = [c for c in cases if c.get("DOMAIN", "").lower() == self.domain.lower()]
             logger.info(f"Metric ID: {metric_id} -> {plan_entry.get('metrics', {}).get(metric_id, metric_id)} has {len(cases)} test cases")
@@ -325,19 +328,6 @@ manager = TestCaseExecutionManager(
     )
 
 if args.action == "send_all_prompts":
-    if args.test_plan_id == "T6":
-        timer = FunctionalPromptTimer(
-            test_plan_id=args.test_plan_id,
-            agent_name=args.agent_name,
-            base_url=args.base_url,
-            run_mode=args.run_mode,
-            test_case_count=args.test_case_count,
-            test_plan_file=str(data_points_path),
-            domain=args.domain
-        )
-        results = timer.collect_prompt_timings()
-    else:
-        results = manager.send_all_prompts()
-
+    results = manager.send_all_prompts()
     output_file = str(response_file)
-    print(f"Responses saved to {output_file}")
+    print(f"Responses saved to {output_file}")
