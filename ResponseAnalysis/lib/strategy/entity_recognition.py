@@ -1,4 +1,5 @@
 import re
+import json
 import warnings
 from strategy_base import Strategy
 from logger import get_logger
@@ -19,8 +20,32 @@ class EntityRecognition(Strategy):
         :param text: String containing entity-tag objects like {'entity': 'wheat', 'ner_tag': 'CROP'}
         :return: List of normalized (entity, tag) tuples
         """
-        pattern = re.compile(r"\{['\"]entity['\"]:\s*['\"](.*?)['\"],\s*['\"]ner_tag['\"]:\s*['\"](.*?)['\"]\}")
-        return [(m[0].strip().lower(), m[1].strip().upper()) for m in pattern.findall(text)]
+        pairs = []
+
+        # Clean 
+        text = text.replace("```", "").strip().strip(',')
+
+        # Try parsing structured JSON block if present
+        try:
+            # Try extracting list of dicts inside square brackets
+            list_match = re.search(r"\[\s*\{.*?\}\s*\]", text, re.DOTALL)
+            if list_match:
+                data = json.loads(list_match.group(0))
+            else:
+                # Attempt to wrap plain dicts into a list and parse
+                data = json.loads(f"[{text}]")
+            
+            for item in data:
+                if isinstance(item, dict) and "entity" in item and "ner_tag" in item:
+                    pairs.append((item["entity"].strip().lower(), item["ner_tag"].strip().upper()))
+            return pairs
+        except Exception:
+            pass  # Fallback to regex if parsing fails
+
+        # Fallback regex pattern (less strict, accepts mixed quotes)
+        pattern = re.compile(r"""\{\s*['"]entity['"]\s*:\s*['"](.*?)['"]\s*,\s*['"]ner_tag['"]\s*:\s*['"](.*?)['"]\s*\}""", re.DOTALL)
+        matches = pattern.findall(text)
+        return [(ent.strip().lower(), tag.strip().upper()) for ent, tag in matches]
 
     def ner_recognition(self, expected_str: str, response_str: str) -> dict:
         """
@@ -56,11 +81,11 @@ class EntityRecognition(Strategy):
 
 # Example usage
 # expected_response = """
-# [{'entity': 'wheat', 'ner_tag': 'CROP'}, {'entity': 'punjab', 'ner_tag': 'LOCATION'}]
+# {'entity': 'wheat', 'ner_tag': 'CROP'}, {'entity': 'punjab', 'ner_tag': 'LOCATION'}
 # """
 
 # agent_response = """
-# Here is the extracted entities: [{'entity': 'wheat', 'ner_tag': 'CROP'}, {'entity': 'punjab', 'ner_tag': 'LOCATION'}, {'entity': 'india', 'ner_tag': 'COUNTRY'}]
+# Here is the extracted entities: {'entity': 'wheat', 'ner_tag': 'CROP'}, {'entity': 'punjab', 'ner_tag': 'LOCATION'}, {'entity': 'india', 'ner_tag': 'COUNTRY'}
 # """
 
 # ner_eval = EntityRecognition()
