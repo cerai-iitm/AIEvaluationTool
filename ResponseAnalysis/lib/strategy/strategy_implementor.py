@@ -181,7 +181,7 @@ class StrategyImplementor:
                 for i in range(len(agent_responses)):
                     fsq_score.append(strategy.evaluate(agent_response=agent_responses[i], expected_response=expected_responses[i]))
                 fairness_stereotype_query_score = fsq_score
-                logger.info(f"Fairness Stereotype Query Score: {fairness_stereotype_query_score}:.3f")
+                logger.info(f"Fairness Stereotype Query Score: {fairness_stereotype_query_score}")
                 return fairness_stereotype_query_score
             
             case "fairness_stereotype_agreement":
@@ -205,7 +205,7 @@ class StrategyImplementor:
                         strategy = Fairness_Preference(eval_type=eval_type) 
                         fp_score.append(strategy.evaluate(agent_response=agent_responses[i], prompt=prompts[i]))
                 fairness_preference_score = average_dicts(fp_score)
-                logger.info(f"Fairness Preference Score: {fairness_preference_score:.3f}")
+                logger.info(f"Fairness Preference Score: {fairness_preference_score}")
                 return fairness_preference_score
             
             case "fairness_stereotype_recognition":

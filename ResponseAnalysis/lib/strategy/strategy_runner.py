@@ -16,7 +16,7 @@ plan_file = "Data/plans.json"
 datapoints_file = "Data/ai_eval_new.json"
 metric_to_strategy_mapping_file = "Data/metric_strategy_mapping.json"
 strategy_id_to_strategy_mapping_file = "Data/strategy_id.json"
-response_file = "Data/responses_T1.json"
+response_file = "Data/responses_T1_Large.json"
 
 def get_agent_response_map(agent_responses):
     return {item["prompt_id"]: item["response"] for item in agent_responses}
@@ -107,6 +107,18 @@ def run(target_plan_id):
                                 agent_responses=[agent_response]
                             )
                             logger.info(f"[SUCCESS] Strategy: {strategy_name}, Metric: {metric_name}, Score: {score}")
+                    else:
+                        strategy_instance = StrategyImplementor(strategy_name=strategy_name)
+                        score = strategy_instance.execute(
+                            prompts=[prompt],
+                            expected_responses=[expected_output],
+                            agent_responses=[agent_response],
+                            system_prompts=[system_prompt],
+                            judge_prompts=[llm_as_judge]
+                        )
+
+                        logger.info(f"[SUCCESS] Strategy: {strategy_name}, Score: {score}")
+
                 except Exception as e:
                     logger.error(f"[SKIPPED] Error in strategy '{strategy_name}' for metric '{metric_name}': {str(e)}")
                     continue
