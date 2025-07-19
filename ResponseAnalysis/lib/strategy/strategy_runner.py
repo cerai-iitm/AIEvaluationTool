@@ -13,10 +13,10 @@ from collections import defaultdict
 logger = get_logger("strategy_runner")
 
 plan_file = "Data/plans.json"
-datapoints_file = "Data/ai_eval_new.json"
+datapoints_file = "Data/datapoints_old_metrics.json"
 metric_to_strategy_mapping_file = "Data/metric_strategy_mapping.json"
 strategy_id_to_strategy_mapping_file = "Data/strategy_id.json"
-response_file = "Data/responses_T1_Large.json"
+response_file = "Data/responses_T6_Large_old.json"
 
 def get_agent_response_map(agent_responses):
     return {item["prompt_id"]: item["response"] for item in agent_responses}
@@ -188,4 +188,4 @@ def run(target_plan_id):
             executed_strategies.append(strategy_name)
 
 # Example usage:
-run("T1") 
+run("T6") 
