@@ -33,7 +33,7 @@ import asyncio
 from lexical_diversity_calc import LexicalDiversity
 from toxicity import Toxicity
 from efficacy_of_content_filtering import ContentFiltering
-from utils import extract_from_uds, RtA
+from utils import extract_from_uds, RtA, average_dicts
 
 logger = get_logger("strategy_implementor")
 
@@ -145,11 +145,11 @@ class StrategyImplementor:
                 return score
  
             case "compute_error_rate":
-                strategy = ComputeErrorRate(file_path="logs/whatsapp_driver.log") # Default check for log file
+                strategy = ComputeErrorRate(file_path="InterfaceManager/APIService/src/logs/whatsapp_driver.log") # Default check for log file
                 return strategy.evaluate()
             
             case "compute_mtbf":
-                strategy = Compute_MTBF(file_path="logs/whatsapp_driver.log") # Default check for log file
+                strategy = Compute_MTBF(file_path="InterfaceManager/APIService/src/logs/whatsapp_driver.log") # Default check for log file
                 return strategy.evaluate()
             
             case "entity_recognition":
@@ -178,9 +178,9 @@ class StrategyImplementor:
             case "fairness_stereotype_query":
                 strategy = Fairness_Stereotype_Query()
                 fsq_score = []
-                for i in range(agent_responses):
+                for i in range(len(agent_responses)):
                     fsq_score.append(strategy.evaluate(agent_response=agent_responses[i], expected_response=expected_responses[i]))
-                fairness_stereotype_query_score = np.mean(fsq_score)
+                fairness_stereotype_query_score = fsq_score
                 logger.info(f"Fairness Stereotype Query Score: {fairness_stereotype_query_score}:.3f")
                 return fairness_stereotype_query_score
             
@@ -189,8 +189,8 @@ class StrategyImplementor:
                 fsa_score = []
                 for i in range(len(prompts)):
                     fsa_score.append(strategy.evaluate(agent_response=agent_responses[i], prompt=prompts[i]))
-                fairness_stereotype_agreement_score = np.mean(fsa_score)
-                logger.info(f"Fairness Stereotype Agreement Score: {fairness_stereotype_agreement_score:.3f}")
+                fairness_stereotype_agreement_score = fsa_score
+                logger.info(f"Fairness Stereotype Agreement Score: {fairness_stereotype_agreement_score}")
                 return fairness_stereotype_agreement_score
             
             case "fairness_preference_force" | "fairness_preference_plain":
@@ -204,16 +204,19 @@ class StrategyImplementor:
                         eval_type = "force"
                         strategy = Fairness_Preference(eval_type=eval_type) 
                         fp_score.append(strategy.evaluate(agent_response=agent_responses[i], prompt=prompts[i]))
-                fairness_preference_score = np.mean(fp_score)
+                fairness_preference_score = average_dicts(fp_score)
                 logger.info(f"Fairness Preference Score: {fairness_preference_score:.3f}")
                 return fairness_preference_score
             
             case "fairness_stereotype_recognition":
                 fsr_score = []
-                for i in range(len(prompts)):
-                    fsr_score.append(Fairness_Stereotype_Recognition().evaluate(agent_response=agent_responses[i], prompt=prompts[i]))
-                fairness_stereotype_recognition_score = np.mean(fsr_score)
-                logger.info(f"Fairness Stereotype Recognition Score: {fairness_stereotype_recognition_score:.3f}")
+                for i in range(len(agent_responses)):
+                    strategy = Fairness_Stereotype_Recognition()
+                    print(agent_responses[i] , expected_responses[i])
+                    score = strategy.evaluate(agent_response=agent_responses[i], expected_response=expected_responses[i])
+                    fsr_score.append(score)
+                fairness_stereotype_recognition_score = average_dicts(fsr_score)
+                logger.info(f"Fairness Stereotype Recognition Score: {fairness_stereotype_recognition_score}")
                 return fairness_stereotype_recognition_score
             
 

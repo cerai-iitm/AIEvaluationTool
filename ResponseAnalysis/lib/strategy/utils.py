@@ -21,6 +21,7 @@ from transformers import BartTokenizer, BartForConditionalGeneration
 from typing import List
 import numpy as np
 import re
+from collections import defaultdict
 
 logger = get_logger("utils_calls")
 
@@ -385,3 +386,16 @@ class BARTScorer:
 
         print(self.score(src_list, tgt_list, batch_size))
 
+
+def average_dicts(dict_list):
+    if not dict_list:
+        return {}
+
+    totals = defaultdict(float)
+    count = len(dict_list)
+
+    for d in dict_list:
+        for key, value in d.items():
+            totals[key] += value
+
+    return {key: totals[key] / count for key in totals}
