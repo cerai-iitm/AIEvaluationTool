@@ -10,6 +10,7 @@ envir/
 whatsapp_profile/
 dataset_for_review**
 logs/
+venv/
 
 *.log
 analyzer_log.log
