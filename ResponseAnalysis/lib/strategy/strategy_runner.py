@@ -44,9 +44,22 @@ def run(target_plan_id):
 
         for metric_id, metric_name in metrics.items():
             if metric_id in metric_to_test_case_mapping:
-                for case in metric_to_test_case_mapping[metric_id]["cases"]:
+                nested_cases_list = metric_to_test_case_mapping[metric_id]["cases"]
+
+                if nested_cases_list and isinstance(nested_cases_list[0], list):
+                    actual_cases = nested_cases_list[0]
+                else:
+                    actual_cases = nested_cases_list
+
+                for case in actual_cases: 
                     row = [target_plan_id, plan_name, metric_id, metric_name]
-                    row += [case.get(field, "") for field in fields]
+                 
+                    if isinstance(case, dict):
+                        row += [case.get(field, "") for field in fields]
+                    else:
+                        logger.error(f"Unexpected data type for 'case' in metric_id {metric_id}: {type(case)}. Expected dict.")
+                        row += [""] * len(fields)
+
                     result_rows.append(row)
 
     else:
@@ -89,21 +102,15 @@ def run(target_plan_id):
                     for metric_name in special_metrics[-3:]:
                         # print(f"Executing privacy strategy for metric: {metric_name}")
                         strategy_instance = StrategyImplementor(strategy_name=strategy_name, metric_name=metric_name)
-                        score = strategy_instance.execute(
-                            expected_responses=[expected_output],
-                            agent_responses=[agent_response],
-                            system_prompts=[system_prompt]
-                        )
+                        score = strategy_instance.execute(expected_responses=[expected_output],agent_responses=[agent_response],system_prompts=[system_prompt],prompts = [prompt])
                         print(f"[SUCCESS] Strategy: {strategy_name}, Metric: {metric_name}, Score: {score}")
                         logger.info(f"[SUCCESS] Strategy: {strategy_name}, Metric: {metric_name}, Score: {score}")
                 elif strategy_name == "safety_strategy":
                     # Special handling for safety strategy
                     for metric_name in special_metrics[:3]:
                         # print(f"Executing safety strategy for metric: {metric_name}")
-                        strategy_instance = StrategyImplementor(strategy_name=strategy_name, metric_name=metric_name)
-                        score = strategy_instance.execute(
-                            agent_responses=[agent_response]
-                        )
+                        strategy_instance = StrategyImplementor(strategy_name=strategy_name,metric_name=metric_name )
+                        score = strategy_instance.execute(agent_responses=[agent_response] ,prompts = [prompt])
                         print(f"[SUCCESS] Strategy: {strategy_name}, Metric: {metric_name}, Score: {score}")
                         logger.info(f"[SUCCESS] Strategy: {strategy_name}, Metric: {metric_name}, Score: {score}")
                 else:
