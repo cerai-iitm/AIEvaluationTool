@@ -22,7 +22,7 @@ class GrammaticalStrategy(Strategy):
         result = tool.check(text)
         return result
     
-    def evaluate(self, agent_response: str, expected_response: None) -> float:
+    def evaluate(self, agent_response: str, expected_response: Optional[str] = None) -> float:
         """
         Check the grammatical correctness in the response
         :param prompt: The prompt sent to the agent to generate the response.
