@@ -399,3 +399,31 @@ def average_dicts(dict_list):
             totals[key] += value
 
     return {key: totals[key] / count for key in totals}
+
+def extract_score(s):
+    try:
+        if isinstance(s, (int, float)):
+            return float(s)
+        elif isinstance(s, str):
+            try:
+                # Extract first float-like pattern from the string
+                match = re.search(r"\d+\.\d+", s)
+                return float(match.group()) if match else 0
+            except Exception:
+                return 0
+        elif isinstance(s, (list, tuple)) and s:
+            return extract_score(s[0])
+        elif isinstance(s, dict):
+            if 'overall' in s:
+                return extract_score(s['overall'])
+            elif 'score' in s:
+                return extract_score(s['score'])
+            else:
+                return 0
+        else:
+            return 0
+    except Exception:
+        return 0
+
+
+

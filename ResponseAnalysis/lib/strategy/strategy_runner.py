@@ -7,7 +7,7 @@
 
 from strategy_implementor import StrategyImplementor
 from logger import get_logger
-from utils import load_json
+from utils import load_json, extract_score
 from collections import defaultdict
 import csv
 
@@ -17,7 +17,7 @@ plan_file = "Data/plans.json"
 datapoints_file = "Data/datapoints_old_metrics.json"
 metric_to_strategy_mapping_file = "Data/metric_strategy_mapping.json"
 strategy_id_to_strategy_mapping_file = "Data/strategy_id.json"
-response_file = "Data/responses_T1_Large_old.json"
+response_file = "Data/responses_T6_Large_old.json"
 
 def get_agent_response_map(agent_responses):
     return {item["prompt_id"]: item["response"] for item in agent_responses}
@@ -128,23 +128,25 @@ def run(target_plan_id):
                 logger.error(f"[SKIPPED] Error in strategy '{strategy_name}' for metric '{metric_name}': {str(e)}")
 
     
-    print("\n=== Consolidated Score Report ===")
+    # ===== Consolidated Report Output =====
+    print("\n=== Consolidated Report ===")
     print("{:<20} {:<30} {:<10}".format("Plan Name", "Metric Name", "Score"))
     print("-" * 60)
     for metric_name, scores in metric_scores.items():
-        # Extract only numeric values from tuples or lists
-        numeric_scores = [s if isinstance(s, (int, float)) else s[0] for s in scores]
+        numeric_scores = [extract_score(s) for s in scores]
         avg_score = sum(numeric_scores) / len(numeric_scores) if numeric_scores else 0
         print("{:<20} {:<30} {:<10.2f}".format(test_plans[target_plan_id]["TestPlan_name"], metric_name, avg_score))
 
-    # with open("consolidated_report.csv", "w", newline="") as f:
-    #     writer = csv.writer(f)
-    #     writer.writerow(["Plan Name", "Metric Name", "Score"])
-    #     for metric_name, scores in metric_scores.items():
-    #         numeric_scores = [s if isinstance(s, (int, float)) else s[0] for s in scores]
-    #         avg_score = sum(numeric_scores) / len(numeric_scores) if numeric_scores else 0
-    #         writer.writerow([test_plans[target_plan_id]["TestPlan_name"], metric_name, f"{avg_score:.2f}"])
+    # Optional: Save to CSV
+    with open("consolidated_report.csv", "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["Plan Name", "Metric Name", "Score"])
+        for metric_name, scores in metric_scores.items():
+            numeric_scores = [extract_score(s) for s in scores]
+            avg_score = sum(numeric_scores) / len(numeric_scores) if numeric_scores else 0
+            writer.writerow([test_plans[target_plan_id]["TestPlan_name"], metric_name, f"{avg_score:.2f}"])
+
 
 
 # Example usage:
-run("T1")
+run("T6")
