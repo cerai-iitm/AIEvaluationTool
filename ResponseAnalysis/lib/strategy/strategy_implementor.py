@@ -33,7 +33,7 @@ import asyncio
 from lexical_diversity_calc import LexicalDiversity
 from toxicity import Toxicity
 from efficacy_of_content_filtering import ContentFiltering
-from utils import extract_from_uds, RtA
+from utils import extract_from_uds, RtA, average_dicts
 
 logger = get_logger("strategy_implementor")
 
@@ -97,13 +97,13 @@ class StrategyImplementor:
                     similarities.append(strategy.evaluate(agent_responses[i], expected_responses[i]))
                 avg_similarity = np.mean(similarities)
                 logger.info(f"Robustness Adv Instruction Similarities Score: {avg_similarity}")
-                return avg_similarity
+                return float(avg_similarity)
             
             case "robustness_ood":
                 strategy = Robustness_OutOfDomain(device="cpu")
                 results = []
                 for i in range(len(prompts)):
-                    eval_res = strategy.evaluate(agent_response=agent_responses[i], agent_prompt=prompts[i])
+                    eval_res = strategy.evaluate(system_prompt=system_prompts[i] ,agent_response=agent_responses[i], agent_prompt=prompts[i])
                     results.append(eval_res)
                 RtA_score = RtA(results)
                 logger.info(f"Robustness Out of Domain Score: {RtA_score}")
@@ -120,6 +120,7 @@ class StrategyImplementor:
                 return score
             
             case "truthfulness_internal_hotpot" | "truthfulness_internal_codah" | "truthfulness_internal_squad":
+                net_score = []
                 for i in range(len(prompts)):
                     ind_task = extract_from_uds(self.strategy_name)
                     if ind_task == "codah":
@@ -133,7 +134,7 @@ class StrategyImplementor:
                     net_score.append(strategy.evaluate(agent_responses[i],expected_responses[i]))
                 score = np.mean(net_score)
                 logger.info(f"Truthfulness Internal Score: {score}")
-                return score
+                return float(score)
             
             case "transliterated_language_strategy":
                 scores =[]
@@ -142,14 +143,14 @@ class StrategyImplementor:
                     scores.append(strategy.evaluate(agent_responses[i], expected_responses[i]))
                 score = np.mean(scores)
                 logger.info(f"Transliterated Language Strategy Score: {score}")
-                return score
+                return float(score)
  
             case "compute_error_rate":
-                strategy = ComputeErrorRate(file_path="logs/whatsapp_driver.log") # Default check for log file
+                strategy = ComputeErrorRate(file_path="InterfaceManager/APIService/src/logs/whatsapp_driver.log") # Default check for log file
                 return strategy.evaluate()
             
             case "compute_mtbf":
-                strategy = Compute_MTBF(file_path="logs/whatsapp_driver.log") # Default check for log file
+                strategy = Compute_MTBF(file_path="InterfaceManager/APIService/src/logs/whatsapp_driver.log") # Default check for log file
                 return strategy.evaluate()
             
             case "entity_recognition":
@@ -159,7 +160,7 @@ class StrategyImplementor:
                     score.append(strategy.evaluate(agent_response=agent_responses[i], expected_response=expected_responses[i]))
                     ner_score = np.mean(score)
                 logger.info(f"Entity Recognition Accuracy: {ner_score:.3f}")
-                return ner_score
+                return float(ner_score)
             
             case "detect_toxicity_using_perspective_api":
                 strategy = ToxicityDetectionUsingAPI()
@@ -173,16 +174,16 @@ class StrategyImplementor:
                     agent_response_toxicity_score = np.mean(agent_response_harm_score)
                 logger.info(f"Detection of harmful inputs score: {prompt_toxicity_score:.3f}")
                 logger.info(f"Inappropriate Content Detection Rate: {agent_response_toxicity_score:.3f}")
-                return prompt_toxicity_score, agent_response_toxicity_score
+                return float(prompt_toxicity_score), float(agent_response_toxicity_score)
             
             case "fairness_stereotype_query":
                 strategy = Fairness_Stereotype_Query()
                 fsq_score = []
-                for i in range(agent_responses):
+                for i in range(len(agent_responses)):
                     fsq_score.append(strategy.evaluate(agent_response=agent_responses[i], expected_response=expected_responses[i]))
                 fairness_stereotype_query_score = np.mean(fsq_score)
-                logger.info(f"Fairness Stereotype Query Score: {fairness_stereotype_query_score}:.3f")
-                return fairness_stereotype_query_score
+                logger.info(f"Fairness Stereotype Query Score: {fairness_stereotype_query_score}")
+                return float(fairness_stereotype_query_score)
             
             case "fairness_stereotype_agreement":
                 strategy = Fairness_Stereotype_Agreement()
@@ -190,8 +191,8 @@ class StrategyImplementor:
                 for i in range(len(prompts)):
                     fsa_score.append(strategy.evaluate(agent_response=agent_responses[i], prompt=prompts[i]))
                 fairness_stereotype_agreement_score = np.mean(fsa_score)
-                logger.info(f"Fairness Stereotype Agreement Score: {fairness_stereotype_agreement_score:.3f}")
-                return fairness_stereotype_agreement_score
+                logger.info(f"Fairness Stereotype Agreement Score: {fairness_stereotype_agreement_score}")
+                return float(fairness_stereotype_agreement_score)
             
             case "fairness_preference_force" | "fairness_preference_plain":
                 fp_score = []
@@ -204,16 +205,19 @@ class StrategyImplementor:
                         eval_type = "force"
                         strategy = Fairness_Preference(eval_type=eval_type) 
                         fp_score.append(strategy.evaluate(agent_response=agent_responses[i], prompt=prompts[i]))
-                fairness_preference_score = np.mean(fp_score)
-                logger.info(f"Fairness Preference Score: {fairness_preference_score:.3f}")
+                fairness_preference_score = average_dicts(fp_score)
+                logger.info(f"Fairness Preference Score: {fairness_preference_score}")
                 return fairness_preference_score
             
             case "fairness_stereotype_recognition":
                 fsr_score = []
-                for i in range(len(prompts)):
-                    fsr_score.append(Fairness_Stereotype_Recognition().evaluate(agent_response=agent_responses[i], prompt=prompts[i]))
-                fairness_stereotype_recognition_score = np.mean(fsr_score)
-                logger.info(f"Fairness Stereotype Recognition Score: {fairness_stereotype_recognition_score:.3f}")
+                for i in range(len(agent_responses)):
+                    strategy = Fairness_Stereotype_Recognition()
+                    print(agent_responses[i] , expected_responses[i])
+                    score = strategy.evaluate(agent_response=agent_responses[i], expected_response=expected_responses[i])
+                    fsr_score.append(score)
+                fairness_stereotype_recognition_score = average_dicts(fsr_score)
+                logger.info(f"Fairness Stereotype Recognition Score: {fairness_stereotype_recognition_score}")
                 return fairness_stereotype_recognition_score
             
 
@@ -327,7 +331,7 @@ class StrategyImplementor:
             case "grammatical_strategies":
                 strategy = GrammaticalStrategy()
                 for response in agent_responses:
-                    score = strategy.evaluate([response])
+                    score = strategy.evaluate(agent_response=[response])
                     scores.append(score)
                 logger.info(f"Average Grammatical Score: {sum(scores)/len(scores)}")
                 return sum(scores)/len(scores)

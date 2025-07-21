@@ -64,11 +64,11 @@ class LanguageStrategiesSync(Strategy):
         match self.__strategy_name:
             case "language_detect_langdetect":
                 score = self.language_detect_langdetect(agent_response, expected_response)
-                logger.info("Language Detection:", score)
+                logger.info("Language Detection: %s", score)
                 return score
             case "language_similarity_sarvam":
                 score = self.language_similarity_sarvam(agent_response, expected_response)
-                logger.info("Language Similarity Sarvam:", score)
+                logger.info("Language Similarity Sarvam: %s", score)
                 return score
 
 #Test

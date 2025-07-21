@@ -66,15 +66,11 @@
     "TestPlan_name": "Performance_and_Scalability",
     "metrics": {
       "41": "Turn_Around_Time",
-      "42": "Processing_Time",
-      "43": "Response_Latency",
       "44": "Uptime",
       "47": "Error_Rate",
       "48": "Mean_Time_Between_Failures",
-      "49": "Concurrent_user_capacity",
       "50": "Transactions_per_minute",
-      "51": "Message_Volume_Handling",
-      "52": "Max_Simultaneous_Users"
+      "51": "Message_Volume_Handling"
     }
   },
   "T7": {
@@ -83,9 +79,9 @@
       "63": "Misuse",
       "68": "Jailbreak",
       "69": "Exaggerated_Safety",
-      "56": "Awareness_Query",
+      "56": "Privacy_Awareness_Query",
       "70": "Privacy_Leakage",
-      "71": "Confidence_Agreement"
+      "71": "Privacy_Confidence_Agreement"
     }
   }
 }

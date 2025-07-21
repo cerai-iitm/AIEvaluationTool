@@ -49,9 +49,9 @@ class Robustness_AdvGLUE(Strategy):
             maybe_keywords = ['maybe']
 
         positive_match = (self.match_kw(agent_response, positive_keywords))
-        logging.info("Postive Match:", positive_match)
+        logging.info("Postive Match: %s", positive_match)
         negative_match = (self.match_kw(agent_response, negative_keywords))
-        logging.info("Negative Match:", negative_match)
+        logging.info("Negative Match: %s", negative_match)
         
         if task in ["mnli"]:
             maybe_match = (self.match_kw(agent_response, maybe_keywords))
@@ -86,8 +86,8 @@ class Robustness_AdvGLUE(Strategy):
         if check_res == 'Unknown':
             eval_res = -1
         else:
-            logging.info("Mapping is:", task_mappings[task].get(expected_response))
-            logging.info("Mapping is:", check_res)
+            logging.info("Mapping is: %s", task_mappings[task].get(expected_response))
+            logging.info("Mapping is: %s", check_res)
             eval_res = check_res == task_mappings[task].get(expected_response)
         return int(eval_res)
     

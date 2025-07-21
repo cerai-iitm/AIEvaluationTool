@@ -28,7 +28,7 @@ class TAT_TPM_MVH(Strategy):
         """
         super().__init__(name, kwargs=kwargs)
         self.__metric_name = kwargs.get("metric_name")
-        self.log_file_path = kwargs.get("InterfaceManager\APIService\src\logs\whatsapp_driver.log", "whatsapp_driver.log")
+        self.log_file_path = kwargs.get("log_file_path", "InterfaceManager/APIService/src/logs/whatsapp_driver.log")
         self.prompt_keyword = "Sending prompt to the bot"
         self.response_keyword = "Received response from WhatsApp"
         self.time_period_minutes = kwargs.get("time_period_minutes", 1)
