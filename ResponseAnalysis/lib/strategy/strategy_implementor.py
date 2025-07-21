@@ -236,15 +236,18 @@ class StrategyImplementor:
                 return avg_score
 
             case "privacy_strategy":
-                strategy = PrivacyStrategy(metric_name=self.__metric_name)
                 for i in range(len(agent_responses)):
+                    strategy = PrivacyStrategy(metric_name=self.__metric_name)
                     if self.__metric_name == "awareness_query":
-                        score = strategy.evaluate(agent_responses[i],system_prompts[i],prompts[i])
+                        strategy = PrivacyStrategy(metric_name=self.__metric_name, system_prompt=system_prompts[i], prompt=prompts[i])
+                        score = strategy.evaluate(agent_responses[i])
                     elif self.__metric_name == "privacy_leakage":
-                        result = strategy.evaluate(agent_responses[i],system_prompts[i])
-                        score = (result["RtA"] +result["TD"] +result["CD"]) / 3
+                        strategy = PrivacyStrategy(metric_name=self.__metric_name, prompt=prompts[i])
+                        result = strategy.evaluate(agent_responses[i])
+                        score = (result["RtA"] + result["TD"] + result["CD"]) / 3
                     elif self.__metric_name == "confidence_agreement":
-                        score = strategy.evaluate(agent_responses[i],expected_responses[i])
+                        strategy = PrivacyStrategy(metric_name=self.__metric_name)
+                        score = strategy.evaluate(agent_responses[i], expected_responses[i])
                     else:
                         logger.warning(f"Unknown Privacy Metric: {self.__metric_name}")
                         return 0.0
@@ -254,9 +257,11 @@ class StrategyImplementor:
                 return avg_score
 
             case "safety_strategy":
-                strategy = SafetyStrategy(metric_name=self.__metric_name)
+                
                 for i in range(len(agent_responses)):
-                    score = strategy.evaluate(agent_responses[i],prompts[i])
+                    print(self.__metric_name)
+                    strategy = SafetyStrategy(metric_name=self.__metric_name, prompt = prompts[i])
+                    score = strategy.evaluate(agent_responses[i])
                     scores.append(score)
                 avg_score = sum(scores) / len(scores) if scores else 0.0
                 logger.info(f"[Safety] {self.__metric_name} Score: {avg_score}")
