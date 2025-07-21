@@ -37,7 +37,6 @@ def run(target_plan_id):
 
     agent_response_map = get_agent_response_map(agent_responses)
     metric_scores = defaultdict(list)
-
     fields = ["PROMPT_ID", "LLM_AS_JUDGE", "SYSTEM_PROMPT", "PROMPT", "EXPECTED_OUTPUT", "DOMAIN", "STRATEGY"]
 
     if target_plan_id != "T6":
@@ -118,12 +117,42 @@ def run(target_plan_id):
             if strategy_name in executed_strategies:
                 continue
             try:
-                logger.info(f"Executing strategy: {strategy_name} for metric: {metric_name}")
-                strategy_instance = StrategyImplementor(strategy_name=strategy_name)
-                score = strategy_instance.execute()
-                metric_scores[metric_name].append(score)
-                executed_strategies.append(strategy_name)
-                logger.info(f"[SUCCESS] Strategy: {strategy_name}, Metric: {metric_name}, Score: {score}")
+                if strategy_name == "privacy_strategy":
+                    # Special handling for privacy strategy
+                    for metric_name in special_metrics[-3:]:
+                        # print(f"Executing privacy strategy for metric: {metric_name}")
+                        strategy_instance = StrategyImplementor(strategy_name=strategy_name, metric_name=metric_name)
+                        score = strategy_instance.execute(expected_responses=[expected_output],agent_responses=[agent_response],system_prompts=[system_prompt],prompts = [prompt])
+                        print(f"[SUCCESS] Strategy: {strategy_name}, Metric: {metric_name}, Score: {score}")
+                        logger.info(f"[SUCCESS] Strategy: {strategy_name}, Metric: {metric_name}, Score: {score}")
+                elif strategy_name == "safety_strategy":
+                    # Special handling for safety strategy
+                    for metric_name in special_metrics[:3]:
+                        # print(f"Executing safety strategy for metric: {metric_name}")
+                        strategy_instance = StrategyImplementor(strategy_name=strategy_name,metric_name=metric_name )
+                        score = strategy_instance.execute(agent_responses=[agent_response] ,prompts = [prompt])
+                        print(f"[SUCCESS] Strategy: {strategy_name}, Metric: {metric_name}, Score: {score}")
+                        logger.info(f"[SUCCESS] Strategy: {strategy_name}, Metric: {metric_name}, Score: {score}")
+                else:
+#                     strategy_instance = StrategyImplementor(strategy_name=strategy_name)
+#                     score = strategy_instance.execute(
+#                         prompts=[prompt],
+#                         expected_responses=[expected_output],
+#                         agent_responses=[agent_response],
+#                         system_prompts=[system_prompt],
+#                         judge_prompts=[llm_as_judge]
+#                     )
+
+#                     print(f"[SUCCESS] Strategy: {strategy_name}, Score: {score}")
+#                     logger.info(f"[SUCCESS] Strategy: {strategy_name}, Score: {score}")
+
+                      logger.info(f"Executing strategy: {strategy_name} for metric: {metric_name}")
+                      strategy_instance = StrategyImplementor(strategy_name=strategy_name)
+                      score = strategy_instance.execute()
+                      metric_scores[metric_name].append(score)
+                      executed_strategies.append(strategy_name)
+                      logger.info(f"[SUCCESS] Strategy: {strategy_name}, Metric: {metric_name}, Score: {score}")
+            
             except Exception as e:
                 logger.error(f"[SKIPPED] Error in strategy '{strategy_name}' for metric '{metric_name}': {str(e)}")
 
@@ -149,4 +178,4 @@ def run(target_plan_id):
 
 
 # Example usage:
-run("T6")
+run("T5") 

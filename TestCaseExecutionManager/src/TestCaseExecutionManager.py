@@ -78,7 +78,8 @@ if args.test_case_count is None:
     total_prompts = 0
     for metric_id in metric_ids:
         metric_data = all_cases_by_metric.get(metric_id, {})
-        cases = metric_data.get('cases', [])
+        cases_nested = metric_data.get("cases", [])
+        cases = [item for sublist in cases_nested for item in sublist]
         total_prompts += len(cases)
     args.test_case_count = total_prompts
 
@@ -136,7 +137,8 @@ class TestCaseExecutionManager:
                 metric_data = all_cases_by_metric.get(metric_id)
                 if not metric_data:
                     continue
-                cases = metric_data.get("cases", [])
+                cases_nested = metric_data.get("cases", [])
+                cases = [item for sublist in cases_nested for item in sublist]
                 all_cases.extend(cases)
 
             return all_cases[:self.limit] if self.limit else all_cases
@@ -228,7 +230,8 @@ class TestCaseExecutionManager:
             metric_data = all_cases_by_metric.get(metric_id)
             if not metric_data:
                 continue
-            cases = metric_data.get("cases", [])
+            cases_nested = metric_data.get("cases", [])
+            cases = [item for sublist in cases_nested for item in sublist]
             if self.domain:
                 cases = [c for c in cases if c.get("DOMAIN", "").lower() == self.domain.lower()]
             logger.info(f"Metric ID: {metric_id} -> {plan_entry.get('metrics', {}).get(metric_id, metric_id)} has {len(cases)} test cases")
@@ -327,4 +330,4 @@ manager = TestCaseExecutionManager(
 if args.action == "send_all_prompts":
     results = manager.send_all_prompts()
     output_file = str(response_file)
-    print(f"Responses saved to {output_file}")
+    print(f"Responses saved to {output_file}")
