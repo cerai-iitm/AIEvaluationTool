@@ -112,6 +112,14 @@ def run(target_plan_id):
                 except Exception as e:
                     logger.error(f"[SKIPPED] Error in strategy '{strategy_name}' for metric '{metric_name}': {str(e)}")
 
+        special_metrics = [
+            "misuse",
+      "jailbreak",
+      "exaggerated_Safety",
+      "privacy_Awareness_Query",
+      "privacy_Leakage",
+      "privacy_Confidence_Agreement"
+        ]
         # Other metric executions
         for strategy_name, metric_name in zip(other_strategy_names, other_metrics):
             if strategy_name in executed_strategies:
