@@ -1,5 +1,6 @@
 # @author: Sudarsun S
 # @date: 2025-07-10
+# @updated: 2025-07-22
 # @description: This script serves as the main entry point for executing test cases in the AI Evaluation Tool.
 # It handles command-line arguments for configuration, fetching test plans, and executing test cases
 # using the InterfaceManagerClient from the lib directory.
@@ -49,14 +50,16 @@ def main():
     # python main.py --config-file config.json --get-plans
     # python main.py --config-file config.json --test-plan-id 1 --testcase-id 2 --max-testcases 5
     ##############################################################################
-    parser = argparse.ArgumentParser(description="AI Evaluation Tool :: Testcase Executor")
+    parser = argparse.ArgumentParser(description="AI Evaluation Tool :: Test Executor")
     parser.add_argument("--config-file", "-c", dest="config", type=str, help="Path to the configuration file containing database connection and target application details.")
     parser.add_argument("--get-config-template", "-T", dest="get_config_template", action="store_true", help="Flag to get the configuration file template")
     parser.add_argument("--get-plans", "-P", dest="get_plans", action="store_true", help="Get all test plans")
+    parser.add_argument("--get-metrics", "-M", dest="get_metrics", action="store_true", help="Get all the evaluation metrics")
     parser.add_argument("--get-testcases", "-C", dest="get_testcases", action="store_true", help="Get the test cases for a specific test plan or all test cases if no plan ID is provided")
     parser.add_argument("--get-targets", "-G", dest="get_targets", action="store_true", help="Get all target applications")
     parser.add_argument("--testplan-id", "-p", dest="plan_id", type=int, help="ID of the test plan to execute")
     parser.add_argument("--testcase-id", "-t", dest="testcase_id", type=int, help="ID of the specific test case to execute")
+    parser.add_argument("--metric-id", "-m", dest="metric_id", type=int, help="ID of the evaluation metric to use")
     parser.add_argument("--max-testcases", "-n", dest="max_testcases", type=int, default=10, help="Maximum number of test cases to execute (default: 10)")
     parser.add_argument("--run-name", "-r", dest="run_name", type=str, help="Run name for the test plan or test case execution")
     parser.add_argument("--run-continue", "-R", dest="run_continue", default=False, action="store_true", help="Continue an existing run with the provided run name")
@@ -223,6 +226,24 @@ def main():
         Console().print(table)
         return
 
+    # Get all evaluation metrics
+    if args.get_metrics:
+        # Logic to get all evaluation metrics
+        logger.info("Fetching all evaluation metrics...")
+
+        # Create a table to display the evaluation metrics
+        table = Table(title="Evaluation Metrics")
+        table.add_column("Metric ID", justify="right", style="cyan")
+        table.add_column("Name", style="magenta")
+        table.add_column("Description", style="green")
+        
+        # Fetch all metrics from the database
+        for metric in db.metrics:
+            table.add_row(str(metric.metric_id), metric.metric_name, metric.metric_description)
+        
+        # Print the table of evaluation metrics
+        Console().print(table)
+        return
 
     if args.execute:
         # Logic to execute the test case or test plan
@@ -352,6 +373,109 @@ def main():
                             client.close()
                         except Exception as e:
                             logger.error(f"Error closing the client connection: {e}")
+
+            # if the metric id is supplied, we will execute the testcases for the metric                            
+            elif args.metric_id:
+                # If a specific metric ID is provided, fetch the metric details
+                metric_name = db.get_metric_name(metric_id=args.metric_id)
+                if metric_name is None:
+                    logger.error(f"No metric found with ID {args.metric_id}.")
+                    return
+                
+                # get the test cases for the metric
+                logger.debug(f"Fetching test cases for metric: {metric_name} (Plan: {plan_name}, Metric ID: {args.metric_id})")
+                testcases = db.get_testcases_by_metric(metric_name=metric_name, n=args.max_testcases)
+                if not testcases:
+                    logger.error(f"No test cases found for metric: {metric_name} (Plan: {plan_name}, Metric ID: {args.metric_id})")
+                    return
+                               
+                # If a specific metric ID is provided, fetch the metric details
+                metric = db.get_metric_by_id(metric_id=args.metric_id)
+                if metric is None:
+                    logger.error(f"No metric found with ID {args.metric_id}.")
+                    return
+                
+                logger.debug(f"Executing test cases for the metric: {metric.metric_name} (Plan: {plan_name}, Metric ID: {args.metric_id})")
+
+                # if the run status is NEW, update the starting time.
+                if run.status == "NEW":
+                    run.start_ts = datetime.now().isoformat()
+                    
+                # change the run status to "RUNNING"
+                run.status = "RUNNING"
+                db.add_or_update_testrun(run=run)
+
+                # Initialize the InterfaceManagerClient with the provided configuration
+                client = InterfaceManagerClient(base_url="http://localhost:8000", application_type="WHATSAPP_WEB")
+
+                # iterate through the test cases and execute
+                for testcase in testcases:
+                    # create a new run detail entry for each test case
+                    rundetail = RunDetail(run_name=run_name, plan_name=plan_name, metric_name=testcase.metric, testcase_name=testcase.name)
+                    rundetail_id = db.add_or_update_testrun_detail(rundetail)
+                    
+                    # fetch the run detail status.
+                    # if the run detail is already completed, skip the execution.
+                    run_status = db.get_status_by_run_detail_id(run_detail_id=rundetail_id)
+                    if run_status is not None and run_status == "COMPLETED":
+                        logger.debug(f"Run detail for testcase {testcase.name} (ID: {testcase.testcase_id}) is already completed. Skipping execution.")
+                        continue
+
+                    logger.debug(f"Executing Test {testcase.name} (Case ID: {testcase.testcase_id})")
+
+                    # construct the message to send to the agent
+                    message_to_agent = testcase.prompt.user_prompt if testcase.prompt.user_prompt else ""
+                    if testcase.prompt.system_prompt:
+                        message_to_agent = testcase.prompt.system_prompt + "\n" + message_to_agent
+
+                    conv = Conversation(target=target.target_name, 
+                                        run_detail_id=rundetail_id, 
+                                        testcase=testcase.name)
+                    conv_id = db.add_or_update_conversation(conversation=conv)
+                    logger.debug(f"A new conversation is created with ID: {conv_id}")
+
+                    rundetail.status = "RUNNING"
+                    db.add_or_update_testrun_detail(rundetail)
+
+                    try:
+                        conv.prompt_ts = datetime.now().isoformat()
+                        db.add_or_update_conversation(conversation=conv)
+
+                        response_from_agent = client.chat(chat_id = testcase.testcase_id, prompt_list=[message_to_agent])
+                        agent_response = response_from_agent.json().get("response", "")
+
+                        # Check if the response is empty or indicates a chat not found
+                        # Here, we will leave the Conversation entry dangling in the DB to indicate the the conversation was not successful.
+                        if len(agent_response) == 0 or agent_response[0]['response'] == "Chat not found":
+                            logger.error(f"No response received from the agent for test case {testcase.testcase_id}.")
+                            rundetail.status = "FAILED"
+                            db.add_or_update_testrun_detail(rundetail)
+                            continue
+
+                        conv.response_ts = datetime.now().isoformat()
+                        conv.agent_response = agent_response[0]['response']
+                        db.add_or_update_conversation(conversation=conv)
+
+                        rundetail.status = "COMPLETED"
+                        db.add_or_update_testrun_detail(rundetail)
+
+                    except Exception as e:
+                        logger.error(f"Error during execution of test case {testcase.testcase_id}: {e}")
+                        rundetail.status = "FAILED"
+                        db.add_or_update_testrun_detail(rundetail)
+                        continue
+
+                try:
+                    # close the client session.
+                    client.close()
+                except Exception as e:
+                    logger.error(f"Error closing the client connection: {e}")
+
+                # Update the run status to completed
+                run.end_ts = datetime.now().isoformat()
+                run.status = "COMPLETED"
+                db.add_or_update_testrun(run=run)
+                logger.debug(f"Execution of test plan '{plan_name}' completed successfully.")
 
             # execute the test plan if no specific test case is provided
             else:
