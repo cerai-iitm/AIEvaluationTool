@@ -176,10 +176,10 @@ class DotDict:
 
 
 class CustomOllamaModel(OpikBaseModel):
-    def __init__(self, model_name: str, base_url: str = "http://localhost:11434"):
+    def __init__(self, model_name: str, base_url: str = os.getenv("OLLAMA_URL")):
         super().__init__(model_name)
         self.base_url = base_url.rstrip("/")
-        self.api_url = f"{self.base_url}/api/chat"
+        self.api_url = f"{self.base_url}/api/generate"
 
     def generate_string(self, input: str, response_format: Optional[Type] = None, **kwargs: Any) -> Any:
         messages = [{"role": "user", "content": f'{input} /nothink'}]

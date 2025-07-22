@@ -29,7 +29,7 @@ class SimilarityMatchStrategy(Strategy):
         super().__init__(name, kwargs=kwargs)
         # Initialize the metric name for similarity matching
         # `metric_name` can be "bert_similarity", "cosine_similarity", or "rouge_similarity", "meteor_similarity", "bleu_similarity", "bart_score_similarity"
-        self.__metric_name = kwargs.get("metric_name")
+        self.__metric_name = kwargs.get("metric_name","bleu")
         #self.embedding_model = SentenceTransformer('sentence-transformers/distiluse-base-multilingual-cased-v1')
 
     def bleu_score_metric(self, predictions, references):
@@ -126,19 +126,19 @@ class SimilarityMatchStrategy(Strategy):
             case "bert_similarity":
                 bertscore = load("bertscore")
                 results = bertscore.compute(predictions=[agent_response], references=[expected_response], lang="en")
-                return results['f1'][0]  # Return the F1 score from BERTScore
+                return float(results['f1'][0])  # Return the F1 score from BERTScore
             case "cosine_similarity":
                 cos_sim_score = self.cosine_similarity_metric(agent_response,expected_response)
-                return cos_sim_score
-            case "rouge_similarity":
+                return float(cos_sim_score)
+            case "ROUGE" | "rouge":
                 score = self.rouge_score_metric(expected_response, agent_response)
                 return score
-            case "meteor_similarity":
+            case "METEOR" | "meteor" :
                 score = self.meteor_metric(expected_response, agent_response)
-                return score
-            case "bleu_similarity":
+                return float(score)
+            case "BLEU" | "bleu":
                 score = self.bleu_score_metric(expected_response, agent_response)
-                return score
+                return float(score)
             case "bart_score_similarity":
                 # Placeholder for BART score similarity logic
                 bart_scorer = BARTScorer(device='cpu', checkpoint='facebook/bart-large-cnn')

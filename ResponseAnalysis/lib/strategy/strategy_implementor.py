@@ -46,6 +46,7 @@ class StrategyImplementor:
     
     def __init__(self, strategy_name: str, **kwargs):
         self.strategy_name = strategy_name
+        self.kwargs = kwargs
         self.__metric_name = kwargs.get("metric_name")
         
     def execute(self, prompts: Optional[List[str]] = None, expected_responses: Optional[List[str]] = None, agent_responses: Optional[List[str]] = None, system_prompts: Optional[List[str]] = None, judge_prompts: Optional[List[str]] = None) -> float :
@@ -238,13 +239,13 @@ class StrategyImplementor:
             case "privacy_strategy":
                 strategy = PrivacyStrategy(metric_name=self.__metric_name)
                 for i in range(len(agent_responses)):
-                    if self.__metric_name == "awareness_query":
-                        score = strategy.evaluate(agent_responses[i],system_prompts[i],prompts[i])
+                    if self.__metric_name == "privacy_awareness_query":
+                        score = strategy.evaluate(agent_response=agent_responses[i])
                     elif self.__metric_name == "privacy_leakage":
-                        result = strategy.evaluate(agent_responses[i],system_prompts[i])
+                        result = strategy.evaluate(agent_response=agent_responses[i])
                         score = (result["RtA"] +result["TD"] +result["CD"]) / 3
-                    elif self.__metric_name == "confidence_agreement":
-                        score = strategy.evaluate(agent_responses[i],expected_responses[i])
+                    elif self.__metric_name == "privacy_confidence_agreement":
+                        score = strategy.evaluate(agent_response=agent_responses[i],expected_response=expected_responses[i])
                     else:
                         logger.warning(f"Unknown Privacy Metric: {self.__metric_name}")
                         return 0.0
@@ -275,7 +276,7 @@ class StrategyImplementor:
                     p_type=extract_from_uds(self.strategy_name)
                     strategy = LLMJudgeStrategy(
                         metric_name=self.kwargs.get("metric_name"),
-                        model_name=self.kwargs.get("model_name", "mistral:7b-instruct"),
+                        # model_name=self.kwargs.get("model_name", "mistral:7b-instruct"),
                         prompt=prompts[i],
                         judge_prompt=judge_prompts[i],
                         system_prompt=system_prompts[i],
@@ -317,11 +318,35 @@ class StrategyImplementor:
                 return sum(scores)/len(scores)
 
             case "similarity_match":
-                strategy = SimilarityMatchStrategy(metric_name = self.__metric_name)
-                for i in range(len(agent_responses)):
-                    score = strategy.evaluate(agent_responses[i], expected_responses[i])
-                    scores.append(score)
-                logger.info(f"Average {self.__metric_name} score is: {sum(scores)/len(scores)}" )
+                strategy = SimilarityMatchStrategy(metric_name=self.__metric_name)
+                
+                if self.__metric_name.lower() == "rouge":
+                    rouge_scores = []
+
+                    for agent_resp, expected_resp in zip(agent_responses, expected_responses):
+                        score = strategy.evaluate(agent_resp, expected_resp)
+                        if isinstance(score, dict):
+                            rouge_scores.append(float(score.get("rougeLsum")))
+
+                    avg_rougeLsum = round(sum(rouge_scores) / len(rouge_scores), 4) if rouge_scores else 0.0
+
+                    logger.info(
+                        "[SUCCESS] Strategy: similarity_match, Metric: ROUGE-Lsum, "
+                        f"Score: {avg_rougeLsum}"
+                    )
+                    return avg_rougeLsum
+
+                else:
+                    # Handle BLEU, METEOR, cosine_similarity, etc.
+                    scores = []
+                    for i in range(len(agent_responses)):
+                        score = strategy.evaluate(agent_responses[i], expected_responses[i])
+                        scores.append(float(score))
+
+                    avg_score = sum(scores) / len(scores) if scores else 0.0
+                    logger.info(f"[SUCCESS] Strategy: similarity_match, Metric: {self.__metric_name}, "
+                                f"Average Score: {avg_score}")
+                    return round(avg_score, 5)
             
             case "grammatical_strategies":
                 strategy = GrammaticalStrategy()

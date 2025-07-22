@@ -17,7 +17,7 @@ plan_file = "Data/plans.json"
 datapoints_file = "Data/datapoints_old_metrics.json"
 metric_to_strategy_mapping_file = "Data/metric_strategy_mapping.json"
 strategy_id_to_strategy_mapping_file = "Data/strategy_id.json"
-response_file = "Data/responses_T6_Large_old.json"
+response_file = "Data/responses_T1_Large_old.json"
 
 def get_agent_response_map(agent_responses):
     return {item["prompt_id"]: item["response"] for item in agent_responses}
@@ -45,7 +45,7 @@ def run(target_plan_id):
             plan = test_plans[target_plan_id]
             plan_name = plan["TestPlan_name"]
             metrics = plan["metrics"]
-
+            special_metrics = get_metric_names_by_test_plan_id(test_plan_id=target_plan_id, test_plans=test_plans)
             for metric_id, metric_name in metrics.items():
                 if metric_id in metric_to_test_case_mapping:
                     for case in metric_to_test_case_mapping[metric_id]["cases"]:
@@ -71,16 +71,33 @@ def run(target_plan_id):
                         agent_response = agent_response_map[prompt_id]
                         for strategy_name in strategy_names:
                             try:
-                                strategy_instance = StrategyImplementor(strategy_name=strategy_name)
-                                score = strategy_instance.execute(
-                                    prompts=[prompt],
-                                    expected_responses=[expected_output],
-                                    agent_responses=[agent_response],
-                                    system_prompts=[system_prompt],
-                                    judge_prompts=[llm_as_judge]
-                                )
-                                logger.info(f"[SUCCESS] Strategy: {strategy_name}, Metric: {metric_name}, Score: {score}")
-                                metric_scores[metric_name].append(score)
+                                if strategy_name == "privacy_strategy":
+                                    # Special handling for privacy strategy
+                                    for metric_name in special_metrics[-3:]:
+                                        print(f"Executing privacy strategy for metric: {metric_name}")
+                                        strategy_instance = StrategyImplementor(strategy_name=strategy_name, metric_name=metric_name)
+                                        score = strategy_instance.execute(expected_responses=[expected_output],agent_responses=[agent_response],system_prompts=[system_prompt],prompts = [prompt])
+                                        logger.info(f"[SUCCESS] Strategy: {strategy_name}, Metric: {metric_name}, Score: {score}")
+                                        metric_scores[metric_name].append(score)
+                                elif strategy_name == "safety_strategy":
+                                    # Special handling for safety strategy
+                                    for metric_name in special_metrics[:3]:
+                                        print(f"Executing safety strategy for metric: {metric_name}")
+                                        # strategy_instance = StrategyImplementor(strategy_name=strategy_name,metric_name=metric_name )
+                                        # score = strategy_instance.execute(agent_responses=[agent_response] ,prompts = [prompt])
+                                        # logger.info(f"[SUCCESS] Strategy: {strategy_name}, Metric: {metric_name}, Score: {score}")
+                                        # metric_scores[metric_name].append(score)
+                                else:
+                                    strategy_instance = StrategyImplementor(strategy_name=strategy_name, metric_name=metric_name)
+                                    score = strategy_instance.execute(
+                                        prompts=[prompt],
+                                        expected_responses=[expected_output],
+                                        agent_responses=[agent_response],
+                                        system_prompts=[system_prompt],
+                                        judge_prompts=[llm_as_judge]
+                                    )
+                                    logger.info(f"[SUCCESS] Strategy: {strategy_name}, Metric: {metric_name}, Score: {score}")
+                                    metric_scores[metric_name].append(score)
                             except Exception as e:
                                 logger.error(f"[SKIPPED] Error in strategy '{strategy_name}' for metric '{metric_name}': {str(e)}")
                                 continue
@@ -149,4 +166,4 @@ def run(target_plan_id):
 
 
 # Example usage:
-run("T6")
+run("T1")
