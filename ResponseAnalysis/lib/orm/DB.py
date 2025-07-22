@@ -1473,6 +1473,27 @@ class DB:
                 return None
             return getattr(result, 'testcase_id')
         
+    def get_metric_by_id(self, metric_id: int) -> Optional[Metric]:
+        """
+        Fetches a metric by its ID.
+        
+        Args:
+            metric_id (int): The ID of the metric to fetch.
+        
+        Returns:
+            Optional[Metric]: The Metric object if found, otherwise None.
+        """
+        with self.Session() as session:
+            sql = select(Metrics).where(Metrics.metric_id == metric_id)
+            result = session.execute(sql).scalar_one_or_none()
+            if result is None:
+                self.logger.error(f"Metric with ID '{metric_id}' does not exist.")
+                return None
+            return Metric(metric_name=getattr(result, 'metric_name'),
+                          domain_id=getattr(result, 'domain_id'),
+                          metric_description=str(result.metric_description),
+                          metric_id=getattr(result, 'metric_id'))
+        
     def get_metric_name(self, metric_id: int) -> Optional[str]:
         """
         Fetches the name of a metric by its ID.
