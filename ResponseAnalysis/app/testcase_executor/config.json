@@ -4,7 +4,7 @@
         "port": 5432,
         "user": "root",
         "password": "ATmega32*",
-        "database": "eval"
+        "database": "aieval"
     },
     "target": {
         "application_type": "WHATSAPP-WEB",
