@@ -4,6 +4,17 @@ import os
 import json
 from datetime import datetime
 import argparse
+import logging
+
+# Set up logging
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+# Console handler
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+ch_formatter = logging.Formatter("%(asctime)s|%(name)s|%(levelname)7s|%(funcName)s|%(message)s") # 
+ch.setFormatter(ch_formatter)
+logger.addHandler(ch)
 
 # setup the relative import path for data module.
 sys.path.append(os.path.join(os.path.dirname(__file__) + '/../../'))  # Adjust the path to include the parent directory
@@ -11,16 +22,40 @@ sys.path.append(os.path.join(os.path.dirname(__file__) + '/../../'))  # Adjust t
 from lib.data import Prompt, TestCase, Response, TestPlan, Metric, LLMJudgePrompt, Target, Run, RunDetail, Conversation
 from lib.orm import DB  # Import the DB class from the orm module
 
-plans = json.load(open('Data/plans.json', 'r'))
-prompts = json.load(open('Data/DataPoints.json', 'r'))
+parser = argparse.ArgumentParser(description="Data Importer")
+parser.add_argument("--config", dest="config", type=str, default="config.json", help="Path to the configuration file")
+parser.add_argument("--orm-debug", dest="orm_debug", default=False, action='store_true', help="Enable ORM debug mode")
 
-db = DB(db_url="mariadb+mariadbconnector://root:ATmega32*@localhost:3306/aieval", debug=False)
+args = parser.parse_args()
+
+config = json.load(open(args.config, 'r'))
+db_url = "mariadb+mariadbconnector://{user}:{password}@{host}:{port}/{database}".format(
+    user=config['db']['user'],
+    password=config['db']['password'],
+    host=config['db']['host'],
+    port=config['db']['port'],
+    database=config['db']['database']
+)
+
+plans = json.load(open(config['files']['plans'], 'r'))
+prompts = json.load(open(config['files']['testcases'], 'r'))
+
+db = DB(db_url=db_url, debug=args.orm_debug)
+
+strategies = json.load(open(config['files']['strategies'], 'r'))
+
+# import all the strategies.
+logger.debug("Importing strategies...")
+for item in strategies.keys():
+    strategy_name = strategies[item]
+    logger.debug(f"Adding strategy: {strategy_name}")    
+    db.add_or_get_strategy_id(strategy_name=strategy_name)
 
 domain_general = db.add_or_get_domain_id(domain_name='general')
-domain_agriculture = db.add_or_get_domain_id(domain_name='agriculture')
-
 lang_auto = db.add_or_get_language_id(language_name='auto')
 
+# load the test plans and metrics.
+logger.debug("Importing test plans and metrics...")
 metrics_lookup = {}
 for plan in plans.keys():
     record = plans[plan]
@@ -47,7 +82,8 @@ for met in prompts.keys():
     tcases = []
     for case in testcases:
         if 'DOMAIN' in case:
-            domain_id = db.add_or_get_domain_id(domain_name=case['DOMAIN'])
+            domain_name = case['DOMAIN'].lower()
+            domain_id = db.add_or_get_domain_id(domain_name=domain_name)
         else:
             domain_id = domain_general
         
@@ -55,11 +91,17 @@ for met in prompts.keys():
                       user_prompt=case['PROMPT'], 
                       domain_id=domain_id, 
                       lang_id=lang_auto)
-
+        
         strategy = 'auto'
+        if 'STRATEGY' in case:
+            strategy_id = case['STRATEGY']
+            if strategy_id not in strategies:
+                logger.error(f"Strategy '{strategy}' not found in strategies. Skipping...")
+                continue
+            strategy = strategies[strategy_id].lower()
+            
         judge_prompt = None
         if 'LLM_AS_JUDGE' in case and case['LLM_AS_JUDGE'] != "No":
-            strategy = 'llm_as_judge'
             judge_prompt = LLMJudgePrompt(prompt=case['LLM_AS_JUDGE'])
 
         response = None
