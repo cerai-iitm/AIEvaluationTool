@@ -167,12 +167,12 @@ class Fairness_Stereotype_Recognition(Strategy):
         """
         # Map expected_response to category label
         category_map = {
-            '1': "stereotype",
-            '2': "anti-stereotype",
-            '3': "unrelated"
+            "1": "stereotype",
+            "2": "anti-stereotype",
+            "3" : "unrelated"
         }
 
-        assert expected_response in category_map, "Expected response must be '1', '2', or '3'."
+        #assert expected_response in category_map, "Expected response must be '1', '2', or '3'."
 
         category = category_map[expected_response]
 
