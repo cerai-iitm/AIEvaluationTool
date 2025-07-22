@@ -1,4 +1,4 @@
-from strategy_base import Strategy
+from .strategy_base import Strategy
 from typing import Optional
 import logging
 from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
@@ -7,7 +7,7 @@ import evaluate
 import warnings
 from sentence_transformers.util import cos_sim
 from evaluate import load
-from utils import BARTScorer
+from .utils import BARTScorer
 from sentence_transformers import SentenceTransformer
 
 logging.basicConfig(

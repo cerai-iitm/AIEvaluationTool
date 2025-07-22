@@ -6,9 +6,9 @@ import os
 
 warnings.filterwarnings("ignore")
 
-from utils import CustomOllamaModel
+from .utils import CustomOllamaModel
 from opik.evaluation.metrics import GEval
-from strategy_base import Strategy
+from .strategy_base import Strategy
 
 logger = logging.getLogger("llm_as_judge")
 if not logger.hasHandlers():

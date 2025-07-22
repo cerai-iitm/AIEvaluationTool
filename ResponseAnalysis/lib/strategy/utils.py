@@ -13,7 +13,7 @@ import requests
 import asyncio
 from typing import Any, Dict, List, Type, Optional
 from opik.evaluation.models import OpikBaseModel
-from logger import get_logger
+from .logger import get_logger
 import torch
 import torch.nn as nn
 import traceback
