@@ -5,7 +5,20 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Testcase Executor",
+            "name": "Importer",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/ResponseAnalysis/app/importer/main.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {},
+            "args": [
+                "--config",
+                "${workspaceFolder}/ResponseAnalysis/app/importer/config.json",
+            ]
+        },
+        {
+            "name": "Testcase Executor",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/ResponseAnalysis/app/testcase_executor/main.py",
@@ -15,11 +28,12 @@
             "args": [
                 "--config",
                 "${workspaceFolder}/ResponseAnalysis/app/testcase_executor/config.json",
-                "--testplan-id", "1",
+                "--testplan-id",
+                "1",
                 "--execute",
-                "--run-name", "place-serious-station-non",
-                "--run-continue",
-                "--testcase-id", "149"
+                //"--run-name", "place-serious-station-non",
+                //"--run-continue",
+                //"--testcase-id", "149"
             ]
         },
         {
@@ -30,8 +44,7 @@
             "console": "integratedTerminal",
             "justMyCode": false,
             "env": {},
-            "args": [
-            ]
+            "args": []
         },
         {
             "name": "Interface Manager",
@@ -41,8 +54,7 @@
             "console": "integratedTerminal",
             "justMyCode": false,
             "env": {},
-            "args": [
-            ]
+            "args": []
         }
     ]
 }
