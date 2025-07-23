@@ -17,7 +17,7 @@ plan_file = "Data/plans.json"
 datapoints_file = "Data/datapoints_combined.json"
 metric_to_strategy_mapping_file = "Data/metric_strategy_mapping.json"
 strategy_id_to_strategy_mapping_file = "Data/strategy_id.json"
-response_file = "Data/responses_T1.json"
+response_file = "Data/responses_T6.json"
 
 def get_agent_response_map(agent_responses, prompt_id):
     l = extract_prompt_ids_from_response(agent_responses)
@@ -57,15 +57,16 @@ def run(target_plan_id):
     consolidated_scores={}
 
 
-    if target_plan_id != "T6":
-        if target_plan_id in test_plans:
-            plan = test_plans[target_plan_id]
-            plan_name = plan["TestPlan_name"]
-            metrics = plan["metrics"]
+    #if target_plan_id != "T6":
+    if target_plan_id in test_plans:
+        plan = test_plans[target_plan_id]
+        plan_name = plan["TestPlan_name"]
+        metrics = plan["metrics"]
 
-            all_cases = {}
-            for metric_id, metric_name in metrics.items():
-                print("Gathering datapoints for metric id: ", metric_id)
+        all_cases = {}
+        for metric_id, metric_name in metrics.items():
+            print("Gathering datapoints for metric id: ", metric_id)
+            if metric_id not in ["47","48","41","44","50", "51"]:
                 if metric_id in metric_to_test_case_mapping:
                     for case in metric_to_test_case_mapping[metric_id]["cases"]:
                         row = [target_plan_id, plan_name, metric_id, metric_name]
@@ -77,14 +78,18 @@ def run(target_plan_id):
                             else:
                                 all_cases[metric_id].append(row)
                             print("PROMPT included!", row[4])
-                
+            else:
+                print("PROMPTS NOT REQUIRED!")
+                all_cases[metric_id] = "PROMPTS NOT REQUIRED!"
+            
+            if all_cases[metric_id]!= "PROMPTS NOT REQUIRED!":
                 print("####")
                 print(all_cases)
                 dl = []
                 for data_list in all_cases[metric_id]:
                     dl.append(data_list[-1][-1])
                 unique_strategy = set(dl)
-     
+        
                 print("########")
                 print(all_cases)
             
@@ -130,34 +135,46 @@ def run(target_plan_id):
                                 print(f"PROMPT {data_list[4]} not included!")
                 print("##########")
                 print(strategy_data_list)
-                with open("strategy_data_list.txt", "w") as output:
-                    output.write(str(strategy_data_list))
-                strategy_data_list
                 strategy_map_clean = {k: [v] for k, v in strategy_id_to_strategy_map.items()}
                 strategy_names = [s for sid in unique_strategy if sid in strategy_map_clean for s in strategy_map_clean[sid]]
                 print("##########")
                 print(strategy_names)
                 st_scores= []
                 for strategy_name in strategy_names:
+                        st_id = get_key_by_value(strategy_id_to_strategy_map, strategy_name)
+                        print("The strategy ID which is executed is ",st_id)
+                        print("The strategy name to be executed ", strategy_name)
+                        strategy_instance = StrategyImplementor(strategy_name=strategy_name, metric_name=metric_name.lower())
+                        st_score = strategy_instance.execute(
+                                        prompts=strategy_data_list[st_id]["PROMPT"],
+                                        expected_responses=strategy_data_list[st_id]["EXPECTED_RESPONSES"],
+                                        agent_responses=strategy_data_list[st_id]["AGENT_RESPONSES"],
+                                        system_prompts=strategy_data_list[st_id]["SYSTEM_PROMPTS"],
+                                        judge_prompts=strategy_data_list[st_id]["JUDGE_PROMPTS"]
+                                    )
+                        logger.info(f"[SUCCESS] Strategy: {strategy_name}, Metric: {metric_name}, Score: {st_score}")
+                        st_scores.append(st_score)
+                        print("List of scores: ",st_scores)
+                
+                consolidated_scores[metric_name] = sum(st_scores)/len(st_scores)
+                logger.info(f"Consolidated Score - {consolidated_scores}")   
+                
+            else:
+                st_scores = []
+                strategy_names = strategy_map[metric_id]
+                for strategy_name in strategy_names:
                     st_id = get_key_by_value(strategy_id_to_strategy_map, strategy_name)
                     print("The strategy ID which is executed is ",st_id)
                     print("The strategy name to be executed ", strategy_name)
-                    strategy_instance = StrategyImplementor(strategy_name=strategy_name, metric_name=metric_name)
-                    st_score = strategy_instance.execute(
-                                    prompts=strategy_data_list[st_id]["PROMPT"],
-                                    expected_responses=strategy_data_list[st_id]["EXPECTED_RESPONSES"],
-                                    agent_responses=strategy_data_list[st_id]["AGENT_RESPONSES"],
-                                    system_prompts=strategy_data_list[st_id]["SYSTEM_PROMPTS"],
-                                    judge_prompts=strategy_data_list[st_id]["JUDGE_PROMPTS"]
-                                )
+                    strategy_instance = StrategyImplementor(strategy_name=strategy_name, metric_name=metric_name.lower())
+                    st_score = strategy_instance.execute()
                     logger.info(f"[SUCCESS] Strategy: {strategy_name}, Metric: {metric_name}, Score: {st_score}")
-                    st_scores.append(st_score)
-                    print("List of scores: ",st_scores)
-                
-                consolidated_scores[metric_name] = sum(st_scores)/len(st_scores)
-                logger.info(f"Consolidated Score - {consolidated_scores}")
-
-                
+                st_scores.append(st_score)
+                print("List of scores: ",st_scores)
+                    
+        
+            consolidated_scores[metric_name] = sum(st_scores)/len(st_scores)
+            logger.info(f"Consolidated Score - {consolidated_scores}")   
 
                 
                 
@@ -224,7 +241,8 @@ def run(target_plan_id):
 #                     logger.info(f"Executing strategy: {strategy_name} for metric: {metric_name}")
 #                     strategy_instance = StrategyImplementor(strategy_name=strategy_name, metric_name=metric_name)
 #                     score = strategy_instance.execute()
-#                     metric_scores[metric_name].append(score)
+#                     consolidated_scores[metric_name].append(score)
+#                     logger.info(f"Consolidated Score - {consolidated_scores}") 
 #                     executed_pairs.add(pair)
 #                     logger.info(f"[SUCCESS] Strategy: {strategy_name}, Metric: {metric_name}, Score: {score}")
 #                 except Exception as e:
@@ -275,7 +293,8 @@ def run(target_plan_id):
 #                       logger.info(f"Executing strategy: {strategy_name} for metric: {metric_name}")
 #                       strategy_instance = StrategyImplementor(strategy_name=strategy_name)
 #                       score = strategy_instance.execute()
-#                       metric_scores[metric_name].append(score)
+#                       consolidated_scores[metric_name].append(score)
+#                       logger.info(f"Consolidated Score - {consolidated_scores}")   
 #                       executed_strategies.append(strategy_name)
 #                       logger.info(f"[SUCCESS] Strategy: {strategy_name}, Metric: {metric_name}, Score: {score}")
             
@@ -283,25 +302,25 @@ def run(target_plan_id):
 #                 logger.error(f"[SKIPPED] Error in strategy '{strategy_name}' for metric '{metric_name}': {str(e)}")
 
     
-    # # ===== Consolidated Report Output =====
-    # print("\n=== Consolidated Report ===")
-    # print("{:<20} {:<30} {:<10}".format("Plan Name", "Metric Name", "Score"))
-    # print("-" * 60)
-    # for metric_name, scores in consolidated_scores.items():
-    #     # numeric_scores = [extract_score(s) for s in scores]
-    #     # avg_score = sum(numeric_scores) / len(numeric_scores) if numeric_scores else 0
-    #     print("{:<20} {:<30} {:<10.2f}".format(test_plans[target_plan_id]["TestPlan_name"], metric_name, scores))
+        # # ===== Consolidated Report Output =====
+        # print("\n=== Consolidated Report ===")
+        # print("{:<20} {:<30} {:<10}".format("Plan Name", "Metric Name", "Score"))
+        # print("-" * 60)
+        # for metric_name, scores in consolidated_scores.items():
+        #     # numeric_scores = [extract_score(s) for s in scores]
+        #     # avg_score = sum(numeric_scores) / len(numeric_scores) if numeric_scores else 0
+        #     print("{:<20} {:<30} {:<10.2f}".format(test_plans[target_plan_id]["TestPlan_name"], metric_name, scores))
 
-    # # Optional: Save to CSV
-    # with open("consolidated_report.csv", "w", newline="") as f:
-    #     writer = csv.writer(f)
-    #     writer.writerow(["Plan Name", "Metric Name", "Score"])
-    #     for metric_name, scores in consolidated_scores.items():
-    #         # numeric_scores = [extract_score(s) for s in scores]
-    #         # avg_score = sum(numeric_scores) / len(numeric_scores) if numeric_scores else 0
-    #         writer.writerow([test_plans[target_plan_id]["TestPlan_name"], metric_name, f"{scores:.2f}"])
+        # # Optional: Save to CSV
+        # with open("consolidated_report.csv", "w", newline="") as f:
+        #     writer = csv.writer(f)
+        #     writer.writerow(["Plan Name", "Metric Name", "Score"])
+        #     for metric_name, scores in consolidated_scores.items():
+        #         # numeric_scores = [extract_score(s) for s in scores]
+        #         # avg_score = sum(numeric_scores) / len(numeric_scores) if numeric_scores else 0
+        #         writer.writerow([test_plans[target_plan_id]["TestPlan_name"], metric_name, f"{scores:.2f}"])
 
 
 
 # Example usage:
-run("T1") 
+run("T6") 
