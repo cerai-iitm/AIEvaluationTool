@@ -56,7 +56,7 @@ class StrategyImplementor:
         scores = []
         match self.strategy_name:
             case "uptime_calculation":
-                strategy = UptimeCalculation(threshold=120) # Default check for 2 mins
+                strategy = UptimeCalculation(threshold=50) # Default check for 2 mins
                 return strategy.evaluate()
             
             case "robustness_advglue_mnli" | "robustness_advglue_qqp" | "robustness_advglue_sst2" | "robustness_advglue_qnli":
@@ -97,7 +97,7 @@ class StrategyImplementor:
                     results.append(eval_res)
                 score = np.mean(results)
                 logger.info(f"Truthfulness External Score: {score}")
-                return score
+                return float(score)
             
             case "truthfulness_internal_hotpot" | "truthfulness_internal_codah" | "truthfulness_internal_squad":
                 net_score = []
@@ -131,7 +131,8 @@ class StrategyImplementor:
             
             case "compute_mtbf":
                 strategy = Compute_MTBF(file_path="InterfaceManager/APIService/src/logs/whatsapp_driver.log") # Default check for log file
-                return strategy.evaluate()
+                mtbf_time, uptime = strategy.evaluate()
+                return mtbf_time
             
             case "entity_recognition":
                 strategy = EntityRecognition()
@@ -276,7 +277,7 @@ class StrategyImplementor:
                         geval.append(1.0 - score)
                         logger.info(f"Negative {self.__metric_name} Use Case Score %s", score)
                 logger.info(f"Mean {self.__metric_name} Use Case Score %s", np.mean(geval))
-                return np.mean(geval)
+                return float(np.mean(geval))
 
             case "fluency_score":
                 strategy = IndianLanguageFluencyScorer()

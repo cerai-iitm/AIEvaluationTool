@@ -4,7 +4,8 @@ import numpy as np
 from nltk.tokenize import sent_tokenize
 from typing import Optional
 from logger import get_logger
-
+import nltk
+nltk.download('punkt')
 logger = get_logger("fleuncy_score")
 
 class IndianLanguageFluencyScorer(Strategy):
