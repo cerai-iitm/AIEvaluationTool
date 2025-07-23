@@ -17,7 +17,7 @@ plan_file = "Data/plans.json"
 datapoints_file = "Data/datapoints_combined.json"
 metric_to_strategy_mapping_file = "Data/metric_strategy_mapping.json"
 strategy_id_to_strategy_mapping_file = "Data/strategy_id.json"
-response_file = "Data/responses_T3.json"
+response_file = "Data/responses_T1.json"
 
 def get_agent_response_map(agent_responses, prompt_id):
     l = extract_prompt_ids_from_response(agent_responses)
@@ -304,4 +304,4 @@ def run(target_plan_id):
 
 
 # Example usage:
-run("T3") 
+run("T1") 
