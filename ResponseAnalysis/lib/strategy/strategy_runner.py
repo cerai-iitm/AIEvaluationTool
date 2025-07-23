@@ -17,7 +17,7 @@ plan_file = "Data/plans.json"
 datapoints_file = "Data/datapoints_combined.json"
 metric_to_strategy_mapping_file = "Data/metric_strategy_mapping.json"
 strategy_id_to_strategy_mapping_file = "Data/strategy_id.json"
-response_file = "Data/responses_T6.json"
+response_file = "Data/responses_T2.json"
 
 def get_agent_response_map(agent_responses, prompt_id):
     l = extract_prompt_ids_from_response(agent_responses)
@@ -65,7 +65,7 @@ def run(target_plan_id):
 
         all_cases = {}
         for metric_id, metric_name in metrics.items():
-            print("Gathering datapoints for metric id: ", metric_id)
+            logger.info(f"Gathering datapoints for metric id: {metric_id}")
             if metric_id not in ["47","48","41","44","50", "51"]:
                 if metric_id in metric_to_test_case_mapping:
                     for case in metric_to_test_case_mapping[metric_id]["cases"]:
@@ -77,9 +77,9 @@ def run(target_plan_id):
                                 all_cases[metric_id] = [row]
                             else:
                                 all_cases[metric_id].append(row)
-                            print("PROMPT included!", row[4])
+                            logger.info(f"PROMPT included! {row[4]}")
             else:
-                print("PROMPTS NOT REQUIRED!")
+                logger.info("PROMPTS NOT REQUIRED!")
                 all_cases[metric_id] = "PROMPTS NOT REQUIRED!"
             
             if all_cases[metric_id]!= "PROMPTS NOT REQUIRED!":
@@ -323,4 +323,4 @@ def run(target_plan_id):
 
 
 # Example usage:
-run("T6") 
+run("T2") 
