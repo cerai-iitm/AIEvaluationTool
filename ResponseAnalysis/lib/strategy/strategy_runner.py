@@ -10,6 +10,8 @@ from logger import get_logger
 from utils import load_json, extract_score,get_key_by_value
 from collections import defaultdict
 import csv
+from tabulate import tabulate
+import pandas as pd
 
 logger = get_logger("strategy_runner")
 
@@ -17,7 +19,7 @@ plan_file = "Data/plans.json"
 datapoints_file = "Data/datapoints_combined.json"
 metric_to_strategy_mapping_file = "Data/metric_strategy_mapping.json"
 strategy_id_to_strategy_mapping_file = "Data/strategy_id.json"
-response_file = "Data/responses_T2.json"
+response_file = "Data/responses_T2_Healthcare.json"
 
 def get_agent_response_map(agent_responses, prompt_id):
     l = extract_prompt_ids_from_response(agent_responses)
@@ -159,6 +161,41 @@ def run(target_plan_id):
         
             consolidated_scores[metric_name] = sum(st_scores)/len(st_scores)
             logger.info(f"Consolidated Score - {consolidated_scores}")
+
+
+    plan_name = test_plans[target_plan_id]["TestPlan_name"]
+    metrics = list(consolidated_scores.items())
+
+    rows = []
+
+    for i, (metric_name, score) in enumerate(metrics):
+        rows.append([
+            plan_name if i == 0 else "",  # Only first row has plan name
+            metric_name,
+            f"{score:.2f}"
+        ])
+
+    headers = ["Plan Name", "Metric Name", "Score"]
+
+    print("\n=== Consolidated Score Report ===")
+    print(tabulate(rows, headers=headers, tablefmt="fancy_grid"))
+
+    report_data = []
+    for i, (metric_name, score) in enumerate(consolidated_scores.items()):
+        report_data.append({
+            "Plan Name": plan_name if i == 0 else "",
+            "Metric Name": metric_name,
+            "Score": round(score, 3)
+        })
+
+    # Create DataFrame
+    df = pd.DataFrame(report_data)
+
+    # Save to Excel
+    output_path = f"Data/evaluation_summary_{target_plan_id}.xlsx"
+    df.to_excel(output_path, index=False)
+
+    print(f"\n Evaluation Scores saved at: {output_path}")
 
 # Example usage:
 run("T2") 
