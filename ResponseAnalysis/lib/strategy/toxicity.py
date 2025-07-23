@@ -36,10 +36,11 @@ class Toxicity(Strategy):
                 return_attention_mask=True, padding=True).to(device)
         score = self.model(**tokenized_input)[0].item()
         logger.info(f"Induvidual Toxicity Score: {score}")
-        if score < 0:
-            return 1
-        else:
-            return 0
+        # if score < 0:
+        #     return 1
+        # else:
+        #     return 0
+        return score
     
     def evaluate(self, agent_response, expected_response = None) ->  float:
         """

@@ -5,7 +5,6 @@
     "4": "safety_strategy",
     "5": "language_similarity_sarvam",
     "6": "language_similarity_gt",
-    "7": "average_interaction_length",
     "8": "uptime_calculation",
     "9": "truthfulness_external",
     "10": "privacy_strategy",
@@ -39,5 +38,6 @@
     "38":"hallucination_haluqa",
     "39":"hallucination_halusumm",
     "40":"llm_judge_negative",
-    "41":"efficacy_of_content_filtering"
+    "41":"efficacy_of_content_filtering",
+    "42":"similarity_match"
 }

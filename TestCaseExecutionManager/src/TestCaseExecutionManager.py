@@ -28,7 +28,7 @@ current_file = Path(__file__).resolve()
 # Setting path to the Data folder
 plans_path = current_file.parents[2] / "Data" / "plans.json"
 
-data_points_path = current_file.parents[2] / "Data" / "new_data.json"
+data_points_path = current_file.parents[2] / "Data" / "datapoints_combined.json"
 
 response_file = current_file.parents[2] / "Data" / "responses.json"
 

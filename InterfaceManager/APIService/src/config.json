@@ -19,6 +19,6 @@
     "action": "send_all_prompts",
     "run_mode": "single_window",
     "agent_name": "Gooey AI",
-    "test_plan_id": "T1",
+    "test_plan_id": "T7",
     "test_case_count": 5
 }
