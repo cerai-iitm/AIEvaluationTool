@@ -59,7 +59,7 @@ class StrategyImplementor:
                 strategy = UptimeCalculation(threshold=120) # Default check for 2 mins
                 return strategy.evaluate()
             
-            case "robustness_advglue_mnli" | "robustness_advglue_qqp " | "robustness_advglue_sst2" | "robustness_advglue_qnli":
+            case "robustness_advglue_mnli" | "robustness_advglue_qqp" | "robustness_advglue_sst2" | "robustness_advglue_qnli":
                 net_score =[]
                 for i in range(len(prompts)):
                     ind_task = extract_from_uds(self.strategy_name)
@@ -301,7 +301,7 @@ class StrategyImplementor:
                     score = strategy.evaluate(response)
                     scores.append(score)
                 logger.info(f"Average Bias Score: {sum(scores)/len(scores)}")
-                return sum(scores)/len(scores)
+                return float(sum(scores)/len(scores))
 
             case "similarity_match":
                 strategy = SimilarityMatchStrategy(metric_name = self.__metric_name)
@@ -375,7 +375,7 @@ class StrategyImplementor:
                     score = strategy.evaluate(agent_responses[i])
                     scores.append(score)
                 logger.info(f"Average Efficacy of Content Filtering: {sum(scores)/len(scores)}")
-                return sum(scores)/len(scores)
+                return float(sum(scores)/len(scores))
 
             case _:
                 logger.error(f"Strategy {self.strategy_name} not recognized.")

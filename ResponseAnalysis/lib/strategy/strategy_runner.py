@@ -155,7 +155,7 @@ def run(target_plan_id):
                     print("List of scores: ",st_scores)
                 
                 consolidated_scores[metric_name] = sum(st_scores)/len(st_scores)
-                logger.info(f"Consolidated Score")
+                logger.info(f"Consolidated Score - {consolidated_scores}")
 
                 
 
