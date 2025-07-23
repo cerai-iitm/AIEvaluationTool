@@ -17,13 +17,11 @@ plan_file = "Data/plans.json"
 datapoints_file = "Data/datapoints_combined.json"
 metric_to_strategy_mapping_file = "Data/metric_strategy_mapping.json"
 strategy_id_to_strategy_mapping_file = "Data/strategy_id.json"
-response_file = "Data/responses_T1.json"
+response_file = "Data/responses_T3.json"
 
 def get_agent_response_map(agent_responses, prompt_id):
-    l = []
-    for resp in agent_responses:
-        l.append(resp["prompt_id"])
-    
+    l = extract_prompt_ids_from_response(agent_responses)
+
     if prompt_id in l:
         for resp in agent_responses:
             return resp["response"]
@@ -36,17 +34,29 @@ def get_metric_names_by_test_plan_id(test_plan_id, test_plans):
     else:
         return []
 
+def extract_prompt_data(data, prompt_ids):
+    new_data = []
+    for i in data:
+        if i["PROMPT_ID"] in prompt_ids:
+            new_data.append(i)
+    return new_data
+
+def extract_prompt_ids_from_response(data):
+    l = []
+    for resp in data:
+        l.append(resp["prompt_id"])
+    return l
+
 def run(target_plan_id):
     test_plans = load_json(plan_file)
     metric_to_test_case_mapping = load_json(datapoints_file)
     strategy_map = load_json(metric_to_strategy_mapping_file)
     agent_responses = load_json(response_file)
     strategy_id_to_strategy_map = load_json(strategy_id_to_strategy_mapping_file)
-
-    #agent_response_map = get_agent_response_map(agent_responses)
-    metric_scores = defaultdict(list)
     fields = ["PROMPT_ID", "LLM_AS_JUDGE", "SYSTEM_PROMPT", "PROMPT", "EXPECTED_OUTPUT", "DOMAIN", "STRATEGY"]
     consolidated_scores={}
+
+
     if target_plan_id != "T6":
         if target_plan_id in test_plans:
             plan = test_plans[target_plan_id]
@@ -55,29 +65,26 @@ def run(target_plan_id):
 
             all_cases = {}
             for metric_id, metric_name in metrics.items():
+                print("Gathering datapoints for metric id: ", metric_id)
                 if metric_id in metric_to_test_case_mapping:
                     for case in metric_to_test_case_mapping[metric_id]["cases"]:
                         row = [target_plan_id, plan_name, metric_id, metric_name]
                         row += [case.get(field, "") for field in fields]
-
-                        if metric_id not in all_cases:
-                            all_cases[metric_id] = [row]
-                            #print("New")
-                            #print(all_cases[metric_id])
-                        else:
-                            all_cases[metric_id].append(row)
-                            #print("Old")
-                            #print(all_cases[metric_id])
+                        resp_prompts = extract_prompt_ids_from_response(agent_responses)
+                        if row[4] in resp_prompts:
+                            if metric_id not in all_cases:
+                                all_cases[metric_id] = [row]
+                            else:
+                                all_cases[metric_id].append(row)
+                            print("PROMPT included!", row[4])
+                
+                print("####")
+                print(all_cases)
                 dl = []
                 for data_list in all_cases[metric_id]:
                     dl.append(data_list[-1][-1])
-                    #print(data_list)
                 unique_strategy = set(dl)
-                #print(unique_strategy)
-                #print("###")
-                #print(metric_id)
-                # break
-
+     
                 print("########")
                 print(all_cases)
             
@@ -148,6 +155,7 @@ def run(target_plan_id):
                     print("List of scores: ",st_scores)
                 
                 consolidated_scores[metric_name] = sum(st_scores)/len(st_scores)
+                logger.info(f"Consolidated Score")
 
                 
 
@@ -275,25 +283,25 @@ def run(target_plan_id):
 #                 logger.error(f"[SKIPPED] Error in strategy '{strategy_name}' for metric '{metric_name}': {str(e)}")
 
     
-    # ===== Consolidated Report Output =====
-    print("\n=== Consolidated Report ===")
-    print("{:<20} {:<30} {:<10}".format("Plan Name", "Metric Name", "Score"))
-    print("-" * 60)
-    for metric_name, scores in consolidated_scores.items():
-        # numeric_scores = [extract_score(s) for s in scores]
-        # avg_score = sum(numeric_scores) / len(numeric_scores) if numeric_scores else 0
-        print("{:<20} {:<30} {:<10.2f}".format(test_plans[target_plan_id]["TestPlan_name"], metric_name, scores))
+    # # ===== Consolidated Report Output =====
+    # print("\n=== Consolidated Report ===")
+    # print("{:<20} {:<30} {:<10}".format("Plan Name", "Metric Name", "Score"))
+    # print("-" * 60)
+    # for metric_name, scores in consolidated_scores.items():
+    #     # numeric_scores = [extract_score(s) for s in scores]
+    #     # avg_score = sum(numeric_scores) / len(numeric_scores) if numeric_scores else 0
+    #     print("{:<20} {:<30} {:<10.2f}".format(test_plans[target_plan_id]["TestPlan_name"], metric_name, scores))
 
-    # Optional: Save to CSV
-    with open("consolidated_report.csv", "w", newline="") as f:
-        writer = csv.writer(f)
-        writer.writerow(["Plan Name", "Metric Name", "Score"])
-        for metric_name, scores in consolidated_scores.items():
-            # numeric_scores = [extract_score(s) for s in scores]
-            # avg_score = sum(numeric_scores) / len(numeric_scores) if numeric_scores else 0
-            writer.writerow([test_plans[target_plan_id]["TestPlan_name"], metric_name, f"{scores:.2f}"])
+    # # Optional: Save to CSV
+    # with open("consolidated_report.csv", "w", newline="") as f:
+    #     writer = csv.writer(f)
+    #     writer.writerow(["Plan Name", "Metric Name", "Score"])
+    #     for metric_name, scores in consolidated_scores.items():
+    #         # numeric_scores = [extract_score(s) for s in scores]
+    #         # avg_score = sum(numeric_scores) / len(numeric_scores) if numeric_scores else 0
+    #         writer.writerow([test_plans[target_plan_id]["TestPlan_name"], metric_name, f"{scores:.2f}"])
 
 
 
 # Example usage:
-run("T1") 
+run("T3") 
