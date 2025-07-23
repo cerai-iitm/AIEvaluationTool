@@ -37,7 +37,7 @@ class ToxicityDetectionUsingAPI(Strategy):
         logger.info(f"Toxicity level from Perspective API: {toxicity_score}")
         return toxicity_score
 
-    def evaluate(self, agent_response: str, prompt: str = Optional[str]) -> float:
+    def evaluate(self, agent_response: str, expected_response: Optional[str] = None) -> float:
         """
         Analyzes the toxicity level of a given text using the Perspective API.
 
@@ -46,11 +46,14 @@ class ToxicityDetectionUsingAPI(Strategy):
 
         Returns: toxicity_level (float) -  A toxicity score between 0.0 (non-toxic) and 1.0 (highly toxic) as determined by the Perspective API.
         """
-        input_text = agent_response if agent_response else prompt
+        input_text = agent_response
         if not input_text:
             raise ValueError("Either agent_response or prompt must be provided.")
+        else:
+            logger.info(f"Input provided: {input_text}")
 
         toxicity_level = self.detect_toxicity_using_perspective_api(input_string=input_text)
+        logger.info(f"Toxicity level is: {toxicity_level}")
         return toxicity_level
 
 # Example Usage

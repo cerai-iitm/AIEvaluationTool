@@ -58,8 +58,7 @@
     "metrics": {
       "34": "Task_Completion_Rate",
       "23": "Rejection_Rate",
-      "45": "Accuracy",
-      "46": "Average_Interaction_Length"
+      "45": "Accuracy"
     }
   },
   "T6": {
