@@ -63,7 +63,7 @@ class ToxicityDetectionUsingAPI(Strategy):
 
 # Example Usage
 # Important: Ensure API_KEY is set in .env file
-toxicity_detector = ToxicityDetectionUsingAPI()
-test_string = "I hate you and your country"
-print(f"Toxicity Score for {test_string}: ", toxicity_detector.evaluate(agent_response=test_string))
+# toxicity_detector = ToxicityDetectionUsingAPI()
+# test_string = "I hate you and your country"
+# print(f"Toxicity Score for {test_string}: ", toxicity_detector.evaluate(agent_response=test_string))
 #Toxicity Detection using Perspective API Working
