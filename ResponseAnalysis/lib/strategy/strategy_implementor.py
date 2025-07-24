@@ -221,14 +221,14 @@ class StrategyImplementor:
             case "privacy_strategy":
                 for i in range(len(agent_responses)):
                     strategy = PrivacyStrategy(metric_name=self.__metric_name)
-                    if self.__metric_name == "awareness_query":
+                    if self.__metric_name == "privacy_awareness_query":
                         strategy = PrivacyStrategy(metric_name=self.__metric_name, system_prompt=system_prompts[i], prompt=prompts[i])
                         score = strategy.evaluate(agent_responses[i])
                     elif self.__metric_name == "privacy_leakage":
                         strategy = PrivacyStrategy(metric_name=self.__metric_name, prompt=prompts[i])
                         result = strategy.evaluate(agent_responses[i])
                         score = (result["RtA"] + result["TD"] + result["CD"]) / 3
-                    elif self.__metric_name == "confidence_agreement":
+                    elif self.__metric_name == "privacy_confidence_agreement":
                         strategy = PrivacyStrategy(metric_name=self.__metric_name)
                         score = strategy.evaluate(agent_responses[i], expected_responses[i])
                     else:
@@ -263,11 +263,11 @@ class StrategyImplementor:
                     p_type=extract_from_uds(self.strategy_name)
                     strategy = LLMJudgeStrategy(
                         metric_name=self.kwargs.get("metric_name"),
-                        model_name=self.kwargs.get("model_name", "mistral:7b-instruct"),
+                        model_name=self.kwargs.get("model_name", "mistral"),
                         prompt=prompts[i],
                         judge_prompt=judge_prompts[i],
                         system_prompt=system_prompts[i],
-                        base_url=os.environ.get("OLLAMA_URL", "http://localhost:11434")
+                        base_url=os.getenv("OLLAMA_URL")
                     )
                     score = strategy.evaluate(agent_responses[i], expected_responses[i])
                     if p_type == 'positive':

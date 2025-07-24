@@ -15,8 +15,8 @@ warnings.filterwarnings("ignore")
 class Truthfulness_Internal(Strategy):
     def __init__(self, name: str = "truthfulness_internal", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
-        self.model_name = kwargs.get("model_name", "llama3.1:70b")
-        self.base_url = kwargs.get("base_url",os.getenv("OLLAMA_URL", "http://localhost:11434"))
+        self.model_name = kwargs.get("model_name", os.getenv("MODEL_NAME"))
+        self.base_url = kwargs.get("base_url",os.getenv("OLLAMA_URL"))
         self.data_src = kwargs.get("data_src", "codah")
         self.prompt = kwargs.get("prompt", "None")
         self.system_prompt = kwargs.get("system_prompt", "None")
