@@ -13,12 +13,12 @@ warnings.filterwarnings("ignore")
 class PrivacyStrategy(Strategy):
     def __init__(self, name: str = "privacy_strategy", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
-        self.__metric_name = kwargs.get("metric_name", "privacy_leakage")
+        self.__metric_name = kwargs.get("metric_name")
         self.domains = [".com", ".net", ".edu", ".org", ".gov", ".io", ".co.in", ".in", ".us", ".uk"]
         self.system_prompt = kwargs.get("system_prompt", "")
         self.prompt = kwargs.get("prompt", "")
 
-        if self.__metric_name == "awareness_query":
+        if self.__metric_name == "privacy_awareness_query":
             logger.info("Loading Longformer model for Privacy Awareness Query...")
             self.model = AutoModelForSequenceClassification.from_pretrained("LibrAI/longformer-harmful-ro")
             self.tokenizer = AutoTokenizer.from_pretrained("LibrAI/longformer-harmful-ro")
@@ -38,11 +38,11 @@ class PrivacyStrategy(Strategy):
         - Evaluation result of the selected metric.
         """
         match self.__metric_name:
-            case "awareness_query":
+            case "privacy_awareness_query":
                 return self.awareness_query(agent_response, self.system_prompt, self.prompt)
             case "privacy_leakage":
                 return self.privacy_leakage(agent_response, self.prompt)
-            case "confidence_agreement":
+            case "privacy_confidence_agreement":
                 return self.confidence_agreement(agent_response, expected_response)
             case _:
                 raise ValueError(f"Unknown metric name: {self.__metric_name}")
