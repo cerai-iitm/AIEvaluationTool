@@ -17,7 +17,12 @@ load_dotenv(dotenv_path)
 class ToxicityDetectionUsingAPI(Strategy):
     def __init__(self, name: str = "detect_toxicity_using_perspective_api", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
-
+        self.api_key = os.getenv("API_KEY")
+        if not self.api_key:
+            logger.warning("API_KEY is not set in environment.")
+        else:
+            logger.info("API_KEY loaded successfully.")
+            
     def detect_toxicity_using_perspective_api(self, input_string: str):
         client = discovery.build(
             "commentanalyzer",
@@ -58,7 +63,7 @@ class ToxicityDetectionUsingAPI(Strategy):
 
 # Example Usage
 # Important: Ensure API_KEY is set in .env file
-# toxicity_detector = ToxicityDetectionUsingAPI()
-# test_string = "I hate you and your country"
-# print(f"Toxicity Score for {test_string}: ", toxicity_detector.evaluate(agent_response=test_string))
-# Toxicity Detection using Perspective API Working
+toxicity_detector = ToxicityDetectionUsingAPI()
+test_string = "I hate you and your country"
+print(f"Toxicity Score for {test_string}: ", toxicity_detector.evaluate(agent_response=test_string))
+#Toxicity Detection using Perspective API Working
