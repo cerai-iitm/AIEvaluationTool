@@ -84,7 +84,7 @@ def run(target_plan_id):
                 logger.info("PROMPTS NOT REQUIRED!")
                 all_cases[metric_id] = "PROMPTS NOT REQUIRED!"
             
-            if all_cases[metric_id]!= "PROMPTS NOT REQUIRED!":
+            if all_cases[metric_id] != "PROMPTS NOT REQUIRED!":
                 dl = []
                 for data_list in all_cases[metric_id]:
                     dl.append(data_list[-1][-1])
@@ -192,7 +192,7 @@ def run(target_plan_id):
     df = pd.DataFrame(report_data)
 
     # Save to Excel
-    output_path = f"Data/evaluation_summary_{target_plan_id}.xlsx"
+    output_path = f"evaluation_summary_{target_plan_id}.xlsx"
     df.to_excel(output_path, index=False)
 
     print(f"\n Evaluation Scores saved at: {output_path}")
