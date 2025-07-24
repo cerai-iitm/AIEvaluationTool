@@ -5,3 +5,4 @@ from .orm import DB, Base, Languages, Domains, Metrics, Responses, TestCases, \
 from .strategy.factory import StrategyFactory
 from .strategy.strategy_base import Strategy
 from .interface_manager import InterfaceManagerClient
+from .utils import get_logger
