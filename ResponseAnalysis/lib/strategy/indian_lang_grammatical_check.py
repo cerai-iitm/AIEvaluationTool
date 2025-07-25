@@ -1,10 +1,14 @@
-import torch
-import math
+import requests
 import difflib
 import nltk
-from utils import SarvamModel
 from strategy_base import Strategy
 from typing import Optional
+import os 
+from dotenv import load_dotenv
+from os.path import join, dirname
+
+dotenv_path = join(dirname(__file__), '.env')
+load_dotenv(dotenv_path)
 
 from logger import get_logger
 
@@ -15,7 +19,12 @@ nltk.download('punkt')
 class IndianLangGrammaticalCheck(Strategy):
     def __init__(self, model=None, tokenizer=None, name="indian_lang_grammatical_check", **kwargs):
         super().__init__(name, **kwargs)
-        self.model = SarvamModel() if model is None else model
+        self.sarvam_url=os.getenv("SARVAM_URL")
+
+        if not self.sarvam_url:
+            logger.warning("SARVAM_URL is not set in environment.")
+        else:
+            logger.info("SARVAM_URL is loaded from environment.")
 
     def check_grammar(self, text: str, lang: str) -> str:
         prompt = f'''<|user|>
@@ -28,16 +37,14 @@ Respond below only with the corrected sentence in {lang}:
 <|assistant|>
 Corrected Sentence:
 '''
-        output = self.model.generate(prompt)
-        try:
-            corrected = output.split("Corrected Sentence:")[-1].strip()
-        except Exception:
-            corrected = output.strip()
+        output = requests.post(f"{self.sarvam_url}/generate",params={"prompt": prompt})
+        data = output.json()
+        corrected = data.get("generated")
         return corrected
 
     def count_corrections(self, original, corrected):
-        original_words = original.split()
-        corrected_words = corrected.split()
+        original_words = original
+        corrected_words = corrected
         diff = difflib.SequenceMatcher(None, original_words, corrected_words)
         changes = sum(1 for tag, *_ in diff.get_opcodes() if tag != 'equal')
         return changes, len(original_words)

@@ -5,13 +5,26 @@ from nltk.tokenize import sent_tokenize
 from typing import Optional
 from logger import get_logger
 import nltk
+import requests
+import os
+from dotenv import load_dotenv
+from os.path import join, dirname
+
+dotenv_path = join(dirname(__file__), '.env')
+load_dotenv(dotenv_path)
+
 nltk.download('punkt')
 logger = get_logger("fleuncy_score")
 
 class IndianLanguageFluencyScorer(Strategy):
-    def __init__(self, model=None, name="indian_lang_fluency", **kwargs):
+    def __init__(self, name="indian_lang_fluency", **kwargs):
         super().__init__(name, **kwargs)
-        self.model = SarvamModel() if model is None else model
+        self.sarvam_url=os.getenv("SARVAM_URL")
+
+        if not self.sarvam_url:
+            logger.warning("SARVAM_URL is not set in environment.")
+        else:
+            logger.info("SARVAM_URL is loaded from environment.")
 
     def cosine_similarity(self, a: np.ndarray, b: np.ndarray) -> float:
         return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b)))
@@ -22,19 +35,21 @@ class IndianLanguageFluencyScorer(Strategy):
             return 1.0
         sims = []
         for i in range(len(sentences) - 1):
-            emb1 = self.model.get_mean_pooled_embedding(sentences[i]).numpy()
-            emb2 = self.model.get_mean_pooled_embedding(sentences[i + 1]).numpy()
+            emb1 = requests.post(f"{self.sarvam_url}/embedding",params={"text": sentences[i]})
+            emb2 = requests.post(f"{self.sarvam_url}/embedding",params={"text": sentences[i+1]})
+            # emb1 = self.model.get_mean_pooled_embedding(sentences[i]).numpy()
+            # emb2 = self.model.get_mean_pooled_embedding(sentences[i + 1]).numpy()
             sim = self.cosine_similarity(emb1, emb2)
             sims.append(sim)
         avg_sim = float(np.mean(sims))
         return round(avg_sim, 4)
 
-'''if __name__ == "__main__":
-    scorer = IndianLanguageFluencyScorer()
-    test_sentence = "यह एक उदाहरण वाक्य है। यह दूसरा वाक्य है।"
-    score = scorer.evaluate(test_sentence)
-    print(f"Fluency score for test sentence: {score}")
-    print("Tokenizer vocab size:", len(scorer.model.tokenizer))'''
+# if __name__ == "__main__":
+#     scorer = IndianLanguageFluencyScorer()
+#     test_sentence = "यह एक उदाहरण वाक्य है। यह दूसरा वाक्य है।"
+#     score = scorer.evaluate(test_sentence)
+#     print(f"Fluency score for test sentence: {score}")
+    # print("Tokenizer vocab size:", len(scorer.tokenizer))
 
 
 
