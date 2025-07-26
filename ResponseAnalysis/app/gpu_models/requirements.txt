@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+transformers
+torch
+sqlalchemy
+langdetect
+googletrans
+opik
+nltk
+evaluate
+sentence_transformers
+sentencepiece
+google
+protobuf
+accelerate
