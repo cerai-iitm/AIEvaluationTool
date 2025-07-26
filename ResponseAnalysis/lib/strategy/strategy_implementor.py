@@ -310,6 +310,7 @@ class StrategyImplementor:
                     score = strategy.evaluate(agent_responses[i], expected_responses[i])
                     scores.append(score)
                 logger.info(f"Average {self.__metric_name} score is: {sum(scores)/len(scores)}" )
+                return float(sum(scores)/len(scores))
             
             case "grammatical_strategies":
                 strategy = GrammaticalStrategy()

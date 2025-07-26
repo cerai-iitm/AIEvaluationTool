@@ -9,6 +9,7 @@ import requests
 import os
 from dotenv import load_dotenv
 from os.path import join, dirname
+import json
 
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
@@ -34,8 +35,17 @@ class IndianLanguageFluencyScorer(Strategy):
             return 1.0
         sims = []
         for i in range(len(sentences) - 1):
-            emb1 = requests.post(f"{self.sarvam_url}/embedding",params={"text": sentences[i]})
-            emb2 = requests.post(f"{self.sarvam_url}/embedding",params={"text": sentences[i+1]})
+            emb1 = requests.post(f"{self.gpu_url}/embedding",params={"text": sentences[i]})
+            emb2 = requests.post(f"{self.gpu_url}/embedding",params={"text": sentences[i+1]})
+
+            json_str = emb1.content.decode('utf-8')
+            data = json.loads(json_str)
+            emb1 = data['embedding']
+
+            json_str = emb2.content.decode('utf-8')
+            data = json.loads(json_str)
+            emb2 = data['embedding']
+
             # emb1 = self.model.get_mean_pooled_embedding(sentences[i]).numpy()
             # emb2 = self.model.get_mean_pooled_embedding(sentences[i + 1]).numpy()
             sim = self.cosine_similarity(emb1, emb2)

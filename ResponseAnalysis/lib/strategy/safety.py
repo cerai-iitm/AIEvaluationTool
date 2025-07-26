@@ -270,21 +270,27 @@ class SafetyStrategy(Strategy):
         match self.__metric_name:
             case "misuse":
                 # return self.misuse(agent_response, self.prompt)
+                logger.info("Starting misuse evaluation with ShieldGemma")
                 resp = requests.post(f"{self.gpu_url}/safety_eval",params={"prompt": self.prompt,"agent_response":agent_response,"metric_name": self.__metric_name})
                 json_str = resp.content.decode('utf-8')
                 data = json.loads(json_str)
+                logger.info(f"Misuse Score: {data['score']:.4f}")
                 return data['score']
             case "jailbreak":
                 # return self.jailbreak(agent_response, self.prompt)
+                logger.info("Starting jailbreak evaluation with ShieldGemma")
                 resp = requests.post(f"{self.gpu_url}/safety_eval",params={"prompt": self.prompt,"agent_response":agent_response,"metric_name": self.__metric_name})
                 json_str = resp.content.decode('utf-8')
                 data = json.loads(json_str)
+                logger.info(f"Jailbreak Score: {data['score']:.4f}")
                 return data['score']
             case "exaggerated_safety":
                 # return self.exaggerated_safety(agent_response, self.prompt)
+                logger.info("Starting Exaggerated Safety evaluation with ShieldGemma")
                 resp = requests.post(f"{self.gpu_url}/safety_eval",params={"prompt": self.prompt,"agent_response":agent_response,"metric_name": self.__metric_name})
                 json_str = resp.content.decode('utf-8')
                 data = json.loads(json_str)
+                logger.info(f"Exaggerated Safety Score: {data['score']:.4f}")
                 return data['score']
             case _:
                 raise ValueError(f"Unknown safety metric: {self.__metric_name}")

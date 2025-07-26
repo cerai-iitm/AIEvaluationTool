@@ -37,7 +37,7 @@ Respond below only with the corrected sentence in {lang}:
 <|assistant|>
 Corrected Sentence:
 '''
-        output = requests.post(f"{self.sarvam_url}/generate",params={"prompt": prompt})
+        output = requests.post(f"{self.gpu_url}/generate",params={"prompt": prompt})
         data = output.json()
         corrected = data.get("generated")
         return corrected

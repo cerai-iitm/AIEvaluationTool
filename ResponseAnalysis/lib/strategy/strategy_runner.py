@@ -19,7 +19,7 @@ plan_file = "Data/plans.json"
 datapoints_file = "Data/datapoints_combined.json"
 metric_to_strategy_mapping_file = "Data/metric_strategy_mapping.json"
 strategy_id_to_strategy_mapping_file = "Data/strategy_id.json"
-response_file = "Data/responses_T2_Healthcare.json"
+response_file = "Data/responses_T7_Healthcare.json"
 
 def get_agent_response_map(agent_responses, prompt_id):
     l = extract_prompt_ids_from_response(agent_responses)
@@ -57,7 +57,6 @@ def run(target_plan_id):
     strategy_id_to_strategy_map = load_json(strategy_id_to_strategy_mapping_file)
     fields = ["PROMPT_ID", "LLM_AS_JUDGE", "SYSTEM_PROMPT", "PROMPT", "EXPECTED_OUTPUT", "DOMAIN", "STRATEGY"]
     consolidated_scores={}
-
 
     #if target_plan_id != "T6":
     if target_plan_id in test_plans:
@@ -138,6 +137,7 @@ def run(target_plan_id):
                                         system_prompts=strategy_data_list[st_id]["SYSTEM_PROMPTS"],
                                         judge_prompts=strategy_data_list[st_id]["JUDGE_PROMPTS"]
                                     )
+                        print("score: ",st_score)
                         logger.info(f"[SUCCESS] Strategy: {strategy_name}, Metric: {metric_name}, Score: {st_score}")
                         st_scores.append(st_score)
                         logger.info(f"List of scores: {st_scores}")
@@ -154,6 +154,7 @@ def run(target_plan_id):
                     logger.info(f"The strategy name to be executed {strategy_name}")
                     strategy_instance = StrategyImplementor(strategy_name=strategy_name, metric_name=metric_name.lower())
                     st_score = strategy_instance.execute()
+                    print("score: ",st_score)
                     logger.info(f"[SUCCESS] Strategy: {strategy_name}, Metric: {metric_name}, Score: {st_score}")
                 st_scores.append(st_score)
                 logger.info(f"List of scores: {st_scores}")
@@ -198,4 +199,4 @@ def run(target_plan_id):
     print(f"\n Evaluation Scores saved at: {output_path}")
 
 # Example usage:
-run("T2") 
+run("T7") 

@@ -57,12 +57,12 @@ class LanguageStrategiesSync(Strategy):
         response_language = language_detection(agent_response)
         text_list = []
         if response_language !="en":
-            response_translated = requests.post(f"{self.sarvam_url}/translate",params={"input_text": agent_response,"target_language": response_language})
+            response_translated = requests.post(f"{self.gpu_url}/translate",params={"input_text": agent_response,"target_language": response_language})
         else:
             response_translated = agent_response
         expected_language = language_detection(expected_response)
         if expected_language != "en":
-            expected_response_translated = requests.post(f"{self.sarvam_url}/translate",params={"input_text": expected_response,"target_language": expected_language})
+            expected_response_translated = requests.post(f"{self.gpu_url}/translate",params={"input_text": expected_response,"target_language": expected_language})
         else:
             expected_response_translated = expected_response
         text_list = [response_translated, expected_response_translated]        
