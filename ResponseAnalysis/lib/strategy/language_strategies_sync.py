@@ -25,11 +25,11 @@ class LanguageStrategiesSync(Strategy):
         self.__strategy_name = kwargs.get("strategy_name")
         self.embedding_model_name = kwargs.get("model_name", "thenlper/gte-small")
         self.embedding_model = SentenceTransformer(self.embedding_model_name)
-        self.sarvam_url = os.getenv("SARVAM_URL")
-        if not self.sarvam_url:
-            logger.warning("SARVAM_URL is not set in environment.")
+        self.gpu_url=os.getenv("GPU_URL")
+        if not self.gpu_url:
+            logger.warning("GPU_URL is not set in environment.")
         else:
-            logger.info("SARVAM_URL is loaded from environment.")
+            logger.info("GPU_URL is loaded from environment.")
     
     def language_detect_langdetect(self, prompt: str, agent_response: str) -> float:
         """

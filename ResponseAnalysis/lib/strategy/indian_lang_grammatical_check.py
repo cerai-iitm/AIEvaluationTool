@@ -19,12 +19,12 @@ nltk.download('punkt')
 class IndianLangGrammaticalCheck(Strategy):
     def __init__(self, model=None, tokenizer=None, name="indian_lang_grammatical_check", **kwargs):
         super().__init__(name, **kwargs)
-        self.sarvam_url=os.getenv("SARVAM_URL")
+        self.gpu_url=os.getenv("GPU_URL")
 
-        if not self.sarvam_url:
-            logger.warning("SARVAM_URL is not set in environment.")
+        if not self.gpu_url:
+            logger.warning("GPU_URL is not set in environment.")
         else:
-            logger.info("SARVAM_URL is loaded from environment.")
+            logger.info("GPU_URL is loaded from environment.")
 
     def check_grammar(self, text: str, lang: str) -> str:
         prompt = f'''<|user|>

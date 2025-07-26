@@ -19,12 +19,11 @@ logger = get_logger("fleuncy_score")
 class IndianLanguageFluencyScorer(Strategy):
     def __init__(self, name="indian_lang_fluency", **kwargs):
         super().__init__(name, **kwargs)
-        self.sarvam_url=os.getenv("SARVAM_URL")
-
-        if not self.sarvam_url:
-            logger.warning("SARVAM_URL is not set in environment.")
+        self.gpu_url=os.getenv("GPU_URL")
+        if not self.gpu_url:
+            logger.warning("GPU_URL is not set in environment.")
         else:
-            logger.info("SARVAM_URL is loaded from environment.")
+            logger.info("GPU_URL is loaded from environment.")
 
     def cosine_similarity(self, a: np.ndarray, b: np.ndarray) -> float:
         return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b)))
