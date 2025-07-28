@@ -132,7 +132,7 @@ class SimilarityMatchStrategy(Strategy):
                 return float(cos_sim_score)
             case "ROUGE" | "rouge":
                 score = self.rouge_score_metric(expected_response, agent_response)
-                return score
+                return float(score['rougeLsum'])
             case "METEOR" | "meteor" :
                 score = self.meteor_metric(expected_response, agent_response)
                 return float(score)
@@ -143,14 +143,14 @@ class SimilarityMatchStrategy(Strategy):
                 # Placeholder for BART score similarity logic
                 bart_scorer = BARTScorer(device='cpu', checkpoint='facebook/bart-large-cnn')
                 score = bart_scorer.score([expected_response], [agent_response], batch_size=4)
-                return score[0]
+                return float(score[0])
             case _:
                 raise ValueError(f"Unknown metric name: {self.__metric_name}")
 
         return 0.0  # Replace with actual evaluation logic
     
 #Test
-# sm_instance = SimilarityMatchStrategy(metric_name="bart_score_similarity")
+# sm_instance = SimilarityMatchStrategy(metric_name="bleu")
 # score = sm_instance.evaluate("hello world","gomenasai")
 # print(f"Score: {score}")
 # score = sm_instance.evaluate("hello world","hello gokul")

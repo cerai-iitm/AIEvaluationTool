@@ -2,8 +2,17 @@ from strategy_base import Strategy
 from typing import Optional
 import warnings
 from sentence_transformers.util import cos_sim
-from utils import language_detection, sarvam_translate
+from sentence_transformers import SentenceTransformer
+from utils import language_detection
 from logger import get_logger
+import requests
+
+import os 
+from dotenv import load_dotenv
+from os.path import join, dirname
+
+dotenv_path = join(dirname(__file__), '.env')
+load_dotenv(dotenv_path)
 
 logger = get_logger("language-strategies-sync")
 warnings.filterwarnings("ignore")
@@ -14,6 +23,13 @@ class LanguageStrategiesSync(Strategy):
     def __init__(self, name: str = "language_strategies_sync", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
         self.__strategy_name = kwargs.get("strategy_name")
+        self.embedding_model_name = kwargs.get("model_name", "thenlper/gte-small")
+        self.embedding_model = SentenceTransformer(self.embedding_model_name)
+        self.gpu_url=os.getenv("GPU_URL")
+        if not self.gpu_url:
+            logger.warning("GPU_URL is not set in environment.")
+        else:
+            logger.info("GPU_URL is loaded from environment.")
     
     def language_detect_langdetect(self, prompt: str, agent_response: str) -> float:
         """
@@ -41,12 +57,12 @@ class LanguageStrategiesSync(Strategy):
         response_language = language_detection(agent_response)
         text_list = []
         if response_language !="en":
-            response_translated = sarvam_translate(agent_response)
+            response_translated = requests.post(f"{self.gpu_url}/translate",params={"input_text": agent_response,"target_language": response_language})
         else:
             response_translated = agent_response
         expected_language = language_detection(expected_response)
         if expected_language != "en":
-            expected_response_translated = sarvam_translate(expected_response)
+            expected_response_translated = requests.post(f"{self.gpu_url}/translate",params={"input_text": expected_response,"target_language": expected_language})
         else:
             expected_response_translated = expected_response
         text_list = [response_translated, expected_response_translated]        
@@ -72,7 +88,7 @@ class LanguageStrategiesSync(Strategy):
                 return score
 
 #Test
-# lg_instance = LanguageStrategiesSync(strategy_name="language_detect_langdetect")
+# lg_instance = LanguageStrategiesSync(strategy_name="language_similarity_sarvam")
 # result = lg_instance.evaluate("இந்தியா என்பது பரந்த பாரம்பரியமும் பண்பாடும் கொண்ட நாடாகும். இங்கு பல மதங்கள், மொழிகள் மற்றும் கலாசாரங்கள் ஒன்றிணைந்து வாழ்கின்றன.அது உலகிலேயே மிகப்பெரிய ஜனநாயக நாடாகும்.","India is a land of vast heritage and culture. It is the largest democracy in the world with many religions, languages and cultures living together.")
 # print(result)
 # del lg_instance
