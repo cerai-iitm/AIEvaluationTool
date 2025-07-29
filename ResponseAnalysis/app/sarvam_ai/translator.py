@@ -6,9 +6,13 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 import sys, os
 import logging
 import torch
+from sarvamai import SarvamAI
+from utils import language_detection
 
 # Adjust the path to include the "lib" directory
 sys.path.append(os.path.dirname(__file__) + "/../../")  
+from dotenv import load_dotenv
+load_dotenv()
 
 from lib.utils.logger import get_logger
 # from logger import get_logger
@@ -18,6 +22,7 @@ class SarvamAITranslator:
         self.model_loaded = False
         self.logger = get_logger(__name__, loglevel=loglevel)
         self.force_cpu = force_cpu
+        self.api_key_check = bool(os.environ.get('SARVAM_API_KEY'))
 
     def load_model(self, model_name="sarvamai/sarvam-translate"):
         self.model_name = model_name
@@ -58,3 +63,17 @@ class SarvamAITranslator:
         output_ids = generated_ids[0][len(model_inputs.input_ids[0]):].tolist()
         output_text = self.tokenizer.decode(output_ids, skip_special_tokens=True)
         return output_text.strip()
+    
+    def token_translate(self, input_text, target_language, model_name = "sarvam-translate:v1"):
+        SARVAM_API_KEY = os.getenv("SARVAM_API_KEY")
+        client = SarvamAI(api_subscription_key=SARVAM_API_KEY)
+        source_language = language_detection(input_text)
+        source_language = source_language + "-IN"
+        response = client.text.translate(
+                input=input_text,
+                source_language_code=source_language,
+                target_language_code=target_language,
+                model=model_name
+            )
+        
+        return response.translated_text.strip()
