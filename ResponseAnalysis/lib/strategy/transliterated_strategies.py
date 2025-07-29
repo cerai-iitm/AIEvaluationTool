@@ -2,9 +2,10 @@ from strategy_base import Strategy
 from typing import Optional
 import warnings
 from logger import get_logger
-from utils import language_detection, sarvam_translate
+from utils import language_detection
 from sentence_transformers import SentenceTransformer
 from sentence_transformers.util import cos_sim
+import requests
 
 logger = get_logger("transliterated_language_strategy")
 warnings.filterwarnings("ignore")
@@ -23,7 +24,7 @@ class TransliteratedStrategy(Strategy):
         """
         language = language_detection(text)
         if language == "en":
-            translated_language = sarvam_translate(text, target_lang=language)
+            translated_language = requests.post(f"{self.gpu_url}/translate",params={"input_text": text,"target_language": language})
             sentences = [translated_language, expected_response]
         else:
             sentences = [text, expected_response]

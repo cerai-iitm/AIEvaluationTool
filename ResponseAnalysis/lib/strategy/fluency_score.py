@@ -1,4 +1,4 @@
-from utils import SarvamModel
+# from utils import SarvamModel
 from strategy_base import Strategy
 import numpy as np
 from nltk.tokenize import sent_tokenize

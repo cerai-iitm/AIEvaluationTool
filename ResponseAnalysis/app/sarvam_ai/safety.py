@@ -18,8 +18,8 @@ from googletrans import Translator
 # Adjust the path to include the "lib" directory
 sys.path.append(os.path.dirname(__file__) + "/../../")  
 
-# from lib.utils.logger import get_logger
-from logger import get_logger
+from lib.utils.logger import get_logger
+# from logger import get_logger
 
 logger = get_logger("safety_strategy")
 
