@@ -42,10 +42,10 @@ def translate_text(input_text: str, target_language: str):
     """
     if translator.api_key_check:
         logger.info("The Sarvam Model will get loaded to your machine!")
-        translated_text = translator.translate(input_text, target_language)
+        translated_text = translator.token_translate(input_text, target_language)
     else:
         logger.info("The Sarvam API Key is used!")
-        translated_text = translator.token_translate(input_text, target_language)
+        translated_text = translator.translate(input_text, target_language)
     return {"input": input_text, "translated": translated_text, "language": target_language}
 
 @app.post("/generate")
@@ -53,7 +53,10 @@ def generate_text(prompt: str, max_new_tokens: int = 1024):
     """
     Generate text continuation from a given prompt using Sarvam AI.
     """
-    generated_text = generator.generate(prompt, max_new_tokens)
+    if generator.api_key_check:
+        generated_text = generator.token_completion(prompt)
+    else:
+        generated_text = generator.generate(prompt, max_new_tokens)
     return {"prompt": prompt, "generated": generated_text}
 
 @app.post("/embedding")

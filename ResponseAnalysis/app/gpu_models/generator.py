@@ -7,9 +7,12 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
 import sys, os, logging
 import numpy as np
+from sarvamai import SarvamAI
 
 # Adjust the path to include the "lib" directory
 sys.path.append(os.path.dirname(__file__) + "/../../")  
+from dotenv import load_dotenv
+load_dotenv()
 
 # from lib.utils.logger import get_logger
 from logger import get_logger
@@ -22,6 +25,7 @@ class SarvamAIGenerator:
         self.force_cpu = force_cpu
         self.logger = get_logger(__name__, loglevel=loglevel)
         self.model_loaded = False
+        self.api_key_check = bool(os.environ.get('SARVAM_API_KEY'))
 
     def load_model(self, model_id: str = "sarvamai/sarvam-2b-v0.5"):
         """ Load the Sarvam AI model for text generation.
@@ -85,4 +89,21 @@ class SarvamAIGenerator:
             print("Final embedding shape:", embedding.shape)
 
             # Convert to numpy array for compatibility with other libraries
-            return embedding.cpu().numpy()  
+            return embedding.cpu().numpy()
+
+    def token_completion(self, text:str):
+        """
+        This function is for chat completion using Sarvam APIs
+        """  
+        SARVAM_API_KEY = os.getenv("SARVAM_API_KEY")
+        client = SarvamAI(api_subscription_key=SARVAM_API_KEY)
+        response = client.chat.completions(
+            messages= [
+                {
+                    "role":"user",
+                    "content":text
+                }
+            ]
+        )
+        return response.choices[0].message.content
+        
