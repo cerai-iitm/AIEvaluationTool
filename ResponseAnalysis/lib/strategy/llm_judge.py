@@ -9,6 +9,11 @@ warnings.filterwarnings("ignore")
 from utils import CustomOllamaModel
 from opik.evaluation.metrics import GEval
 from strategy_base import Strategy
+from dotenv import load_dotenv
+from os.path import join, dirname
+
+dotenv_path = join(dirname(__file__), '.env')
+load_dotenv(dotenv_path)
 
 logger = logging.getLogger("llm_as_judge")
 if not logger.hasHandlers():
@@ -33,6 +38,14 @@ class LLMJudgeStrategy(Strategy):
         self.system_prompt = kwargs.get("system_prompt", "You are a general tips and advice provider chatbot, your task is to help users with their general doubts.")
         self.model = CustomOllamaModel(model_name=self.model_name, base_url=self.base_url)
         eval_criteria = re.split(r'[.?]', self.judge_prompt)
+        if not self.model_name:
+            logger.warning("MODEL_NAME is not set in environment.")
+        else:
+            logger.info("MODEL_NAME is loaded from environment.")
+        if not self.base_url:
+            logger.warning("OLLAMA_URL is not set in environment.")
+        else:
+            logger.info("OLLAMA_URL is loaded from environment.")
         print(eval_criteria)
         if eval_criteria[-1] == "":
             eval_criteria = eval_criteria[-2]
