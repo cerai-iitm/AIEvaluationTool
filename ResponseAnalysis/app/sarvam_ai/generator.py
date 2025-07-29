@@ -11,8 +11,8 @@ import numpy as np
 # Adjust the path to include the "lib" directory
 sys.path.append(os.path.dirname(__file__) + "/../../")  
 
-# from lib.utils.logger import get_logger
-from logger import get_logger
+from lib.utils.logger import get_logger
+# from logger import get_logger
 
 class SarvamAIGenerator:
     """ Sarvam AI text generation model wrapper.

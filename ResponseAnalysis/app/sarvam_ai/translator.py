@@ -10,8 +10,8 @@ import torch
 # Adjust the path to include the "lib" directory
 sys.path.append(os.path.dirname(__file__) + "/../../")  
 
-# from lib.utils.logger import get_logger
-from logger import get_logger
+from lib.utils.logger import get_logger
+# from logger import get_logger
 
 class SarvamAITranslator:
     def __init__(self, loglevel=logging.DEBUG, force_cpu=False):
