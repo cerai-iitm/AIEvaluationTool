@@ -14,3 +14,4 @@ accelerate
 language_tool_python
 lexical_diversity
 sentencepiece
+sarvamai
