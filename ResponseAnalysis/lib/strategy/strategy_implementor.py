@@ -263,7 +263,7 @@ class StrategyImplementor:
                     p_type=extract_from_uds(self.strategy_name)
                     strategy = LLMJudgeStrategy(
                         metric_name=self.kwargs.get("metric_name"),
-                        model_name=self.kwargs.get("model_name", "mistral"),
+                        model_name=self.kwargs.get("model_name", "gemma3n:e4b"),
                         prompt=prompts[i],
                         judge_prompt=judge_prompts[i],
                         system_prompt=system_prompts[i],
