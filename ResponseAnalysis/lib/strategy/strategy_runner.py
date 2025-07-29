@@ -139,10 +139,11 @@ def run(target_plan_id):
                                         judge_prompts=strategy_data_list[st_id]["JUDGE_PROMPTS"]
                                     )
                         logger.info(f"[SUCCESS] Strategy: {strategy_name}, Metric: {metric_name}, Score: {st_score}")
-                        st_scores.append(st_score)
-                        logger.info(f"List of scores: {st_scores}")
+                        if st_score is not None:
+                            st_scores.append(st_score)
+                logger.info(f"List of scores: {st_scores}")
                 
-                consolidated_scores[metric_name] = sum(st_scores)/len(st_scores)
+                consolidated_scores[metric_name] = sum(st_scores)/len(st_scores) if st_scores else 0
                 logger.info(f"Consolidated Score - {consolidated_scores}")   
                 
             else:
@@ -155,11 +156,11 @@ def run(target_plan_id):
                     strategy_instance = StrategyImplementor(strategy_name=strategy_name, metric_name=metric_name.lower())
                     st_score = strategy_instance.execute()
                     logger.info(f"[SUCCESS] Strategy: {strategy_name}, Metric: {metric_name}, Score: {st_score}")
-                st_scores.append(st_score)
+                    if st_score is not None:
+                        st_scores.append(st_score)
                 logger.info(f"List of scores: {st_scores}")
-                    
-        
-            consolidated_scores[metric_name] = sum(st_scores)/len(st_scores)
+
+            consolidated_scores[metric_name] = sum(st_scores)/len(st_scores) if st_scores else 0
             logger.info(f"Consolidated Score - {consolidated_scores}")
 
 

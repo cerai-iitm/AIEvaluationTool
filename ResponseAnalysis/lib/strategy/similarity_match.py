@@ -1,4 +1,4 @@
-from .strategy_base import Strategy
+from strategy_base import Strategy
 from typing import Optional
 import logging
 from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
@@ -7,7 +7,7 @@ import evaluate
 import warnings
 from sentence_transformers.util import cos_sim
 from evaluate import load
-from .utils import BARTScorer
+from utils import BARTScorer
 from sentence_transformers import SentenceTransformer
 
 logging.basicConfig(
@@ -126,13 +126,20 @@ class SimilarityMatchStrategy(Strategy):
             case "bert_similarity":
                 bertscore = load("bertscore")
                 results = bertscore.compute(predictions=[agent_response], references=[expected_response], lang="en")
+                if results is None:
+                    return 0.0
                 return float(results['f1'][0])  # Return the F1 score from BERTScore
             case "cosine_similarity":
-                cos_sim_score = self.cosine_similarity_metric(agent_response,expected_response)
+                if expected_response is None:
+                    logger.error("Expected response is None, cannot compute cosine similarity.")
+                    return 0.0
+                cos_sim_score = self.cosine_similarity_metric(agent_response, expected_response)
                 return float(cos_sim_score)
             case "ROUGE" | "rouge":
                 score = self.rouge_score_metric(expected_response, agent_response)
-                return score
+                if score is None:
+                    return 0.0
+                return float(score["rougeL"])
             case "METEOR" | "meteor" :
                 score = self.meteor_metric(expected_response, agent_response)
                 return float(score)

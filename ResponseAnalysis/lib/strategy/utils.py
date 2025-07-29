@@ -13,7 +13,7 @@ import requests
 import asyncio
 from typing import Any, Dict, List, Type, Optional
 from opik.evaluation.models import OpikBaseModel
-from .logger import get_logger
+from logger import get_logger
 import torch
 import torch.nn as nn
 import traceback
@@ -151,10 +151,10 @@ def extract_from_uds(txt):
     return new_txt[-1]
 
 
-try:
-    from opik.evaluation.models import OpikBaseModel
-except ImportError:
-    OpikBaseModel = object
+#try:
+from opik.evaluation.models import OpikBaseModel
+#except ImportError:
+#    OpikBaseModel = object
 
 class DotDict:
     """
@@ -176,7 +176,7 @@ class DotDict:
 
 
 class CustomOllamaModel(OpikBaseModel):
-    def __init__(self, model_name: str, base_url: str = os.getenv("OLLAMA_URL")):
+    def __init__(self, model_name: str, base_url: str = os.getenv("OLLAMA_URL", "http://localhost:11434")):
         super().__init__(model_name)
         self.base_url = base_url.rstrip("/")
         self.api_url = f"{self.base_url}/api/chat"
@@ -199,7 +199,7 @@ class CustomOllamaModel(OpikBaseModel):
                 payload[k] = v
         try:
             logger.info(f"[Ollama] Sending request to {self.api_url}...")
-            response = requests.post(self.api_url, json=payload, timeout=60,)
+            response = requests.post(self.api_url, json=payload, timeout=120,)
             response.raise_for_status()
             raw = response.json()
             print(raw)
@@ -248,7 +248,7 @@ class SarvamModel:
         self.model_id = model_id
         self.tokenizer = AutoTokenizer.from_pretrained(model_id)
 
-        if torch.cuda.is_available():
+        if torch.cuda.is_available() and False:
             logger.info("Using GPU for hosting SarvamModel")
             self.model = AutoModelForCausalLM.from_pretrained(
                 model_id, torch_dtype=torch.float16, device_map="auto"
@@ -259,8 +259,8 @@ class SarvamModel:
                 model_id, torch_dtype=torch.float32
             ).to("cpu")
 
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.model.to(self.device)
+        self.device = torch.device("cpu") # torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        #self.model.to(self.device)
 
     def generate(self, prompt: str, max_new_tokens: int = 1024) -> str:
         """
