@@ -22,8 +22,8 @@ metric_to_strategy_mapping_file = "Data/metric_strategy_mapping.json"
 strategy_id_to_strategy_mapping_file = "Data/strategy_id.json"
 
 parser = argparse.ArgumentParser(description="LLM Startegy Runner - Runner which uses strategies to compute the metrics")
-parser.add_argument("--response-file", "-r", dest="response_file", type=str, default="Data/responses_T1.json", help="Location of responses file for each test plan")
-parser.add_argument("--test-plan-id", "-t", dest="test_plan_id", type=str, default="T1", help="The test plan ID to be analyzed")
+parser.add_argument("--response-file", "-r", dest="response_file", type=str, default="Data/responses_T3.json", help="Location of responses file for each test plan")
+parser.add_argument("--test-plan-id", "-t", dest="test_plan_id", type=str, default="T3", help="The test plan ID to be analyzed")
 
 args = parser.parse_args()
 
@@ -34,7 +34,8 @@ def get_agent_response_map(agent_responses, prompt_id):
 
     if prompt_id in l:
         for resp in agent_responses:
-            return resp["response"]
+            if resp.get("prompt_id") == prompt_id:  # or however you identify prompt_id in resp
+                return resp["response"]
     else:
         return "PROMPT NOT FOUND"
 
