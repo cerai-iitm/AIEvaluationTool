@@ -6,13 +6,12 @@ from utils import language_detection
 from sentence_transformers import SentenceTransformer
 from sentence_transformers.util import cos_sim
 import requests
-import os 
 from dotenv import load_dotenv
+import os
 from os.path import join, dirname
 
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
-
 logger = get_logger("transliterated_language_strategy")
 warnings.filterwarnings("ignore")
 
