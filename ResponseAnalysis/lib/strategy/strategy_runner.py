@@ -197,7 +197,7 @@ def run(target_plan_id):
         report_data.append({
             "Plan Name": plan_name if i == 0 else "",
             "Metric Name": metric_name,
-            "Score": round(score, 3)
+            "Score": round(score, 5)
         })
 
     # Create DataFrame
