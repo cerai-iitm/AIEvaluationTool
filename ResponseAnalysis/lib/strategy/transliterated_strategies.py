@@ -6,6 +6,12 @@ from utils import language_detection
 from sentence_transformers import SentenceTransformer
 from sentence_transformers.util import cos_sim
 import requests
+import os 
+from dotenv import load_dotenv
+from os.path import join, dirname
+
+dotenv_path = join(dirname(__file__), '.env')
+load_dotenv(dotenv_path)
 
 logger = get_logger("transliterated_language_strategy")
 warnings.filterwarnings("ignore")
@@ -15,6 +21,11 @@ warnings.filterwarnings("ignore")
 class TransliteratedStrategy(Strategy):
     def __init__(self, name: str = "transliterated_language_strategy", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
+        self.gpu_url=os.getenv("GPU_URL")
+        if not self.gpu_url:
+            logger.warning("GPU_URL is not set in environment.")
+        else:
+            logger.info("GPU_URL is loaded from environment.")
 
     def transliterate_text(self, text: str, expected_response:str) -> float:
         """

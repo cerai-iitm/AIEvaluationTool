@@ -19,7 +19,7 @@ plan_file = "Data/plans.json"
 datapoints_file = "Data/datapoints_combined.json"
 metric_to_strategy_mapping_file = "Data/metric_strategy_mapping.json"
 strategy_id_to_strategy_mapping_file = "Data/strategy_id.json"
-response_file = "Data/responses_T7_Healthcare.json"
+response_file = "Data/responses_T6_Healthcare.json"
 
 def get_agent_response_map(agent_responses, prompt_id):
     l = extract_prompt_ids_from_response(agent_responses)
@@ -168,26 +168,31 @@ def run(target_plan_id):
     metrics = list(consolidated_scores.items())
 
     rows = []
+    report_data = []
 
     for i, (metric_name, score) in enumerate(metrics):
+        # Format score string with " sec" for specific metrics
+        if metric_name in ["Turn_Around_Time", "Mean_Time_Between_Failures"]:
+            display_score = f"{score:.2f} sec"
+        else:
+            display_score = f"{score:.2f}"
+
         rows.append([
             plan_name if i == 0 else "",  # Only first row has plan name
             metric_name,
-            f"{score:.2f}"
+            display_score
         ])
 
-    headers = ["Plan Name", "Metric Name", "Score"]
-
-    print("\n=== Consolidated Score Report ===")
-    print(tabulate(rows, headers=headers, tablefmt="fancy_grid"))
-
-    report_data = []
-    for i, (metric_name, score) in enumerate(consolidated_scores.items()):
         report_data.append({
             "Plan Name": plan_name if i == 0 else "",
             "Metric Name": metric_name,
-            "Score": round(score, 3)
+            "Score": round(score, 3)  # Excel gets the raw numeric score
         })
+
+    # Print table
+    headers = ["Plan Name", "Metric Name", "Score"]
+    print("\n=== Consolidated Score Report ===")
+    print(tabulate(rows, headers=headers, tablefmt="fancy_grid"))
 
     # Create DataFrame
     df = pd.DataFrame(report_data)
@@ -196,7 +201,7 @@ def run(target_plan_id):
     output_path = f"evaluation_summary_{target_plan_id}.xlsx"
     df.to_excel(output_path, index=False)
 
-    print(f"\n Evaluation Scores saved at: {output_path}")
+    print(f"\nEvaluation Scores saved at: {output_path}")
 
 # Example usage:
-run("T7") 
+run("T6") 
