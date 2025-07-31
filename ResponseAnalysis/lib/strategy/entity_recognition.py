@@ -58,6 +58,8 @@ class EntityRecognition(Strategy):
         expected_pairs = set(self.extract_entity_pairs(expected_str))
         predicted_pairs = set(self.extract_entity_pairs(response_str))
 
+        print(f"Expected pairs: {expected_pairs} and Predicted pairs: {predicted_pairs}")
+
         tp = len(expected_pairs & predicted_pairs)
         fp = len(predicted_pairs - expected_pairs)
         fn = len(expected_pairs - predicted_pairs)
@@ -76,16 +78,27 @@ class EntityRecognition(Strategy):
         :param expected_response: String containing expected entity-tag pairs.
         :return: Evaluation metrics as dict.
         """
-        return self.ner_recognition(expected_response, agent_response)
+        result = (expected_response
+                    .replace("'entity' :", "'entity':")
+                    .replace("'ner_tag' :", "'ner_tag':")
+                    .replace(": ", ": '")
+                    .replace(" ,", "',")
+                    .replace(" }", "'}")
+                    .replace("},", "}\n")
+                    .strip())
+        #logger.info(f"Result: {self.ner_recognition(result, agent_response)}")
+        return self.ner_recognition(result, agent_response)
 
 
 # Example usage
 # expected_response = """
-# {'entity': 'wheat', 'ner_tag': 'CROP'}, {'entity': 'punjab', 'ner_tag': 'LOCATION'}
+# {'entity' :  weeder ,  'ner_tag' :  TOOL },  { 'entity' :  floods ,  'ner_tag' :  DISASTER},  { 'entity' :  dibbler ,  'ner_tag' :  TOOL },  { 'entity' :  saplings ,  'ner_tag' :  PLANT_STAGE },  { 'entity' :  cutworm ,  'ner_tag' :  PEST },  { 'entity' :  beetles ,  'ner_tag' :  PEST }
 # """
-
+# # expected_response ="""
+# # ntity': 'weeder', 'ner_tag': 'Tool'}\n{'entity': 'dibbler', 'ner_tag': 'Tool'}\n{'entity': 'seedlings', 'ner_tag': 'Crop'}\n{'entity': 'cutworm', 'ner_tag': 'Pest'}\n{'entity': 'beetles', 'ner_tag': 'Pest'}
+# # """
 # agent_response = """
-# Here is the extracted entities: {'entity': 'wheat', 'ner_tag': 'CROP'}, {'entity': 'punjab', 'ner_tag': 'LOCATION'}, {'entity': 'india', 'ner_tag': 'COUNTRY'}
+# Here are the agricultural entities extracted from the text: {'entity': 'weeder', 'ner_tag': 'Tool'}\n{'entity': 'dibbler', 'ner_tag': 'Tool'}\n{'entity': 'seedlings', 'ner_tag': 'Crop'}\n{'entity': 'cutworm', 'ner_tag': 'Pest'}\n{'entity': 'beetles', 'ner_tag': 'Pest'}
 # """
 
 # ner_eval = EntityRecognition()

@@ -12,6 +12,7 @@ from collections import defaultdict
 import csv
 from tabulate import tabulate
 import pandas as pd
+import argparse
 
 logger = get_logger("strategy_runner")
 
@@ -19,14 +20,22 @@ plan_file = "Data/plans.json"
 datapoints_file = "Data/datapoints_combined.json"
 metric_to_strategy_mapping_file = "Data/metric_strategy_mapping.json"
 strategy_id_to_strategy_mapping_file = "Data/strategy_id.json"
-response_file = "Data/responses_T7_Healthcare.json"
+
+parser = argparse.ArgumentParser(description="LLM Startegy Runner - Runner which uses strategies to compute the metrics")
+parser.add_argument("--response-file", "-r", dest="response_file", type=str, default="Data/responses_T3.json", help="Location of responses file for each test plan")
+parser.add_argument("--test-plan-id", "-t", dest="test_plan_id", type=str, default="T3", help="The test plan ID to be analyzed")
+
+args = parser.parse_args()
+
+response_file = args.response_file
 
 def get_agent_response_map(agent_responses, prompt_id):
     l = extract_prompt_ids_from_response(agent_responses)
 
     if prompt_id in l:
         for resp in agent_responses:
-            return resp["response"]
+            if resp.get("prompt_id") == prompt_id:  # or however you identify prompt_id in resp
+                return resp["response"]
     else:
         return "PROMPT NOT FOUND"
 
@@ -98,6 +107,7 @@ def run(target_plan_id):
                     for us in unique_strategy:
                         if us not in strategy_data_list:
                             agent_response = get_agent_response_map(agent_responses,data_list[4])
+                            logger.info(f"For PromptID: {data_list[4]}, the Agent response is: {agent_response}")
                             if agent_response != "PROMPT NOT FOUND":
                                 if data_list[10] == [us]: 
                                     strategy_data_list[us] = {
@@ -112,6 +122,7 @@ def run(target_plan_id):
                                 logger.info(f"PROMPT {data_list[4]} not included!")
                         else:
                             agent_response = get_agent_response_map(agent_responses,data_list[4])
+                            logger.info(f"For PromptID: {data_list[4]}, the Agent response is: {agent_response}")
                             if agent_response != "PROMPT NOT FOUND":
                                 if data_list[10] == [us]:
                                     strategy_data_list[us]["PROMPT"].append(data_list[7])
@@ -186,7 +197,7 @@ def run(target_plan_id):
         report_data.append({
             "Plan Name": plan_name if i == 0 else "",
             "Metric Name": metric_name,
-            "Score": round(score, 3)
+            "Score": round(score, 5)
         })
 
     # Create DataFrame
@@ -199,4 +210,4 @@ def run(target_plan_id):
     print(f"\n Evaluation Scores saved at: {output_path}")
 
 # Example usage:
-run("T7") 
+run(args.test_plan_id) 
