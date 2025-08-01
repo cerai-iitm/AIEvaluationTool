@@ -18,9 +18,11 @@ AIEvaluationTool/
 │   │   │   └── ... (API source code)
 │   │   └── requirements.txt
 │   └── ... (other interface-related modules)
-├── ResponseAnalyzer/
-│   ├── src/
-│   │   └── ... (analysis scripts)
+├── ResponseAnalysis/
+│   ├── app/sarvam_ai
+│   │   └── ... (scripts to run LLMs locally)
+│   ├── lib/strategy
+│   │   └── ... (scripts that contain how to run strategies)
 │   └── requirements.txt
 ├── TestCaseExecutionManager/
 │   ├── src/
@@ -77,7 +79,7 @@ Install all dependencies for each component using the provided `requirements.txt
 
 ```bash
 # For Response Analysis
-pip install -r ResponseAnalyzer/src/requirements.txt
+pip install -r ResponseAnalysis/lib/strategy/requirements.txt
 
 # For API Service and Interface Interaction
 pip install -r InterfaceManager/APIService/requirements.txt
@@ -157,13 +159,36 @@ The Test Case Execution Manager leverages the interface automation to automatica
 
 This step will execute the test cases and store the responses in `Data/responses.json`.
 
-**Step 3: Run the Response Analyzer**
+**Step 3: Run the LLMS in your GPUs**
+
+In order for the evaluation framework to work we need to have 3 models to be in place - 
+
+1. sarvamai/sarvam-2b-v0.5
+2. google/shieldgemma-2b
+3. sarvamai/sarvam-translate
+4. mistral:7b-instruct (Default LLM as Judge)
+
+```bash
+cd ResponseAnalysis/app/sarvam_ai
+python main.py
+```
+
+You need to port forward to facilitate the model to connect to your testing machine. You can use the command below -
+
+```bash
+ollama run mistral:7b-instruct
+ssh gpu_machine_cred@machineIP -L testing_machine_ip:11434:localhost:11434 -L testing_machine_ip:8000:localhost:8000
+```
+
+Here in 11434 the LLM as Judge Model ie mistral:7b-instruct is hosted through ollama and 8000 is used to serve the other 3 models.
+
+**Step 4: Run the Response Analyzer**
 
 **Once the previous step has completed and `responses.json` is populated**, open a new terminal and run:
 
 ```bash
-cd ResponseAnalyzer/src
-python -W ignore ResponseAnalyzer.py
+cd ResponseAnalysis/lib/strategy
+python -W ignore strategy_runner.py --response-file "path_to_data_file" --test-plan-id "test_plan_id" --datapoints-file "datapoints_file_path"
 ```
 
 > **Note:** If you are using a local model (e.g., Ollama or any OpenAI-compatible local model), ensure that the model server is running in the background and accessible before executing the Response Analyzer.
