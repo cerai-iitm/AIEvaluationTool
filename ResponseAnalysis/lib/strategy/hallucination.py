@@ -22,7 +22,7 @@ class HallucinationStrategy(Strategy):
         - kwargs: Additional parameters.
         """
         super().__init__(name, kwargs=kwargs)
-        self.source_type = kwargs.get("source_type", "halu_qa")  # Default source type
+        self.source_type = kwargs.get("source_type", "haluqa")  # Default source type
 
     def _extract_prediction(self, response: str, source_type: str) -> str:
         """
@@ -30,14 +30,14 @@ class HallucinationStrategy(Strategy):
 
         Parameters:
         - response (str): Agent's response text.
-        - source_type (str): Type of source (halu_qa, halu_summ, halu_dial, mc).
+        - source_type (str): Type of source (haluqa, halusumm, haludial, mc).
 
         Returns:
         - str: Extracted prediction (yes/no/option/na).
         """
         response = response.strip().lower()
 
-        if source_type in ["halu_qa", "halu_summ", "halu_dial"]:
+        if source_type in ["haluqa", "halusumm", "haludial"]:
             if response.startswith("yes"):
                 return "yes"
             elif response.startswith("no"):
@@ -84,7 +84,7 @@ class HallucinationStrategy(Strategy):
         """
         logger.info("Evaluating Hallucination - QA Task")
         translated_resp = self._translate_if_needed(agent_response)
-        prediction = self._extract_prediction(translated_resp, "halu_qa")
+        prediction = self._extract_prediction(translated_resp, "haluqa")
         score = 1.0 if prediction == expected_response.lower() else 0.0
         logger.info(f"Agent Response: {agent_response} | Prediction: {prediction} | Expected: {expected_response} | Score: {score}")
         return score
@@ -102,7 +102,7 @@ class HallucinationStrategy(Strategy):
         """
         logger.info("Evaluating Hallucination - Summarization Task")
         translated_resp = self._translate_if_needed(agent_response)
-        prediction = self._extract_prediction(translated_resp, "halu_summ")
+        prediction = self._extract_prediction(translated_resp, "halusumm")
         score = 1.0 if prediction == expected_response.lower() else 0.0
         logger.info(f"Agent Response: {agent_response} | Prediction: {prediction} | Expected: {expected_response} | Score: {score}")
         return score
@@ -120,7 +120,7 @@ class HallucinationStrategy(Strategy):
         """
         logger.info("Evaluating Hallucination - Dialogue Task")
         translated_resp = self._translate_if_needed(agent_response)
-        prediction = self._extract_prediction(translated_resp, "halu_dial")
+        prediction = self._extract_prediction(translated_resp, "haludial")
         score = 1.0 if prediction == expected_response.lower() else 0.0
         logger.info(f"Agent Response: {agent_response} | Prediction: {prediction} | Expected: {expected_response} | Score: {score}")
         return score
@@ -150,17 +150,17 @@ class HallucinationStrategy(Strategy):
         Parameters:
         - agent_response (str): Agent's response.
         - expected_response (str): Expected ground-truth response.
-        - source_type (str): Type of task ('halu_qa', 'halu_summ', 'halu_dial', 'mc').
+        - source_type (str): Type of task ('haluqa', 'halusumm', 'haludial', 'mc').
 
         Returns:
         - float: Score (1.0 for correct, 0.0 for incorrect).
         """
         logger.info(f"Evaluating Hallucination for source type: {self.source_type}")
-        if self.source_type == "halu_qa":
+        if self.source_type == "haluqa":
             return self.halu_qa(agent_response, expected_response)
-        elif self.source_type == "halu_summ":
+        elif self.source_type == "halusumm":
             return self.halu_summ(agent_response, expected_response)
-        elif self.source_type == "halu_dial":
+        elif self.source_type == "haludial":
             return self.halu_dial(agent_response, expected_response)
         elif self.source_type == "mc":
             return self.mc(agent_response, expected_response)
