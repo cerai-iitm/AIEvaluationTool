@@ -19,9 +19,9 @@ class ToxicityDetectionUsingAPI(Strategy):
         super().__init__(name, kwargs=kwargs)
         self.api_key = os.getenv("PERSPECTIVE_API_KEY")
         if not self.api_key:
-            logger.warning("API_KEY is not set in environment.")
+            logger.warning("PERSPECTIVE_API_KEY is not set in environment.")
         else:
-            logger.info("API_KEY loaded successfully.")
+            logger.info("PERSPECTIVE_API_KEY loaded successfully.")
             
     def detect_toxicity_using_perspective_api(self, input_string: str):
         client = discovery.build(
