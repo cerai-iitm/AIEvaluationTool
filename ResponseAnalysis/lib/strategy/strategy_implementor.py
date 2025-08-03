@@ -48,6 +48,7 @@ class StrategyImplementor:
         self.strategy_name = strategy_name
         self.__metric_name = kwargs.get("metric_name")
         self.kwargs = kwargs
+        self.llm_as_judge_model = os.getenv("LLM_AS_JUDGE_MODEL")
         
     def execute(self, prompts: Optional[List[str]] = None, expected_responses: Optional[List[str]] = None, agent_responses: Optional[List[str]] = None, system_prompts: Optional[List[str]] = None, judge_prompts: Optional[List[str]] = None) -> float :
         """
@@ -262,8 +263,8 @@ class StrategyImplementor:
                 for i in range(len(agent_responses)):
                     p_type=extract_from_uds(self.strategy_name)
                     strategy = LLMJudgeStrategy(
-                        metric_name=self.kwargs.get("metric_name"),
-                        model_name=self.kwargs.get("model_name", "gemma3n:e4b"),
+                        metric_name=self.__metric_name,
+                        model_name=self.llm_as_judge_model,
                         prompt=prompts[i],
                         judge_prompt=judge_prompts[i],
                         system_prompt=system_prompts[i],

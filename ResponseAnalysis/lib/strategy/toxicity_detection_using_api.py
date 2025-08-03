@@ -17,17 +17,17 @@ load_dotenv(dotenv_path)
 class ToxicityDetectionUsingAPI(Strategy):
     def __init__(self, name: str = "detect_toxicity_using_perspective_api", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
-        self.api_key = os.getenv("API_KEY")
+        self.api_key = os.getenv("PERSPECTIVE_API_KEY")
         if not self.api_key:
-            logger.warning("API_KEY is not set in environment.")
+            logger.warning("PERSPECTIVE_API_KEY is not set in environment.")
         else:
-            logger.info("API_KEY loaded successfully.")
+            logger.info("PERSPECTIVE_API_KEY loaded successfully.")
             
     def detect_toxicity_using_perspective_api(self, input_string: str):
         client = discovery.build(
             "commentanalyzer",
             "v1alpha1",
-            developerKey=os.environ.get("API_KEY"),
+            developerKey=self.api_key,
             discoveryServiceUrl="https://commentanalyzer.googleapis.com/$discovery/rest?version=v1alpha1",
             static_discovery=False,
         )
