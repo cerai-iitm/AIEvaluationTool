@@ -161,7 +161,7 @@ This step will execute the test cases and store the responses in `Data/responses
 
 **Step 3: Run the LLMS in your GPUs**
 
-In order for the evaluation framework to work we need to have 3 models to be in place - 
+In order for the evaluation framework to work we need to have 4 models to be in place - 
 
 1. sarvamai/sarvam-2b-v0.5
 2. google/shieldgemma-2b
@@ -181,6 +181,18 @@ ssh gpu_machine_cred@machineIP -L testing_machine_ip:11434:localhost:11434 -L te
 ```
 
 Here in 11434 the LLM as Judge Model ie mistral:7b-instruct is hosted through ollama and 8000 is used to serve the other 3 models.
+
+There are other small sized models which gets downloaded while running this application. The models are - 
+
+1. amedvedev/bert-tiny-cognitive-bias
+2. NousResearch/Minos-v1
+3. LibrAI/longformer-harmful-ro
+4. vectara/hallucination_evaluation_model
+5. thenlper/gte-small
+6. all-MiniLM-L6-v2
+7. facebook/bart-large-cnn
+8. nicholasKluge/ToxiGuardrail
+9. paraphrase-multilingual-mpnet-base-v2
 
 **Step 4: Run the Response Analyzer**
 
