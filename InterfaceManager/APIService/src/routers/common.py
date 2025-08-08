@@ -74,7 +74,7 @@ async def chat(prompt: PromptCreate):
         if agent_name is None:
             raise HTTPException(status_code=400, detail="Agent name is not set in config.json")
         if agent_name == "cpgrams":
-            logger.info("Received prompt request for WEB Application.")
+            logger.info("Received prompt request for CPGRAMS Application.")
             result = send_prompt_cpgrams(chat_id=prompt.chat_id, prompt_list=prompt.prompt_list)
             return JSONResponse(content={"response": result})
         else:

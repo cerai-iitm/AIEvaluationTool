@@ -20,7 +20,7 @@ def chat_interface():
         return whatsapp.get_ui_response()
     elif application_type == "OPEN_UI_INTERFACE":
         return openui.get_ui_response()
-    elif application_type == "CPGRAMS":
+    elif application_type == "WEBAPP":
         return cpgrams.get_ui_response()
     else:
         return {"error": "Unknown application type"}
