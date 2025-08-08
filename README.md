@@ -132,8 +132,9 @@ python main.py
 
 After starting the InterfaceManager API Service, the terminal shows the following outputs.
 
-![Interface Server Setup](screenshots/API_Server_load.jpg)
-![Interface Server Running](screenshots/API_Server_running.jpg)
+![Interface Server Setup](screenshots/API_server_load.png)
+
+![Interface Server Running](screenshots/API_server_running.png)
 
 **Step 2: Run the Test Case Execution Manager**
 
@@ -147,12 +148,13 @@ python TestCaseExecutionManager.py --test_plan_id <test_plan_id> --test_case_cou
 #### Test Case Execution Manager Running
 On running the Test Case Execution Manager, the terminal output should look similar to:
 
-![TEM Launch](screenshots/TestCaseExecutionManager.jpg)
-![TEM Running](screenshots/TEM_Running.jpg)
+![TEM Launch](screenshots/TestCaseExecutionManager.png)
+
+![TEM Running](screenshots/TEM_Execution_Completion.png)
 
 The Test Case Execution Manager leverages the interface automation to automatically deliver test cases to the conversational platform and retrieve responses without manual intervention.
 
-![Interface](screenshots/Interface.jpg)
+![Interface](screenshots/cpgrams_ui_interaction.png)
 
 
 This step will execute the test cases and store the responses in `Data/responses.json`.
