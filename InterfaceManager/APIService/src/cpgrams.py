@@ -126,7 +126,7 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int = 3):
                 chat_input = WebDriverWait(driver, 10).until(
                     EC.presence_of_element_located((
                         By.XPATH,
-                        "//input[@placeholder='Type your query here or press and hold mic button for audio communication']"
+                        "//textarea[@placeholder='Type your query here or press and hold mic button for audio communication']"
                     ))
                 )
                 chat_input.clear()
