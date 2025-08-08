@@ -60,6 +60,7 @@ def logout():
 async def chat(prompt: PromptCreate):
     config = load_config()
     application_type = config.get("application_type")
+    agent_name = config.get("agent_name")
 
     if application_type == "WHATSAPP_WEB":
         logger.info(f"Received prompt for {application_type}")
@@ -70,6 +71,10 @@ async def chat(prompt: PromptCreate):
         result = send_prompt_openui(chat_id=prompt.chat_id, prompt_list=prompt.prompt_list)
         return JSONResponse(content={"response": result})
     elif application_type == "WEBAPP":
+        if agent_name is None:
+            raise HTTPException(status_code=400, detail="Agent name is not set in config.json")
+        if agent_name != "cpgrams":
+            raise HTTPException(status_code=400, detail="Invalid agent name in config.json")
         logger.info("Received prompt request for WEB Application.")
         result = send_prompt_cpgrams(chat_id=prompt.chat_id, prompt_list=prompt.prompt_list)
         return JSONResponse(content={"response": result})
