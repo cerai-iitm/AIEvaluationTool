@@ -140,7 +140,7 @@ After starting the InterfaceManager API Service, the terminal shows the followin
 Open another new terminal on your machine and run:
 ```bash
 cd TestCaseExecutionManager/src
-python TestCaseExecutionManager.py --test_plan_id <test_plan_id> --test_case_count <test_case_count>
+python TestCaseExecutionManager.py --test_plan_id <test_plan_id> --test_case_count <test_case_count> --application_type WEBAPP --agent_name "cpgrams"
 ```
 *(Adjust `--test_plan_id` and `--test_case_count` as needed.)*
 
