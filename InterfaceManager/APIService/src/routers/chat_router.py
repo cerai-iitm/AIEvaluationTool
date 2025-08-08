@@ -4,6 +4,7 @@ from fastapi import APIRouter
 import openui
 import whatsapp
 import json
+import cpgrams
 
 router = APIRouter()
 
@@ -19,5 +20,7 @@ def chat_interface():
         return whatsapp.get_ui_response()
     elif application_type == "OPEN_UI_INTERFACE":
         return openui.get_ui_response()
+    elif application_type == "CPGRAMS":
+        return cpgrams.get_ui_response()
     else:
         return {"error": "Unknown application type"}

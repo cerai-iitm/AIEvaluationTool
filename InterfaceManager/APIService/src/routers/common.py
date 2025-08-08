@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 from logger import get_logger
 from whatsapp import login_whatsapp, logout_whatsapp, send_prompt_whatsapp
 from openui import login_openui, logout_openui, send_prompt_openui
+from cpgrams import send_prompt_cpgrams
 import json
 from typing import List
 
@@ -67,6 +68,10 @@ async def chat(prompt: PromptCreate):
     elif application_type == "OPENUI":
         logger.info("Received prompt request for OpenUI Application.")
         result = send_prompt_openui(chat_id=prompt.chat_id, prompt_list=prompt.prompt_list)
+        return JSONResponse(content={"response": result})
+    elif application_type == "WEBAPP":
+        logger.info("Received prompt request for WEB Application.")
+        result = send_prompt_cpgrams(chat_id=prompt.chat_id, prompt_list=prompt.prompt_list)
         return JSONResponse(content={"response": result})
     else:
         result = "Application not found"
