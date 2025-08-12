@@ -5,6 +5,23 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "ResponseAnalyzer",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/ResponseAnalysis/app/response_analyzer/main.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {},
+            "args": [
+                "--datapoints-file",
+                "${workspaceFolder}/Data/datapoints_combined.json",
+                "--response-file",
+                "${workspaceFolder}/Data/responses_T1_Healthcare.json",
+                "--test-plan-id",
+                "T1"
+            ]
+        },
+        {
             "name": "Importer",
             "type": "debugpy",
             "request": "launch",
