@@ -1,4 +1,3 @@
-from strategy_base import Strategy
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
 from typing import Optional
@@ -7,13 +6,15 @@ import warnings
 import os
 import asyncio
 from accelerate import infer_auto_device_map, dispatch_model
-from utils import detect_text, google_lang_translate
-from logger import get_logger
 import requests
 import json
 
 from dotenv import load_dotenv
 from os.path import join, dirname
+
+from .strategy_base import Strategy
+from .logger import get_logger
+from .utils import detect_text, google_lang_translate
 
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)

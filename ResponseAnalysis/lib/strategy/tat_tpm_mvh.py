@@ -1,9 +1,10 @@
-from strategy_base import Strategy
 from typing import Optional
 from datetime import datetime
 import re
 import math
-from logger import get_logger
+
+from .logger import get_logger
+from .strategy_base import Strategy
 
 logger = get_logger("tat_tpm_mvh")
 

@@ -1,13 +1,9 @@
-from strategy_base import Strategy
 import torch
-
-import logging
 import warnings
-import os
-import sys
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
-from logger import get_logger
+from .strategy_base import Strategy
+from .logger import get_logger
 
 logger = get_logger("toxicity")
 

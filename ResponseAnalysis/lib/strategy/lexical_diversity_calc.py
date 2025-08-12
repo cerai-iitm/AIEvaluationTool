@@ -1,18 +1,10 @@
-from strategy_base import Strategy
-import logging
+from .strategy_base import Strategy
+from .utils import get_logger
+
 import warnings
 from lexical_diversity import lex_div
 
-logging.basicConfig(
-    level=logging.INFO,  
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.StreamHandler(),  
-        logging.FileHandler("analyzer_log.log")  
-    ]
-)
-
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 warnings.filterwarnings("ignore")
 

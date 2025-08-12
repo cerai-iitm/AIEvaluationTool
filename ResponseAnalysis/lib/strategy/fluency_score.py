@@ -1,15 +1,16 @@
 # from utils import SarvamModel
-from strategy_base import Strategy
 import numpy as np
 from nltk.tokenize import sent_tokenize
 from typing import Optional
-from logger import get_logger
 import nltk
 import requests
 import os
 from dotenv import load_dotenv
 from os.path import join, dirname
 import json
+
+from .strategy_base import Strategy
+from .logger import get_logger
 
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)

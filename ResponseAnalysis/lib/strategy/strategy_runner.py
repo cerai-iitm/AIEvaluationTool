@@ -21,9 +21,9 @@ metric_to_strategy_mapping_file = "Data/metric_strategy_mapping.json"
 strategy_id_to_strategy_mapping_file = "Data/strategy_id.json"
 
 parser = argparse.ArgumentParser(description="LLM Startegy Runner - Runner which uses strategies to compute the metrics")
-parser.add_argument("--response-file", "-r", dest="response_file", type=str, default="Data/responses_T3.json", help="Location of responses file for each test plan")
-parser.add_argument("--datapoints-file", "-d", dest="datapoints_file", type=str, default="Data/Datapoints.json", help="Path to complete dataset")
-parser.add_argument("--test-plan-id", "-t", dest="test_plan_id", type=str, default="T3", help="The test plan ID to be analyzed")
+parser.add_argument("--response-file", "-r", dest="response_file", type=str, default="Data/responses_T1_Healthcare.json", help="Location of responses file for each test plan")
+parser.add_argument("--datapoints-file", "-d", dest="datapoints_file", type=str, default="Data/datapoints_combined.json", help="Path to complete dataset")
+parser.add_argument("--test-plan-id", "-t", dest="test_plan_id", type=str, default="T1", help="The test plan ID to be analyzed")
 
 args = parser.parse_args()
 

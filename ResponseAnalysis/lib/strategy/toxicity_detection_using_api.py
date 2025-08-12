@@ -1,11 +1,12 @@
-from strategy_base import Strategy
 from googleapiclient import discovery
 import os
 from os.path import join, dirname
 from dotenv import load_dotenv
-from logger import get_logger
 import warnings
 from typing import Optional
+
+from .logger import get_logger
+from .strategy_base import Strategy
 
 logger = get_logger("detect_toxicity_using_perspective_api")
 

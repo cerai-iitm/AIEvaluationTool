@@ -7,13 +7,11 @@ from langdetect import detect
 from googletrans import Translator
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import json
-import os
 import torch
 import requests
 import asyncio
 from typing import Any, Dict, List, Type, Optional
 from opik.evaluation.models import OpikBaseModel
-from logger import get_logger
 import torch
 import torch.nn as nn
 import traceback
@@ -22,6 +20,11 @@ from typing import List
 import numpy as np
 import re
 from collections import defaultdict
+import sys, os
+
+# setup the relative import path for data module.
+sys.path.append(os.path.join(os.path.dirname(__file__) + '/../'))  # Adjust the path to include the parent directory
+from lib.utils import get_logger
 
 logger = get_logger("utils_calls")
 

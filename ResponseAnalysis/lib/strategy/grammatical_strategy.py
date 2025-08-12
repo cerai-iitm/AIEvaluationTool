@@ -1,11 +1,12 @@
-from strategy_base import Strategy
 from typing import Optional
 import asyncio
 import logging
 import warnings
 import language_tool_python
-from utils import language_detection
-from logger import get_logger
+
+from .strategy_base import Strategy
+from .utils import language_detection
+from .logger import get_logger
 
 logger = get_logger("grammatical_strategy")
 warnings.filterwarnings("ignore")

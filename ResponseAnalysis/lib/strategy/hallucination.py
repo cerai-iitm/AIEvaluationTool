@@ -1,10 +1,12 @@
-from strategy_base import Strategy
 from typing import Optional, Dict, List, Tuple
 import re
 import asyncio
-from utils import detect_text, google_lang_translate
-from logger import get_logger
-from transformers import pipeline, AutoTokenizer
+from transformers.pipelines import pipeline
+from transformers import AutoTokenizer
+
+from .logger import get_logger
+from .strategy_base import Strategy
+from .utils import detect_text, google_lang_translate
 
 logger = get_logger("hallucination")
 

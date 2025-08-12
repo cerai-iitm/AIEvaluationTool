@@ -1,39 +1,40 @@
-from truth_external import Truthfulness_External
-from truth_internal import Truthfulness_Internal
-from transliterated_strategies import TransliteratedStrategy
-from calculate_uptime import UptimeCalculation
-from robustness_advGLUE import Robustness_AdvGLUE
 from typing import Optional, List
 import numpy as np
-from robustness_advInstruction import Robustness_AdvInstruction
-from robustness_ood import Robustness_OutOfDomain
-from logger import get_logger
-from compute_error_rate import ComputeErrorRate
-from compute_mtbf import Compute_MTBF
-from entity_recognition import EntityRecognition
-from toxicity_detection_using_api import ToxicityDetectionUsingAPI
-from fairness_preference import Fairness_Preference
-from fairness_stereotype_agreement import Fairness_Stereotype_Agreement
-from fairness_stereotype_query import Fairness_Stereotype_Query
-from fairness_stereotype_recognition import Fairness_Stereotype_Recognition
-from llm_judge import LLMJudgeStrategy
-from indian_lang_grammatical_check import IndianLangGrammaticalCheck
-from fluency_score import IndianLanguageFluencyScorer
 import os
-from hallucination import HallucinationStrategy
-from privacy import PrivacyStrategy
-from safety import SafetyStrategy
-from tat_tpm_mvh import TAT_TPM_MVH
-from bias_detection import BiasDetection
-from similarity_match import SimilarityMatchStrategy
-from grammatical_strategy import GrammaticalStrategy
-from language_strategies_async import LanguageStrategiesAsync
-from language_strategies_sync import LanguageStrategiesSync
+
+from .truth_external import Truthfulness_External
+from .truth_internal import Truthfulness_Internal
+from .transliterated_strategies import TransliteratedStrategy
+from .calculate_uptime import UptimeCalculation
+from .robustness_advGLUE import Robustness_AdvGLUE
+from .robustness_advInstruction import Robustness_AdvInstruction
+from .robustness_ood import Robustness_OutOfDomain
+from .logger import get_logger
+from .compute_error_rate import ComputeErrorRate
+from .compute_mtbf import Compute_MTBF
+from .entity_recognition import EntityRecognition
+from .toxicity_detection_using_api import ToxicityDetectionUsingAPI
+from .fairness_preference import Fairness_Preference
+from .fairness_stereotype_agreement import Fairness_Stereotype_Agreement
+from .fairness_stereotype_query import Fairness_Stereotype_Query
+from .fairness_stereotype_recognition import Fairness_Stereotype_Recognition
+from .llm_judge import LLMJudgeStrategy
+from .indian_lang_grammatical_check import IndianLangGrammaticalCheck
+from .fluency_score import IndianLanguageFluencyScorer
+from .hallucination import HallucinationStrategy
+from .privacy import PrivacyStrategy
+from .safety import SafetyStrategy
+from .tat_tpm_mvh import TAT_TPM_MVH
+from .bias_detection import BiasDetection
+from .similarity_match import SimilarityMatchStrategy
+from .grammatical_strategy import GrammaticalStrategy
+from .language_strategies_async import LanguageStrategiesAsync
+from .language_strategies_sync import LanguageStrategiesSync
 import asyncio
-from lexical_diversity_calc import LexicalDiversity
-from toxicity import Toxicity
-from efficacy_of_content_filtering import ContentFiltering
-from utils import extract_from_uds, RtA, average_dicts
+from .lexical_diversity_calc import LexicalDiversity
+from .toxicity import Toxicity
+from .efficacy_of_content_filtering import ContentFiltering
+from .utils import extract_from_uds, RtA, average_dicts
 
 logger = get_logger("strategy_implementor")
 

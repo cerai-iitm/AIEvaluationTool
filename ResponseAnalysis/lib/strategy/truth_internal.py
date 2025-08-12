@@ -1,10 +1,11 @@
-from strategy_base import Strategy
 from typing import Optional
 import warnings
 import re
-from logger import get_logger
 import os
-from llm_judge import LLMJudgeStrategy
+
+from .strategy_base import Strategy
+from .logger import get_logger
+from .llm_judge import LLMJudgeStrategy
 
 
 logger = get_logger("truthfulness_internal")

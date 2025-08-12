@@ -6,9 +6,10 @@ import os
 
 warnings.filterwarnings("ignore")
 
-from utils import CustomOllamaModel
+from .utils import CustomOllamaModel
+from .strategy_base import Strategy
+
 from opik.evaluation.metrics import GEval
-from strategy_base import Strategy
 from dotenv import load_dotenv
 from os.path import join, dirname
 

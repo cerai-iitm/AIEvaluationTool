@@ -1,13 +1,13 @@
-from strategy_base import Strategy
 from typing import Optional
 from opik.evaluation.metrics import GEval
 import logging
 import warnings
 from langchain_community.llms import Ollama
 import re
-from logger import get_logger
-from similarity_match import SimilarityMatchStrategy
 
+from .logger import get_logger
+from .strategy_base import Strategy
+from .similarity_match import SimilarityMatchStrategy
 
 logger = get_logger("robustness")
 
