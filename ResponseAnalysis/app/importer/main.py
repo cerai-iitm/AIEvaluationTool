@@ -95,10 +95,10 @@ for met in prompts.keys():
         strategy = 'auto'
         if 'STRATEGY' in case:
             strategy_id = case['STRATEGY']
-            if strategy_id not in strategies:
+            if len(strategy_id) > 0 and strategy_id[0] not in strategies:
                 logger.error(f"Strategy '{strategy}' not found in strategies. Skipping...")
                 continue
-            strategy = strategies[strategy_id].lower()
+            strategy = strategies[strategy_id[0]].lower()
             
         judge_prompt = None
         if 'LLM_AS_JUDGE' in case and case['LLM_AS_JUDGE'] != "No":
