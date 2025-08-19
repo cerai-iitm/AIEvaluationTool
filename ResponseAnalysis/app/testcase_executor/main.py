@@ -94,7 +94,7 @@ def main():
             "database": "db name",
         },
         "target": {
-            "application_type": "WHATSAPP-WEB | WEBAPP",
+            "application_type": "WHATSAPP_WEB | WEBAPP",
             "application_name": "Name of the target application",
             "application_url": "http://localhost:8000",  # URL of the target application
             "agent_name": "Name of the AI agent",
@@ -158,10 +158,25 @@ def main():
     if "application_name" not in config["target"]:
         logger.error("Application name not found in the configuration file.")
         return
+
+    application_name = config["target"]["application_name"]
+    application_type = config["target"]["application_type"]
+
+    if "application_url" not in config["target"]:
+        logger.error("Application URL not found in the configuration file.")
+        return
     
-    target_id = db.get_target_id(target_name=config["target"]["application_name"])
+    application_url = config["target"]["application_url"]
+
+    if "agent_name" not in config["target"]:
+        logger.error("Agent name not found in the configuration file.")
+        return
+    
+    agent_name = config["target"]["agent_name"]
+
+    target_id = db.get_target_id(target_name=application_name)
     if target_id is None:
-        logger.error(f"Target application '{config['target']['application_name']}' not found in the database.")
+        logger.error(f"Target application '{application_name}' not found in the database.")
         return
     
     target = db.get_target_by_id(target_id=target_id)
@@ -266,18 +281,28 @@ def main():
             run_name = args.run_name
             run = db.get_run_by_name(run_name=args.run_name)
             if run is None or run.status is None:
-                logger.error(f"No run found with name '{args.run_name}'")
-                return
-            if run.status == "COMPLETED":
                 if args.run_continue:
-                    run.end_ts = None  # Reset the end timestamp to allow continuation
-                    run.status = "RUNNING"
-                    db.add_or_update_testrun(run=run, override=True)
-                    logger.debug(f"Reopening the COMPLETED run with ID {run.run_id} and name '{run.run_name}'")
+                    logger.debug(f"Run name '{args.run_name}' is not found, creating a new run...")
+                    # Create a new run entry in the database
+                    start_time = datetime.now().isoformat()
+                    run = Run(target = target.target_name, run_name=run_name, start_ts=start_time)
+                    run_id = db.add_or_update_testrun(run=run)
+                    logger.debug(f"Created new run with ID {run_id} and name '{run_name}'")
                 else:
-                    logger.error(f"Run '{args.run_name}' is already completed!")
+                    logger.error(f"No run found with name '{args.run_name}'.  If you want to create a new one, pass '--run-continue' to the cmdline args.")
                     return
-            logger.debug(f"Using existing run with ID {run.run_id} and name '{run.run_name} with status '{run.status}'")
+            else:
+                if run.status == "COMPLETED":
+                    if args.run_continue:
+                        run.end_ts = None  # Reset the end timestamp to allow continuation
+                        run.status = "RUNNING"
+                        db.add_or_update_testrun(run=run, override=True)
+                        logger.debug(f"Reopening the COMPLETED run with ID {run.run_id} and name '{run.run_name}'")
+                    else:
+                        logger.error(f"Run '{args.run_name}' is already completed!")
+                        return
+                    
+                logger.debug(f"Using existing run with ID {run.run_id} and name '{run.run_name} with status '{run.status}'")
         
         # Fetch the test plan name
         if args.plan_id:
@@ -334,7 +359,12 @@ def main():
                     db.add_or_update_testrun_detail(rundetail)
 
                     # Initialize the InterfaceManagerClient with the provided configuration
-                    client = InterfaceManagerClient(base_url="http://localhost:8000", application_type="WHATSAPP_WEB")
+                    client = InterfaceManagerClient(base_url=application_url, application_type=application_type)
+                    client.sync_config({
+                        "application_name": application_name,
+                        "agent_name": agent_name,
+                        "application_url": application_url
+                    })
 
                     try:
                         conv.prompt_ts = datetime.now().isoformat()
@@ -406,7 +436,12 @@ def main():
                 db.add_or_update_testrun(run=run)
 
                 # Initialize the InterfaceManagerClient with the provided configuration
-                client = InterfaceManagerClient(base_url="http://localhost:8000", application_type="WHATSAPP_WEB")
+                client = InterfaceManagerClient(base_url=application_url, application_type=application_type)
+                client.sync_config({
+                    "application_name": application_name,
+                    "agent_name": agent_name,
+                    "application_url": application_url
+                })
 
                 # iterate through the test cases and execute
                 for testcase in testcases:
@@ -496,7 +531,12 @@ def main():
                 db.add_or_update_testrun(run=run)
 
                 # Initialize the InterfaceManagerClient with the provided configuration
-                client = InterfaceManagerClient(base_url="http://localhost:8000", application_type="WHATSAPP_WEB")
+                client = InterfaceManagerClient(base_url=application_url, application_type=application_type)
+                client.sync_config({
+                    "application_name": application_name,
+                    "agent_name": agent_name,
+                    "application_url": application_url
+                })
 
                 # iterate through the test cases and execute
                 for testcase in testcases:
