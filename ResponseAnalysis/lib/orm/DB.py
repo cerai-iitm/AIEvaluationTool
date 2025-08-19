@@ -1851,4 +1851,27 @@ class DB:
                                 prompt_ts=result.prompt_ts.isoformat() if getattr(result, "prompt_ts") else None,
                                 response_ts=result.response_ts.isoformat() if getattr(result, "response_ts") else None,
                                 conversation_id=getattr(result, 'conversation_id'))
-    
+        
+    def get_agent_responses_by_run_name(self, run_name:str) -> List[Conversation]:
+        """
+        Fetches all agent responses for a given run name.
+        
+        Args:
+            run_name (str): The name of the run to fetch agent responses for.
+        
+        Returns:
+            List[Conversation]: A list of Conversation objects containing agent responses.
+        """
+        with self.Session() as session:
+            sql = select(Conversations).join(TestRunDetails, Conversations.detail_id == TestRunDetails.detail_id) \
+                                       .join(TestRuns, TestRunDetails.run_id == TestRuns.run_id) \
+                                       .where(TestRuns.run_name == run_name)
+            results = session.execute(sql).scalars().all()
+            return [Conversation(target=result.target.target_name,
+                                 run_detail_id=getattr(result, "detail_id"),
+                                 testcase=result.detail.testcase.testcase_name,
+                                 agent_response=getattr(result, "agent_response"),
+                                 prompt_ts=result.prompt_ts.isoformat() if getattr(result, "prompt_ts") else None,
+                                 response_ts=result.response_ts.isoformat() if getattr(result, "response_ts") else None,
+                                 conversation_id=getattr(result, 'conversation_id')) for result in results]
+
