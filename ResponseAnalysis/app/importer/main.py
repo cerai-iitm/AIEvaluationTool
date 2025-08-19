@@ -126,3 +126,19 @@ tgt = Target(target_name="Gooey AI",
              target_domain="agriculture",
              target_languages=["english", "telugu", "bhojpuri", "hindi"])    
 target_id = db.add_or_get_target(target = tgt)
+
+tgt = Target(target_name="August AI", 
+             target_type="WhatsApp", 
+             target_url="https://wa.me/8738030604", 
+             target_description="August AI is a WhatsApp-based AI assistant for providing healthcare advices.",
+             target_domain="healthcare",
+             target_languages=["english", "telugu", "kannada", "hindi", "bengali", "gujarati", "marathi"])
+target_id = db.add_or_get_target(target = tgt)
+
+tgt = Target(target_name="Vaidya AI", 
+             target_type="WhatsApp", 
+             target_url="https://wa.me/8828808350", 
+             target_description="Vaidya AI is a WhatsApp-based AI assistant for providing healthcare advices.",
+             target_domain="healthcare",
+             target_languages=["english"])
+target_id = db.add_or_get_target(target = tgt)
