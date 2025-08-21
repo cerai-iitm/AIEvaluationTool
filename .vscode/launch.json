@@ -5,6 +5,21 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Response Analyzer 2",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/ResponseAnalysis/app/response_analyzer/analyze.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {},
+            "args": [
+                "--config",
+                "${workspaceFolder}/ResponseAnalysis/app/response_analyzer/config.json",
+                "--run-name",
+                "run-sweet-name-ultrices"
+            ]
+        },
+        {
             "name": "ResponseAnalyzer",
             "type": "debugpy",
             "request": "launch",
@@ -45,11 +60,15 @@
             "args": [
                 "--config",
                 "${workspaceFolder}/ResponseAnalysis/app/testcase_executor/config.json",
+                //"-v1",
+                //"-N"
                 "--testplan-id",
                 "1",
                 "--execute",
-                //"--run-name", "place-serious-station-non",
-                //"--run-continue",
+                "--run-name",
+                "run-sweet-name-ultrices",
+                "-n20",
+                "--run-continue",
                 //"--testcase-id", "149"
             ]
         },
