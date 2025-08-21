@@ -1404,6 +1404,58 @@ class DB:
                 return None
             return getattr(result, 'run_id')
         
+    def get_testcase_strategy_name(self, testcase_name: str) -> Optional[str]:
+        """
+        Fetches the strategy name of a test case by its name.
+
+        Args:
+            testcase_name (str): The name of the test case to fetch.
+
+        Returns:
+            Optional[str]: The strategy name of the test case if found, otherwise None.
+        """
+        with self.Session() as session:
+            sql = select(Strategies.strategy_name) \
+                    .join(TestCases, Strategies.strategy_id == TestCases.strategy_id) \
+                    .where(TestCases.testcase_name == testcase_name)
+            result = session.execute(sql).scalar_one_or_none()
+            if result is None:
+                self.logger.error(f"TestCase with name '{testcase_name}' does not exist.")
+                return None
+            return result
+
+    def get_testcase_by_name(self, testcase_name: str) -> Optional[TestCase]:
+        """
+        Fetches a test case by its name.
+
+        Args:
+            testcase_name (str): The name of the test case to fetch.
+
+        Returns:
+            Optional[TestCase]: The TestCase object if found, otherwise None.
+        """
+        with self.Session() as session:
+            sql = select(TestCases).where(TestCases.testcase_name == testcase_name)
+            result = session.execute(sql).scalar_one_or_none()
+            if result is None:
+                self.logger.error(f"TestCase with name '{testcase_name}' does not exist.")
+                return None
+            # Return a TestCase object with the fetched data
+            return TestCase(name=getattr(result, 'testcase_name'),
+                            metric=result.metrics[0].metric_name,  # use the first metric associated with the test case
+                            testcase_id=getattr(result, 'testcase_id'),
+                            prompt=Prompt(prompt_id=getattr(result.prompt, 'prompt_id'),
+                                          user_prompt=str(result.prompt.user_prompt),
+                                          system_prompt=str(result.prompt.system_prompt),
+                                          lang_id=getattr(result.prompt, 'lang_id')),
+                            response=Response(response_text=str(result.response.response_text),
+                                              response_type=result.response.response_type,
+                                              response_id=getattr(result.response, 'response_id'),
+                                              prompt_id=result.response.prompt_id,
+                                              lang_id=result.response.lang_id,
+                                              digest=result.response.hash_value) if result.response else None,
+                            strategy=result.strategy.strategy_name)
+
     def get_testcase_by_id(self, testcase_id: int) -> Optional[TestCase]:
         """
         Fetches a test case by its ID.
@@ -1565,6 +1617,31 @@ class DB:
                 return None
             return getattr(result, 'plan_id')
         
+    def get_all_run_details_by_run_name(self, run_name:str) -> List[RunDetail]:
+        """
+        Fetches all run details for a specific run name.
+
+        Args:
+            run_name (str): The name of the run to fetch details for.
+
+        Returns:
+            List[RunDetail]: A list of RunDetail objects for the specified run name.
+        """
+        with self.Session() as session:
+            sql = select(TestRunDetails).join(TestRuns).where(TestRuns.run_name == run_name)
+            results = session.execute(sql).scalars().all()
+            return [RunDetail(run_name=result.run.run_name,
+                              testcase_name=result.testcase.testcase_name,
+                              metric_name=result.metric.metric_name,
+                              plan_name=result.plan.plan_name,
+                              # unfortunately, as per the table design, 
+                              # there can be more than one conversation per run_detail.
+                              # in reality, that is restricted. 
+                              #@NOTE: Try changing the table design by merging rundetails and conversations.
+                              conversation_id = result.conversation[0].conversation_id,
+                              status=getattr(result, "testcase_status"),
+                              detail_id=result.detail_id) for result in results]
+
     def get_run_detail_by_id(self, detail_id: int) -> Optional[RunDetail]:
         """
         Fetches a test run detail by its ID.
@@ -1694,7 +1771,7 @@ class DB:
                 return None
             return getattr(result, 'testcase_status')
         
-    def get_run_status(self, run_name: str) -> Optional[str]:
+    def get_status_by_run_name(self, run_name: str) -> Optional[str]:
         """
         Fetches the status of a test run based on its name.
         
