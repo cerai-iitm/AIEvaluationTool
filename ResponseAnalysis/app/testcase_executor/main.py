@@ -65,6 +65,7 @@ def main():
     parser.add_argument("--run-continue", "-R", dest="run_continue", default=False, action="store_true", help="Continue an existing run with the provided run name")
     parser.add_argument("--execute", "-e", dest="execute", action="store_true", help="Execute the test plan or test case")
     parser.add_argument("--verbosity", "-v", dest="verbosity", type=int, choices=[0,1,2,3,4,5], help="Enable verbose output", default=5)
+    parser.add_argument("--get-runs", "-N", dest="get_runs", action="store_true", help="Get all test runs")
 
     args = parser.parse_args()
 
@@ -133,6 +134,20 @@ def main():
         logger.error(f"Failed to connect to the database: {e}")
         return
     
+    # Logic to get all test runs
+    if args.get_runs:
+        # Create a table to display the test runs
+        table = Table(title="Test Runs")
+        table.add_column("Run ID", justify="right", style="cyan")
+        table.add_column("Name", style="magenta")
+        table.add_column("Status", style="green")
+        # Fetch all test runs from the database
+        for run in db.runs:
+            table.add_row(str(run.run_id), run.run_name, run.status)
+        # Print the table of test runs
+        Console().print(table)
+        return
+
     # list all the known target applications
     if args.get_targets:
         # Logic to get all target applications
