@@ -24,7 +24,7 @@ db = DB(db_url="mariadb+mariadbconnector://root:ATmega32*@localhost:3306/aieval"
 print(db.get_status_by_run_detail_id(1))
 print(db.get_status_by_run_id(1))
 print(db.get_run_detail_status(run_name="Gooey AI Run #1", testcase_name="P701"))
-print(db.get_run_status(run_name="Gooey AI Run #1"))
+print(db.get_status_by_run_name(run_name="Gooey AI Run #1"))
 
 plans = json.load(open('Data/plans.json', 'r'))
 prompts = json.load(open('Data/DataPoints.json', 'r'))
