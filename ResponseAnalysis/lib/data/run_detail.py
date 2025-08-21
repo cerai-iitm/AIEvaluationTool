@@ -56,7 +56,9 @@ class RunDetail(BaseModel):
         return f"RunDetail(run_name='{self.run_name}', plan_name='{self.plan_name}', metric_name='{self.metric_name}', testcase_name='{self.testcase_name}', status='{self.status}')" 
     
     def __str__(self):
-        return f"RunDetail with run_name: '{self.run_name}', plan_name: '{self.plan_name}', metric_name: '{self.metric_name}', testcase_name: '{self.testcase_name}', status: '{self.status}'"
+        kwargs_str = ", ".join([f"{key}: '{value}'" for key, value in self.kwargs.items()])
+        main_str = f"RunDetail with run_name: '{self.run_name}', plan_name: '{self.plan_name}', metric_name: '{self.metric_name}', testcase_name: '{self.testcase_name}', status: '{self.status}'"
+        return f"{main_str}, additional attributes: {kwargs_str}" if kwargs_str else  main_str
     
     def __eq__(self, other):
         if not isinstance(other, RunDetail):
