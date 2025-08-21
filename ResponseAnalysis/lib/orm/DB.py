@@ -203,7 +203,6 @@ class DB:
             List[Run]: A list of Run objects or None if no runs are found.
         """
         with self.Session() as session:
-            self.logger.debug("Fetching all test runs ..")
             runs:List[Run] = []
             # Fetch all test runs from the database
             self.logger.debug("Fetching all test runs ..")
