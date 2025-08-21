@@ -19,7 +19,9 @@
     "action": "send_all_prompts",
     "test_plan_file": "/store/github/AIEvaluationTool/Data/DataPoints.json",
     "run_mode": "single_window",
-    "agent_name": "Gooey AI",
+    "agent_name": "Vaidya AI",
     "test_plan_id": "T2",
-    "test_case_count": 4
+    "test_case_count": 4,
+    "application_name": "Vaidya AI",
+    "application_url": "http://localhost:8000"
 }
