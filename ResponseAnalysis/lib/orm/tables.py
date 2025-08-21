@@ -161,7 +161,7 @@ class Targets(Base):
     __tablename__ = 'Targets'
     
     target_id = Column(Integer, primary_key=True)
-    target_name = Column(String(255), nullable=False, unique=True)  # Name of the target
+    target_name = Column(String(255), nullable=False, unique=True)  # Name of the target (Also the AI Agent name in WA targets)
     target_type = Column(Enum('WhatsApp', 'WebApp', 'API'), nullable=False, index=True)  # Type of the target
     target_description = Column(Text, nullable=True)  # Description of the target
     target_url = Column(String(255), nullable=False)  # URL of the target (if applicable)
@@ -181,7 +181,7 @@ class Conversations(Base):
     conversation_id = Column(Integer, primary_key=True)
     target_id = Column(Integer, ForeignKey('Targets.target_id'), nullable=False)  # Foreign key to Targets
     detail_id = Column(Integer, ForeignKey('TestRunDetails.detail_id'), nullable=False)  # Foreign key to TestRunDetails
-    agent_response = Column(Text, nullable=True)  # Name of the conversation
+    agent_response = Column(Text, nullable=True)  # AI agent response of the conversation
     prompt_ts = Column(DateTime, nullable=True)  # Start timestamp of the conversation
     response_ts = Column(DateTime, nullable=True)  # End timestamp of the conversation
 
