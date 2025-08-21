@@ -15,11 +15,16 @@ from rich.table import Table
 from datetime import datetime
 import randomname  # Importing the randomname library for generating random names
 
+
+#@NOTE To add domain specific testcase sampling.
+
+
 sys.path.append(os.path.dirname(__file__) + "/../../")  # Adjust the path to include the "lib" directory
 
 from lib.interface_manager import InterfaceManagerClient  # Import the InterfaceManagerClient from the lib directory
 from lib.orm import DB  # Import the DB class from the ORM module
 from lib.data import Target, Run, RunDetail, Conversation
+from lib.utils import get_logger, get_logger_verbosity
 
 def main():
     """ Main function to handle command-line arguments and execute test cases.
@@ -29,14 +34,7 @@ def main():
     """
 
     # Set up logging
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.DEBUG)
-    # Console handler
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.DEBUG)
-    ch_formatter = logging.Formatter("%(asctime)s|%(name)s|%(levelname)7s|%(funcName)s|%(message)s") # 
-    ch.setFormatter(ch_formatter)
-    logger.addHandler(ch)
+    logger = get_logger(__name__)
 
     # Set up the argument parser
     ##############################################################################
@@ -51,7 +49,7 @@ def main():
     # python main.py --config-file config.json --test-plan-id 1 --testcase-id 2 --max-testcases 5
     ##############################################################################
     parser = argparse.ArgumentParser(description="AI Evaluation Tool :: Test Executor")
-    parser.add_argument("--config-file", "-c", dest="config", type=str, help="Path to the configuration file containing database connection and target application details.")
+    parser.add_argument("--config", "-c", dest="config", type=str, help="Path to the configuration file containing database connection and target application details.")
     parser.add_argument("--get-config-template", "-T", dest="get_config_template", action="store_true", help="Flag to get the configuration file template")
     parser.add_argument("--get-plans", "-P", dest="get_plans", action="store_true", help="Get all test plans")
     parser.add_argument("--get-metrics", "-M", dest="get_metrics", action="store_true", help="Get all the evaluation metrics")
@@ -69,22 +67,9 @@ def main():
 
     args = parser.parse_args()
 
-    verbosity_levels = {
-        5: logging.DEBUG,  # Verbose output
-        4: logging.INFO,   # Default output
-        3: logging.WARNING,  # Warning output
-        2: logging.ERROR,    # Error output
-        1: logging.CRITICAL,  # Critical output
-        0: logging.NOTSET,    # No output
-    }
-
     # Set the logging level based on the verbosity argument
-    if args.verbosity in verbosity_levels:
-        loglevel = verbosity_levels[args.verbosity]
-        logger.setLevel(loglevel)
-    else:
-        logger.error(f"Invalid verbosity level: {args.verbosity}. Valid levels are: {list(verbosity_levels.keys())}")
-        return
+    loglevel = get_logger_verbosity(args.verbosity)
+    logger.setLevel(loglevel)
 
     config = {
         "database": {
