@@ -170,10 +170,10 @@ class CustomOllamaModel(OpikBaseModel):
             response = requests.post(self.api_url, json=payload, timeout=120,)
             response.raise_for_status()
             raw = response.json()
-            print(raw)
-            logger.debug(f"[Ollama] Raw content: {raw}")
+            #print(raw)
+            #logger.debug(f"[Ollama] Raw content: {raw}")
             content_text = raw.get("message", {}).get("content", "") 
-            logger.info(content_text)
+            #logger.info(content_text)
             final_response={
                 "choices": [
                     {
@@ -183,7 +183,7 @@ class CustomOllamaModel(OpikBaseModel):
                     }
                 ]
             }
-            logger.info(final_response)
+            #logger.info(final_response)
             final_response= DotDict(final_response)
             return final_response
         except requests.exceptions.HTTPError as http_err:
