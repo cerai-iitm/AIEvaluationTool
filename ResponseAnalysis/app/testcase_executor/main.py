@@ -55,6 +55,7 @@ def main():
     parser.add_argument("--get-metrics", "-M", dest="get_metrics", action="store_true", help="Get all the evaluation metrics")
     parser.add_argument("--get-testcases", "-C", dest="get_testcases", action="store_true", help="Get the test cases for a specific test plan or all test cases if no plan ID is provided")
     parser.add_argument("--get-targets", "-G", dest="get_targets", action="store_true", help="Get all target applications")
+    parser.add_argument("--get-runs", "-N", dest="get_runs", action="store_true", help="Get all test runs")
     parser.add_argument("--testplan-id", "-p", dest="plan_id", type=int, help="ID of the test plan to execute")
     parser.add_argument("--testcase-id", "-t", dest="testcase_id", type=int, help="ID of the specific test case to execute")
     parser.add_argument("--metric-id", "-m", dest="metric_id", type=int, help="ID of the evaluation metric to use")
@@ -63,7 +64,6 @@ def main():
     parser.add_argument("--run-continue", "-R", dest="run_continue", default=False, action="store_true", help="Continue an existing run with the provided run name")
     parser.add_argument("--execute", "-e", dest="execute", action="store_true", help="Execute the test plan or test case")
     parser.add_argument("--verbosity", "-v", dest="verbosity", type=int, choices=[0,1,2,3,4,5], help="Enable verbose output", default=5)
-    parser.add_argument("--get-runs", "-N", dest="get_runs", action="store_true", help="Get all test runs")
 
     args = parser.parse_args()
 
