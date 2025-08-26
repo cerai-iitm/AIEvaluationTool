@@ -1,5 +1,5 @@
 from sqlalchemy.orm import DeclarativeBase, relationship
-from sqlalchemy import Column, Integer, Text, DateTime, String, Enum, ForeignKey
+from sqlalchemy import Column, Integer, Text, DateTime, String, Enum, ForeignKey, Float
 
 class Base(DeclarativeBase):
     """Base class for all ORM models.
@@ -184,6 +184,9 @@ class Conversations(Base):
     agent_response = Column(Text, nullable=True)  # AI agent response of the conversation
     prompt_ts = Column(DateTime, nullable=True)  # Start timestamp of the conversation
     response_ts = Column(DateTime, nullable=True)  # End timestamp of the conversation
+    evaluation_score = Column(Float, nullable=True)  # The evaluation score assigned to the agent response
+    evaluation_reason = Column(Text, nullable=True)  # The reason or explanation for the evaluation score   
+    evaluation_ts = Column(DateTime, nullable=True)  # Timestamp when the evaluation was performed
 
     target = relationship("Targets", back_populates="conversations")  # Relationship to Targets
     detail = relationship("TestRunDetails", back_populates="conversation")  # Relationship to TestRunDetails
