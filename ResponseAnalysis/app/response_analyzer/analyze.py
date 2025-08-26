@@ -3,6 +3,7 @@
 # @updated 2025-08-21
 # @description This module provides functionality for analyzing responses received from the target AI agent under test.
 
+from datetime import datetime
 import sys, os
 import argparse
 import json
@@ -99,18 +100,15 @@ def main():
             logger.error(f"Strategy not found for testcase '{detail.testcase_name}' in run '{run.run_name}'.")
             continue
 
-        if strategy_name not in grouped_run_details:
-            grouped_run_details[strategy_name + ":" + detail.metric_name] = []
-        grouped_run_details[strategy_name + ":" + detail.metric_name].append(detail)
+        group_key = strategy_name + ":" + detail.metric_name
+        if group_key not in grouped_run_details:
+            grouped_run_details[group_key] = []
+        grouped_run_details[group_key].append(detail)
 
     for group in grouped_run_details.keys():
         strategy_name, metric_name = group.split(":")
 
-        prompts:List[str] = []
-        system_prompts:List[str] = []
-        judge_prompts:List[str] = []
-        agent_responses:List[str] = []
-        expected_responses:List[str] = []
+        strategy = StrategyImplementor(strategy_name=strategy_name, metric_name=metric_name)
 
         # Analyze the run details
         for detail in grouped_run_details[group]:
@@ -124,21 +122,45 @@ def main():
                 logger.error(f"Testcase '{detail.testcase_name}' not found for run '{run.run_name}'.")
                 continue
 
+            # check if the testcase prompt is consistent
+            if not testcase.prompt:
+                logger.error(f"Prompt not found for testcase '{detail.testcase_name}' in run '{run.run_name}'.")
+                continue
+            if not testcase.prompt.user_prompt:
+                logger.error(f"User prompt not found for testcase '{detail.testcase_name}' in run '{run.run_name}'.")
+                continue
+
+            # check if the conversation object is consistent
             conversation = db.get_conversation_by_id(detail.conversation_id)
             if not conversation:
                 logger.error(f"Conversation with ID '{detail.conversation_id}' not found for run '{run.run_name}'.")
                 continue
+            if conversation.evaluation_ts:
+                logger.warning(f"Conversation with ID '{detail.conversation_id}' in run '{run.run_name}' has already been evaluated on {conversation.evaluation_ts}. Skipping re-evaluation.")
+                continue
+            if not conversation.agent_response:
+                logger.error(f"Agent response not found for conversation ID '{detail.conversation_id}' in run '{run.run_name}'.")
+                continue
 
-            prompts.append(testcase.prompt.user_prompt)
-            system_prompts.append(testcase.prompt.system_prompt)
-            judge_prompts.append(testcase.judge_prompt.prompt if testcase.judge_prompt else None)
-            agent_responses.append(conversation.agent_response)
-            expected_responses.append(testcase.response.response_text)
+            logger.debug(f"Evaluating strategy '{strategy_name}' for Testcase '{detail.testcase_name}'")
+            score = strategy.execute(prompts=[testcase.prompt.user_prompt], 
+                                     expected_responses=[testcase.response.response_text] if testcase.response else [None],
+                                     agent_responses=[conversation.agent_response], 
+                                     system_prompts=[testcase.prompt.system_prompt] if testcase.prompt.system_prompt else [None],
+                                     judge_prompts=[testcase.judge_prompt.prompt] if testcase.judge_prompt else [None])
 
-        strategy = StrategyImplementor(strategy_name=strategy_name, metric_name=metric_name)
-        scores = strategy.execute(prompts=prompts, expected_responses=expected_responses,
-                                  agent_responses=agent_responses, system_prompts=system_prompts,
-                                  judge_prompts=judge_prompts)
+            logger.debug(f"Evaluated score for conversation ID {conversation.conversation_id} in run '{run.run_name}' and Testcase '{detail.testcase_name}': {score}")
+            # now, let's update the scores for each conversation
+            conversation.evaluation_score = score
+            conversation.evaluation_reason = ""
+            conversation.evaluation_ts = datetime.now().isoformat()
+
+            # record the evaluation details
+            logger.debug(f"Recording evaluation score '{conversation.evaluation_score}' for Testcase '{detail.testcase_name}', conversation ID {conversation.conversation_id} in run '{run.run_name}'")
+            db.add_or_update_conversation(conversation=conversation)
+    
+        
+        
 
 
 if __name__ == "__main__":
