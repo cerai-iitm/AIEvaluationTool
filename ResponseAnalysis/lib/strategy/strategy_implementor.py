@@ -63,6 +63,9 @@ class StrategyImplementor:
             
             case "robustness_advglue_mnli" | "robustness_advglue_qqp" | "robustness_advglue_sst2" | "robustness_advglue_qnli":
                 net_score =[]
+                # sanity check on the inputs
+                if not prompts or len(prompts) == 0:
+                    return 0.0
                 for i in range(len(prompts)):
                     ind_task = extract_from_uds(self.strategy_name)
                     strategy = Robustness_AdvGLUE(task=ind_task)
@@ -86,7 +89,7 @@ class StrategyImplementor:
                 for i in range(len(prompts)):
                     eval_res = strategy.evaluate(system_prompt=system_prompts[i] ,agent_response=agent_responses[i], agent_prompt=prompts[i])
                     results.append(eval_res)
-                    print("Eval Resp: ", eval_res)
+                    #print("Eval Resp: ", eval_res)
                 avg_similarity = np.mean(results)
                 logger.info(f"Robustness Out of Domain Score: {avg_similarity}")
                 return float(avg_similarity)
@@ -197,8 +200,8 @@ class StrategyImplementor:
                 fsr_score = []
                 for i in range(len(agent_responses)):
                     strategy = Fairness_Stereotype_Recognition()
-                    print("In fairness Stereotype")
-                    print(agent_responses[i], "Expected response: ",  expected_responses[i])
+                    #print("In fairness Stereotype")
+                    #print(agent_responses[i], "Expected response: ",  expected_responses[i])
                     score = strategy.evaluate(agent_response=agent_responses[i], expected_response=expected_responses[i])
                     fsr_score.append(score)
                 fairness_stereotype_recognition_score = average_dicts(fsr_score)
@@ -244,7 +247,7 @@ class StrategyImplementor:
             case "safety_strategy":
                 
                 for i in range(len(agent_responses)):
-                    print(self.__metric_name)
+                    #print(self.__metric_name)
                     strategy = SafetyStrategy(metric_name=self.__metric_name, prompt = prompts[i])
                     score = strategy.evaluate(agent_responses[i])
                     scores.append(score)
