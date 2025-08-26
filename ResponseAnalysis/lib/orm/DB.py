@@ -14,8 +14,8 @@ sys.path.append(os.path.dirname(__file__) + '/..')
 
 from data import Prompt, Language, Domain, Response, TestCase, TestPlan, \
     Strategy, Metric, LLMJudgePrompt, Target, Conversation, Run, RunDetail
-from .tables import Base, Languages, Domains, Metrics, Responses, TestCases, TestPlans, Prompts, Strategies, LLMJudgePrompts, Targets, TargetLanguages, Conversations, TestRuns, TestRunDetails, MetricTestCaseMapping
-
+from .tables import Base, Languages, Domains, Metrics, Responses, TestCases, TestPlans, Prompts, Strategies, LLMJudgePrompts, Targets, Conversations, TestRuns, TestRunDetails
+from lib.utils import get_logger
 
 class DB:    
     """
@@ -44,14 +44,7 @@ class DB:
         self.Session = scoped_session(sessionmaker(bind=self.engine))
 
         # Set up logging
-        self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(loglevel)
-        # Console handler
-        ch = logging.StreamHandler()
-        ch.setLevel(loglevel)
-        ch_formatter = logging.Formatter("%(asctime)s|%(name)s|%(levelname)s|%(funcName)s|%(message)s")
-        ch.setFormatter(ch_formatter)
-        self.logger.addHandler(ch)
+        self.logger = get_logger(__name__, loglevel=loglevel)
 
     @property
     def languages(self) -> List[Language]:
@@ -1454,6 +1447,8 @@ class DB:
                                               prompt_id=result.response.prompt_id,
                                               lang_id=result.response.lang_id,
                                               digest=result.response.hash_value) if result.response else None,
+                            judge_prompt=LLMJudgePrompt(prompt=str(result.judge_prompt.prompt),
+                                                        lang_id=getattr(result.judge_prompt, 'lang_id')) if result.judge_prompt else None,
                             strategy=result.strategy.strategy_name)
 
     def get_testcase_by_id(self, testcase_id: int) -> Optional[TestCase]:
@@ -1486,6 +1481,8 @@ class DB:
                                               prompt_id=result.response.prompt_id,
                                               lang_id=result.response.lang_id,
                                               digest=result.response.hash_value) if result.response else None,
+                            judge_prompt=LLMJudgePrompt(prompt=str(result.judge_prompt.prompt),
+                                                        lang_id=getattr(result.judge_prompt, 'lang_id')) if result.judge_prompt else None,
                             strategy=result.strategy.strategy_name)
         
     def get_testcase_name(self, testcase_id: int) -> Optional[str]:
@@ -1852,23 +1849,36 @@ class DB:
                 # Check if the conversation already exists in the database
                 existing_conversation = session.query(Conversations).filter_by(detail_id=conversation.run_detail_id).first()
                 if existing_conversation:
-                    if existing_conversation.prompt_ts is None and conversation.prompt_ts is not None:
-                        self.logger.debug(f"Updating existing conversation details (Prompt timestamp: {conversation.prompt_ts}) ..")
-                    elif existing_conversation.agent_response is None and conversation.agent_response is not None:
-                        self.logger.debug(f"Updating existing conversation details (Agent response text and Response timestamp: {conversation.response_ts}) ..")
-                    elif existing_conversation.response_ts is None and conversation.response_ts is not None:
-                        self.logger.debug(f"Updating existing conversation details (Agent response text and Response timestamp: {conversation.response_ts}) ..")
-                    elif override:
-                        self.logger.debug(f"Updating existing conversation details with the supplied 'override' information. (RunDetailId:{conversation.run_detail_id}) ..")
+                    # update the evaluation details
+                    if existing_conversation.evaluation_ts is None and conversation.evaluation_ts is not None:
+                        if existing_conversation.agent_response is None:
+                            self.logger.error(f"Cannot update evaluation details for Conversation (RunDetailId:{conversation.run_detail_id}) as the agent response is not yet recorded.")
+                            return -1
+                        
+                        self.logger.debug(f"Updating existing conversation details (Evaluation score: {conversation.evaluation_score}, reason and timestamp: {conversation.evaluation_ts}) ..")
+                        # Update the existing conversation with the new details
+                        setattr(existing_conversation, "evaluation_score", conversation.evaluation_score)
+                        setattr(existing_conversation, "evaluation_reason", conversation.evaluation_reason)
+                        setattr(existing_conversation, "evaluation_ts", conversation.evaluation_ts)
+                    # update the agent response details.
                     else:
-                        self.logger.debug(f"Existing conversation (RunDetailId:{conversation.run_detail_id}) will not be updated. Returning conversation ID: {existing_conversation.conversation_id}")
-                        # Return the ID of the existing conversation if it already exists
-                        return getattr(existing_conversation, "conversation_id")
+                        if existing_conversation.prompt_ts is None and conversation.prompt_ts is not None:
+                            self.logger.debug(f"Updating existing conversation details (Prompt timestamp: {conversation.prompt_ts}) ..")
+                        elif existing_conversation.agent_response is None and conversation.agent_response is not None:
+                            self.logger.debug(f"Updating existing conversation details (Agent response text and Response timestamp: {conversation.response_ts}) ..")
+                        elif existing_conversation.response_ts is None and conversation.response_ts is not None:
+                            self.logger.debug(f"Updating existing conversation details (Agent response text and Response timestamp: {conversation.response_ts}) ..")
+                        elif override:
+                            self.logger.debug(f"Updating existing conversation details with the supplied 'override' information. (RunDetailId:{conversation.run_detail_id}) ..")
+                        else:
+                            self.logger.debug(f"Existing conversation (RunDetailId:{conversation.run_detail_id}) will not be updated. Returning conversation ID: {existing_conversation.conversation_id}")
+                            # Return the ID of the existing conversation if it already exists
+                            return getattr(existing_conversation, "conversation_id")
 
-                    # Update the existing conversation with the new details
-                    setattr(existing_conversation, "agent_response", conversation.agent_response)
-                    setattr(existing_conversation, "prompt_ts", conversation.prompt_ts)
-                    setattr(existing_conversation, "response_ts", conversation.response_ts)
+                        # Update the existing conversation with the new details
+                        setattr(existing_conversation, "agent_response", conversation.agent_response)
+                        setattr(existing_conversation, "prompt_ts", conversation.prompt_ts)
+                        setattr(existing_conversation, "response_ts", conversation.response_ts)
                     
                     # Commit the session to save the updated conversation
                     session.commit()
@@ -1886,8 +1896,11 @@ class DB:
                                                  detail_id=conversation.run_detail_id,
                                                  agent_response=conversation.agent_response,
                                                  prompt_ts=conversation.prompt_ts,
-                                                 response_ts=conversation.response_ts)
-                
+                                                 response_ts=conversation.response_ts,
+                                                 evaluation_score=conversation.evaluation_score,
+                                                 evaluation_reason=conversation.evaluation_reason,
+                                                 evaluation_ts=conversation.evaluation_ts)
+
                 # Add the new conversation to the session
                 session.add(new_conversation)
                 # Commit the session to save the new conversation
@@ -1926,6 +1939,9 @@ class DB:
                                 agent_response=getattr(result, "agent_response"),
                                 prompt_ts=result.prompt_ts.isoformat() if getattr(result, "prompt_ts") else None,
                                 response_ts=result.response_ts.isoformat() if getattr(result, "response_ts") else None,
+                                evaluation_score=getattr(result, "evaluation_score"),
+                                evaluation_reason=getattr(result, "evaluation_reason"),
+                                evaluation_ts=result.evaluation_ts.isoformat() if getattr(result, "evaluation_ts") else None,
                                 conversation_id=getattr(result, 'conversation_id'))
         
     def get_agent_responses_by_run_name(self, run_name:str) -> List[Conversation]:
@@ -1949,5 +1965,8 @@ class DB:
                                  agent_response=getattr(result, "agent_response"),
                                  prompt_ts=result.prompt_ts.isoformat() if getattr(result, "prompt_ts") else None,
                                  response_ts=result.response_ts.isoformat() if getattr(result, "response_ts") else None,
+                                 evaluation_score=getattr(result, "evaluation_score"),
+                                 evaluation_reason=getattr(result, "evaluation_reason"),
+                                 evaluation_ts=getattr(result, "evaluation_ts"),
                                  conversation_id=getattr(result, 'conversation_id')) for result in results]
 
