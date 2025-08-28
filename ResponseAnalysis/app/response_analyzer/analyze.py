@@ -25,6 +25,7 @@ def main():
     parser.add_argument("--get-config-template", "-T", dest="get_config_template", action="store_true", help="Flag to get the configuration file template")
     parser.add_argument("--verbosity", "-v", dest="verbosity", type=int, choices=[0,1,2,3,4,5], help="Enable verbose output", default=5)
     parser.add_argument("--run-name", "-r", dest="run_name", type=str, help="Name of the run to evaluate")
+    parser.add_argument("--force", "-f", dest="force", default=False, action="store_true", help="Force evaluation of already evaluated runs")
 
     args = parser.parse_args()
 
@@ -136,8 +137,12 @@ def main():
                 logger.error(f"Conversation with ID '{detail.conversation_id}' not found for run '{run.run_name}'.")
                 continue
             if conversation.evaluation_ts:
-                logger.warning(f"Conversation with ID '{detail.conversation_id}' in run '{run.run_name}' has already been evaluated on {conversation.evaluation_ts}. Skipping re-evaluation.")
-                continue
+                # if conversation has already been evaluated and not forced, skip re-evaluation
+                if not args.force:
+                    logger.warning(f"Conversation with ID '{detail.conversation_id}' in run '{run.run_name}' has already been evaluated on {conversation.evaluation_ts}. Skipping re-evaluation.")
+                    continue
+                # we will be re-evaluating the conversation
+                logger.debug(f"Force re-evaluating conversation with ID '{detail.conversation_id}' in run '{run.run_name}'.")
             if not conversation.agent_response:
                 logger.error(f"Agent response not found for conversation ID '{detail.conversation_id}' in run '{run.run_name}'.")
                 continue
@@ -157,11 +162,7 @@ def main():
 
             # record the evaluation details
             logger.debug(f"Recording evaluation score '{conversation.evaluation_score}' for Testcase '{detail.testcase_name}', conversation ID {conversation.conversation_id} in run '{run.run_name}'")
-            db.add_or_update_conversation(conversation=conversation)
-    
-        
-        
-
+            db.add_or_update_conversation(conversation=conversation, override=args.force)
 
 if __name__ == "__main__":
     main()
