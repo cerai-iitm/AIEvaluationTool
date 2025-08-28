@@ -1,15 +1,16 @@
-from strategy_base import Strategy
 from typing import Optional
 import warnings
 from sentence_transformers.util import cos_sim
 from sentence_transformers import SentenceTransformer
-from utils import language_detection
-from logger import get_logger
 import requests
 
 import os 
 from dotenv import load_dotenv
 from os.path import join, dirname
+
+from .utils import language_detection
+from .strategy_base import Strategy
+from .logger import get_logger
 
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)

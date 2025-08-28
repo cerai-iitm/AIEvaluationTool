@@ -1,7 +1,8 @@
-from strategy_base import Strategy
 from typing import Optional
 import warnings
-from logger import get_logger
+
+from .logger import get_logger
+from .strategy_base import Strategy
 
 logger = get_logger("computer_error_rate")
 

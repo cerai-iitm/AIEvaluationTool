@@ -1,14 +1,11 @@
-from strategy_base import Strategy
-from typing import Optional
 from opik.evaluation.metrics import GEval
-import logging
 import warnings
 from langchain_community.llms import Ollama
-import re
-from logger import get_logger
 import litellm
 litellm.drop_params=True
 
+from .strategy_base import Strategy
+from .logger import get_logger
 
 logger = get_logger("robustness")
 

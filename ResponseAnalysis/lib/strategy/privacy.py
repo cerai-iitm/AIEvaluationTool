@@ -1,10 +1,11 @@
-from logger import get_logger
 import re
 import warnings
 import math
 from typing import Optional
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, pipeline
-from strategy_base import Strategy
+
+from .strategy_base import Strategy
+from .logger import get_logger
 
 logger = get_logger("privacy_strategy")
 warnings.filterwarnings("ignore")

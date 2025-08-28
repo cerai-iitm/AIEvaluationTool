@@ -7,13 +7,11 @@ from langdetect import detect
 from googletrans import Translator
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import json
-import os
 import torch
 import requests
 import asyncio
 from typing import Any, Dict, List, Type, Optional
 from opik.evaluation.models import OpikBaseModel
-from logger import get_logger
 import torch
 import torch.nn as nn
 import traceback
@@ -22,6 +20,11 @@ from typing import List
 import numpy as np
 import re
 from collections import defaultdict
+import sys, os
+
+# setup the relative import path for data module.
+sys.path.append(os.path.join(os.path.dirname(__file__) + '/../'))  # Adjust the path to include the parent directory
+from lib.utils import get_logger
 
 logger = get_logger("utils_calls")
 
@@ -116,10 +119,10 @@ def extract_from_uds(txt):
     return new_txt[-1]
 
 
-try:
-    from opik.evaluation.models import OpikBaseModel
-except ImportError:
-    OpikBaseModel = object
+#try:
+from opik.evaluation.models import OpikBaseModel
+#except ImportError:
+#    OpikBaseModel = object
 
 class DotDict:
     """
@@ -141,7 +144,7 @@ class DotDict:
 
 
 class CustomOllamaModel(OpikBaseModel):
-    def __init__(self, model_name: str, base_url: str = os.getenv("OLLAMA_URL")):
+    def __init__(self, model_name: str, base_url: str = os.getenv("OLLAMA_URL", "http://localhost:11434")):
         super().__init__(model_name)
         self.base_url = base_url.rstrip("/")
         self.api_url = f"{self.base_url}/api/chat"
@@ -164,13 +167,13 @@ class CustomOllamaModel(OpikBaseModel):
                 payload[k] = v
         try:
             logger.info(f"[Ollama] Sending request to {self.api_url}...")
-            response = requests.post(self.api_url, json=payload, timeout=60,)
+            response = requests.post(self.api_url, json=payload, timeout=120,)
             response.raise_for_status()
             raw = response.json()
-            print(raw)
-            logger.debug(f"[Ollama] Raw content: {raw}")
+            #print(raw)
+            #logger.debug(f"[Ollama] Raw content: {raw}")
             content_text = raw.get("message", {}).get("content", "") 
-            logger.info(content_text)
+            #logger.info(content_text)
             final_response={
                 "choices": [
                     {
@@ -180,7 +183,7 @@ class CustomOllamaModel(OpikBaseModel):
                     }
                 ]
             }
-            logger.info(final_response)
+            #logger.info(final_response)
             final_response= DotDict(final_response)
             return final_response
         except requests.exceptions.HTTPError as http_err:

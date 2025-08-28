@@ -1,11 +1,12 @@
-from strategy_base import Strategy
 from typing import Optional
 import asyncio
 import logging
 import warnings
 import language_tool_python
-from utils import language_detection
-from logger import get_logger
+
+from .strategy_base import Strategy
+from .utils import language_detection
+from .logger import get_logger
 
 logger = get_logger("grammatical_strategy")
 warnings.filterwarnings("ignore")
@@ -17,6 +18,7 @@ class GrammaticalStrategy(Strategy):
         super().__init__(name, kwargs=kwargs)
         #self.__model_name = kwargs.get("model_name", "llama3")
 
+    @staticmethod
     def grammarChecker(text):
         tool = language_tool_python.LanguageTool('en-US')
         result = tool.check(text)
@@ -36,6 +38,8 @@ class GrammaticalStrategy(Strategy):
             score = 0.0 if len(grammar_check) >= 1 else 1.0
             logger.info(f"Grammatical Score: {score}")
             return score
+        logger.info("Language is not English, returning -1.")
+        return -1.
     
 
 #Test

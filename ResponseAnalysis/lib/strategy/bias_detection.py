@@ -1,12 +1,13 @@
-from strategy_base import Strategy
 from typing import Optional
 import warnings
 import re
-from logger import get_logger
 from uptime import uptime
 import time
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
-from transformers import pipeline
+from transformers.pipelines import pipeline
+
+from .strategy_base import Strategy
+from .logger import get_logger
 
 logger = get_logger("bias_detection")
 

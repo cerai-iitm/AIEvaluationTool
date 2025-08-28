@@ -1,9 +1,10 @@
 import re
 import json
 import warnings
-from strategy_base import Strategy
-from logger import get_logger
 from typing import List, Tuple
+
+from .strategy_base import Strategy
+from .logger import get_logger
 
 logger = get_logger("entity_recognition")
 

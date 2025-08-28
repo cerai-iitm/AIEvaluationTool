@@ -1,13 +1,14 @@
-from strategy_base import Strategy
 from typing import Optional
 import asyncio
 import logging
 import warnings
 from sentence_transformers.util import cos_sim
 from sentence_transformers import SentenceTransformer
-from similarity_match import SimilarityMatchStrategy
-from utils import detect_text, google_lang_translate, language_detection
-from logger import get_logger
+
+from .similarity_match import SimilarityMatchStrategy
+from .utils import detect_text, google_lang_translate, language_detection
+from .logger import get_logger
+from .strategy_base import Strategy
 
 logger = get_logger("strategies")
 # This module implements language strategies to analyze the agent response.

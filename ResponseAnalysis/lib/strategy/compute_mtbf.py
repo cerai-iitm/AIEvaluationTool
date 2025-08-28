@@ -1,8 +1,9 @@
-from strategy_base import Strategy
 from datetime import datetime
 import warnings
 from typing import Optional
-from logger import get_logger
+
+from .strategy_base import Strategy
+from .logger import get_logger
 
 logger = get_logger("compute_mtbf")
 

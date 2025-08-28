@@ -1,6 +1,7 @@
-from strategy_base import Strategy
 import warnings
-from logger import get_logger
+
+from .strategy_base import Strategy
+from .logger import get_logger
 
 
 logger = get_logger("truthfulness_external")

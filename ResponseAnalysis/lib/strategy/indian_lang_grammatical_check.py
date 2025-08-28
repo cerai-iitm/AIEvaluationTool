@@ -1,7 +1,6 @@
 import requests
 import difflib
 import nltk
-from strategy_base import Strategy
 from typing import Optional
 import os 
 from dotenv import load_dotenv
@@ -10,7 +9,8 @@ from os.path import join, dirname
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 
-from logger import get_logger
+from .strategy_base import Strategy
+from .logger import get_logger
 
 logger = get_logger("indian_lang_grammatical_check")
 

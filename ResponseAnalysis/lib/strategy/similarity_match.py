@@ -1,4 +1,4 @@
-from strategy_base import Strategy
+from .strategy_base import Strategy
 from typing import Optional
 import logging
 from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
@@ -7,19 +7,17 @@ import evaluate
 import warnings
 from sentence_transformers.util import cos_sim
 from evaluate import load
-from utils import BARTScorer
+from .utils import BARTScorer
 from sentence_transformers import SentenceTransformer
 
-logging.basicConfig(
-    level=logging.INFO,  
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.StreamHandler(),  
-        logging.FileHandler("analyzer_log.log")  
-    ]
-)
-
-logger = logging.getLogger(__name__)
+#logging.basicConfig(
+#    level=logging.INFO,  
+#    format="%(asctime)s - %(levelname)s - %(message)s",
+#    handlers=[
+#        logging.StreamHandler(),  
+#        logging.FileHandler("analyzer_log.log")  
+#    ]
+#)
 
 warnings.filterwarnings("ignore")
 # This module implements a similarity matching strategy for evaluating agent responses.
@@ -31,6 +29,14 @@ class SimilarityMatchStrategy(Strategy):
         # `metric_name` can be "bert_similarity", "cosine_similarity", or "rouge_similarity", "meteor_similarity", "bleu_similarity", "bart_score_similarity"
         self.__metric_name = kwargs.get("metric_name","bleu")
         #self.embedding_model = SentenceTransformer('sentence-transformers/distiluse-base-multilingual-cased-v1')
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
+        # Console handler
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.DEBUG)
+        ch_formatter = logging.Formatter("%(asctime)s|%(name)s|%(levelname)s|%(funcName)s|%(message)s")
+        ch.setFormatter(ch_formatter)
+        self.logger.addHandler(ch)
 
     def bleu_score_metric(self, predictions, references):
         """
@@ -42,7 +48,7 @@ class SimilarityMatchStrategy(Strategy):
         Prints:
         - Average BLEU Score (%)
         """
-        logger.info("Starting bleu_score_metric evaluation strategy")
+        self.logger.info("Starting bleu_score_metric evaluation strategy")
         try:
             pred_tokens = predictions.split()
             ref_tokens = references.split()
@@ -50,8 +56,8 @@ class SimilarityMatchStrategy(Strategy):
             score = sentence_bleu([ref_tokens], pred_tokens, smoothing_function=smoothie)
         except Exception:
             score = 0.0
-        logger.info(f"bleu_score_metric score: {score}")
-        logger.info("Completed bleu_score_metric evaluation strategy")
+        self.logger.info(f"bleu_score_metric score: {score}")
+        self.logger.info("Completed bleu_score_metric evaluation strategy")
         return score
     
     def meteor_metric(self, prompts, test_case_responses):
@@ -63,7 +69,7 @@ class SimilarityMatchStrategy(Strategy):
         Prints:
         - Average METEOR Score (%)
         """
-        logger.info("Starting meteor_metric evaluation strategy")
+        self.logger.info("Starting meteor_metric evaluation strategy")
         try:
             prediction = test_case_responses
             reference = prompts
@@ -75,8 +81,8 @@ class SimilarityMatchStrategy(Strategy):
                 score = meteor_score([reference_tokens], prediction_tokens)
         except Exception:
             score = 0.0
-        logger.info(f"meteor_metric score: {score}")
-        logger.info("Completed meteor_metric evaluation strategy")
+        self.logger.info(f"meteor_metric score: {score}")
+        self.logger.info("Completed meteor_metric evaluation strategy")
         return score
 
 
@@ -90,17 +96,17 @@ class SimilarityMatchStrategy(Strategy):
         Prints:
         - Average ROUGE scores for rouge1, rouge2, rougeL, and rougeLsum.
         """
-        logger.info("Starting rouge_score_metric evaluation strategy")
+        self.logger.info("Starting rouge_score_metric evaluation strategy")
         try:
             rouge = evaluate.load("rouge")
             # all_scores = {'rouge1': 0.0, 'rouge2': 0.0, 'rougeL': 0.0, 'rougeLsum': 0.0}
             prediction = test_case_responses
             reference = expected_responses
             results = rouge.compute(predictions=[prediction], references=[reference])
-            logger.info(f"rouge_score_metric scores: {results}")
+            self.logger.info(f"rouge_score_metric scores: {results}")
             return results
         except Exception as e:
-            logger.error(f"rouge_score_metric failed: {str(e)}")
+            self.logger.error(f"rouge_score_metric failed: {str(e)}")
             return {"rouge1": 0.0, "rouge2": 0.0, "rougeL": 0.0, "rougeLsum": 0.0}
     
     def cosine_similarity_metric(self, agent_response:str, expected_response:str) -> float:
@@ -126,9 +132,14 @@ class SimilarityMatchStrategy(Strategy):
             case "bert_similarity":
                 bertscore = load("bertscore")
                 results = bertscore.compute(predictions=[agent_response], references=[expected_response], lang="en")
+                if results is None:
+                    return 0.0
                 return float(results['f1'][0])  # Return the F1 score from BERTScore
             case "cosine_similarity":
-                cos_sim_score = self.cosine_similarity_metric(agent_response,expected_response)
+                if expected_response is None:
+                    self.logger.error("Expected response is None, cannot compute cosine similarity.")
+                    return 0.0
+                cos_sim_score = self.cosine_similarity_metric(agent_response, expected_response)
                 return float(cos_sim_score)
             case "ROUGE" | "rouge":
                 score = self.rouge_score_metric(expected_response, agent_response)

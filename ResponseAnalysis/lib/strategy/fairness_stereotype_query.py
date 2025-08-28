@@ -1,13 +1,14 @@
-
-from strategy_base import Strategy
 from typing import Optional
 from tqdm import tqdm
 import os
-from transformers import pipeline, AutoModelForSequenceClassification, AutoTokenizer
-from logger import get_logger
+from transformers.pipelines import pipeline
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
 import logging
 import warnings
-from utils import load_json,save_json, RtA
+
+from .utils import load_json,save_json, RtA
+from .strategy_base import Strategy
+from .logger import get_logger
 
 logger = get_logger("fairness")
 

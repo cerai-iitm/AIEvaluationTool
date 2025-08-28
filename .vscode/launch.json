@@ -1,0 +1,113 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Report Generator",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/ResponseAnalysis/app/response_analyzer/report.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {},
+            "args": [
+                "--config",
+                "${workspaceFolder}/ResponseAnalysis/app/response_analyzer/config.json",
+                "--run-name",
+                "run-sweet-name-ultrices",
+                //"--get-runs"
+            ]
+        },
+        {
+            "name": "Response Analyzer 2",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/ResponseAnalysis/app/response_analyzer/analyze.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {},
+            "args": [
+                "--config",
+                "${workspaceFolder}/ResponseAnalysis/app/response_analyzer/config.json",
+                "--run-name",
+                "run-sweet-name-ultrices",
+                "--force"
+            ]
+        },
+        {
+            "name": "ResponseAnalyzer",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/ResponseAnalysis/app/response_analyzer/main.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {},
+            "args": [
+                "--datapoints-file",
+                "${workspaceFolder}/Data/datapoints_combined.json",
+                "--response-file",
+                "${workspaceFolder}/Data/responses_T1_Healthcare.json",
+                "--test-plan-id",
+                "T1"
+            ]
+        },
+        {
+            "name": "Importer",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/ResponseAnalysis/app/importer/main.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {},
+            "args": [
+                "--config",
+                "${workspaceFolder}/ResponseAnalysis/app/importer/config.json",
+            ]
+        },
+        {
+            "name": "Testcase Executor",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/ResponseAnalysis/app/testcase_executor/main.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {},
+            "args": [
+                "--config",
+                "${workspaceFolder}/ResponseAnalysis/app/testcase_executor/config.json",
+                //"-v1",
+                //"-N"
+                "--testplan-id",
+                "1",
+                "--execute",
+                "--run-name",
+                "run-sweet-name-ultrices",
+                "-n20",
+                "--run-continue",
+                //"--testcase-id", "149"
+            ]
+        },
+        {
+            "name": "Tester",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/ResponseAnalysis/app/tester/tester.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {},
+            "args": []
+        },
+        {
+            "name": "Interface Manager",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/ResponseAnalysis/app/interface_manager/main.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {},
+            "args": []
+        }
+    ]
+}

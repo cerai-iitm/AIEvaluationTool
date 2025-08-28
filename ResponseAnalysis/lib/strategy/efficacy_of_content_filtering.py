@@ -1,8 +1,9 @@
-from strategy_base import Strategy
 import torch
 import warnings
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
-from logger import get_logger
+
+from .strategy_base import Strategy
+from .logger import get_logger
 
 logger = get_logger("efficacy_of_content_filtering")
 

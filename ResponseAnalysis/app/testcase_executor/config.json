@@ -1,0 +1,15 @@
+{
+    "database": {
+        "host": "localhost",
+        "port": 5432,
+        "user": "root",
+        "password": "ATmega32*",
+        "database": "test"
+    },
+    "target": {
+        "application_type": "WHATSAPP_WEB",
+        "application_name": "Vaidya AI",
+        "application_url": "http://localhost:8000",
+        "agent_name": "Vaidya AI"
+    }
+}
