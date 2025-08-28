@@ -1850,12 +1850,16 @@ class DB:
                 existing_conversation = session.query(Conversations).filter_by(detail_id=conversation.run_detail_id).first()
                 if existing_conversation:
                     # update the evaluation details
-                    if existing_conversation.evaluation_ts is None and conversation.evaluation_ts is not None:
+                    if (existing_conversation.evaluation_ts is None or override) and conversation.evaluation_ts is not None:
                         if existing_conversation.agent_response is None:
                             self.logger.error(f"Cannot update evaluation details for Conversation (RunDetailId:{conversation.run_detail_id}) as the agent response is not yet recorded.")
                             return -1
                         
-                        self.logger.debug(f"Updating existing conversation details (Evaluation score: {conversation.evaluation_score}, reason and timestamp: {conversation.evaluation_ts}) ..")
+                        if not override:
+                            self.logger.debug(f"Updating existing conversation details (Evaluation score: {conversation.evaluation_score}, reason and timestamp: {conversation.evaluation_ts}) ..")
+                        else:
+                            self.logger.debug(f"Overwriting existing conversation details (Evaluation score: {conversation.evaluation_score}, reason and timestamp: {conversation.evaluation_ts}) ..")                            
+                            
                         # Update the existing conversation with the new details
                         setattr(existing_conversation, "evaluation_score", conversation.evaluation_score)
                         setattr(existing_conversation, "evaluation_reason", conversation.evaluation_reason)
