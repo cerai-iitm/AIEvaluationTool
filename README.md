@@ -18,7 +18,7 @@ AIEvaluationTool/
 │   │   │   └── ... (API source code)
 │   │   └── requirements.txt
 │   └── ... (other interface-related modules)
-├── ResponseAnalysis/
+├── src/
 │   ├── app/sarvam_ai
 │   │   └── ... (scripts to run LLMs locally)
 │   ├── lib/strategy
@@ -79,7 +79,7 @@ Install all dependencies for each component using the provided `requirements.txt
 
 ```bash
 # For Response Analysis
-pip install -r ResponseAnalysis/lib/strategy/requirements.txt
+pip install -r src/lib/strategy/requirements.txt
 
 # For API Service and Interface Interaction
 pip install -r InterfaceManager/APIService/requirements.txt
@@ -169,7 +169,7 @@ In order for the evaluation framework to work we need to have 4 models to be in 
 4. mistral:7b-instruct (Default LLM as Judge)
 
 ```bash
-cd ResponseAnalysis/app/sarvam_ai
+cd src/app/sarvam_ai
 python main.py
 ```
 
@@ -199,7 +199,7 @@ There are other small sized models which gets downloaded while running this appl
 **Once the previous step has completed and `responses.json` is populated**, open a new terminal and run:
 
 ```bash
-cd ResponseAnalysis/lib/strategy
+cd src/lib/strategy
 python -W ignore strategy_runner.py --response-file "path_to_data_file" --test-plan-id "test_plan_id" --datapoints-file "datapoints_file_path"
 ```
 
