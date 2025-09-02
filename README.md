@@ -26,10 +26,6 @@ AIEvaluationTool/
 │   ├── lib/strategy
 │   │   └── ... (scripts that contain how to run strategies)
 │   └── requirements.txt
-├── TestCaseExecutionManager/
-│   ├── src/
-│   │   └── ... (test execution scripts)
-│   └── requirements.txt
 ```
 
 ## Key Features and Evaluation Dimensions:
