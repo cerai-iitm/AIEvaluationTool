@@ -7,7 +7,7 @@ This project offers a robust, end-to-end framework for evaluating the performanc
 
 ```
 AIEvaluationTool/
-├── Data/
+├── data/
 │   ├── DataPoints.json
 │   ├── plans.json
 │   ├── strategy_map.json
@@ -116,13 +116,13 @@ Ensure your model is accessible and properly configured before running the evalu
 
 ### 5. **Prepare Data Files**
 
-Ensure the `Data/` directory contains the following files (already present in the repository):
-- `datapoints_combined.json`
+Ensure the `data/` directory contains the following files (already present in the repository):
+- `DataPoints.json` (sample test dataset)
 - `plans.json`
 - `strategy_map.json`
 - `strategy_id.json`
 - `metric_strategy_mapping.json`
-- **Seeding data will be provided upon request.**
+- **A detailed set of Seeding data points shall be provided upon request.**
 
 ---
 
@@ -188,7 +188,7 @@ The Test Case Execution Manager leverages the interface automation to automatica
 ![Interface](screenshots/Interface.jpg)
 
 
-This step will execute the test cases and store the responses in `Data/responses.json`.
+This step will execute the test cases and store the responses in `data/responses.json`.
 
 **Step 4: Run the LLMS in your GPUs**
 
