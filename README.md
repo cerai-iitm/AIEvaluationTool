@@ -25,7 +25,7 @@ AIEvaluationTool/
 │   │   └── ... (scripts to analyse the collected response and computer score and store in the database)
 │   ├── lib/strategy
 │   │   └── ... (scripts that contain how to run strategies)
-│   └── requirements.txt
+└── requirements.txt
 ```
 
 ## Key Features and Evaluation Dimensions:
@@ -78,14 +78,8 @@ Before installing Python dependencies, ensure you have the following prerequisit
 Install all dependencies for each component using the provided `requirements.txt` files:
 
 ```bash
-# For Response Analysis
-pip install -r src/lib/strategy/requirements.txt
-
-# For API Service and Interface Interaction
-pip install -r InterfaceManager/APIService/requirements.txt
-
-# For Test Case Execution Manager
-pip install -r TestCaseExecutionManager/requirements.txt
+# For installing dependencies
+pip install -r requirements.txt
 ```
 
 ---
