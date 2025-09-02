@@ -26,8 +26,8 @@ print(db.get_status_by_run_id(1))
 print(db.get_run_detail_status(run_name="Gooey AI Run #1", testcase_name="P701"))
 print(db.get_status_by_run_name(run_name="Gooey AI Run #1"))
 
-plans = json.load(open('Data/plans.json', 'r'))
-prompts = json.load(open('Data/DataPoints.json', 'r'))
+plans = json.load(open('data/plans.json', 'r'))
+prompts = json.load(open('data/DataPoints.json', 'r'))
 
 domain_general = db.add_or_get_domain_id(domain_name='general')
 domain_agriculture = db.add_or_get_domain_id(domain_name='agriculture')

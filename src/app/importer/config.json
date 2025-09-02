@@ -7,8 +7,8 @@
         "database": "test"
     },
     "files": {
-        "plans": "Data/plans.json",
-        "testcases": "Data/datapoints_combined.json",
-        "strategies": "Data/strategy_id.json"
+        "plans": "data/plans.json",
+        "testcases": "data/datapoints_combined.json",
+        "strategies": "data/strategy_id.json"
     }
 }

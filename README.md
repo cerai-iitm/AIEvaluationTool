@@ -7,7 +7,7 @@ This project offers a robust, end-to-end framework for evaluating the performanc
 
 ```
 AIEvaluationTool/
-├── Data/
+├── data/
 │   ├── DataPoints.json
 │   ├── plans.json
 │   ├── strategy_map.json
@@ -24,7 +24,17 @@ AIEvaluationTool/
 │   ├── app/response_analyzer
 │   │   └── ... (scripts to analyse the collected response and computer score and store in the database)
 │   ├── lib/strategy
-│   │   └── ... (scripts that contain how to run strategies)
+│   │   └── ... (implementation of model and rules based evaluation strategies)
+│   ├── lib/orm
+│   │   └── ... (ORM implementation of the data model)
+│   ├── lib/data
+│   │   └── ... (Pydantic classes of all the data model objects)
+│   ├── lib/interface_manager
+│   │   └── ... (wrapper class to talk to the Interface Manager stub)
+│   ├── lib/utils
+│   │   └── ... (helper functions)
+│   ├── notebooks
+│   │   └── ... (Python notebooks)
 └── requirements.txt
 ```
 
@@ -67,7 +77,7 @@ cd AIEvaluationTool
 
 Before installing Python dependencies, ensure you have the following prerequisites installed on your system:
 
-- **Python 3.8+**
+- **Python 3.10+**
 - **Google Chrome Browser**
 - **ChromeDriver** (must match your Chrome version; this is a mandatory install for interface automation)
 
@@ -106,13 +116,13 @@ Ensure your model is accessible and properly configured before running the evalu
 
 ### 5. **Prepare Data Files**
 
-Ensure the `Data/` directory contains the following files (already present in the repository):
-- `DataPoints.json`
+Ensure the `data/` directory contains the following files (already present in the repository):
+- `DataPoints.json` (sample test dataset)
 - `plans.json`
 - `strategy_map.json`
 - `strategy_id.json`
 - `metric_strategy_mapping.json`
-- (Other .csv/.tsv files are generated during runs)
+- **A detailed set of Seeding data points shall be provided upon request.**
 
 ---
 
@@ -178,7 +188,7 @@ The Test Case Execution Manager leverages the interface automation to automatica
 ![Interface](screenshots/Interface.jpg)
 
 
-This step will execute the test cases and store the responses in `Data/responses.json`.
+This step will execute the test cases and store the responses in `data/responses.json`.
 
 **Step 4: Run the LLMS in your GPUs**
 
