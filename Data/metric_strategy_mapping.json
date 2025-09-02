@@ -22,7 +22,7 @@
     "44": ["uptime_calculation"],
     "54":["robustness_advglue_mnli","robustness_advglue_qqp","robustness_advglue_sst2", "robustness_advglue_qnli","robustness_advins","robustness_ood"],
     "66":["robustness_advglue_mnli","robustness_advglue_qqp","robustness_advglue_sst2", "robustness_advglue_qnli","robustness_advins","robustness_ood"],
-    "55":["truthfulness_external","truthfulness_internal_codah","truthfulness_internal_squad","truthfulness_internal_hotpot","hallucination"],
+    "55":["truthfulness_external","truthfulness_internal_codah","truthfulness_internal_squad","truthfulness_internal_hotpot","hallucination_halusumm","hallucination_haluqa","hallucination_mc"],
     "30": ["transliterated_language_strategy"],
     "57":["llm_judge_negative"],
     "65":["llm_judge_negative"],
