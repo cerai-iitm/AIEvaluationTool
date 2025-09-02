@@ -70,7 +70,7 @@ class Compute_MTBF(Strategy):
         return mtbf_time, uptime
 
 # Example usage
-# file_path = "Data/whatsapp_driver.log"
+# file_path = "data/whatsapp_driver.log"
 # mtbf = Compute_MTBF(file_path=log_file)
 # mtbf_time = mtbf.evaluate()
 # print(f"Mean time Between Failure (in Hrs): {mtbf_time}")

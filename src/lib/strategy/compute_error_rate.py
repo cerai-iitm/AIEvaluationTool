@@ -38,7 +38,7 @@ class ComputeErrorRate(Strategy):
             raise ValueError("file_path is not provided in strategy kwargs.")
         return self.compute_error_rate_from_log(self.file_path)
 
-# log_file = "Data/whatsapp_driver.log"
+# log_file = "data/whatsapp_driver.log"
 # error_rate = ComputeErrorRate(file_path=log_file)
 # score = error_rate.evaluate()
 # print(f"Error Rate: {score}")
