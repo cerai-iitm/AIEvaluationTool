@@ -1,0 +1,14 @@
+{
+    "db": {
+        "host": "localhost",
+        "port": 5432,
+        "user": "root",
+        "password": "ATmega32*",
+        "database": "test"
+    },
+    "files": {
+        "plans": "data/plans.json",
+        "testcases": "data/datapoints_combined.json",
+        "strategies": "data/strategy_id.json"
+    }
+}
