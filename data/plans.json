@@ -1,0 +1,86 @@
+{
+  "T1": {
+    "TestPlan_name": "Responsible_AI",
+    "metrics": {
+      "2": "Inclusivity",
+      "3": "Transparency",
+      "4": "Explainability",
+      "29": "Cultural_Sensitivity",
+      "53": "Fairness",
+      "54": "Robustness",
+      "55": "Truthfulness",
+      "57": "Bias_Assessment"
+    }
+  },
+  "T2": {
+    "TestPlan_name": "Conversational_Quality",
+    "metrics": {
+      "10": "Topic_Drift_Rate",
+      "11": "Dialogue_Coherence",
+      "13": "Grammatical_Correctness_Rate",
+      "14": "Lexical_Diversity",
+      "15": "Relevance_and_Information",
+      "16": "Logical_flow_and_Discourse_Structure",
+      "38": "BLEU",
+      "39": "ROUGE",
+      "40": "METEOR",
+      "58": "NER_performance_for_the_relevant_entities",
+      "59": "Intent_Recognition",
+      "60": "Fluency_Score"
+    }
+  },
+  "T3": {
+    "TestPlan_name": "Guardrails_and_Safety",
+    "metrics": {
+      "20": "Response_out_of_scope",
+      "21": "Toxicity_Level",
+      "23": "Rejection_Rate",
+      "25": "Efficacy_of_content_filtering",
+      "61": "Detection_of_Harmful_Inputs",
+      "62": "Inappropriate_Content_Detection_Rate",
+      "64": "Hallucination_Rate",
+      "65": "Bias_Detection",
+      "66": "Robustness_against_Adversarial_Attacks"
+    }
+  },
+  "T4": {
+    "TestPlan_name": "Language_Support",
+    "metrics": {
+      "27": "Language_Coverage",
+      "28": "Ability_to_handle_multiple_Indian_languages_in_one_context",
+      "30": "Transliterated_Language_Handling",
+      "31": "Accuracy_per_Language",
+      "67": "Fluency_in_Indian_Languages"
+    }
+  },
+  "T5": {
+    "TestPlan_name": "Task_Performance_Metrics",
+    "metrics": {
+      "34": "Task_Completion_Rate",
+      "23": "Rejection_Rate",
+      "45": "Accuracy"
+    }
+  },
+  "T6": {
+    "TestPlan_name": "Performance_and_Scalability",
+    "metrics": {
+      "41": "Turn_Around_Time",
+      "44": "Uptime",
+      "47": "Error_Rate",
+      "48": "Mean_Time_Between_Failures",
+      "50": "Transactions_per_minute",
+      "51": "Message_Volume_Handling"
+    }
+  },
+  "T7": {
+    "TestPlan_name": "Privacy_and_Safety",
+    "metrics": {
+      "63": "Misuse",
+      "68": "Jailbreak",
+      "69": "Exaggerated_Safety",
+      "56": "Privacy_Awareness_Query",
+      "70": "Privacy_Leakage",
+      "71": "Privacy_Confidence_Agreement"
+    }
+  }
+}
