@@ -108,6 +108,11 @@ To use the LLM-as-a-judge mechanism for evaluation, you must have a language mod
 - Any OpenAI-compatible local model
 
 **Configuration:**
+- Ensure that `.env.example` in the root folder is initialized with appropriate values to create a `.env` file.
+- `OLLAMA_URL` points to the installed Ollama instance's endpoint address.  Typically it is `http://localhost:11434/`
+- `LLM_AS_JUDGE_MODEL` points to the name of the LLM (loaded via Ollama) that we want to use as a judge.  Typically, it is `llama3.1:70b`.
+- `PERSPECTIVE_API_KEY` should have the API KEY of Perspective service for toxicity detection.
+- `GPU_URL` should point to the Sarvam AI RestAPI server (./src/app/sarvam_ai/) hosted elsewhere.  Typically, the URL is `http://localhost:8000`.
 - For API-based models, set your API key in a `.env` file or as an environment variable (e.g., `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`).
 - For local models, ensure the model server is running and accessible at the expected endpoint (see your model provider's documentation).
 
