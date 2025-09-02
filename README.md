@@ -80,6 +80,7 @@ Before installing Python dependencies, ensure you have the following prerequisit
 - **Python 3.10+**
 - **Google Chrome Browser**
 - **ChromeDriver** (must match your Chrome version; this is a mandatory install for interface automation)
+- **MariaDB Server**
 
 ---
 
@@ -130,13 +131,15 @@ Ensure the `data/` directory contains the following files (already present in th
 
 **Step 1: Import datapoints into Database**
 
+Create a database in the MariaDB server and authorize a database user with full privileges.  Replace the host, port number, username, password, and database name in the `config.json` file. 
+
 Open a terminal on your machine and run:
 
 ```bash
 python3 src/app/importer/main.py --config "path to the config file"
 ```
 
-Replace the host, port number, username, password, and database name in the `config.json` file. After running the importer script, the terminal shows the following outputs.
+After running the importer script, the terminal shows the following outputs.
 
 ![Importing datapoints to database](screenshots/importing%20data%20to%20database.png)
 
