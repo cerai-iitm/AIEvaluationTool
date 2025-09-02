@@ -7,6 +7,7 @@ from whatsapp import login_whatsapp, logout_whatsapp, send_prompt_whatsapp, clos
 from openui import login_openui, logout_openui, send_prompt_openui
 import json
 from typing import List
+import os
 
 from pydantic import BaseModel
 
@@ -19,7 +20,7 @@ class PromptCreate(BaseModel):
     prompt_list: List[str]
 
 def load_config():
-    with open('config.json', 'r') as file:
+    with open(os.path.join(os.path.dirname(__file__), '../config.json'), 'r') as file:
         return json.load(file)
 
 @router.get("/login")
