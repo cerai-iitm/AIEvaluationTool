@@ -130,7 +130,7 @@ def main():
     table = Table(title=f"Response Analysis Report for Run '{run.run_name}'")
     table.add_column("Plan Name", style="cyan", no_wrap=True)
     table.add_column("Metric Name", style="magenta")
-    table.add_column("Testcase Name", style="green")
+    table.add_column("Testcase Score", style="green")
     # iterate through the dictionary to create score summaries.
     for plan in score_card.keys():
         for metric in score_card[plan].keys():
