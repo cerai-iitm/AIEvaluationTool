@@ -30,7 +30,7 @@ global cached_driver
 cached_driver = None
 
 def load_config():
-    with open('config.json', 'r') as file:
+    with open(os.path.join(os.path.dirname(__file__), 'config.json'), 'r') as file:
         return json.load(file)
 
 def get_ui_response():
@@ -218,6 +218,9 @@ def search_llm(driver: webdriver.Chrome) -> bool:
             EC.presence_of_element_located((By.XPATH, search_input_xpath))
         )
         search_box.click()
+        # @bugfix -- sudar 02.08.2025
+        # clear the box before typing a new string.
+        search_box.clear()
         search_box.send_keys(llm_name)
         search_box.send_keys(Keys.RETURN)
 
@@ -287,7 +290,9 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int = 3):
                 return "Failed: Internet unavailable"
             
             logger.info(f"Sending prompt to the bot: {prompt}")
-            message_box_xpath = '//div[@aria-label="Type a message" and @contenteditable="true"]'
+            # @bugfix.  The XPath has changed! -- Sudar 02.08.2025
+            #message_box_xpath = '//div[@aria-label="Type a message" and @contenteditable="true"]'
+            message_box_xpath = '//div[@aria-placeholder="Type a message" and @contenteditable="true"]'
             message_box = WebDriverWait(driver, 2).until(
                 EC.presence_of_element_located((By.XPATH, message_box_xpath))
             )
