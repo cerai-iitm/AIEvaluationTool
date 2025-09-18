@@ -25,10 +25,8 @@ def load_config():
     with open('config.json', 'r') as file:
         return json.load(file)
 
-
 def get_ui_response():
     return {"ui": "CPGRAMS Chat Interface", "features": ["smart-compose", "modular-layout"]}
-
 
 # -------------------------------
 # Connectivity Helpers
