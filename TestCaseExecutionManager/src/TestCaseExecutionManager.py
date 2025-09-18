@@ -36,7 +36,7 @@ parser = argparse.ArgumentParser(description="LLM Evaluation Suite - A comprehen
 parser.add_argument("--base_url", type=str, default="http://localhost:8000", help="Base URL of the server (Default: 'http://localhost:8000')")
 parser.add_argument("--application_type", type=str.upper, default="WHATSAPP_WEB", help="Application type: required for LLM evaluation (e.g., WHATSAPP_WEB or OPENUI or WEBAPP)")
 parser.add_argument("--agent_name", type=str, default="Gooey AI", help="Model name for the application (Default set to ChatGPT)")
-parser.add_argument("--application_url", type=str, default="https://cpgram-ai-chatbot-abhqgua2d9g2dka2.centralindia-01.azurewebsites.net/", help="URL of the web application (Default set to CPGRAMS AI Chatbot)")
+parser.add_argument("--application_url", type=str, default="https://cpgramsaichatbot.com/", help="URL of the web application (Default set to CPGRAMS AI Chatbot)")
 parser.add_argument("--openui_email", type=str, help="OpenUI email: required for OpenUI Application")
 parser.add_argument("--openui_password", type=str, help="OpenUI password: required for OpenUI Application")
 parser.add_argument("--run_mode", default="single_window", type=str, help="How to handle prompt session", choices=["single_window", "multiple_window"])

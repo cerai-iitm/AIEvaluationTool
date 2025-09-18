@@ -35,6 +35,7 @@ def check_and_recover_connection() -> bool:
     Logs the device's connectivity status.
     """
     config = load_config()
+    print(f"[DEBUG] Keys in config: {list(config.keys())}")
     if not is_connected(host=config.get("default_host"), port=config.get("default_port"), timeout=config.get("default_timeout")):
         logger.warning("Internet connection lost.")
         return retry_on_internet()
@@ -76,16 +77,31 @@ def retry_on_internet(max_attempts=5, initial_delay=3, max_delay=60) -> bool:
     logger.error("Device remains disconnected after all retry attempts.")
     return False
 
-def is_profile_in_use(profile_path):
-    """Check if any Chrome process is using the given user-data-dir."""
-    for proc in psutil.process_iter(['name', 'cmdline']):
-        try:
-            if 'chrome' in proc.info['name'].lower():
-                cmdline = ' '.join(proc.info['cmdline'])
-                if f"user-data-dir={profile_path}" in cmdline:
-                    return True
-        except (psutil.NoSuchProcess, psutil.AccessDenied):
+# def is_profile_in_use(profile_path):
+#     """Check if any Chrome process is using the given user-data-dir."""
+#     for proc in psutil.process_iter(['name', 'cmdline']):
+#         try:
+#             if 'chrome' in proc.info['name'].lower():
+#                 cmdline = ' '.join(proc.info['cmdline'])
+#                 if f"user-data-dir={profile_path}" in cmdline:
+#                     return True
+#         except (psutil.NoSuchProcess, psutil.AccessDenied):
+#             continue
+#     return False
+
+def is_profile_in_use(profile_folder_path):
+    for proc in psutil.process_iter(attrs=["cmdline"]):
+        cmdline = proc.info.get("cmdline")
+        if not cmdline:  # None or empty
             continue
+        # Ensure it's a list before joining
+        if isinstance(cmdline, (list, tuple)):
+            cmdline_str = " ".join(cmdline)
+        else:
+            cmdline_str = str(cmdline)
+
+        if profile_folder_path in cmdline_str:
+            return True
     return False
 
 def close_chrome_with_profile(profile_path):
@@ -118,7 +134,7 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int = 3):
                 # Get current messages before sending
                 previous_messages = driver.find_elements(
                     By.XPATH,
-                    "//div[@class='text-base leading-relaxed mb-3']/p"
+                    "//div[@class='leading-relaxed text-sm']/p"
                 )
                 previous_count = len(previous_messages)
 
@@ -126,7 +142,7 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int = 3):
                 chat_input = WebDriverWait(driver, 10).until(
                     EC.presence_of_element_located((
                         By.XPATH,
-                        "//textarea[@placeholder='Type your query here or press and hold mic button for audio communication']"
+                        "//textarea[@placeholder='Type your query here or press mic button for audio communication']"
                     ))
                 )
                 chat_input.clear()
@@ -134,19 +150,19 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int = 3):
                 chat_input.send_keys(Keys.ENTER)
 
                 # Wait until a new message appears
-                WebDriverWait(driver, 30).until(
+                WebDriverWait(driver, 50).until(
                     lambda d: len(d.find_elements(
                         By.XPATH,
-                        "//div[@class='text-base leading-relaxed mb-3']/p"
+                        "//div[@class='leading-relaxed text-sm']/p"
                     )) > previous_count
                 )
 
-                time.sleep(1)  # Give DOM a moment to settle
+                time.sleep(10)  # Give DOM a moment to settle
 
                 # Fetch latest message
                 bot_messages = driver.find_elements(
                     By.XPATH,
-                    "//div[@class='text-base leading-relaxed mb-3']/p"
+                    "//div[@class='leading-relaxed text-sm']/p"
                 )
 
                 new_response = bot_messages[-1].text.strip()
@@ -170,21 +186,21 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int = 3):
             else:
                 return ["[Error during chat after retries]"]
 
-def open_chat_interface(driver: webdriver.Chrome) -> bool:
+def open_chat_interface() -> bool:
     """
-    Opens a chat window for the given chat_id.
+    Opens and verifies CPGRAMS chat interface using Selenium driver.
     """
-    status: bool = False
     try:
         if not check_and_recover_connection():
-            return status
+            return False
+
         logger.info("Initiating CPGRAMS web interface process..")
-        
-        status = True
-        logger.info("CPGRAMS web chat interface opened successful")
-        return status
+        logger.info("CPGRAMS web chat interface opened successfully")
+        return True
+
     except Exception as e:
-            logger.error(f"Error initializing CPGRAMS web chat interface: {e}")
+        logger.error(f"Error initializing CPGRAMS web chat interface: {e}")
+        return False
     
 
 def send_prompt_cpgrams(chat_id: int, prompt_list: List[str], mode: str = "single_window") -> list[dict]:
@@ -222,7 +238,8 @@ def send_prompt_cpgrams(chat_id: int, prompt_list: List[str], mode: str = "singl
             driver.get(load_config().get("application_url"))
             time.sleep(5)
 
-            chat_found = open_chat_interface(driver)
+            chat_found = open_chat_interface()
+            print(chat_found)
             
             for i, prompt in enumerate(prompt_list):
                 result = {"chat_id": chat_id, "prompt": prompt, "response": "Not available"}

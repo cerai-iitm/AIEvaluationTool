@@ -1,0 +1,11 @@
+{
+    "base_url": "http://localhost:8000",
+    "application_type": "WEBAPP",
+    "agent_name": "cpgrams",
+    "application_url": "https://cpgramsaichatbot.com/",
+    "run_mode": "single_window",
+    "test_plan_id": "T2",
+    "test_case_count": 5,
+    "action": "send_all_prompts",
+    "test_plan_file": "/home/balayogi/Documents/cpgrams/AIEvaluationTool/Data/DataPoints.json"
+}
