@@ -351,7 +351,7 @@ def main():
                     # construct the message to send to the agent
                     message_to_agent = testcase.prompt.user_prompt if testcase.prompt.user_prompt else ""
                     if testcase.prompt.system_prompt:
-                        message_to_agent = testcase.prompt.system_prompt + "\n" + message_to_agent
+                        message_to_agent = testcase.prompt.system_prompt + " " + message_to_agent
 
                     logger.debug(f"A new conversation is created with ID: {conv_id}")
 
@@ -461,7 +461,7 @@ def main():
                     # construct the message to send to the agent
                     message_to_agent = testcase.prompt.user_prompt if testcase.prompt.user_prompt else ""
                     if testcase.prompt.system_prompt:
-                        message_to_agent = testcase.prompt.system_prompt + "\n" + message_to_agent
+                        message_to_agent = testcase.prompt.system_prompt + " " + message_to_agent
 
                     conv = Conversation(target=target.target_name, 
                                         run_detail_id=rundetail_id, 
@@ -556,7 +556,7 @@ def main():
                     # construct the message to send to the agent
                     message_to_agent = testcase.prompt.user_prompt if testcase.prompt.user_prompt else ""
                     if testcase.prompt.system_prompt:
-                        message_to_agent = testcase.prompt.system_prompt + "\n" + message_to_agent
+                        message_to_agent = testcase.prompt.system_prompt + " " + message_to_agent
 
                     conv = Conversation(target=target.target_name, 
                                         run_detail_id=rundetail_id, 
