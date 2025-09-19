@@ -27,3 +27,5 @@ lexical_diversity
 sentencepiece
 sarvamai
 openpyxl
+randomname
+mariadb
