@@ -362,6 +362,7 @@ def main():
                     client = InterfaceManagerClient(base_url="http://localhost:8000" ,application_type=application_type)
                     client.sync_config({
                         "application_name": application_name,
+                        "application_type": application_type,
                         "agent_name": agent_name,
                         "application_url": application_url
                     })
@@ -439,6 +440,7 @@ def main():
                 client = InterfaceManagerClient(base_url="http://localhost:8000" ,application_type=application_type)
                 client.sync_config({
                     "application_name": application_name,
+                    "application_type": application_type,
                     "agent_name": agent_name,
                     "application_url": application_url
                 })
@@ -534,6 +536,7 @@ def main():
                 client = InterfaceManagerClient(base_url="http://localhost:8000" ,application_type=application_type)
                 client.sync_config({
                     "application_name": application_name,
+                    "application_type": application_type,
                     "agent_name": agent_name,
                     "application_url": application_url
                 })
