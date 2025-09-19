@@ -85,7 +85,7 @@ async def chat(prompt: PromptCreate):
     elif application_type == "WEB_APP" and application_name == "CPGRAMS":
         logger.info("Received prompt request for Web App Application.")
         result = send_prompt_cpgrams(chat_id=prompt.chat_id, prompt_list=prompt.prompt_list)
-        return JSONResponse(content=result)
+        return JSONResponse(content={"response": result})
     else:
         result = "Application not found"
         return JSONResponse(content=result)
