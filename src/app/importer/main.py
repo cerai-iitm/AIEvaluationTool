@@ -142,3 +142,12 @@ tgt = Target(target_name="Vaidya AI",
              target_domain="healthcare",
              target_languages=["english"])
 target_id = db.add_or_get_target(target = tgt)
+
+
+tgt = Target(target_name="CPGRAMS", 
+             target_type="WebApp", 
+             target_url="https://cpgramsaichatbot.com/", 
+             target_description="CPGRAMS is a web-based AI assistant for streamlines public grievance registration, tracking, and monitoring to enhance efficiency, transparency, and citizen engagement in governance.",
+             target_domain="government services",
+             target_languages=["english","assamese","bengali","bodo","dogri","goan konkani","gujarati","hindi","kannada","kashmiri","maithili","malayalam","manipuri","marathi","nepali","odia","punjabi","sanskrit","santali","sindhi","tamil","telugu","urudu"])
+target_id = db.add_or_get_target(target = tgt)

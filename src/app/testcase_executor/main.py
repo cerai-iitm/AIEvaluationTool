@@ -359,7 +359,7 @@ def main():
                     db.add_or_update_testrun_detail(rundetail)
 
                     # Initialize the InterfaceManagerClient with the provided configuration
-                    client = InterfaceManagerClient(base_url=application_url, application_type=application_type)
+                    client = InterfaceManagerClient(base_url="http://localhost:8000" ,application_type=application_type)
                     client.sync_config({
                         "application_name": application_name,
                         "agent_name": agent_name,
@@ -436,7 +436,7 @@ def main():
                 db.add_or_update_testrun(run=run)
 
                 # Initialize the InterfaceManagerClient with the provided configuration
-                client = InterfaceManagerClient(base_url=application_url, application_type=application_type)
+                client = InterfaceManagerClient(base_url="http://localhost:8000" ,application_type=application_type)
                 client.sync_config({
                     "application_name": application_name,
                     "agent_name": agent_name,
@@ -531,7 +531,7 @@ def main():
                 db.add_or_update_testrun(run=run)
 
                 # Initialize the InterfaceManagerClient with the provided configuration
-                client = InterfaceManagerClient(base_url=application_url, application_type=application_type)
+                client = InterfaceManagerClient(base_url="http://localhost:8000" ,application_type=application_type)
                 client.sync_config({
                     "application_name": application_name,
                     "agent_name": agent_name,

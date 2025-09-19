@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 from logger import get_logger
 from whatsapp import login_whatsapp, logout_whatsapp, send_prompt_whatsapp, close_whatsapp
 from openui import login_openui, logout_openui, send_prompt_openui
+from webapp import send_prompt_cpgrams, close_webapp
 import json
 from typing import List
 import os
@@ -27,6 +28,7 @@ def load_config():
 def login():
     config = load_config()
     application_type = config.get("application_type")
+    application_name = config.get("application_name")
 
     if application_type == "WHATSAPP_WEB":
         logger.info("Received login request for Whatsapp Web Application.")
@@ -36,6 +38,10 @@ def login():
         logger.info("Received login request for OpenUI Application.")
         result = login_openui(driver=None)
         return JSONResponse(content=result)
+    elif application_type == "WEB_APP" and application_name == "CPGRAMS":
+        logger.info("Received login request for Web App Application.")
+        result = {"message": "No login required for Web App"}
+        return JSONResponse(content=result)
     else:
         result = "Application not found"
         return JSONResponse(content=result)
@@ -44,6 +50,8 @@ def login():
 def logout():
     config = load_config()
     application_type = config.get("application_type")
+    application_name = config.get("application_name")
+
     if application_type == "WHATSAPP_WEB":
         logger.info("Received logout request for Whatsapp Web Application.")
         result = logout_whatsapp()
@@ -51,6 +59,10 @@ def logout():
     elif application_type == "OPENUI":
         logger.info("Received logout request for OpenUI Application.")
         result = logout_openui()
+        return JSONResponse(content=result)
+    elif application_type == "WEB_APP" and application_name == "CPGRAMS":
+        logger.info("Received logout request for Web App Application.")
+        result = {"message": "No logout required for Web App"}
         return JSONResponse(content=result)
     else:
         result = "Application not found"
@@ -60,6 +72,7 @@ def logout():
 async def chat(prompt: PromptCreate):
     config = load_config()
     application_type = config.get("application_type")
+    application_name = config.get("application_name")
 
     if application_type == "WHATSAPP_WEB":
         logger.info(f"Received prompt for {application_type}")
@@ -69,6 +82,10 @@ async def chat(prompt: PromptCreate):
         logger.info("Received prompt request for OpenUI Application.")
         result = send_prompt_openui(chat_id=prompt.chat_id, prompt_list=prompt.prompt_list)
         return JSONResponse(content={"response": result})
+    elif application_type == "WEB_APP" and application_name == "CPGRAMS":
+        logger.info("Received prompt request for Web App Application.")
+        result = send_prompt_cpgrams(chat_id=prompt.chat_id, prompt_list=prompt.prompt_list)
+        return JSONResponse(content=result)
     else:
         result = "Application not found"
         return JSONResponse(content=result)
@@ -82,6 +99,13 @@ def close():
         logger.info("Received close request for Whatsapp Web Application.")
         close_whatsapp()
         return JSONResponse(content={"message": "Whatsapp Web closed successfully"})
+    elif application_type == "OPENUI":
+        logger.info("Received close request for OpenUI Application.")
+        return JSONResponse(content={"message": "OpenUI close not implemented"})
+    elif application_type == "WEB_APP":
+        logger.info("Received close request for Web App Application.")
+        close_webapp()
+        return JSONResponse(content={"message": "Web App close not implemented"})
     else:
         result = "Application not found"
         return JSONResponse(content=result)

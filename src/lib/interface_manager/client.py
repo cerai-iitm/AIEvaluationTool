@@ -10,12 +10,12 @@ class PromptCreate(BaseModel):
 class InterfaceManagerClient:
     def __init__(
         self,
-        base_url: str,
         application_type: str,
         model_name: str = "None",
         openui_email: str = "None",
         openui_password: str = "None",
-        run_mode: str = "None"
+        run_mode: str = "None",
+        base_url: str = "http://localhost:8000",
     ):
         self.base_url = base_url.rstrip("/")
         self.application_type = application_type
