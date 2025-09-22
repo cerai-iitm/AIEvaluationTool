@@ -139,7 +139,7 @@ def safe_click(driver, selector: str, retries: int = 3, wait_time: int = 10) -> 
 
 def logout_webapp():
     try:
-        profile_folder_path = os.path.expanduser('~') + "/webapp_profile"
+        profile_folder_path = os.path.expanduser('~') + "/whatsapp_profile"
         opts = Options()
         opts.add_argument("--no-sandbox")
         opts.add_argument("--start-maximized")
@@ -261,7 +261,7 @@ def send_prompt_cpgrams(chat_id: int, prompt_list: List[str], mode: str = "singl
     results = []
 
     if mode == "single_window":
-        profile_folder_path = os.path.expanduser('~') + "/webapp_profile"
+        profile_folder_path = os.path.expanduser('~') + "/whatsapp_profile"
         logger.info(f"Using profile folder: {profile_folder_path}")
 
         if is_profile_in_use(profile_folder_path) and cached_driver is not None:
@@ -320,13 +320,13 @@ def close_webapp():
             cached_driver.quit()
             logger.info("Closing WebApp session...")
             cached_driver = None
-            profile_folder_path = os.path.expanduser('~') + "/webapp_profile"
+            profile_folder_path = os.path.expanduser('~') + "/whatsapp_profile"
             close_chrome_with_profile(profile_folder_path)
         except Exception as e:
             logger.error(f"Error closing WebApp session: {e}")
     else:
         logger.warning("No active WebApp session to close.")
-        profile_folder_path = os.path.expanduser('~') + "/webapp_profile"
+        profile_folder_path = os.path.expanduser('~') + "/whatsapp_profile"
         close_chrome_with_profile(profile_folder_path)
 
 
