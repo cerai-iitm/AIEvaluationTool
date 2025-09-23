@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 from logger import get_logger
 from whatsapp import login_whatsapp, logout_whatsapp, send_prompt_whatsapp, close_whatsapp
 from openui import login_openui, logout_openui, send_prompt_openui
-from webapp import send_prompt_cpgrams, close_webapp
+from webapp import login_webapp_cpgrams, logout_webapp_cpgrams, send_prompt_cpgrams, close_webapp
 import json
 from typing import List
 import os
@@ -40,7 +40,7 @@ def login():
         return JSONResponse(content=result)
     elif application_type == "WEBAPP" and application_name == "CPGRAMS":
         logger.info("Received login request for Web App Application.")
-        result = {"message": "No login required for Web App"}
+        result = login_webapp_cpgrams(driver=None)
         return JSONResponse(content=result)
     else:
         result = "Application not found"
@@ -62,7 +62,7 @@ def logout():
         return JSONResponse(content=result)
     elif application_type == "WEBAPP" and application_name == "CPGRAMS":
         logger.info("Received logout request for Web App Application.")
-        result = {"message": "No logout required for Web App"}
+        result = logout_webapp_cpgrams(driver=None)
         return JSONResponse(content=result)
     else:
         result = "Application not found"
