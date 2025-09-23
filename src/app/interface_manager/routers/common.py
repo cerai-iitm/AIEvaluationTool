@@ -38,7 +38,7 @@ def login():
         logger.info("Received login request for OpenUI Application.")
         result = login_openui(driver=None)
         return JSONResponse(content=result)
-    elif application_type == "WEB_APP" and application_name == "CPGRAMS":
+    elif application_type == "WEBAPP" and application_name == "CPGRAMS":
         logger.info("Received login request for Web App Application.")
         result = {"message": "No login required for Web App"}
         return JSONResponse(content=result)
@@ -60,7 +60,7 @@ def logout():
         logger.info("Received logout request for OpenUI Application.")
         result = logout_openui()
         return JSONResponse(content=result)
-    elif application_type == "WEB_APP" and application_name == "CPGRAMS":
+    elif application_type == "WEBAPP" and application_name == "CPGRAMS":
         logger.info("Received logout request for Web App Application.")
         result = {"message": "No logout required for Web App"}
         return JSONResponse(content=result)
@@ -82,7 +82,7 @@ async def chat(prompt: PromptCreate):
         logger.info("Received prompt request for OpenUI Application.")
         result = send_prompt_openui(chat_id=prompt.chat_id, prompt_list=prompt.prompt_list)
         return JSONResponse(content={"response": result})
-    elif application_type == "WEB_APP" and application_name == "CPGRAMS":
+    elif application_type == "WEBAPP" and application_name == "CPGRAMS":
         logger.info("Received prompt request for Web App Application.")
         result = send_prompt_cpgrams(chat_id=prompt.chat_id, prompt_list=prompt.prompt_list)
         return JSONResponse(content={"response": result})
@@ -102,7 +102,7 @@ def close():
     elif application_type == "OPENUI":
         logger.info("Received close request for OpenUI Application.")
         return JSONResponse(content={"message": "OpenUI close not implemented"})
-    elif application_type == "WEB_APP":
+    elif application_type == "WEBAPP":
         logger.info("Received close request for Web App Application.")
         close_webapp()
         return JSONResponse(content={"message": "Web App close not implemented"})

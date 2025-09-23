@@ -85,31 +85,71 @@ def retry_on_internet(max_attempts=5, initial_delay=3, max_delay=60) -> bool:
     return False
 
 
-# -------------------------------
-# WebApp Login / Logout
-# -------------------------------
-def login_webapp():
-    status: bool = False
+def is_logged_in(driver: webdriver.Chrome) -> bool:
+    try:
+        # Example: check for profile icon or dashboard element
+        profile_element_xpath = "//div[.//div[@class='font-semibold' and text()='Subodh Kumar Singh']]"
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, profile_element_xpath))
+        )
+        return True
+    except Exception:
+        return False
+
+# CPGRAMS Login / Logout
+def login_webapp_cpgrams(driver: webdriver.Chrome) -> bool:
+    """
+    Attempts login and verifies success by checking post-login element.
+    """
     try:
         if not check_and_recover_connection():
-            return status
-        logger.info("Opening WebApp Chat Interface...")
+            return False
 
-        # profile_folder_path = os.path.expanduser('~') + "/webapp_profile"
-        # opts = Options()
-        # opts.add_argument("--no-sandbox")
-        # opts.add_argument("--start-maximized")
-        # opts.add_argument(f"user-data-dir={profile_folder_path}")
-        # opts.add_experimental_option("excludeSwitches", ["enable-logging"])
+        logger.info("Logging in CPGRAMS Chat Interface...")
 
-        # service = Service(ChromeDriverManager().install())
-        # driver = webdriver.Chrome(service=service, options=opts)
-        # driver.get(load_config().get("application_url"))
+        email_xpath = "//input[@id='email']"
+        password_xpath = "//input[@id='password']"
+        login_button_xpath = "//button[normalize-space(.)='Sign In']"
 
-        logger.info("WebApp chat interface opened successfully.")
+        email = "email"
+        password = "password"
+
+        # Check for post-login success
+        if is_logged_in(driver):
+            logger.info("Already logged in to CPGRAMS chat interface.")
+            return True
+        else:
+            logger.info("Not logged in, proceeding with login.")
+            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, email_xpath))).send_keys(email)
+            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, password_xpath))).send_keys(password)
+            WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, login_button_xpath))).click()
+
+            logger.info("CPGRAMS chat interface Logged in successfully.")
+        return True
+
+    except Exception as e:
+        logger.error(f"Login failed or not confirmed: {e}")
+        return False
+
+    
+def logout_webapp_cpgrams(driver: webdriver.Chrome) -> bool:
+    """
+    Closes the CPGRAMS Web chat interface.
+    """
+
+    profile_element_xpath = "//div[.//div[@class='font-semibold' and text()='Subodh Kumar Singh']]" 
+    logout_button_xpath = "//button[.//span[normalize-space(text())='Logout']]"
+
+    try:
+        if driver:
+            WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, profile_element_xpath))).click()
+            WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, logout_button_xpath))).click()
+            time.sleep(0.5)
+            driver.quit()
+            logger.info("CPGRAMS Chat Interface Logged out and closed successfully.")
         return True
     except Exception as e:
-        logger.error(f"Error initializing WebApp interface: {e}")
+        logger.error(f"Error closing WebApp interface: {e}")
         return False
 
 
@@ -135,31 +175,6 @@ def safe_click(driver, selector: str, retries: int = 3, wait_time: int = 10) -> 
             logger.error(f"WebDriver error during click: {e}")
             break
     return False
-
-
-def logout_webapp():
-    try:
-        profile_folder_path = os.path.expanduser('~') + "/whatsapp_profile"
-        opts = Options()
-        opts.add_argument("--no-sandbox")
-        opts.add_argument("--start-maximized")
-        opts.add_argument(f"user-data-dir={profile_folder_path}")
-        opts.add_experimental_option("excludeSwitches", ["enable-logging"])
-
-        service = Service(ChromeDriverManager().install())
-        driver = webdriver.Chrome(service=service, options=opts)
-
-        driver.get(load_config().get("application_url"))
-        logger.info("Logout sequence placeholder. Adjust selectors if logout exists.")
-
-        time.sleep(0.5)
-        driver.quit()
-        logger.info("Browser session closed after logout.")
-        return True
-    except Exception as e:
-        logger.error(f"Error during WebApp logout: {e}")
-        return False
-
 
 # -------------------------------
 # Session Management Helpers
@@ -211,7 +226,7 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int = 3):
 
             # Get current messages before sending
             previous_messages = driver.find_elements(
-                By.XPATH, "//div[@class='leading-relaxed text-sm']/p"
+                By.XPATH, "//div[@class='select-text']/p"
             )
             previous_count = len(previous_messages)
 
@@ -230,7 +245,7 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int = 3):
             WebDriverWait(driver, 50).until(
                 lambda d: len(d.find_elements(
                     By.XPATH,
-                    "//div[@class='leading-relaxed text-sm']/p"
+                    "//div[@class='select-text']/p"
                 )) > previous_count
             )
 
@@ -238,7 +253,7 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int = 3):
 
             # Fetch latest message
             bot_messages = driver.find_elements(
-                By.XPATH, "//div[@class='leading-relaxed text-sm']/p"
+                By.XPATH, "//div[@class='select-text']/p"
             )
             new_response = bot_messages[-1].text.strip() if bot_messages else "[No response received]"
 
@@ -290,7 +305,7 @@ def send_prompt_cpgrams(chat_id: int, prompt_list: List[str], mode: str = "singl
             while chat_found is False:
                 logger.debug("Waiting for chat to be found...")
                 time.sleep(0.5)
-                chat_found = login_webapp()
+                chat_found = login_webapp_cpgrams(driver=driver)
             
             for i, prompt in enumerate(prompt_list):
                 result = {"chat_id": chat_id, "prompt": prompt, "response": "Not available"}
