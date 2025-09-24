@@ -207,6 +207,7 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int = 3):
                 ))
             )
             chat_input.clear()
+            chat_input.click()
             chat_input.send_keys(prompt)
             chat_input.send_keys(Keys.ENTER)
 
