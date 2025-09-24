@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 from logger import get_logger
 from whatsapp import login_whatsapp, logout_whatsapp, send_prompt_whatsapp
 from openui import login_openui, logout_openui, send_prompt_openui
-from cpgrams import send_prompt_cpgrams
+from cpgrams import send_prompt_cpgrams, login_webapp_cpgrams, logout_webapp_cpgrams
 import json
 from typing import List
 
@@ -27,6 +27,7 @@ def load_config():
 def login():
     config = load_config()
     application_type = config.get("application_type")
+    agent_name = config.get("agent_name")
 
     if application_type == "WHATSAPP_WEB":
         logger.info("Received login request for Whatsapp Web Application.")
@@ -36,6 +37,10 @@ def login():
         logger.info("Received login request for OpenUI Application.")
         result = login_openui(driver=None)
         return JSONResponse(content=result)
+    elif application_type == "WEBAPP" and agent_name == "cpgrams":
+        logger.info("WEBAPP does not require login.")
+        result = login_webapp_cpgrams(driver=None)
+        return JSONResponse(content=result)
     else:
         result = "Application not found"
         return JSONResponse(content=result)
@@ -44,6 +49,8 @@ def login():
 def logout():
     config = load_config()
     application_type = config.get("application_type")
+    agent_name = config.get("agent_name")
+
     if application_type == "WHATSAPP_WEB":
         logger.info("Received logout request for Whatsapp Web Application.")
         result = logout_whatsapp()
@@ -51,7 +58,11 @@ def logout():
     elif application_type == "OPENUI":
         logger.info("Received logout request for OpenUI Application.")
         result = logout_openui()
-        return JSONResponse(content=result)
+        return JSONResponse(content=result) 
+    elif application_type == "WEBAPP" and agent_name == "cpgrams":
+        logger.info("Received logout request for CPGRAMS Application.")
+        result = logout_webapp_cpgrams()
+        return JSONResponse(content=result) 
     else:
         result = "Application not found"
         return JSONResponse(content=result)
