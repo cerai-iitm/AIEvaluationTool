@@ -247,7 +247,7 @@ python analyze.py --config "path to config file" --run-name <run-name>
 
 The Response Analyzer block when executed will display a detailed report on the terminal, showing scores evaluated for metrics under the test plan and can be used as an indicator of the validity of the model against a particular metric.
 
-**Once the previous step has completed and analysis is done**, open a new terminal and run:
+**To see the evaluation report**, open a new terminal and run:
 
 ```bash
 cd src/app/response_analyzer
