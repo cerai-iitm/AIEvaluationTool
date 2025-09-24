@@ -13,10 +13,14 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 from logger import get_logger
+import os
 
 from typing import List
 
 logger = get_logger("cpgrams_driver")
+
+global cached_driver
+cached_driver = None
 
 # -------------------------------
 # Configuration
@@ -74,6 +78,105 @@ def retry_on_internet(max_attempts=5, initial_delay=3, max_delay=60) -> bool:
     logger.error("Device remains disconnected after all retry attempts.")
     return False
 
+# Is logged in function can be added here if needed
+def is_logged_in(driver: webdriver.Chrome) -> bool:
+    try:
+        # Example: check for profile icon or dashboard element
+        profile_element_xpath = "//div[.//div[@class='font-semibold' and text()='Subodh Kumar Singh']]"
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, profile_element_xpath))
+        )
+        return True
+    except Exception:
+        return False
+
+# Session Management Helpers
+
+def is_profile_in_use(profile_path):
+    for proc in psutil.process_iter(['name', 'cmdline']):
+        try:
+            if 'chrome' in proc.info['name'].lower():
+                if proc.info['cmdline'] is None:
+                    continue
+                cmdline = ' '.join(proc.info['cmdline'])
+                if f"user-data-dir={profile_path}" in cmdline:
+                    return True
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue
+    return False
+
+
+def close_chrome_with_profile(profile_path):
+    closed_any = False
+    for proc in psutil.process_iter(['name', 'cmdline']):
+        try:
+            if 'chrome' in proc.info['name'].lower():
+                if proc.info['cmdline'] is None:
+                    continue
+                cmdline = ' '.join(proc.info['cmdline'])
+                if f"user-data-dir={profile_path}" in cmdline:
+                    proc.kill()
+                    closed_any = True
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue
+    return closed_any
+
+
+# CPGRAMS Login / Logout
+def login_webapp_cpgrams(driver: webdriver.Chrome) -> bool:
+    """
+    Attempts login and verifies success by checking post-login element.
+    """
+    try:
+        if not check_and_recover_connection():
+            return False
+
+        logger.info("Logging in CPGRAMS Chat Interface...")
+
+        email_xpath = "//input[@id='email']"
+        password_xpath = "//input[@id='password']"
+        login_button_xpath = "//button[normalize-space(.)='Sign In']"
+
+        email = "email"
+        password = "password"
+
+        # Check for post-login success
+        if is_logged_in(driver):
+            logger.info("Already logged in to CPGRAMS chat interface.")
+            return True
+        else:
+            logger.info("Not logged in, proceeding with login.")
+            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, email_xpath))).send_keys(email)
+            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, password_xpath))).send_keys(password)
+            WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, login_button_xpath))).click()
+
+            logger.info("CPGRAMS chat interface Logged in successfully.")
+        return True
+
+    except Exception as e:
+        logger.error(f"Login failed or not confirmed: {e}")
+        return False
+
+    
+def logout_webapp_cpgrams(driver: webdriver.Chrome) -> bool:
+    """
+    Closes the CPGRAMS Web chat interface.
+    """
+
+    profile_element_xpath = "//div[.//div[@class='font-semibold' and text()='Subodh Kumar Singh']]" 
+    logout_button_xpath = "//button[.//span[normalize-space(text())='Logout']]"
+
+    try:
+        if driver:
+            WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, profile_element_xpath))).click()
+            WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, logout_button_xpath))).click()
+            time.sleep(0.5)
+            driver.quit()
+            logger.info("CPGRAMS Chat Interface Logged out and closed successfully.")
+        return True
+    except Exception as e:
+        logger.error(f"Error closing WebApp interface: {e}")
+        return False
 
 # -------------------------------
 # Web Automation Helpers
@@ -92,7 +195,7 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int = 3):
 
             # Get current messages before sending
             previous_messages = driver.find_elements(
-                By.XPATH, "//div[@class='leading-relaxed text-sm']/p"
+                By.XPATH, "//div[@class='select-text']/p"
             )
             previous_count = len(previous_messages)
 
@@ -111,7 +214,7 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int = 3):
             WebDriverWait(driver, 50).until(
                 lambda d: len(d.find_elements(
                     By.XPATH,
-                    "//div[@class='leading-relaxed text-sm']/p"
+                    "//div[@class='select-text']/p"
                 )) > previous_count
             )
 
@@ -119,7 +222,7 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int = 3):
 
             # Fetch latest message
             bot_messages = driver.find_elements(
-                By.XPATH, "//div[@class='leading-relaxed text-sm']/p"
+                By.XPATH, "//div[@class='select-text']/p"
             )
             new_response = bot_messages[-1].text.strip() if bot_messages else "[No response received]"
 
@@ -134,76 +237,66 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int = 3):
             else:
                 return "[Error during chat after retries]"
 
-
-def open_chat_interface(driver: webdriver.Chrome) -> bool:
-    """
-    Opens and verifies CPGRAMS chat interface.
-    """
-    try:
-        if not check_and_recover_connection():
-            return False
-        logger.info("CPGRAMS web chat interface opened successfully")
-        return True
-    except Exception as e:
-        logger.error(f"Error initializing chat interface: {e}")
-        return False
-
-
 # -------------------------------
 # Main Function
 # -------------------------------
 def send_prompt_cpgrams(chat_id: int, prompt_list: List[str], mode: str = "single_window") -> list[dict]:
-    """
-    Send a list of prompts to the CPGRAMS chat interface.
-    No session profiles are used.
-    """
+    global cached_driver
     results = []
 
-    def launch_driver():
-        opts = Options()
-        opts.add_argument("--no-sandbox")
-        opts.add_argument("--start-maximized")
-        opts.add_experimental_option("excludeSwitches", ["enable-logging"])
-        service = Service(ChromeDriverManager().install())
-        return webdriver.Chrome(service=service, options=opts)
-
     if mode == "single_window":
-        driver = launch_driver()
-        try:
+        profile_folder_path = os.path.expanduser('~') + "/whatsapp_profile"
+        logger.info(f"Using profile folder: {profile_folder_path}")
+
+        if is_profile_in_use(profile_folder_path) and cached_driver is not None:
+            driver = cached_driver
+            logger.info("Reusing existing Chrome session.")
+        else:
+            if cached_driver is None:
+                logger.error("Chrome with this session is already running, but driver outdated.  Restarting Chrome with the same profile.")
+                close_chrome_with_profile(profile_folder_path)
+            else:
+                logger.info("No Automated Chrome instance. Safe to launch a new one.")
+
+            opts = Options()
+            opts.add_argument("--no-sandbox")
+            #opts.add_argument("--headless")  # Uncomment for headless operation
+            opts.add_argument(f"user-data-dir={profile_folder_path}")
+            opts.add_experimental_option("excludeSwitches", ["enable-logging"])
+
+            service = Service(ChromeDriverManager().install())
+            driver = webdriver.Chrome(service=service, options=opts)
             driver.get(load_config().get("application_url"))
-            time.sleep(3)
-
-            chat_found = open_chat_interface(driver)
-            for prompt in prompt_list:
+            cached_driver = driver  # Cache the driver for reuse
+            
+        try:
+            chat_found = False
+            while chat_found is False:
+                logger.debug("Waiting for chat to be found...")
+                time.sleep(0.5)
+                chat_found = login_webapp_cpgrams(driver=driver)
+            
+            for i, prompt in enumerate(prompt_list):
                 result = {"chat_id": chat_id, "prompt": prompt, "response": "Not available"}
-                if chat_found:
-                    result["response"] = send_message(driver, prompt)
-                else:
-                    result["response"] = "Chat not found"
+                try:
+                    if chat_found:
+                        response_str = send_message(driver=driver, prompt=prompt)
+                        result["response"] = str(response_str)
+                    else:
+                        result["response"] = "Chat not found"
+                except Exception as e:
+                    logger.error(f"Prompt failed for chat '{chat_id}': {e}")
+                    result['response'] = f"Error: {e}"
+                
                 results.append(result)
+            
         finally:
-            driver.quit()
-
-    elif mode == "multi_window":
-        for prompt in prompt_list:
-            driver = launch_driver()
-            try:
-                driver.get(load_config().get("application_url"))
-                time.sleep(3)
-
-                result = {"chat_id": chat_id, "prompt": prompt, "response": "Not available"}
-                if open_chat_interface(driver):
-                    result["response"] = send_message(driver, prompt)
-                else:
-                    result["response"] = "Chat not found"
-                results.append(result)
-            finally:
-                driver.quit()
+            close(driver)
+            cached_driver = None  # Clear cached driver on close
     else:
-        raise ValueError("Invalid mode: choose 'single_window' or 'multi_window'.")
-
+        raise ValueError("Invalid mode: choose 'single_window'.")
     return results
-
+    
 
 def close(driver: webdriver.Chrome):
     """
