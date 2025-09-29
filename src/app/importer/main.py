@@ -151,3 +151,11 @@ tgt = Target(target_name="CPGRAMS",
              target_domain="government services",
              target_languages=["english","assamese","bengali","bodo","dogri","goan konkani","gujarati","hindi","kannada","kashmiri","maithili","malayalam","manipuri","marathi","nepali","odia","punjabi","sanskrit","santali","sindhi","tamil","telugu","urudu"])
 target_id = db.add_or_get_target(target = tgt)
+
+tgt = Target(target_name="OPENWEB-UI", 
+             target_type="WebApp", 
+             target_url="http://localhost:3000", 
+             target_description="OpenWeb UI is an open-source, browser-based interface designed for interacting with large language models (LLMs) and AI agents.",
+             target_domain="LLM Interface",
+             target_languages=["english"])
+target_id = db.add_or_get_target(target = tgt)

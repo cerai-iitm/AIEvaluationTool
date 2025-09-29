@@ -33,7 +33,7 @@ def load_config():
     with open(os.path.join(os.path.dirname(__file__), 'config.json'), 'r') as file:
         return json.load(file)
 
-def get_ui_response():
+def get_ui_response_whatsapp():
     return {"ui": "Whatsapp Web Chat Interface", "features": ["smart-compose", "modular-layout"]}
 
 # helper functions

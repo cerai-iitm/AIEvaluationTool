@@ -31,7 +31,6 @@ def load_config():
     with open(os.path.join(os.path.dirname(__file__), 'config.json'), 'r') as file:
         return json.load(file)
 
-
 def get_ui_response():
     return {"ui": "Web Application Chat Interface", "features": ["smart-compose", "modular-layout"]}
 

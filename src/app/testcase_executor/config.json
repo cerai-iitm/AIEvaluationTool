@@ -1,15 +1,15 @@
 {
     "database": {
         "host": "localhost",
-        "port": 5432,
+        "port": 3306,
         "user": "root",
-        "password": "ATmega32*",
-        "database": "test"
+        "password": "jarvis2025",
+        "database": "aieval"
     },
     "target": {
-        "application_type": "WHATSAPP_WEB",
-        "application_name": "Vaidya AI",
-        "application_url": "http://localhost:8000",
-        "agent_name": "Vaidya AI"
+        "application_type": "WEBAPP",
+        "application_name": "OPENWEB-UI",
+        "application_url": "http://localhost:3000",
+        "agent_name": "gemma3:1b"
     }
 }
