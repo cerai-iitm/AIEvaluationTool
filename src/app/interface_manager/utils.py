@@ -4,13 +4,12 @@ import time
 import json
 import socket
 import psutil
-from typing import List
+import requests
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import (
     StaleElementReferenceException,
@@ -169,3 +168,46 @@ def close_chrome_with_profile(profile_path):
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             continue
     return closed_any
+
+
+def is_server_running(url: str, timeout: int) -> bool:
+    '''
+    Checking whether the server is running or not
+    '''
+    config = load_config()
+
+    url = config.get("server_url")
+    timeout = config.get("server_timeout")
+    try:
+        response = requests.get(url)
+        return response.status_code == 200
+    except requests.RequestException as e:
+        logger.error(f"Server unreachable at {url}: {e}")
+        return False
+
+def wait_for_server(url: str, retries: int, delay: int, max_delay=None, on_retry_callback=None) -> bool:
+    '''
+    Retry the automation function if server is down or a runtime exception occurs.
+    '''
+    config = load_config()
+
+    url = config.get("server_url")
+    retries = retries if retries is not None else config.get("retries")
+    delay = delay if delay is not None else config.get("retry_delay")
+    max_delay = max_delay if max_delay is not None else config.get("max_retry_delay")
+
+    current_delay = delay
+    for attempt in range(1, retries + 1):
+        if is_server_running(url=url, timeout=config.get("default_timeout")):
+            logger.info(f"Server at {url} is up.")
+            return True
+        logger.warning(f"Attempt {attempt}/{retries}: Server not responding. Retrying in {current_delay}s...")
+
+        if on_retry_callback:
+            on_retry_callback(attempt, retries, current_delay)
+
+        time.sleep(current_delay)
+        current_delay = min(current_delay * 2, max_delay)
+
+    logger.error(f"Server at {url} is not reachable after {retries} attempts.")
+    return False

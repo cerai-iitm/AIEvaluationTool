@@ -55,6 +55,9 @@ def login_webapp(driver, app_name: str) -> bool:
             raise ValueError(f"Unsupported application: {app_name}")
 
 def logout_webapp(driver, app_name: str) -> bool:
+    """
+    Logout from the web application via UI interactions 
+    """
     match app_name.lower():
         case "cpgrams":
             try:
@@ -65,7 +68,6 @@ def logout_webapp(driver, app_name: str) -> bool:
 
                 safe_click(driver, logout_cfg["profile_element"])
                 safe_click(driver, logout_cfg["logout_button_element"])
-                driver.quit()
                 return True
             except Exception as e:
                 logger.error(f"CPGRAMS logout failed: {e}")
@@ -80,7 +82,6 @@ def logout_webapp(driver, app_name: str) -> bool:
                 
                 safe_click(driver, logout_cfg["profile_element"])
                 safe_click(driver, logout_cfg["logout_button_element"])
-                driver.quit()
                 return True
             except Exception as e:
                 logger.error(f"OpenWeb-UI logout failed: {e}")
@@ -123,62 +124,117 @@ def search_llm(driver: webdriver.Chrome) -> bool:
 
 
 def send_message(driver, app_name: str, prompt: str, max_retries: int = 3) -> str:
+    """
+    Send prompt to the Web Application Interface with robust checks
+    """
     match app_name.lower():
         case "cpgrams":
             cfg = load_xpaths()["applications"]["cpgrams"]["ChatPage"]
+            if not cfg["prompt_input_box_element"]:
+                logger.error("Prompt input box XPath missing for cpgrams.")
+                return "[Error: Invalid XPath]"
+
             for attempt in range(max_retries):
                 try:
+                    # logger.info(f"Sending prompt (attempt {attempt+1}/{max_retries})")
                     if not check_and_recover_connection():
                         return "[Failed: Internet unavailable]"
+                    
+                    logger.info(f"Prompt sending to {app_name}: {prompt}")
+                    previous_messages = driver.find_elements(
+                        By.XPATH, cfg["agent_response_element"]
+                    )
+                    previous_count = len(previous_messages)
 
+                    # Send prompt
                     chat_input = WebDriverWait(driver, 10).until(
-                        EC.presence_of_element_located((By.XPATH, cfg["prompt_input_box_element"]))
+                        EC.presence_of_element_located((
+                            By.XPATH,
+                            cfg["prompt_input_box_element"]
+                        ))
                     )
-                    chat_input.clear()
-                    chat_input.send_keys(prompt)
-                    chat_input.send_keys(Keys.ENTER)
 
+                    chat_input.clear()
+                    chat_input.click()
+                    chat_input.send_keys(prompt)
+                    chat_input.send_keys(Keys.RETURN)
+
+                    # Wait until a new message appears
                     WebDriverWait(driver, 50).until(
-                        lambda d: len(d.find_elements(By.XPATH, cfg["agent_response_element"])) > 0
+                        lambda d: len(d.find_elements(
+                            By.XPATH,
+                            cfg["agent_response_element"]
+                        )) > previous_count
                     )
-                    time.sleep(3)
-                    messages = driver.find_elements(By.XPATH, cfg["agent_response_element"])
-                    return messages[-1].text.strip() if messages else "[No response]"
+
+                    time.sleep(5)  # let DOM stabilize
+
+                    # Fetch latest message
+                    bot_messages = driver.find_elements(
+                        By.XPATH, cfg["agent_response_element"]
+                    )
+                    response = bot_messages[-1].text.strip() if bot_messages else "[No response received]"
+                    logger.info(f"Received response: {response}")
+                    return response
+
                 except Exception as e:
                     logger.warning(f"Retry {attempt+1}/{max_retries} failed: {e}")
+
             return "[Error: Max retries exceeded]"
 
         case "openweb-ui":
             cfg = load_xpaths()["applications"]["openweb-ui"]["ChatPage"]
+            input_xpath = cfg.get("prompt_input_box_element")
+            if not input_xpath:
+                logger.error("Prompt input box XPath missing for openweb-ui.")
+                return "[Error: Invalid XPath]"
+
+            config = load_config()
+            if not is_server_running(url=config.get("ollama_server_url"), timeout=config.get("server_timeout")):
+                return "[Failed: Server unavailable]"
+
             for attempt in range(max_retries):
                 try:
-                    if not check_and_recover_connection():
-                        return "[Failed: Internet Connection]"
+                    # logger.info(f"Sending prompt (attempt {attempt+1}/{max_retries})")
+                    logger.info(f"Prompt sending to {app_name}: {prompt}")
 
-                    chat_input = WebDriverWait(driver, 10).until(
-                        EC.presence_of_element_located((By.XPATH, cfg['prompt_input_box_element']))
+                    # Wait for element to be clickable
+                    message_box = WebDriverWait(driver, 30).until(
+                        EC.element_to_be_clickable((By.XPATH, input_xpath))
                     )
-                    chat_input.clear()
-                    chat_input.send_keys(prompt)
+
+                    if message_box is None:
+                        raise ValueError("Message input element resolved to None")
+
+                    message_box.clear()
+                    message_box.click()
+                    message_box.send_keys(prompt)
                     time.sleep(2)
-                    chat_input.send_keys(Keys.ENTER)
+                    message_box.send_keys(Keys.RETURN)
 
-                    time.sleep(20)
+                    # Wait for agent response
+                    wait = WebDriverWait(driver, 50)
+                    wait.until(EC.presence_of_element_located((By.XPATH, cfg["agent_response_element"])))
 
-                    WebDriverWait(driver, 50).until(
-                        lambda d: len(d.find_elements(By.XPATH, cfg["agent_response_element"])) > 0
-                    )
-                    time.sleep(3)
-                    messages = driver.find_elements(By.XPATH, cfg["agent_response_element"])
-                    return messages[-1].text.strip() if messages else "[No response]"
+                    elements = driver.find_elements(By.XPATH, cfg["agent_response_element"])
+                    if elements:
+                        response = elements[-1].text.strip()
+                        logger.info(f"Received response: {response}")
+                        return response
+
                 except Exception as e:
                     logger.warning(f"Retry {attempt+1}/{max_retries} failed: {e}")
+
             return "[Error: Max retries exceeded]"
 
         case _:
             raise ValueError(f"Unsupported application: {app_name}")
 
+
 def send_prompt(app_name: str, chat_id: int, prompt_list: List[str], mode: str = "single_window") -> list[dict]:
+    """
+    Send prompt and receive response from web application interfaces
+    """
     results = []
     driver = get_driver(app_name)
     logout_cfg = load_xpaths()["applications"]["openweb-ui"]["LogoutPage"]
@@ -196,19 +252,27 @@ def send_prompt(app_name: str, chat_id: int, prompt_list: List[str], mode: str =
     return results
 
 def close_webapp(app_name: str):
+    """
+    Gracefully logs out of the application (if possible) and then shuts down the browser session completely.
+    If the Selenium driver fails, Chrome processes tied to the profile folder are force-killed.
+    """
     global cached_driver
-    if cached_driver is not None:
-        try:
+    profile_folder_path = os.path.expanduser('~') + "/test_profile"
+
+    try:
+        if is_profile_in_use(profile_path=profile_folder_path):
             cached_driver.quit()
-            cached_driver.close()
-            logger.info(f"Closed session for {app_name}")
-        except Exception as e:
-            logger.warning(f"Error while closing driver for {app_name}: {e}")
-        finally:
-            # Kill leftover chrome processes tied to this profile
-            profile_path = os.path.expanduser("~") + "/test_profile"
-            close_chrome_with_profile(profile_path)
-            cached_driver = None
-    else:
-        logger.info(f"No active driver to close for {app_name}")
-  
+            logger.info(f"Browser session closed for {app_name}")
+    except Exception as e:
+        logger.warning(f"Driver quit encountered an issue: {e}")
+
+    finally:
+        cached_driver = None
+
+    # Kill any strays still using this profile
+    if close_chrome_with_profile(profile_folder_path):
+        logger.info("Closed stray Chrome processes using profile.")
+
+    return True
+
+

@@ -80,11 +80,11 @@
                 //"-v1",
                 //"-N"
                 "--testplan-id",
-                "1",
+                "5",
                 "--execute",
                 "--run-name",
                 "run-sweet-name-ultrices",
-                "-n20",
+                "-n3",
                 "--run-continue",
                 //"--testcase-id", "149"
             ]

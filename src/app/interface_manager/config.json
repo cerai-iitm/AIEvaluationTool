@@ -10,9 +10,9 @@
     "action": "send_all_prompts",
     "test_plan_file": "/store/github/AIEvaluationTool/data/DataPoints.json",
     "run_mode": "single_window",
-    "agent_name": "gemma3:1b",
+    "agent_name": "CPGRAMS",
     "test_plan_id": "T2",
     "test_case_count": 4,
-    "application_name": "OPENWEB-UI",
-    "application_url": "http://localhost:3000"
+    "application_name": "CPGRAMS",
+    "application_url": "https://cpgramsaichatbot.com/"
 }

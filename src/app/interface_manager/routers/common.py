@@ -7,6 +7,7 @@ import json
 from typing import List
 import os
 from pydantic import BaseModel
+from utils import *
 
 router = APIRouter()
 logger = get_logger("main")
@@ -15,12 +16,6 @@ logger = get_logger("main")
 class PromptCreate(BaseModel):
     chat_id: int
     prompt_list: List[str]
-
-
-def load_config():
-    with open(os.path.join(os.path.dirname(__file__), "../config.json"), "r") as file:
-        return json.load(file)
-
 
 # -------------------------------
 # Login
