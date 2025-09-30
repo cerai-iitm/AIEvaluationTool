@@ -23,66 +23,13 @@ from selenium.common.exceptions import (
 from logger import get_logger
 
 from typing import List
+from utils import *
 
 logger = get_logger("whatsapp_driver")
 
-global cached_driver
-cached_driver = None
-
-def load_config():
-    with open(os.path.join(os.path.dirname(__file__), 'config.json'), 'r') as file:
-        return json.load(file)
 
 def get_ui_response_whatsapp():
     return {"ui": "Whatsapp Web Chat Interface", "features": ["smart-compose", "modular-layout"]}
-
-# helper functions
-def check_and_recover_connection() -> bool:
-    """
-    Check internet and attempt reconnection if disconnected.
-    Logs the device's connectivity status.
-    """
-    config = load_config()
-    if not is_connected(host=config.get("default_host"), port=config.get("default_port"), timeout=config.get("default_timeout")):
-        logger.warning("Internet connection lost.")
-        return retry_on_internet()
-    else:
-        logger.info("Device is connected to the internet.")
-        return True
-
-def is_connected(host: str, port: int, timeout: int) -> bool:
-    '''
-    Checking whether the device is connected to internet or not 
-    '''
-    config = load_config()
-    host = config.get("default_host")
-    port = config.get("default_port")
-    timeout = config.get("default_timeout")
-    try:
-        socket.setdefaulttimeout(timeout)
-        socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((host, port))
-        return True
-    except socket.error as ex:
-        logger.error(f"Network down: {ex}")
-        return False
-
-def retry_on_internet(max_attempts=5, initial_delay=3, max_delay=60) -> bool:
-    """
-    Retry internet reconnection using exponential backoff.
-    Logs when the device is disconnected and when reconnection is successful.
-    """
-    config = load_config()
-    delay = initial_delay
-    logger.info("Checking internet connectivity...")
-    for attempt in range(1, max_attempts + 1):
-        if is_connected(host=config.get("default_host"), port=config.get("default_port"), timeout=config.get("default_timeout")):
-            logger.info("Device is connected to the internet.")
-            return True
-        logger.warning(f"Device not connected. Attempt {attempt}/{max_attempts}. Retrying in {delay}s...")
-        time.sleep(delay)
-        delay = min(delay * 2, max_delay)
-    logger.error("Device remains disconnected after all retry attempts.")
-    return False
 
 def login_whatsapp():
     """
@@ -112,31 +59,6 @@ def login_whatsapp():
         return status
     except Exception as e:
             logger.error(f"Error initializing WhatsApp Web interface: {e}")
-
-# retry safe click logout helper
-def safe_click(driver, selector: str, retries: int = 3, wait_time: int = 10) -> bool:
-    """Safely clicks an element located by either XPath or CSS selector."""
-    if selector.strip().startswith('/') or selector.strip().startswith('('):
-        by_type = By.XPATH
-    else:
-        by_type = By.CSS_SELECTOR
-
-    for attempt in range(retries):
-        try:
-            logger.debug(f"Attempt {attempt + 1}: Locating element ({by_type}) {selector}")
-            element = WebDriverWait(driver, wait_time).until(
-                EC.element_to_be_clickable((by_type, selector))
-            )
-            element.click()
-            logger.debug(f"Clicked element ({by_type}) {selector}")
-            return True
-        except (StaleElementReferenceException, TimeoutException) as e:
-            logger.warning(f"Retrying due to {type(e).__name__} for selector {selector}")
-            time.sleep(1)
-        except WebDriverException as e:
-            logger.error(f"WebDriver error during click: {e}")
-            break
-    return False
 
 # logout helper
 def initiate_logout(driver: webdriver.Chrome) -> bool:
@@ -247,37 +169,6 @@ def extract_text(msg_element):
         return " ".join(el.text for el in elements if el.text.strip() != "")
     except:
         return ""
-
-def is_profile_in_use(profile_path):
-    """Check if any Chrome process is using the given user-data-dir."""
-    for proc in psutil.process_iter(['name', 'cmdline']):
-        try:
-            if 'chrome' in proc.info['name'].lower():
-                if proc.info['cmdline'] is None:
-                    continue
-                # Check if the profile path is in the command line arguments
-                cmdline = ' '.join(proc.info['cmdline'])
-                if f"user-data-dir={profile_path}" in cmdline:
-                    return True
-        except (psutil.NoSuchProcess, psutil.AccessDenied):
-            continue
-    return False
-
-def close_chrome_with_profile(profile_path):
-    """Kill any Chrome process using the specified user-data-dir."""
-    closed_any = False
-    for proc in psutil.process_iter(['name', 'cmdline']):
-        try:
-            if 'chrome' in proc.info['name'].lower():
-                if proc.info['cmdline'] is None:
-                    continue
-                cmdline = ' '.join(proc.info['cmdline'])
-                if f"user-data-dir={profile_path}" in cmdline:
-                    proc.kill()
-                    closed_any = True
-        except (psutil.NoSuchProcess, psutil.AccessDenied):
-            continue
-    return closed_any
 
 def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int = 3):
     """

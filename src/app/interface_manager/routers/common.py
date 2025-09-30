@@ -1,13 +1,24 @@
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
 from logger import get_logger
-from whatsapp import login_whatsapp, logout_whatsapp, send_prompt_whatsapp, close_whatsapp, get_ui_response_whatsapp
-from webapp_new import send_prompt, login_webapp, logout_webapp, close_webapp, get_ui_response_webapp
-import json
+from whatsapp_new_1 import (
+    login_whatsapp,
+    logout_whatsapp,
+    send_prompt_whatsapp,
+    close_whatsapp,
+    get_ui_response_whatsapp,
+)
+from webapp_new_1 import (
+    login_webapp,
+    logout_webapp,
+    send_prompt,
+    close_webapp,
+    get_ui_response_webapp,
+)
+from utils import load_config
 from typing import List
-import os
 from pydantic import BaseModel
-from utils import *
+import json
 
 router = APIRouter()
 logger = get_logger("main")
@@ -17,28 +28,33 @@ class PromptCreate(BaseModel):
     chat_id: int
     prompt_list: List[str]
 
+
+# -------------------------------
+# Helpers
+# -------------------------------
+def get_app_info():
+    config = load_config()
+    return config.get("application_type"), config.get("application_name")
+
+
 # -------------------------------
 # Login
 # -------------------------------
 @router.get("/login")
 def login():
-    config = load_config()
-    application_type = config.get("application_type")
-    application_name = config.get("application_name")
+    app_type, app_name = get_app_info()
 
-    match application_type:
-        case "WHATSAPP_WEB":
-            logger.info("Received login request for Whatsapp Web Application.")
-            result = login_whatsapp()
-            return JSONResponse(content=result)
+    if app_type == "WHATSAPP_WEB":
+        logger.info("Login request: WhatsApp Web")
+        result = login_whatsapp()
+        return JSONResponse(content={"result": bool(result)})
 
-        case "WEBAPP":
-            logger.info(f"Received login request for Web App: {application_name}")
-            result = login_webapp(driver=None ,app_name=application_name)
-            return JSONResponse(content={"result": result})
+    if app_type == "WEBAPP":
+        logger.info(f"Login request: WebApp {app_name}")
+        result = login_webapp(app_name)
+        return JSONResponse(content={"result": bool(result)})
 
-        case _:
-            return JSONResponse(content={"error": "Application not found"})
+    return JSONResponse(content={"error": "Unsupported application type"})
 
 
 # -------------------------------
@@ -46,23 +62,19 @@ def login():
 # -------------------------------
 @router.get("/logout")
 def logout():
-    config = load_config()
-    application_type = config.get("application_type")
-    application_name = config.get("application_name")
+    app_type, app_name = get_app_info()
 
-    match application_type:
-        case "WHATSAPP_WEB":
-            logger.info("Received logout request for Whatsapp Web Application.")
-            result = logout_whatsapp()
-            return JSONResponse(content=result)
+    if app_type == "WHATSAPP_WEB":
+        logger.info("Logout request: WhatsApp Web")
+        result = logout_whatsapp()
+        return JSONResponse(content={"result": bool(result)})
 
-        case "WEBAPP":
-            logger.info(f"Received logout request for Web App: {application_name}")
-            result = logout_webapp(driver=None, app_name=application_name)
-            return JSONResponse(content={"result": result})
+    if app_type == "WEBAPP":
+        logger.info(f"Logout request: WebApp {app_name}")
+        result = logout_webapp(app_name)
+        return JSONResponse(content={"result": bool(result)})
 
-        case _:
-            return JSONResponse(content={"error": "Application not found"})
+    return JSONResponse(content={"error": "Unsupported application type"})
 
 
 # -------------------------------
@@ -70,23 +82,19 @@ def logout():
 # -------------------------------
 @router.post("/chat")
 async def chat(prompt: PromptCreate):
-    config = load_config()
-    application_type = config.get("application_type")
-    application_name = config.get("application_name")
+    app_type, app_name = get_app_info()
 
-    match application_type:
-        case "WHATSAPP_WEB":
-            logger.info(f"Received prompt for {application_type}")
-            result = send_prompt_whatsapp(chat_id=prompt.chat_id, prompt_list=prompt.prompt_list)
-            return JSONResponse(content={"response": result})
+    if app_type == "WHATSAPP_WEB":
+        logger.info("Chat request: WhatsApp Web")
+        result = send_prompt_whatsapp(chat_id=prompt.chat_id, prompt_list=prompt.prompt_list)
+        return JSONResponse(content={"response": result})
 
-        case "WEBAPP":
-            logger.info(f"Received prompt request for Web App: {application_name}")
-            result = send_prompt(app_name=application_name, chat_id=prompt.chat_id, prompt_list=prompt.prompt_list)
-            return JSONResponse(content={"response": result})
+    if app_type == "WEBAPP":
+        logger.info(f"Chat request: WebApp {app_name}")
+        result = send_prompt(app_name=app_name, chat_id=prompt.chat_id, prompt_list=prompt.prompt_list)
+        return JSONResponse(content={"response": result})
 
-        case _:
-            return JSONResponse(content={"error": "Application not found"})
+    return JSONResponse(content={"error": "Unsupported application type"})
 
 
 # -------------------------------
@@ -94,40 +102,38 @@ async def chat(prompt: PromptCreate):
 # -------------------------------
 @router.get("/close")
 def close():
-    config = load_config()
-    application_type = config.get("application_type")
-    application_name = config.get("application_name")
+    app_type, app_name = get_app_info()
 
-    match application_type:
-        case "WHATSAPP_WEB":
-            logger.info("Received close request for Whatsapp Web Application.")
-            close_whatsapp()
-            return JSONResponse(content={"message": "Whatsapp Web closed successfully"})
+    if app_type == "WHATSAPP_WEB":
+        logger.info("Close request: WhatsApp Web")
+        close_whatsapp()
+        return JSONResponse(content={"message": "WhatsApp Web closed successfully"})
 
-        case "WEBAPP":
-            logger.info(f"Received close request for Web App: {application_name}")
-            close_webapp(app_name=application_name)
-            return JSONResponse(content={"message": f"Closed Web App {application_name}"})
+    if app_type == "WEBAPP":
+        logger.info(f"Close request: WebApp {app_name}")
+        close_webapp(app_name)
+        return JSONResponse(content={"message": f"Closed WebApp {app_name}"})
 
-        case _:
-            return JSONResponse(content={"error": "Application not found"})
+    return JSONResponse(content={"error": "Unsupported application type"})
 
-
-@router.post("/info")
-def chat_interface():
-    config = load_config()
-    application_type = config.get("application_type")
-
-    match application_type:
-        case "WHATSAPP_WEB":
-            return get_ui_response_whatsapp()
-        case "WEBAPP":
-            return get_ui_response_webapp()
-        case _:
-            return {"error": "Unknown application type"}
 
 # -------------------------------
-# Config API
+# Info
+# -------------------------------
+@router.post("/info")
+def chat_interface():
+    app_type, _ = get_app_info()
+
+    if app_type == "WHATSAPP_WEB":
+        return get_ui_response_whatsapp()
+    if app_type == "WEBAPP":
+        return get_ui_response_webapp()
+
+    return {"error": "Unsupported application type"}
+
+
+# -------------------------------
+# Config
 # -------------------------------
 @router.get("/config")
 def get_config():

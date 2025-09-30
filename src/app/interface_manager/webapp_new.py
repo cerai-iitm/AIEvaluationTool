@@ -10,6 +10,8 @@ from utils import *
 
 logger = get_logger("webapp_driver")
 
+driver_manager = DriverManager()
+
 def get_ui_response_webapp():
     return {"ui": "Web Application Chat Interface", "features": ["smart-compose", "modular-layout"]}
 
@@ -236,7 +238,9 @@ def send_prompt(app_name: str, chat_id: int, prompt_list: List[str], mode: str =
     Send prompt and receive response from web application interfaces
     """
     results = []
-    driver = get_driver(app_name)
+    driver_manager = DriverManager()
+    driver = driver_manager.get_driver("MyApp", app_name=app_name)
+
     logout_cfg = load_xpaths()["applications"]["openweb-ui"]["LogoutPage"]
 
     if not is_logged_in(driver, profile_element=logout_cfg["profile_element"]):
@@ -254,25 +258,14 @@ def send_prompt(app_name: str, chat_id: int, prompt_list: List[str], mode: str =
 def close_webapp(app_name: str):
     """
     Gracefully logs out of the application (if possible) and then shuts down the browser session completely.
-    If the Selenium driver fails, Chrome processes tied to the profile folder are force-killed.
     """
-    global cached_driver
-    profile_folder_path = os.path.expanduser('~') + "/test_profile"
-
     try:
-        if is_profile_in_use(profile_path=profile_folder_path):
-            cached_driver.quit()
-            logger.info(f"Browser session closed for {app_name}")
+        logger.info(f"Attempting graceful shutdown for {app_name}...")
+        driver_manager.quit()
+        logger.info(f"Browser session closed for {app_name}")
     except Exception as e:
         logger.warning(f"Driver quit encountered an issue: {e}")
-
-    finally:
-        cached_driver = None
-
-    # Kill any strays still using this profile
-    if close_chrome_with_profile(profile_folder_path):
-        logger.info("Closed stray Chrome processes using profile.")
-
     return True
+
 
 
