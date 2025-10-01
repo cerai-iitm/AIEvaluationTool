@@ -471,13 +471,15 @@ def send_message_webapp(driver: webdriver.Chrome, app_name: str, prompt: str, ma
             message_box.clear()
             message_box.click()
             message_box.send_keys(prompt)
+            time.sleep(2)
             message_box.send_keys(Keys.RETURN)
 
             # Wait for a response
-            WebDriverWait(driver, 30).until(
+            WebDriverWait(driver, 50).until(
                 EC.presence_of_element_located((By.XPATH, response_xpath))
             )
-
+            
+            time.sleep(10)
             responses = driver.find_elements(By.XPATH, response_xpath)
             if responses:
                 response_text = responses[-1].text.strip()

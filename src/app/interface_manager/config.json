@@ -1,6 +1,6 @@
 {
     "base_url": "http://localhost:8000",
-    "application_type": "WHATSAPP_WEB",
+    "application_type": "WEBAPP",
     "debug": "True",
     "ollama_server_url": "http://localhost:11434",
     "server_url": "http://localhost:3000",
@@ -10,9 +10,9 @@
     "action": "send_all_prompts",
     "test_plan_file": "/store/github/AIEvaluationTool/data/DataPoints.json",
     "run_mode": "single_window",
-    "agent_name": "Vaidya AI",
+    "agent_name": "CPGRAMS",
     "test_plan_id": "T2",
     "test_case_count": 4,
-    "application_name": "Vaidya AI",
-    "application_url": "https://web.whatsapp.com/"
+    "application_name": "CPGRAMS",
+    "application_url": "https://cpgramsaichatbot.com/"
 }
