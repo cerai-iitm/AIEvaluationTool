@@ -24,7 +24,7 @@
         "logout_button_element": "//button[.//span[normalize-space(text())='Logout']]"
       },
       "ChatPage": {
-        "prompt_input_box_element": "//textarea[@placeholder='Type your query here or press mic button for audio communication']",
+        "prompt_input_box_element": "//textarea[@id='react-transliterate-input'][@type='textarea']",
         "agent_response_element": "//div[@class='select-text']/p"
       }
     },
