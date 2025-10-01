@@ -1,14 +1,14 @@
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
 from logger import get_logger
-from whatsapp_new_1 import (
+from whatsapp import (
     login_whatsapp,
     logout_whatsapp,
     send_prompt_whatsapp,
     close_whatsapp,
     get_ui_response_whatsapp,
 )
-from webapp_new_1 import (
+from webapp import (
     login_webapp,
     logout_webapp,
     send_prompt,

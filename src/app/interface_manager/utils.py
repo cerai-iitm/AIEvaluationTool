@@ -341,11 +341,12 @@ def send_message_whatsapp(driver: webdriver.Chrome, prompt: str):
     """
     Sends a prompt to WhatsApp Web and retrieves responses after the last sent message.
     """
+    attempt = 0
+    max_retries: int = 3
     app_name = load_config().get("application_type")
     app_cfg = load_xpaths()["applications"][app_name.lower()]
     chat_cfg = app_cfg["ChatPage"]
-    attempt = 0
-    max_retries = 3
+
     while attempt < max_retries:
         try:
             if not check_and_recover_connection():
@@ -384,14 +385,15 @@ def send_message_whatsapp(driver: webdriver.Chrome, prompt: str):
                 wait_time += 2
 
                 wait = WebDriverWait(driver, 30)
+                message_in = chat_cfg["message_in_element"]
+                message_out = chat_cfg["message_out_element"]
                 all_messages = wait.until(
                     EC.presence_of_all_elements_located(
-                        (By.CSS_SELECTOR, f"{chat_cfg["message_in_element"], chat_cfg["message_out_element"]}")
+                        (By.CSS_SELECTOR, f"{message_in}, {message_out}")
                     )
                 )
-
-                message_out_box_xpath = chat_cfg["message_out_element"]
-                outgoing_msgs = driver.find_elements(By.CSS_SELECTOR, message_out_box_xpath)
+                
+                outgoing_msgs = driver.find_elements(By.CSS_SELECTOR, message_out)
                 if not outgoing_msgs:
                     raise Exception("No outgoing messages found.")
 
@@ -415,14 +417,14 @@ def send_message_whatsapp(driver: webdriver.Chrome, prompt: str):
 
                 old_response_texts = response_texts.copy()
                 response_texts = []
+                selectable_text = chat_cfg["agent_response_element"]
                 for msg in responses:
                     try:
-                        response_text_element = chat_cfg["agent_response_element"]
-                        text_elem = msg.find_element(By.CSS_SELECTOR, response_text_element)
+                        text_elem = msg.find_element(By.CSS_SELECTOR, selectable_text)
                         text = text_elem.text.strip()
                         if text:
                             response_texts.append(text)
-                            logger.info(f"(Waited:{wait_time}) Received response from {app_name}: %s", text)
+                            logger.info(f"(Waited:{wait_time}) Received response from WhatsApp: %s", text)
                     except Exception as e:
                         logger.debug("Could not read response message: %s", e)
                         continue
