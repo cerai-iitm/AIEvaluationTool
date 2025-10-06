@@ -3,6 +3,10 @@ A comprehensive evaluation tool for verifying conversational AI applications.
 
 This project offers a robust, end-to-end framework for evaluating the performance and reliability of conversational AI systems across a variety of real-world scenarios and quality metrics. The AIEvaluationTool is designed to automate the process of testing, analyzing, and benchmarking conversational agents, ensuring they meet high standards of accuracy, safety, and user experience.
 
+## Architecture
+
+![The overall architecture](screenshots/Arch.png)
+
 ## Directory Structure
 
 ```
