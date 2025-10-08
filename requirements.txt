@@ -7,7 +7,7 @@ webdriver_manager==4.0.2
 psutil==7.0.0
 argparse
 typing 
-logging
+
 pathlib 
 langdetect
 requests

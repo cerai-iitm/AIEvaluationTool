@@ -1,6 +1,7 @@
 __pycache__
 env/**
 .env
+venv/
 logs/
 whatsapp_profile/
 
