@@ -4,6 +4,7 @@ env/**
 venv/
 logs/
 whatsapp_profile/
+Front-end_AIEvaluationTool/node_modules
 
 *.log
 *.tsv
