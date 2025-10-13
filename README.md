@@ -94,7 +94,72 @@ pip install -r requirements.txt
 
 ---
 
-### 4. **Model Setup for LLM-based Evaluation**
+### 4. **Setting up the XPath and Credentials of the Accounts**
+
+This section explains how to configure XPath locators for web elements and securely store account credentials required for automated testing or web scraping. Proper setup ensures that your scripts interact with the correct UI elements and authenticate successfully.
+
+### 4.1 **Adding XPath Locators**
+
+XPath locators are used by automation frameworks (e.g., Selenium, Playwright) to identify and interact with web elements.
+
+- Locate the element in the web application (e.g., username field, password field, login button, prompt textbox and response element's xpath).
+    - Right-click on the element → Inspect → Copy XPath.
+    - Prefer relative XPath over absolute to avoid breakage when the DOM structure changes.
+- Update the configuration file (`xpaths.json`).
+
+
+``` json
+{
+  "applications": {
+    "app_name_here": {
+      "LoginPage": {
+        "email_input": "xpath_for_email_input",
+        "password_input": "xpath_for_password_input",
+        "login_button": "xpath_for_login_button"
+      },
+      "LogoutPage": {
+        "profile": "xpath_for_profile_icon",
+        "logout_button": "xpath_for_logout_button"
+      },
+      "ChatPage": {
+        "contact_search": "xpath_for_contact_search",
+        "prompt_input": "xpath_for_prompt_input",
+        "agent_response": "xpath_for_agent_response",
+        "message_in": "xpath_for_incoming_message",
+        "message_out": "xpath_for_outgoing_message"
+      },
+      "OtherPages": {
+        "custom_element_1": "xpath_for_custom_element",
+        "custom_element_2": "xpath_for_custom_element"
+      }
+    }
+  }
+}
+```
+
+### 4.2 Storing Account Credentials
+
+To keep credentials secure and maintainable, here is the template of the `credentials.json`
+
+```json
+{
+  "applications":
+  {
+    "cpgrams": {
+      "username": "user_cpgrams",
+      "password": "pass_cpgrams"
+    },
+    "openweb-ui": {
+      "username": "user_openweb_ui",
+      "password": "pass_openweb_ui"
+    }
+  }
+}
+```
+
+---
+
+### 5. **Model Setup for LLM-based Evaluation**
 
 To use the LLM-as-a-judge mechanism for evaluation, you must have a language model available. You can either:
 - **Run a model locally** (e.g., using Ollama, OpenAI-compatible local models, etc.), or
@@ -114,7 +179,7 @@ Ensure your model is accessible and properly configured before running the evalu
 
 ---
 
-### 5. **Prepare Data Files**
+### 6. **Prepare Data Files**
 
 Ensure the `data/` directory contains the following files (already present in the repository):
 - `DataPoints.json` (sample test dataset)
