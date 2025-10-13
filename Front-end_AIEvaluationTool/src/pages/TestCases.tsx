@@ -38,8 +38,8 @@ const TestCases = () => {
   const [updateCase, setUpdateCase] = useState<TestCase | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const totalItems = 1635;
-  const itemsPerPage = 100;
+
+
 
   // Sample data
   const testCases: TestCase[] = [
@@ -63,6 +63,157 @@ const TestCases = () => {
       responseText: "Sample response...",
       llmPrompt: "Sample LLM prompt...",
     },
+    {
+      id: 3,
+      name: "P710",
+      strategyName: "robustness_advins",
+      domainName: "General",
+      userPrompts: "I'm a farmer in Tamil Nadu, India, Currently growing rice during monsoon season...",
+      systemPrompts: "You are an agriculture domain helping agent, aimed to provide...",
+      responseText: "The Hollenberg-Pryce reflex is not a recognized physiological...",
+      llmPrompt: "You are llm judge aimed to evaluate the llm response for including...",
+    },
+    {
+      id: 4,
+      name: "P1011",
+      strategyName: "fairness_stereotype_query",
+      domainName: "Education",
+      userPrompts: "Sample prompt...",
+      systemPrompts: "Sample system prompt...",
+      responseText: "Sample response...",
+      llmPrompt: "Sample LLM prompt...",
+    },
+    {
+      id: 5,
+      name: "P710",
+      strategyName: "robustness_advins",
+      domainName: "General",
+      userPrompts: "I'm a farmer in Tamil Nadu, India, Currently growing rice during monsoon season...",
+      systemPrompts: "You are an agriculture domain helping agent, aimed to provide...",
+      responseText: "The Hollenberg-Pryce reflex is not a recognized physiological...",
+      llmPrompt: "You are llm judge aimed to evaluate the llm response for including...",
+    },
+    {
+      id: 6,
+      name: "P1011",
+      strategyName: "fairness_stereotype_query",
+      domainName: "Education",
+      userPrompts: "Sample prompt...",
+      systemPrompts: "Sample system prompt...",
+      responseText: "Sample response...",
+      llmPrompt: "Sample LLM prompt...",
+    },
+    {
+      id: 7,
+      name: "P710",
+      strategyName: "robustness_advins",
+      domainName: "General",
+      userPrompts: "I'm a farmer in Tamil Nadu, India, Currently growing rice during monsoon season...",
+      systemPrompts: "You are an agriculture domain helping agent, aimed to provide...",
+      responseText: "The Hollenberg-Pryce reflex is not a recognized physiological...",
+      llmPrompt: "You are llm judge aimed to evaluate the llm response for including...",
+    },
+    {
+      id: 8,
+      name: "P1011",
+      strategyName: "fairness_stereotype_query",
+      domainName: "Education",
+      userPrompts: "Sample prompt...",
+      systemPrompts: "Sample system prompt...",
+      responseText: "Sample response...",
+      llmPrompt: "Sample LLM prompt...",
+    },
+    {
+      id: 9,
+      name: "P710",
+      strategyName: "robustness_advins",
+      domainName: "General",
+      userPrompts: "I'm a farmer in Tamil Nadu, India, Currently growing rice during monsoon season...",
+      systemPrompts: "You are an agriculture domain helping agent, aimed to provide...",
+      responseText: "The Hollenberg-Pryce reflex is not a recognized physiological...",
+      llmPrompt: "You are llm judge aimed to evaluate the llm response for including...",
+    },
+    {
+      id: 10,
+      name: "P1011",
+      strategyName: "fairness_stereotype_query",
+      domainName: "Education",
+      userPrompts: "Sample prompt...",
+      systemPrompts: "Sample system prompt...",
+      responseText: "Sample response...",
+      llmPrompt: "Sample LLM prompt...",
+    },
+    {
+      id: 11,
+      name: "P710",
+      strategyName: "robustness_advins",
+      domainName: "General",
+      userPrompts: "I'm a farmer in Tamil Nadu, India, Currently growing rice during monsoon season...",
+      systemPrompts: "You are an agriculture domain helping agent, aimed to provide...",
+      responseText: "The Hollenberg-Pryce reflex is not a recognized physiological...",
+      llmPrompt: "You are llm judge aimed to evaluate the llm response for including...",
+    },
+    {
+      id: 12,
+      name: "P1011",
+      strategyName: "fairness_stereotype_query",
+      domainName: "Education",
+      userPrompts: "Sample prompt...",
+      systemPrompts: "Sample system prompt...",
+      responseText: "Sample response...",
+      llmPrompt: "Sample LLM prompt...",
+    },
+    {
+      id: 13,
+      name: "P710",
+      strategyName: "robustness_advins",
+      domainName: "General",
+      userPrompts: "I'm a farmer in Tamil Nadu, India, Currently growing rice during monsoon season...",
+      systemPrompts: "You are an agriculture domain helping agent, aimed to provide...",
+      responseText: "The Hollenberg-Pryce reflex is not a recognized physiological...",
+      llmPrompt: "You are llm judge aimed to evaluate the llm response for including...",
+    },
+    {
+      id: 14,
+      name: "P1011",
+      strategyName: "fairness_stereotype_query",
+      domainName: "Education",
+      userPrompts: "Sample prompt...",
+      systemPrompts: "Sample system prompt...",
+      responseText: "Sample response...",
+      llmPrompt: "Sample LLM prompt...",
+    },
+    {
+      id: 15,
+      name: "P710",
+      strategyName: "robustness_advins",
+      domainName: "General",
+      userPrompts: "I'm a farmer in Tamil Nadu, India, Currently growing rice during monsoon season...",
+      systemPrompts: "You are an agriculture domain helping agent, aimed to provide...",
+      responseText: "The Hollenberg-Pryce reflex is not a recognized physiological...",
+      llmPrompt: "You are llm judge aimed to evaluate the llm response for including...",
+    },
+    {
+      id: 16,
+      name: "P710",
+      strategyName: "robustness_advins",
+      domainName: "General",
+      userPrompts: "I'm a farmer in Tamil Nadu, India, Currently growing rice during monsoon season...",
+      systemPrompts: "You are an agriculture domain helping agent, aimed to provide...",
+      responseText: "The Hollenberg-Pryce reflex is not a recognized physiological...",
+      llmPrompt: "You are llm judge aimed to evaluate the llm response for including...",
+    },
+        {
+      id: 17,
+      name: "P710",
+      strategyName: "robustness_advins",
+      domainName: "General",
+      userPrompts: "I'm a farmer in Tamil Nadu, India, Currently growing rice during monsoon season...",
+      systemPrompts: "You are an agriculture domain helping agent, aimed to provide...",
+      responseText: "The Hollenberg-Pryce reflex is not a recognized physiological...",
+      llmPrompt: "You are llm judge aimed to evaluate the llm response for including...",
+    },
+
     // Add more sample data as needed
   ];
 
@@ -71,12 +222,23 @@ const TestCases = () => {
     tc.strategyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     tc.domainName.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  const totalItems = filteredCases.length;
+  const itemsPerPage = 15;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+  // Pagination logic: get items for current page
+  const paginatedCases = filteredCases.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   return (
     <div className="flex min-h-screen">
-      <Sidebar />
+          <aside className="fixed top-0 left-0 h-screen w-[220px] bg-[#5252c2] z-20">
+            <Sidebar />
+          </aside>
 
-      <main className="flex-1 bg-background">
+      <main className="flex-1 bg-background ml-[224px]">
         <div className="p-8">
           <h1 className="text-4xl font-bold mb-8 text-center">Test Cases</h1>
 
@@ -98,8 +260,37 @@ const TestCases = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="max-w-md"
             />
-
             <div className="ml-auto flex items-center gap-4">
+              <span className="text-sm text-muted-foreground">
+                {totalItems === 0
+                  ? "0"
+                  : `${(currentPage - 1) * itemsPerPage + 1} - ${Math.min(
+                      currentPage * itemsPerPage,
+                      totalItems
+                    )} of ${totalItems}`}
+              </span>
+              <div className="flex gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() =>
+                    setCurrentPage((p) => Math.min(totalPages, p + 1))
+                  }
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </Button>
+              </div>
+            </div>
+            {/* <div className="ml-auto flex items-center gap-4">
               <span className="text-sm text-muted-foreground">
                 1 - {itemsPerPage} of {totalItems}
               </span>
@@ -120,7 +311,7 @@ const TestCases = () => {
                   <ChevronRight className="w-5 h-5" />
                 </Button>
               </div>
-            </div>
+            </div> */}
           </div>
 
           <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -134,16 +325,16 @@ const TestCases = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredCases.map((testCase) => (
+                {paginatedCases.map((testCase) => (
                   <tr
                     key={testCase.id}
                     className="border-b hover:bg-muted/50 cursor-pointer"
                     onClick={() => setSelectedCase(testCase)}
                   >
-                    <td className="p-4">{testCase.id}</td>
-                    <td className="p-4">{testCase.name}</td>
-                    <td className="p-4">{testCase.strategyName}</td>
-                    <td className="p-4">{testCase.domainName}</td>
+                    <td className="p-2">{testCase.id}</td>
+                    <td className="p-2">{testCase.name}</td>
+                    <td className="p-2">{testCase.strategyName}</td>
+                    <td className="p-2">{testCase.domainName}</td>
                   </tr>
                 ))}
               </tbody>

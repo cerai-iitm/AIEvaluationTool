@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Search, X } from "lucide-react";
 import { PromptSearchDialog } from "./PromptSearchDialog";
+
 
 interface TestCase {
   id: number;
@@ -56,7 +57,7 @@ export const TestCaseUpdateDialog = ({
   open,
   onOpenChange,
 }: TestCaseUpdateDialogProps) => {
-  const [userPrompts, setUserPrompts] = useState(testCase?.userPrompts || "");
+  const [userPrompts, setUserPrompts] = useState(testCase?.userPrompts);
   const [systemPrompts, setSystemPrompts] = useState(testCase?.systemPrompts || "");
   const [responseText, setResponseText] = useState(testCase?.responseText || "");
   const [llmPrompt, setLlmPrompt] = useState(testCase?.llmPrompt || "");
@@ -84,6 +85,17 @@ export const TestCaseUpdateDialog = ({
     }
     setSearchDialogOpen(false);
   };
+
+  useEffect(() => {
+    setUserPrompts(testCase?.userPrompts || '');
+    setSystemPrompts(testCase?.systemPrompts || '');
+    setResponseText(testCase?.responseText || '');
+    setLlmPrompt(testCase?.llmPrompt || '');
+    setStrategy(testCase?.strategyName || '');
+    setDomain(testCase?.domainName || '');
+    setNotes(''); // Or testCase?.notes if available
+  }, [testCase]);
+
 
   const handleSubmit = () => {
     console.log("Submitting:", {

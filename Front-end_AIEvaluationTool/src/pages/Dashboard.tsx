@@ -32,14 +32,18 @@ const Dashboard = () => {
     { title: "Languages", count: 9 },
     { title: "Responses", count: 288 },
     { title: "Prompts", count: 407 },
-    { title: "LLM Prompts", count: 20 }
+    { title: "LLM Prompts", count: 20 },
+
   ];
 
   return (
     <>
       <div className="flex min-h-screen">
-        <Sidebar />
-        <main className="flex-1 p-12">
+          {/* Sidebar: fixed width and position */}
+          <aside className="fixed top-0 left-0 h-screen w-[220px] bg-[#5252c2] z-20">
+            <Sidebar />
+          </aside>
+        <main className="flex-1 p-12 ml-[240px]">
           <div className="grid grid-cols-3 gap-8 max-w-6xl">
             {stats.map((stat, idx) => (
               <Card
