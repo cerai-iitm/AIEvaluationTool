@@ -100,7 +100,7 @@ This section explains how to configure XPath locators for web elements and secur
 
 ### 4.1 **Adding XPath Locators**
 
-XPath locators are used by automation frameworks (e.g., Selenium, Playwright) to identify and interact with web elements.
+XPath locators are used by automation frameworks (e.g., Selenium) to identify and interact with web elements.
 
 - Locate the element in the web application (e.g., username field, password field, login button, prompt textbox and response element's xpath).
     - Right-click on the element → Inspect → Copy XPath.
