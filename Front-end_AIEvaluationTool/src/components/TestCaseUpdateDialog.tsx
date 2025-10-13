@@ -24,7 +24,7 @@ interface TestCase {
   id: number;
   name: string;
   strategyName: string;
-  domainName: string;
+  // domainName: string;
   userPrompts: string;
   systemPrompts: string;
   responseText: string;
@@ -50,7 +50,7 @@ const strategies = [
   "uptime_calculation",
 ];
 
-const domains = ["General", "Education", "agriculture", "Healthcare", "Learning Disability"];
+// const domains = ["General", "Education", "agriculture", "Healthcare", "Learning Disability"];
 
 export const TestCaseUpdateDialog = ({
   testCase,
@@ -62,7 +62,7 @@ export const TestCaseUpdateDialog = ({
   const [responseText, setResponseText] = useState(testCase?.responseText || "");
   const [llmPrompt, setLlmPrompt] = useState(testCase?.llmPrompt || "");
   const [strategy, setStrategy] = useState(testCase?.strategyName || "");
-  const [domain, setDomain] = useState(testCase?.domainName || "");
+  // const [domain, setDomain] = useState(testCase?.domainName || "");
   const [notes, setNotes] = useState("");
   
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
@@ -72,6 +72,9 @@ export const TestCaseUpdateDialog = ({
     setSearchType(type);
     setSearchDialogOpen(true);
   };
+
+  const [focusedField, setFocusedField] = useState<null | "userPrompt" | "response" | "llm">(null);
+
 
   const handleSelectPrompt = (prompt: string) => {
     if (searchType === "userPrompt") {
@@ -92,9 +95,29 @@ export const TestCaseUpdateDialog = ({
     setResponseText(testCase?.responseText || '');
     setLlmPrompt(testCase?.llmPrompt || '');
     setStrategy(testCase?.strategyName || '');
-    setDomain(testCase?.domainName || '');
+    // setDomain(testCase?.domainName || '');
     setNotes(''); // Or testCase?.notes if available
   }, [testCase]);
+
+  const testCaseInitial: TestCase = testCase || {
+    id: 0,
+    name: "",
+    strategyName: "",
+    // domainName: "",
+    userPrompts: "",
+    systemPrompts: "",
+    responseText: "",
+    llmPrompt: "",
+  };
+  const isChanged = (
+    userPrompts !== testCaseInitial.userPrompts ||
+    systemPrompts !== (testCaseInitial.systemPrompts || "") ||
+    responseText !== (testCaseInitial.responseText || "") ||
+    llmPrompt !== (testCaseInitial.llmPrompt || "") ||
+    strategy !== (testCaseInitial.strategyName || "") ||
+    notes !== ""
+  );
+
 
 
   const handleSubmit = () => {
@@ -104,7 +127,7 @@ export const TestCaseUpdateDialog = ({
       responseText,
       llmPrompt,
       strategy,
-      domain,
+      // domain,
       notes,
     });
     onOpenChange(false);
@@ -145,18 +168,24 @@ export const TestCaseUpdateDialog = ({
                 <div className="relative">
                   <Textarea
                     value={userPrompts}
+                    onFocus={() => setFocusedField("userPrompt")}
+                    onBlur={() => setTimeout(() => setFocusedField(null), 100)}
                     onChange={(e) => setUserPrompts(e.target.value)}
-                    className="min-h-[100px] pr-10"
+                    className="bg-muted min-h-[100px] pr-10"
                   />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-2 top-2"
-                    onClick={() => handleSearchClick("userPrompt")}
-                  >
-                    <Search className="w-4 h-4" />
-                  </Button>
+                  { focusedField === "userPrompt" && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-2 top-2"
+                      onMouseDown={e => e.preventDefault()}
+                      onClick={() => handleSearchClick("userPrompt")}
+                    >
+                      <Search className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
+
               </div>
 
               <div className="space-y-2">
@@ -164,7 +193,7 @@ export const TestCaseUpdateDialog = ({
                 <Textarea
                   value={systemPrompts}
                   onChange={(e) => setSystemPrompts(e.target.value)}
-                  className="min-h-[80px]"
+                  className="bg-muted min-h-[80px]"
                 />
               </div>
             </div>
@@ -174,17 +203,25 @@ export const TestCaseUpdateDialog = ({
               <div className="relative">
                 <Textarea
                   value={responseText}
+                  onFocus = { () => setFocusedField("response")}
+                  onBlur={() => setTimeout(() => setFocusedField(null), 100)}
+                  onChange={(e) => setResponseText(e.target.value)}
                   readOnly
                   className="bg-muted min-h-[80px] pr-10"
                 />
+                { focusedField === "response" && (
+                  
+                
                 <Button
                   variant="ghost"
                   size="icon"
                   className="absolute right-2 top-2"
+                  onMouseDown={e => e.preventDefault()}
                   onClick={() => handleSearchClick("response")}
                 >
                   <Search className="w-4 h-4" />
                 </Button>
+                )}
               </div>
             </div>
 
@@ -209,9 +246,15 @@ export const TestCaseUpdateDialog = ({
               <div className="relative">
                 <Textarea
                   value={llmPrompt}
+                  onFocus={() => setFocusedField("llm")}
+                  onBlur = {() => setTimeout(() => setFocusedField(null), 100)}
+                  onChange={(e) => setLlmPrompt(e.target.value)}
                   readOnly
                   className="bg-muted min-h-[80px] pr-10"
                 />
+                { focusedField === "llm" && (
+                  
+                
                 <Button
                   variant="ghost"
                   size="icon"
@@ -220,10 +263,11 @@ export const TestCaseUpdateDialog = ({
                 >
                   <Search className="w-4 h-4" />
                 </Button>
+                )}
               </div>
             </div>
 
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <Label className="text-base font-semibold">Domain</Label>
               <Select value={domain} onValueChange={setDomain}>
                 <SelectTrigger>
@@ -237,25 +281,31 @@ export const TestCaseUpdateDialog = ({
                   ))}
                 </SelectContent>
               </Select>
-            </div>
+            </div> */}
 
             <div className="space-y-2">
-              <Label className="text-base font-semibold">Notes</Label>
-              <Textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                className="min-h-[60px]"
-              />
+
             </div>
 
-            <div className="flex justify-center pt-4">
-              <Button
-                className="bg-accent hover:bg-accent/90 text-accent-foreground px-8"
+            <div className="flex justify-center items-center pt-4">
+              <label className="text-base font-bold mr-2">
+                Notes :
+              </label>
+              <input
+                type="text"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                className="bg-gray-200 rounded px-4 py-1 mr-4 w-96"
+              />
+              <button
+                className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800"
                 onClick={handleSubmit}
+                disabled={!isChanged}
               >
                 Submit
-              </Button>
+              </button>
             </div>
+
           </div>
         </DialogContent>
       </Dialog>
