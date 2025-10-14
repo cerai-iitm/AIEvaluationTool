@@ -85,10 +85,10 @@ export const TestCaseAddDialog = ({
     }
   }, [testCaseName]);
 
-  const handleSearchClick = (type: "userPrompt" | "response" | "llm") => {
-    setSearchType(type);
-    setSearchDialogOpen(true);
-  };
+  // const handleSearchClick = (type: "userPrompt" | "response" | "llm") => {
+  //   setSearchType(type);
+  //   setSearchDialogOpen(true);
+  // };
 
   const handleSelectPrompt = (prompt: string) => {
     if (searchType === "userPrompt") {
@@ -101,6 +101,14 @@ export const TestCaseAddDialog = ({
       setLlmPrompt(prompt);
     }
     setSearchDialogOpen(false);
+  };
+
+  const [focusedField, setFocusedField] = useState<null | "userPrompt" | "response" | "llm">(null);
+
+  const handleSearchClick = (type: "userPrompt" | "response" | "llm") => {
+  setSearchType(type);
+  setSearchDialogOpen(true);
+  setFocusedField(type);
   };
 
   const handleSubmit = () => {
@@ -143,14 +151,15 @@ export const TestCaseAddDialog = ({
           </DialogHeader>
 
           <div className="space-y-4 pt-4">
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label className="text-base font-semibold">Test Case</Label>
               <div className="relative">
                 <Input
-                  placeholder="Enter Test Case Name"
+                  placeholder="Enter New Test Case Name"
                   value={testCaseName}
                   onChange={(e) => setTestCaseName(e.target.value)}
-                  className="pr-24"
+                  className="bg-muted pr-24"
+                  required
                 />
                 {isNameAvailable && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-accent">
@@ -161,32 +170,42 @@ export const TestCaseAddDialog = ({
               </div>
             </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
+            <div className="space-y-2 pb-4">
+              {/* <div className="flex items-center justify-between"> */}
                 <Label className="text-base font-semibold">Prompt</Label>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleSearchClick("userPrompt")}
-                >
-                  <Search className="w-4 h-4" />
-                </Button>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-sm font-normal">User Prompts</Label>
+              {/* </div> */}
+              <div className="space-y-1">
+                <Label className="text-sm font-semibold">User Prompts</Label>
+                <div className="relative">
                 <Textarea
                   value={userPrompts}
                   onChange={(e) => setUserPrompts(e.target.value)}
-                  className="min-h-[100px]"
+                  onFocus = {() => setFocusedField("userPrompt")}
+                  onBlur = {() => setFocusedField(null)}
+                  className="bg-muted min-h-[100px] pr-10"
+                  required
                 />
+                { focusedField === "userPrompt" && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-2 top-2"
+                    onMouseDown = {e => e.preventDefault()}
+                    onClick={() => handleSearchClick("userPrompt")}
+                    tabIndex = {-1} //not focusable, only clickable
+                  >
+                    <Search className="w-4 h-4" />
+                  </Button>
+                )}
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-sm font-normal">System prompts</Label>
+              <div className="space-y-1">
+                <Label className="text-sm font-semibold">System prompts</Label>
                 <Textarea
                   value={systemPrompts}
                   onChange={(e) => setSystemPrompts(e.target.value)}
-                  className="min-h-[80px]"
+                  className="bg-muted min-h-[80px]"
                 />
               </div>
             </div>
@@ -198,15 +217,23 @@ export const TestCaseAddDialog = ({
                   value={responseText}
                   readOnly
                   className="bg-muted min-h-[80px] pr-10"
+                  required
+                  onChange ={(e) => setResponseText(e.target.value)}
+                  onFocus = {() => setFocusedField("response")}
+                  onBlur = {() => setFocusedField(null)}
                 />
+                { focusedField === "response" && (
                 <Button
                   variant="ghost"
                   size="icon"
                   className="absolute right-2 top-2"
+                  onMouseDown = {e => e.preventDefault()}
                   onClick={() => handleSearchClick("response")}
+                  tabIndex = {-1}
                 >
                   <Search className="w-4 h-4" />
                 </Button>
+                )}
               </div>
             </div>
 
@@ -234,35 +261,40 @@ export const TestCaseAddDialog = ({
                     value={llmPrompt}
                     readOnly
                     className="bg-muted min-h-[80px] pr-10"
+                    required
+                    onFocus = {() => setFocusedField("llm")}
+                    onBlur = {() => setFocusedField(null)}
                   />
+                  { focusedField === "llm" && (
                   <Button
                     variant="ghost"
                     size="icon"
                     className="absolute right-2 top-2"
                     onClick={() => handleSearchClick("llm")}
+                    onMouseDown = {e => e.preventDefault()}
                   >
                     <Search className="w-4 h-4" />
                   </Button>
+                  )}
                 </div>
               </div>
             )}
 
-            <div className="space-y-2">
-              <Label className="text-base font-semibold">Notes</Label>
-              <Textarea
+            <div className="flex justify-center items-center p-4 border-gray-300 bg-white sticky bottom-0 z-10">
+              <Label className="text-base font-semibold mr-2">Notes</Label>
+              <input
+                placeholder="Enter Notes"
+                type="text"
                 value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                className="min-h-[60px]"
+                onChange={e => setNotes(e.target.value)}
+                className="bg-gray-200 rounded px-4 py-1 mr-4 w-96"
               />
-            </div>
-
-            <div className="flex justify-center pt-4">
-              <Button
-                className="bg-accent hover:bg-accent/90 text-accent-foreground px-8"
+              <button
+                className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800"
                 onClick={handleSubmit}
               >
                 Submit
-              </Button>
+              </button>
             </div>
           </div>
         </DialogContent>

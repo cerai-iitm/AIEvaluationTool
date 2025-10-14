@@ -56,20 +56,20 @@ export const PromptSearchDialog = ({
       <DialogContent className="max-w-2xl max-h-[80vh]">
         <DialogHeader>
           <DialogTitle className="sr-only">Search Prompts</DialogTitle>
-          <Button
+          {/* <Button
             variant="ghost"
             size="icon"
             className="absolute right-4 top-4"
             onClick={() => onOpenChange(false)}
           >
             <X className="w-5 h-5" />
-          </Button>
+          </Button> */}
         </DialogHeader>
 
         <div className="space-y-4 pt-4">
           <div className="relative">
             <Input
-              placeholder="what"
+              placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pr-10"
@@ -77,16 +77,22 @@ export const PromptSearchDialog = ({
             <Search className="w-5 h-5 absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           </div>
 
-          <div className="space-y-2 max-h-[50vh] overflow-y-auto">
-            {filteredItems.map((item, index) => (
-              <button
-                key={index}
-                onClick={() => onSelect(item)}
-                className="w-full text-left p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
-              >
-                <p className="text-sm">{item}</p>
-              </button>
-            ))}
+          <div className="space-y-2 max-h-[50vh] min-h-[50vh] overflow-y-auto flex flex-col">
+            {filteredItems.length === 0 ? (
+              <div className="flex-1 flex items-center justify-center text-muted-foreground">
+                <p className="text-sm italic">No results found.</p>
+              </div>
+            ) : (
+              filteredItems.map((item, index) => (
+                <button
+                  key={index}
+                  onClick={() => onSelect(item)}
+                  className="w-full text-left p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                >
+                  <p className="text-sm">{item}</p>
+                </button>
+              ))
+            )}
           </div>
         </div>
       </DialogContent>

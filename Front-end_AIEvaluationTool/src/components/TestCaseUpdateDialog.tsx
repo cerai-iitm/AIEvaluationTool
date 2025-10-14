@@ -138,9 +138,12 @@ export const TestCaseUpdateDialog = ({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto"
+          onOpenAutoFocus = {(e) => e.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle className="sr-only">Update Test Case</DialogTitle>
+            
             {/* <Button
               variant="ghost"
               size="icon"
@@ -151,8 +154,9 @@ export const TestCaseUpdateDialog = ({
             </Button> */}
           </DialogHeader>
 
-          <div className="space-y-4 pt-4">
-            <div className="space-y-2">
+          <div className = "overflow-y-auto flex-1 pr-1 pl-1">
+          {/* <div className="space-y-4 pt-4"> */}
+            <div className="space-y-1 pb-4">
               <Label className="text-base font-semibold">Test Case</Label>
               <Input
                 value={testCase.name}
@@ -161,15 +165,15 @@ export const TestCaseUpdateDialog = ({
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1 pb-4">
               <Label className="text-base font-semibold">Prompt</Label>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label className="text-sm font-normal">User Prompts</Label>
                 <div className="relative">
                   <Textarea
                     value={userPrompts}
                     onFocus={() => setFocusedField("userPrompt")}
-                    onBlur={() => setTimeout(() => setFocusedField(null), 100)}
+                    onBlur={() => setTimeout(() => setFocusedField(null))}
                     onChange={(e) => setUserPrompts(e.target.value)}
                     className="bg-muted min-h-[100px] pr-10"
                   />
@@ -188,7 +192,7 @@ export const TestCaseUpdateDialog = ({
 
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label className="text-sm font-normal">System prompts</Label>
                 <Textarea
                   value={systemPrompts}
@@ -198,13 +202,102 @@ export const TestCaseUpdateDialog = ({
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1 pb-4">
               <Label className="text-base font-semibold">Response</Label>
               <div className="relative">
                 <Textarea
                   value={responseText}
                   onFocus = { () => setFocusedField("response")}
-                  onBlur={() => setTimeout(() => setFocusedField(null), 100)}
+                  onBlur={() => setTimeout(() => setFocusedField(null))}
+                  onChange={(e) => setResponseText(e.target.value)}
+                  readOnly
+                  className="bg-muted min-h-[80px] pr-10"
+                />
+                { focusedField === "response" && (
+                  
+                
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-2 top-2"
+                  onMouseDown={e => e.preventDefault()}
+                  onClick={() => handleSearchClick("response")}
+                >
+                  <Search className="w-4 h-4" />
+                </Button>
+                )}<Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto"
+          onOpenAutoFocus = {(e) => e.preventDefault()}
+        >
+          <DialogHeader>
+            <DialogTitle className="sr-only">Update Test Case</DialogTitle>
+            {/* <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-4 top-4"
+              onClick={() => onOpenChange(false)}
+            >
+              <X className="w-5 h-5" />
+            </Button> */}
+          </DialogHeader>
+
+          <div className = "overflow-y-auto flex-1 pr-1 pl-1">
+          {/* <div className="space-y-4 pt-4"> */}
+            <div className="space-y-1 pb-4">
+              <Label className="text-base font-semibold">Test Case</Label>
+              <Input
+                value={testCase.name}
+                readOnly
+                className="bg-muted"
+              />
+            </div>
+
+            <div className="space-y-1 pb-4">
+              <Label className="text-base font-semibold">Prompt</Label>
+              <div className="space-y-1">
+                <Label className="text-sm font-normal">User Prompts</Label>
+                <div className="relative">
+                  <Textarea
+                    value={userPrompts}
+                    onFocus={() => setFocusedField("userPrompt")}
+                    onBlur={() => setTimeout(() => setFocusedField(null))}
+                    onChange={(e) => setUserPrompts(e.target.value)}
+                    className="bg-muted min-h-[100px] pr-10"
+                    required
+                  />
+                  { focusedField === "userPrompt" && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-2 top-2"
+                      onMouseDown={e => e.preventDefault()}
+                      onClick={() => handleSearchClick("userPrompt")}
+                    >
+                      <Search className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-sm font-normal">System prompts</Label>
+                <Textarea
+                  value={systemPrompts}
+                  onChange={(e) => setSystemPrompts(e.target.value)}
+                  className="bg-muted min-h-[80px]"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1 pb-4">
+              <Label className="text-base font-semibold">Response</Label>
+              <div className="relative">
+                <Textarea
+                  value={responseText}
+                  onFocus = { () => setFocusedField("response")}
+                  onBlur={() => setTimeout(() => setFocusedField(null))}
                   onChange={(e) => setResponseText(e.target.value)}
                   readOnly
                   className="bg-muted min-h-[80px] pr-10"
@@ -225,7 +318,7 @@ export const TestCaseUpdateDialog = ({
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1 pb-4">
               <Label className="text-base font-semibold">Strategy</Label>
               <Select value={strategy} onValueChange={setStrategy}>
                 <SelectTrigger>
@@ -241,7 +334,7 @@ export const TestCaseUpdateDialog = ({
               </Select>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1 pb-4">
               <Label className="text-base font-semibold">LLM Prompt</Label>
               <div className="relative">
                 <Textarea
@@ -267,6 +360,8 @@ export const TestCaseUpdateDialog = ({
               </div>
             </div>
 
+
+
             {/* <div className="space-y-2">
               <Label className="text-base font-semibold">Domain</Label>
               <Select value={domain} onValueChange={setDomain}>
@@ -283,11 +378,11 @@ export const TestCaseUpdateDialog = ({
               </Select>
             </div> */}
 
-            <div className="space-y-2">
+           
 
             </div>
 
-            <div className="flex justify-center items-center pt-4">
+            <div className="flex justify-center items-center p-4 border-gray-300 bg-white sticky bottom-0 z-10">
               <label className="text-base font-bold mr-2">
                 Notes :
               </label>
@@ -306,7 +401,98 @@ export const TestCaseUpdateDialog = ({
               </button>
             </div>
 
-          </div>
+          
+          
+        </DialogContent>
+      </Dialog>
+              </div>
+            </div>
+
+            <div className="space-y-1 pb-4">
+              <Label className="text-base font-semibold">Strategy</Label>
+              <Select value={strategy} onValueChange={setStrategy}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-popover max-h-[300px]">
+                  {strategies.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1 pb-4">
+              <Label className="text-base font-semibold">LLM Prompt</Label>
+              <div className="relative">
+                <Textarea
+                  value={llmPrompt}
+                  onFocus={() => setFocusedField("llm")}
+                  onBlur = {() => setTimeout(() => setFocusedField(null), 100)}
+                  onChange={(e) => setLlmPrompt(e.target.value)}
+                  readOnly
+                  className="bg-muted min-h-[80px] pr-10"
+                />
+                { focusedField === "llm" && (
+                  
+                
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-2 top-2"
+                  onClick={() => handleSearchClick("llm")}
+                >
+                  <Search className="w-4 h-4" />
+                </Button>
+                )}
+              </div>
+            </div>
+
+
+
+            {/* <div className="space-y-2">
+              <Label className="text-base font-semibold">Domain</Label>
+              <Select value={domain} onValueChange={setDomain}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-popover">
+                  {domains.map((d) => (
+                    <SelectItem key={d} value={d}>
+                      {d}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div> */}
+
+           
+
+            </div>
+
+            <div className="flex justify-center items-center p-4 border-gray-300 bg-white sticky bottom-0 z-10">
+              <label className="text-base font-bold mr-2">
+                Notes :
+              </label>
+              <input
+                type="text"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                className="bg-gray-200 rounded px-4 py-1 mr-4 w-96"
+              />
+              <button
+                className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800"
+                onClick={handleSubmit}
+                disabled={!isChanged}
+              >
+                Submit
+              </button>
+            </div>
+
+          
+          
         </DialogContent>
       </Dialog>
 

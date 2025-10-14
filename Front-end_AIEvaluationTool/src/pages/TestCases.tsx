@@ -213,6 +213,46 @@ const TestCases = () => {
       responseText: "The Hollenberg-Pryce reflex is not a recognized physiological...",
       llmPrompt: "You are llm judge aimed to evaluate the llm response for including...",
     },
+        {
+      id: 18,
+      name: "P1011",
+      strategyName: "fairness_stereotype_query",
+      domainName: "Education",
+      userPrompts: "Sample prompt...",
+      systemPrompts: "Sample system prompt...",
+      responseText: "Sample response...",
+      llmPrompt: "Sample LLM prompt...",
+    },
+    {
+      id: 19,
+      name: "P710",
+      strategyName: "robustness_advins",
+      domainName: "General",
+      userPrompts: "I'm a farmer in Tamil Nadu, India, Currently growing rice during monsoon season...",
+      systemPrompts: "You are an agriculture domain helping agent, aimed to provide...",
+      responseText: "The Hollenberg-Pryce reflex is not a recognized physiological...",
+      llmPrompt: "You are llm judge aimed to evaluate the llm response for including...",
+    },
+    {
+      id: 20,
+      name: "P710",
+      strategyName: "robustness_advins",
+      domainName: "General",
+      userPrompts: "I'm a farmer in Tamil Nadu, India, Currently growing rice during monsoon season...",
+      systemPrompts: "You are an agriculture domain helping agent, aimed to provide...",
+      responseText: "The Hollenberg-Pryce reflex is not a recognized physiological...",
+      llmPrompt: "You are llm judge aimed to evaluate the llm response for including...",
+    },
+        {
+      id: 21,
+      name: "P710",
+      strategyName: "robustness_advins",
+      domainName: "General",
+      userPrompts: "I'm a farmer in Tamil Nadu, India, Currently growing rice during monsoon season...",
+      systemPrompts: "You are an agriculture domain helping agent, aimed to provide...",
+      responseText: "The Hollenberg-Pryce reflex is not a recognized physiological...",
+      llmPrompt: "You are llm judge aimed to evaluate the llm response for including...",
+    },
 
     // Add more sample data as needed
   ];
@@ -223,7 +263,7 @@ const TestCases = () => {
     tc.domainName.toLowerCase().includes(searchQuery.toLowerCase())
   );
   const totalItems = filteredCases.length;
-  const itemsPerPage = 15;
+  const itemsPerPage = 20;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   // Pagination logic: get items for current page
@@ -239,10 +279,10 @@ const TestCases = () => {
           </aside>
 
       <main className="flex-1 bg-background ml-[224px]">
-        <div className="p-8">
+        <div className="p-8 flex flex-col h-screen">
           <h1 className="text-4xl font-bold mb-8 text-center">Test Cases</h1>
 
-          <div className="flex gap-4 mb-6">
+          <div className="flex gap-4 mb-6 ">
             <Select defaultValue="testcase">
               <SelectTrigger className="w-48">
                 <SelectValue />
@@ -258,7 +298,7 @@ const TestCases = () => {
               placeholder="search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="max-w-md"
+              className="w-64"
             />
             <div className="ml-auto flex items-center gap-4">
               <span className="text-sm text-muted-foreground">
@@ -313,15 +353,15 @@ const TestCases = () => {
               </div>
             </div> */}
           </div>
-
-          <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="flex-1 min-h-0 overflow-y-auto">
+          <div className="bg-white rounded-lg shadow overflow-hidden max-h-[67vh] overflow-y-auto">
             <table className="w-full">
               <thead className="border-b-2">
                 <tr>
-                  <th className="text-left p-4 font-semibold">Testcase ID</th>
-                  <th className="text-left p-4 font-semibold">Testcase Name</th>
-                  <th className="text-left p-4 font-semibold">Strategy Name</th>
-                  <th className="text-left p-4 font-semibold">Domain Name</th>
+                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">Testcase ID</th>
+                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">Testcase Name</th>
+                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">Strategy Name</th>
+                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold   text-left">Domain Name</th>
                 </tr>
               </thead>
               <tbody>
@@ -340,8 +380,9 @@ const TestCases = () => {
               </tbody>
             </table>
           </div>
+          </div>
 
-          <div className="mt-6">
+          <div className="mt-6 sticky bottom-5">
             <Button 
               className="bg-primary hover:bg-primary/90"
               onClick={() => setAddDialogOpen(true)}
@@ -353,7 +394,10 @@ const TestCases = () => {
       </main>
 
       <Dialog open={!!selectedCase} onOpenChange={() => setSelectedCase(null)}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent 
+          className="max-w-3xl max-h-[90vh] overflow-y-auto"
+          onOpenAutoFocus = {(e) => e.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle className="sr-only">Test Case Details</DialogTitle>
             {/* <Button
@@ -367,14 +411,15 @@ const TestCases = () => {
           </DialogHeader>
 
           {selectedCase && (
-            <div className="space-y-4 pt-4">
-              <div className="space-y-2">
-                <Label>Testcase Name</Label>
+            <div className="flex-1 p-1 overflow-y-auto space-y-6 pb-5">
+            {/* <div className="space-y-4 pt-4"> */}
+              <div className="space-y-1">
+                <Label className="text-base font-semibold">Testcase Name</Label>
                 <Input value={selectedCase.name} readOnly className="bg-muted" />
               </div>
 
-              <div className="space-y-2">
-                <Label>User Prompts</Label>
+              <div className="space-y-1">
+                <Label className="text-base font-semibold">User Prompts</Label>
                 <Textarea
                   value={selectedCase.userPrompts}
                   readOnly
@@ -382,8 +427,8 @@ const TestCases = () => {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label>System prompts</Label>
+              <div className="space-y-1">
+                <Label className="text-base font-semibold">System prompts</Label>
                 <Textarea
                   value={selectedCase.systemPrompts}
                   readOnly
@@ -391,8 +436,8 @@ const TestCases = () => {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label>Response Text</Label>
+              <div className="space-y-1">
+                <Label className="text-base font-semibold">Response Text</Label>
                 <Textarea
                   value={selectedCase.responseText}
                   readOnly
@@ -400,34 +445,36 @@ const TestCases = () => {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label>Strategy Name</Label>
+              <div className="space-y-1">
+                <Label className="text-base font-semibold">Strategy Name</Label>
                 <Input value={selectedCase.strategyName} readOnly className="bg-muted" />
               </div>
 
-              <div className="space-y-2">
-                <Label>LLM Prompt</Label>
+              <div className="space-y-1">
+                <Label className="text-base font-semibold">LLM Prompt</Label>
                 <Textarea
                   value={selectedCase.llmPrompt}
                   readOnly
                   className="bg-muted min-h-[80px]"
                 />
               </div>
+              
 
-              <div className="flex justify-center gap-4 pt-4">
-                <Button variant="destructive">Delete</Button>
-                <Button 
-                  className="bg-primary hover:bg-primary/90"
-                  onClick={() => {
-                    setUpdateCase(selectedCase);
-                    setSelectedCase(null);
-                  }}
-                >
-                  Update
-                </Button>
-              </div>
             </div>
           )}
+          <div className="sticky bottom-0 bg-white pt-4 p-2 flex justify-center gap-4 border-gray-200 z-10">
+          {/* <div className="flex justify-center gap-4 pt-4"> */}
+            <Button variant="destructive">Delete</Button>
+            <Button 
+              className="bg-primary hover:bg-primary/90"
+              onClick={() => {
+                setUpdateCase(selectedCase);
+                setSelectedCase(null);
+              }}
+            >
+              Update
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 
