@@ -26,7 +26,7 @@ const Dashboard = () => {
 
   const stats = [
     { title: "Test cases", count: 1635, onClick: () => navigate("/test-cases") },
-    { title: "Targets", count: 534 },
+    { title: "Targets", count: 534, onClick: () => navigate("/targets") },
     { title: "Domains", count: 6 },
     { title: "Strategies", count: 44 },
     { title: "Languages", count: 9 },

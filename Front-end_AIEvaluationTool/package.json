@@ -48,6 +48,7 @@
     "input-otp": "^1.4.2",
     "lucide-react": "^0.462.0",
     "modules-path": "^1.1.0",
+    "multiselect": "^0.9.12",
     "next-themes": "^0.3.0",
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
