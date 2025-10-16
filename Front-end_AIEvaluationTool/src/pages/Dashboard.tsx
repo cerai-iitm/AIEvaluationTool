@@ -31,7 +31,7 @@ const Dashboard = () => {
     { title: "Strategies", count: 44 },
     { title: "Languages", count: 9 },
     { title: "Responses", count: 288, onClick: () => navigate("/responses") },
-    { title: "Prompts", count: 407 },
+    { title: "Prompts", count: 407, onClick: () => navigate("/prompts") },
     { title: "LLM Prompts", count: 20 },
 
   ];

@@ -7,7 +7,7 @@ import  {Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import  {Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Label } from '@/components/ui/label';
-// import TargetUpdateDialog from '@/components/TargetUpdateDialog';
+import TargetUpdateDialog from '@/components/TargetUpdateDialog';
 // import TargetAddDialog from '@/components/TargetAddDialog';
 
 interface Target {
@@ -229,11 +229,11 @@ const Targets = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Update Target Dialog
-        <TargetUpdateDialog
+        {/* // Update Target Dialog */}
+        {/* <TargetUpdateDialog
           target={updateTarget}
           open={!!updateTarget}
-          onOpenChange={open => !open && setUpdateTarget(null)}
+          onOpenChange={(open) => !open && setUpdateTarget(null)}
           onUpdate={updated => {
             setTargets(ts => ts.map(t => t.id === updated.id ? updated : t));
             setUpdateTarget(null);

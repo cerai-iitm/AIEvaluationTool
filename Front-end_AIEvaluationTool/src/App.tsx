@@ -11,6 +11,7 @@ import Users from "./pages/Users";
 import UserHistory from "./pages/UserHistory";
 import NotFound from "./pages/NotFound";
 import Targets from "./pages/Targets";
+import Prompts from "./pages/Prompts";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/test-cases" element={<TestCases />} />
           <Route path="/targets" element={<Targets />} />
           <Route path="/responses" element={<Responses />} />
+          <Route path="/prompts" element={<Prompts/>}/>
           <Route path="/users" element={<Users />} />
           <Route path="/user-history/:username" element={<UserHistory />} />
           <Route path="*" element={<NotFound />} />

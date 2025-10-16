@@ -9,6 +9,7 @@ import MultiSelect from 'multiselect'; // a custom component for multi-select wi
 
 const domains = ['General', 'Education', 'Agriculture', 'Healthcare', 'Learning Disability'];
 const languages = [ 'Tamil', 'Hindi', 'Gujarati', 'Bengali', 'Bhojpuri', 'English' ];
+const targetType = ['WhatsApp', 'WebApp', 'Other'];
 
 interface Target {
   id: number;
@@ -26,16 +27,12 @@ interface TargetUpdateDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdate: (target: Target) => void;  //???
-  props: any
+
 }
 
-const language = ['Tamil', 'Hindi', 'Gujarati', 'Bengali', 'Bhojpuri', 'English'];
 
-const targetType = ['WhatsApp', 'WebApp', 'Other'];
 
-const Domain = ['General', 'Education', 'Agriculture', 'Healthcare', 'Learning Disability'];
-
-export default function TargetUpdateDialog({ target, open, onOpenChange, onUpdate, props }: TargetUpdateDialogProps) {
+export default function TargetUpdateDialog({ target, open, onOpenChange, onUpdate }: TargetUpdateDialogProps) {
   const [type, setType] = useState('');
   const [description, setDescription] = useState('');
   const [url, setUrl] = useState('');
@@ -121,7 +118,7 @@ export default function TargetUpdateDialog({ target, open, onOpenChange, onUpdat
             </div>
             <div className='space-y-4 pb-4'>
                 <Label className='text-base font-semibold'>Target Type</Label>
-                <Select value= {target.type} onValueChange={setType} className="bg-muted" {...(props as CustomSelectProps)}>
+                <Select value= {target.type} onValueChange={setType} >
                     <SelectTrigger>
                         <SelectValue />
                     </SelectTrigger>
@@ -152,7 +149,7 @@ export default function TargetUpdateDialog({ target, open, onOpenChange, onUpdat
             </div>
             <div className='space-y-1 pb-4'>
                 <Label className='text-base font-semibold'>Domain</Label>
-                <Select value={target.domain} onValueChange={setDomain} className="bg-muted" {...(props as CustomSelectProps)}>
+                <Select value={target.domain} onValueChange={setDomain} >
                     <SelectTrigger>
                         <SelectValue />
                     </SelectTrigger>
@@ -183,10 +180,12 @@ export default function TargetUpdateDialog({ target, open, onOpenChange, onUpdat
             <Button onClick={handleSubmit}
                 className='bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800'
                 disabled={!isChanged}
-            >Update
+            >Submit
             </Button>
         </div>
       </DialogContent>
     </Dialog>
   );
 }
+
+export {TargetUpdateDialog};

@@ -288,7 +288,7 @@ const TestCases = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="testcase">Testcase Name</SelectItem>
+                <SelectItem value="testcase">Test Case Name</SelectItem>
                 <SelectItem value="strategy">Strategy Name</SelectItem>
                 <SelectItem value="domain">Domain Name</SelectItem>
               </SelectContent>
