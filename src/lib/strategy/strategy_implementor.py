@@ -14,7 +14,7 @@ from .compute_error_rate import ComputeErrorRate
 from .compute_mtbf import Compute_MTBF
 from .entity_recognition import EntityRecognition
 from .toxicity_detection_using_api import ToxicityDetectionUsingAPI
-from .fairness_preference import Fairness_Preference
+from .test_4_fairness_pref import Fairness_Preference
 from .fairness_stereotype_agreement import Fairness_Stereotype_Agreement
 from .fairness_stereotype_query import Fairness_Stereotype_Query
 from .fairness_stereotype_recognition import Fairness_Stereotype_Recognition
