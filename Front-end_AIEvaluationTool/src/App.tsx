@@ -12,6 +12,7 @@ import UserHistory from "./pages/UserHistory";
 import NotFound from "./pages/NotFound";
 import Targets from "./pages/Targets";
 import Prompts from "./pages/Prompts";
+import DomainList from "./pages/Domains";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/targets" element={<Targets />} />
           <Route path="/responses" element={<Responses />} />
           <Route path="/prompts" element={<Prompts/>}/>
+          <Route path="/domains" element={<DomainList/>} />
           <Route path="/users" element={<Users />} />
           <Route path="/user-history/:username" element={<UserHistory />} />
           <Route path="*" element={<NotFound />} />

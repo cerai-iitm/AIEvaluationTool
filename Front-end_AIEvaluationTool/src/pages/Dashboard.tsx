@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Sidebar from "@/components/Sidebar";
 import { Card, CardContent } from "@/components/ui/card";
 import { MoreVertical } from "lucide-react";
+import { on } from 'events';
 
 const MENU_OPTIONS = [
   { label: "Open", action: "open" },
@@ -27,7 +28,7 @@ const Dashboard = () => {
   const stats = [
     { title: "Test cases", count: 1635, onClick: () => navigate("/test-cases") },
     { title: "Targets", count: 534, onClick: () => navigate("/targets") },
-    { title: "Domains", count: 6 },
+    { title: "Domains", count: 6, onClick: () => navigate("/domains") },
     { title: "Strategies", count: 44 },
     { title: "Languages", count: 9 },
     { title: "Responses", count: 288, onClick: () => navigate("/responses") },
