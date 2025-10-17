@@ -14,6 +14,7 @@ warnings.filterwarnings("ignore")
 class EntityRecognition(Strategy):
     def __init__(self, name: str = "entity_recognition", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
+        pass
 
     def extract_entity_pairs(self, text: str) -> List[Tuple[str, str]]:
         """
@@ -34,12 +35,13 @@ class EntityRecognition(Strategy):
         Computes and returns only the F1 score between expected and predicted entity-tag strings.
         """
         expected_pairs = set(self.extract_entity_pairs(expected_str))
+        print(expected_pairs)
         predicted_pairs = set(self.extract_entity_pairs(response_str))
-
+        print(predicted_pairs)
         # print(f"Expected pairs: {expected_pairs} and Predicted pairs: {predicted_pairs}")
 
-        tp = len(expected_pairs & predicted_pairs)
-        fp = len(predicted_pairs - expected_pairs)
+        tp = len(expected_pairs & predicted_pairs) # only exact matching is counted but that might not necessarily what we want, so root or synonym should also be 
+        fp = len(predicted_pairs - expected_pairs) # what if something that is missed in our expected prompt is actually correctly classified by the model 
         fn = len(expected_pairs - predicted_pairs)
 
         precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
@@ -52,7 +54,7 @@ class EntityRecognition(Strategy):
         """
         Evaluates the agent response against expected and returns only the F1 score.
         """
-        logger.info(f"Result: {self.ner_recognition(expected_str=expected_response, response_str=agent_response)}")
+        # logger.info(f"Result: {self.ner_recognition(expected_str=expected_response, response_str=agent_response)}")
         return self.ner_recognition(expected_str=expected_response, response_str=agent_response)
 
 # Example usage
@@ -70,3 +72,6 @@ class EntityRecognition(Strategy):
 # ner_recogition_score = ner_eval.evaluate(agent_response, expected_response)
 # print("Entity Recogntion Accuracy:", ner_recogition_score)
 # Entity Recognition Accuracy working
+
+
+# have to check for synsets using wordnet else fallback on embedding based semantic similairy matching

@@ -14,4 +14,4 @@ app.include_router(chat_router.router)
 # main driver
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=16000, reload=True)

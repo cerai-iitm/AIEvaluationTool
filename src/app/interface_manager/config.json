@@ -23,5 +23,5 @@
     "test_plan_id": "T2",
     "test_case_count": 4,
     "application_name": "Vaidya AI",
-    "application_url": "http://localhost:8000"
+    "application_url": "http://localhost:16000"
 }

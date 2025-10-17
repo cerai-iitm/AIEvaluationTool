@@ -5,6 +5,9 @@ import json
 from datetime import datetime
 import argparse
 import logging
+# import pdb
+
+# pdb.set_trace()
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -19,15 +22,20 @@ logger.addHandler(ch)
 # setup the relative import path for data module.
 sys.path.append(os.path.join(os.path.dirname(__file__) + '/../../'))  # Adjust the path to include the parent directory
 
+
+
 from lib.data import Prompt, TestCase, Response, TestPlan, Metric, LLMJudgePrompt, Target, Run, RunDetail, Conversation
+
 from lib.orm import DB  # Import the DB class from the orm module
 
+# adding arguments for including configuration
 parser = argparse.ArgumentParser(description="Data Importer")
 parser.add_argument("--config", dest="config", type=str, default="config.json", help="Path to the configuration file")
 parser.add_argument("--orm-debug", dest="orm_debug", default=False, action='store_true', help="Enable ORM debug mode")
 
 args = parser.parse_args()
 
+# connecting to the database
 config = json.load(open(args.config, 'r'))
 db_url = "mariadb+mariadbconnector://{user}:{password}@{host}:{port}/{database}".format(
     user=config['db']['user'],
@@ -36,8 +44,9 @@ db_url = "mariadb+mariadbconnector://{user}:{password}@{host}:{port}/{database}"
     port=config['db']['port'],
     database=config['db']['database']
 )
-
+#test plans
 plans = json.load(open(config['files']['plans'], 'r'))
+#testcases -> basically the data points
 prompts = json.load(open(config['files']['testcases'], 'r'))
 
 db = DB(db_url=db_url, debug=args.orm_debug)

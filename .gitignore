@@ -15,3 +15,14 @@ saved_evaluations/**
 new_data.json
 responses_T**.json
 evaluation_summary**
+
+kul
+kul.pub
+src/lib/strategy/data
+test_4_*.py
+test.py
+models.json
+defaults.json
+improvement_eval.py
+.deepeval
+saved_evaluations

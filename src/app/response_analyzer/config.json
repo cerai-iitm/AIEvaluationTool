@@ -1,9 +1,9 @@
 {
-    "database": {
+    "database":{
         "host": "localhost",
         "port": 3306,
-        "user": "root",
-        "password": "jarvis2025",
-        "database": "test"
+        "user": "dbeaver",
+        "password": "root123",
+        "database": "mydb"
     }
 }
