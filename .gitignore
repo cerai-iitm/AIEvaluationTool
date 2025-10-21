@@ -18,9 +18,8 @@ evaluation_summary**
 
 kul
 kul.pub
-test_4_*.py
 test.py
-defaults.json
 improvement_eval.py
 .deepeval
 saved_evaluations
+test_4_*.py
