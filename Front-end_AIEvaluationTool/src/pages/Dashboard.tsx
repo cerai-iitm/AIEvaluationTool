@@ -30,10 +30,10 @@ const Dashboard = () => {
     { title: "Targets", count: 534, onClick: () => navigate("/targets") },
     { title: "Domains", count: 6, onClick: () => navigate("/domains") },
     { title: "Strategies", count: 44 },
-    { title: "Languages", count: 9 },
+    { title: "Languages", count: 9, onClick: () => navigate("/languages") },
     { title: "Responses", count: 288, onClick: () => navigate("/responses") },
     { title: "Prompts", count: 407, onClick: () => navigate("/prompts") },
-    { title: "LLM Prompts", count: 20 },
+    { title: "LLM Prompts", count: 20, onClick: () => navigate("/llm-prompts") },
 
   ];
 
