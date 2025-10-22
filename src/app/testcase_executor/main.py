@@ -64,6 +64,8 @@ def main():
     parser.add_argument("--run-continue", "-R", dest="run_continue", default=False, action="store_true", help="Continue an existing run with the provided run name")
     parser.add_argument("--execute", "-e", dest="execute", action="store_true", help="Execute the test plan or test case")
     parser.add_argument("--verbosity", "-v", dest="verbosity", type=int, choices=[0,1,2,3,4,5], help="Enable verbose output", default=5)
+    parser.add_argument("--language-strict", "-l", dest="language_strict", action="store_true", help="Enable strict language matching for test case selection based on target's language")
+    parser.add_argument("--domain-strict", "-d", dest="domain_strict", action="store_true", help="Enable strict domain matching for test case selection based on target's domain")
 
     args = parser.parse_args()
 
@@ -114,7 +116,7 @@ def main():
     db_url = f"mariadb+mariadbconnector://{config['database']['user']}:{config['database']['password']}@{config['database']['host']}:{config['database']['port']}/{config['database']['database']}"
     try:
         logger.info(f"Database URL: {db_url}")
-        db = DB(db_url=db_url, debug=False, loglevel=loglevel)
+        db = DB(db_url=db_url, debug=True, loglevel=loglevel)
     except Exception as e:
         logger.error(f"Failed to connect to the database: {e}")
         return
@@ -153,38 +155,70 @@ def main():
         # Print the table of targets
         Console().print(table)
         return
-    
+
+    # Get the target application/agent name.   
     # setting up the Target Application
     if "application_name" not in config["target"]:
         logger.error("Application name not found in the configuration file.")
         return
-
     application_name = config["target"]["application_name"]
-    application_type = config["target"]["application_type"]
+    # application_type = config["target"]["application_type"]
 
+     # Fetch the URL of the interface manager application.
     if "application_url" not in config["target"]:
         logger.error("Application URL not found in the configuration file.")
         return
-    
     application_url = config["target"]["application_url"]
-
-    if "agent_name" not in config["target"]:
-        logger.error("Agent name not found in the configuration file.")
-        return
+   
+    # target_id = db.get_target_id(target_name=application_name)
+    # if target_id is None:
+    #     logger.error(f"Target application '{application_name}' not found in the database.")
+    #     return
     
-    agent_name = config["target"]["agent_name"]
-
-    target_id = db.get_target_id(target_name=application_name)
-    if target_id is None:
-        logger.error(f"Target application '{application_name}' not found in the database.")
-        return
-    
-    target = db.get_target_by_id(target_id=target_id)
+    # Verify that the target application exists in the database
+    target = db.get_target_by_name(target_name=application_name)
     if target is None:
-        logger.error(f"Target application with ID {target_id} not found in the database.")
+        logger.error(f"Target application '{application_name}' not found in the database.")
         return
     else:
         logger.info(f"Target application found: {target.target_name} (ID: {target.target_id})")
+    
+    # Get the application type.
+    application_type = target.target_type
+    # MINOR workaround for DB vs Code differences.
+    if application_type == "WhatsApp":
+        application_type = "WHATSAPP_WEB"
+
+    # get the target's languages and domain specification
+    # if it is not specified, don't use them as constraints.
+    target_languages = target.target_languages
+    target_domain = target.target_domain
+
+    # Now, check if we ought to apply language and domain specificity constraint.
+    lang_names = None
+    if args.language_strict and target_languages is not None and len(target_languages) > 0:
+        logger.debug(f"Applying strict language matching for test case selection based on target's languages: {target_languages}")
+        lang_names = target_languages
+
+    # Check if we ought to apply domain specificity constraint.
+    domain_name = None
+    if args.domain_strict and target_domain is not None:
+        logger.debug(f"Applying strict domain matching for test case selection based on target's domain: {target_domain}")
+        domain_name = target_domain
+
+    # check if the agent_name is mentioned in the config file
+    # Ideally, the agent_name is useful only for WA based agents.
+    if "agent_name" not in config["target"]:
+        logger.error("Agent name not found in the configuration file.")
+        return
+    agent_name = config["target"]["agent_name"]
+    
+    # target = db.get_target_by_id(target_id=target_id)
+    # if target is None:
+    #     logger.error(f"Target application with ID {target_id} not found in the database.")
+    #     return
+    # else:
+    #     logger.info(f"Target application found: {target.target_name} (ID: {target.target_id})")
     
     # get the test plans
     if args.get_plans:
@@ -415,7 +449,7 @@ def main():
                 
                 # get the test cases for the metric
                 logger.debug(f"Fetching test cases for metric: {metric_name} (Plan: {plan_name}, Metric ID: {args.metric_id})")
-                testcases = db.get_testcases_by_metric(metric_name=metric_name, n=args.max_testcases)
+                testcases = db.get_testcases_by_metric(metric_name=metric_name, n=args.max_testcases, lang_names=lang_names, domain_name=domain_name)
                 if not testcases:
                     logger.error(f"No test cases found for metric: {metric_name} (Plan: {plan_name}, Metric ID: {args.metric_id})")
                     return
@@ -516,10 +550,9 @@ def main():
 
             # execute the test plan if no specific test case is provided
             else:
-
                 logger.debug(f"Executing test plan: {plan_name} (PlanID: {args.plan_id})")
                 # fetch the test cases of the test plan
-                testcases = db.get_testcases_by_testplan(plan_name=plan_name, n=args.max_testcases)
+                testcases = db.get_testcases_by_testplan(plan_name=plan_name, n=args.max_testcases, lang_names=lang_names, domain_name=domain_name)
                 if not testcases:
                     logger.error(f"No test cases found for plan: {plan_name} (PlanID: {args.plan_id})")
                     return
