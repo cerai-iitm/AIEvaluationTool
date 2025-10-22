@@ -23,6 +23,7 @@ class Prompts(Base):
     domain_id = Column(Integer, ForeignKey('Domains.domain_id'), nullable=False)  # Foreign key to Domains
     hash_value = Column(String(100), nullable=False, unique=True)  # Hash value for the prompt
     test_cases = relationship("TestCases", back_populates="prompt")  # Relationship to TestCases
+    domain = relationship("Domains", back_populates="prompts")  # Relationship to Domains
 
 class LLMJudgePrompts(Base):
     """ORM model for the LLMJudgePrompts table.
@@ -70,6 +71,7 @@ class Domains(Base):
     domain_name = Column(String(255), nullable=False)
 
     targets = relationship("Targets", back_populates="domain")
+    prompts = relationship("Prompts", back_populates="domain")
 
 class Responses(Base):
     """ORM model for the Responses table.
@@ -103,6 +105,21 @@ class TestCases(Base):
     judge_prompt = relationship("LLMJudgePrompts", back_populates="test_cases")
     run_details = relationship("TestRunDetails", back_populates="testcase")  # Relationship to TestRunDetails
     strategy = relationship("Strategies", back_populates="testcase")  # Relationship to Strategies
+    evaluation_detail = relationship("TestCaseEvaluationDetails", back_populates="testcase") # Relationship to TestCaseEvaluationDetails
+
+class TestCaseEvaluationDetails(Base):
+    """ORM model for the TestCaseEvaluationDetails table.
+    This class defines the structure of the TestCaseEvaluationDetails table in the database.
+    It stores detailed evaluation information for each test case.
+    """
+    __tablename__ = 'TestCaseEvaluationDetails'
+    
+    testcase_eval_id = Column(Integer, primary_key=True)
+    testcase_id = Column(Integer, ForeignKey('TestCases.testcase_id'), nullable=False)  # Foreign key to TestCases
+    evaluation_score = Column(Float, nullable=False)  # The evaluation score assigned to the test case
+    evaluation_reason = Column(Text, nullable=True)  # The reason or explanation for the evaluation score
+    evaluation_ts = Column(DateTime, nullable=False)  # Timestamp when the evaluation was performed
+    testcase = relationship("TestCases", back_populates="evaluation_detail") # Relationship to TestCases
 
 class TestPlans(Base):
     """ORM model for the TestPlans table.
