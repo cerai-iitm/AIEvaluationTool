@@ -86,6 +86,7 @@
                 "run-sweet-name-ultrices",
                 "-n3",
                 "--run-continue",
+                "--domain-strict"
                 //"--testcase-id", "149"
             ]
         },
