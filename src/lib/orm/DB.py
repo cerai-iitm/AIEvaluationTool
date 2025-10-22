@@ -354,6 +354,22 @@ class DB:
         except IntegrityError as e:
             self.logger.error(f"Domain '{domain_name}' already exists. Error: {e}")
             return -1
+        
+    def get_domain_id(self, domain_name: str) -> Optional[int]:
+        """
+        Fetches the ID of a domain by its name.
+        
+        Args:
+            domain_name (str): The name of the domain to fetch.
+        
+        Returns:
+            Optional[int]: The ID of the domain if found, otherwise None.
+        """
+        with self.Session() as session:
+            sql = select(Domains).where(Domains.domain_name == domain_name)
+            result = session.execute(sql).scalar_one_or_none()
+            #return result.domain_id if result else None
+            return getattr(result, 'domain_id', None) if result else None
 
     def get_domain_name(self, domain_id: int) -> Optional[str]:
         """
@@ -804,7 +820,7 @@ class DB:
             self.logger.error(f"Prompt already exists: {prompt} Error: {e}")
             return -1
         
-    def get_testcases_by_testplan(self, plan_name: str, n:int = 0, lang_name:Optional[str] = None, domain_name:Optional[str] = None) -> List[TestCase]:
+    def get_testcases_by_testplan(self, plan_name: str, n:int = 0, lang_names:Optional[List[str]] = None, domain_name:Optional[str] = None) -> List[TestCase]:
         """
         Fetches test cases associated with a specific test plan.
         
@@ -843,7 +859,7 @@ class DB:
             all_testcases = []
             # If there are multiple metrics, we will fetch test cases for each metric
             for metric in metrics:
-                testcases = self.get_testcases_by_metric(metric.metric_name, n=n_per_metric, lang_name=lang_name, domain_name=domain_name)
+                testcases = self.get_testcases_by_metric(metric.metric_name, n=n_per_metric, lang_names=lang_names, domain_name=domain_name)
                 all_testcases.extend(testcases)
 
             self.logger.debug(f"Fetched {len(all_testcases)} test cases for test plan '{plan_name}'.")
@@ -861,27 +877,34 @@ class DB:
             # If n is 0, we return all test cases, otherwise we return a random sample of n test cases
             return all_testcases
         
-    def get_testcases_by_metric(self, metric_name:str, n:int = 0, lang_name:Optional[str] = None, domain_name:Optional[str] = None) -> List[TestCase]:
+    def get_testcases_by_metric(self, metric_name:str, n:int = 0, lang_names:Optional[List[str]] = None, domain_name:Optional[str] = None) -> List[TestCase]:
         """
-        Fetches test cases based on the metric name, language name, and domain name.
+        Fetches test cases based on the metric name, language names, and domain name.
         
         Args:
             metric_name (str): The name of the metric to filter test cases.
             n (int): The number of test cases to fetch. If 0, fetches all matching test cases.
-            lang_name (Optional[str]): The name of the language to filter test cases.
+            lang_names (Optional[List[str]]): The names of the languages to filter test cases.
             domain_name (Optional[str]): The name of the domain to filter test cases.
         
         Returns:
             List[TestCase]: A list of TestCase objects that match the criteria.
         """
+        domain_id = -1
+        if domain_name:
+            domain_id = self.get_domain_id(domain_name)
+
         with self.Session() as session:
             self.logger.debug(f"Fetching test cases for metric '{metric_name}' with limit {n} ..")
             sql = select(TestCases).join(Metrics, TestCases.metrics).where(Metrics.metric_name == metric_name)
 
-            if lang_name:
-                sql = sql.join(Languages, Languages.lang_name == lang_name)
+            if lang_names:
+                # @NOTE: THIS IS TO BE TESTED YET.
+                self.logger.debug(f"Filtering test cases by languages: {lang_names}")
+                sql = sql.join(Prompts, TestCases.prompt).join(Languages, Prompts.lang_id == Languages.lang_id).where(Languages.lang_name.in_(lang_names))
             if domain_name:
-                sql = sql.join(Domains, Domains.domain_name == domain_name)
+                self.logger.debug(f"Filtering test cases by domain: {domain_name} (ID: {domain_id})")
+                sql = sql.join(Prompts, TestCases.prompt).where(Prompts.domain_id == domain_id)
             if n > 0:
                 # If n is specified, we order them randomly and limit the number of test cases returned
                 sql = sql.order_by(func.random()).limit(n)
@@ -1140,6 +1163,31 @@ class DB:
             result = session.execute(sql).scalar_one_or_none()
             if result is None:
                 self.logger.error(f"Target with ID '{target_id}' does not exist.")
+                return None
+            # Return a Target object with the fetched data
+            return Target(target_id=getattr(result, 'target_id'),
+                          target_name=str(result.target_name),
+                          target_type=str(result.target_type),
+                          target_description=str(result.target_description),
+                          target_url=str(result.target_url),
+                          target_domain=result.domain.domain_name,
+                          target_languages=[lang.lang_name for lang in result.langs])
+        
+    def get_target_by_name(self, target_name: str) -> Optional[Target]:
+        """
+        Fetches a target by its name.
+        
+        Args:
+            target_name (str): The name of the target to fetch.
+        
+        Returns:
+            Optional[Target]: The Target object if found, otherwise None.
+        """
+        with self.Session() as session:
+            sql = select(Targets).where(Targets.target_name == target_name)
+            result = session.execute(sql).scalar_one_or_none()
+            if result is None:
+                self.logger.error(f"Target with name '{target_name}' does not exist.")
                 return None
             # Return a Target object with the fetched data
             return Target(target_id=getattr(result, 'target_id'),
