@@ -29,7 +29,7 @@ const Dashboard = () => {
     { title: "Test cases", count: 1635, onClick: () => navigate("/test-cases") },
     { title: "Targets", count: 534, onClick: () => navigate("/targets") },
     { title: "Domains", count: 6, onClick: () => navigate("/domains") },
-    { title: "Strategies", count: 44 },
+    { title: "Strategies", count: 44, onClick: () => navigate("/strategies") },
     { title: "Languages", count: 9, onClick: () => navigate("/languages") },
     { title: "Responses", count: 288, onClick: () => navigate("/responses") },
     { title: "Prompts", count: 407, onClick: () => navigate("/prompts") },
