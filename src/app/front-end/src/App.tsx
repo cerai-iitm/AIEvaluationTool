@@ -13,8 +13,10 @@ import NotFound from "./pages/NotFound";
 import Targets from "./pages/Targets";
 import Prompts from "./pages/Prompts";
 import DomainList from "./pages/Domains";
+import StrategyList from "./pages/Strategies";
 import LlmPrompts from "./pages/LlmPrompts";
 import LanguageList from "./pages/Language";
+
 
 const queryClient = new QueryClient();
 
@@ -32,8 +34,10 @@ const App = () => (
           <Route path="/responses" element={<Responses />} />
           <Route path="/prompts" element={<Prompts/>}/>
           <Route path="/domains" element={<DomainList/>} />
+          <Route path="/strategies" element={<StrategyList/>} />
           <Route path="/llm-prompts" element={<LlmPrompts/>} />
           <Route path="/languages" element={<LanguageList />} />
+          <Route path="/strategies" element={<StrategyList />} />
           <Route path="/users" element={<Users />} />
           <Route path="/user-history/:username" element={<UserHistory />} />
           <Route path="*" element={<NotFound />} />
