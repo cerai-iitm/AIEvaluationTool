@@ -144,7 +144,7 @@ Create a database in the MariaDB server and authorize a database user with full 
 
 Open a terminal on your machine and run:
 
-```bash
+```bash`
 python3 src/app/importer/main.py --config "path to the config file"
 ```
 
