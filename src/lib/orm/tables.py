@@ -1,5 +1,8 @@
 from sqlalchemy.orm import DeclarativeBase, relationship
-from sqlalchemy import Column, Integer, Text, DateTime, String, Enum, ForeignKey, Float
+from sqlalchemy import Column, Integer, Text, DateTime, String, Enum, ForeignKey, Float, Boolean
+from sqlalchemy_utils import ChoiceType
+from datetime import datetime
+import uuid
 
 class Base(DeclarativeBase):
     """Base class for all ORM models.
@@ -239,3 +242,25 @@ class TestRunDetails(Base):
     plan = relationship("TestPlans", back_populates="run_details")
     testcase = relationship("TestCases", back_populates="run_details")
     conversation = relationship("Conversations", back_populates="detail")  # Relationship to Conversations
+
+
+class user(Base):
+    """ORM model for the Users table.
+    This class defines the structure of the Users table in the database.
+    """
+
+    ROLE = (
+        ('admin', 'Admin'),
+        ('manager', 'Manager'),
+        ('curator', 'Curator'),
+        ('viewer', 'Viewer'),
+    )
+    __tablename__ = 'Users'
+    
+    user_id = Column(String(8), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_name = Column(String(16), nullable=False, unique=True)
+    role = Column(ChoiceType(ROLE), nullable=False)
+    password = Column(String(16), nullable=False)
+    is_active = Column(Boolean, nullable=False)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)

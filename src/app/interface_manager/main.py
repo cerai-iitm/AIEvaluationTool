@@ -1,10 +1,39 @@
-# main.py
+"""Interface Manager FastAPI application entrypoint.
+
+When this file is executed directly (python3 main.py) the interpreter's
+import path doesn't include the repository `src/` directory. The project
+uses top-level imports like `lib...` and `app...` which live under
+`src/`. Insert `src/` at the front of sys.path so those absolute imports
+work without requiring the caller to set PYTHONPATH.
+"""
+import os
+import sys
+
+# Ensure the project's `src` directory is on sys.path so top-level imports
+# like `lib` resolve when running this module directly.
+THIS_DIR = os.path.dirname(__file__)
+SRC_DIR = os.path.abspath(os.path.join(THIS_DIR, "..", ".."))
+if SRC_DIR not in sys.path:
+    sys.path.insert(0, SRC_DIR)
 
 from routers import common, chat_router, api
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from database import init_db, seed_users
+from contextlib import asynccontextmanager
 
 app = FastAPI(title="LLM Evaluation Suite - Interface Manager")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("Starting application...")
+    init_db()
+    seed_users()
+    yield
+    logger.info("Shutting down application...")
+
+
 
 # Enable CORS so the Front-end_AIEvaluationTool can call these APIs from the browser
 app.add_middleware(
