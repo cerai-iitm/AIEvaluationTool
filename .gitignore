@@ -23,3 +23,5 @@ improvement_eval.py
 .deepeval
 saved_evaluations
 test_4_*.py
+*.png
+new_fairness_stereotype_recognition.py

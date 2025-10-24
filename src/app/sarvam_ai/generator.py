@@ -8,6 +8,7 @@ import torch
 import sys, os, logging
 import numpy as np
 from sarvamai import SarvamAI
+import math
 
 # Adjust the path to include the "lib" directory
 sys.path.append(os.path.dirname(__file__) + "/../../")  
@@ -106,4 +107,16 @@ class SarvamAIGenerator:
             ]
         )
         return response.choices[0].message.content
+    
+    def get_perplexity(self, text:str):
+        """
+        This function basically returns the perplexity obtained from a text.
+        """
+        inputs = self.tokenizer(text, return_tensors="pt", truncation=True, max_length=512).to(self.device)
+        with torch.no_grad():
+            outputs = self.model(**inputs, labels=inputs["input_ids"])
+            loss = outputs.loss
+            perplexity = math.exp(loss.item()) # this calculates the perplexity in the text -> e ^(- 1/N SUM(1->N) (log(w_{i}|c_{0:i-1})) )
+        return perplexity
+
         

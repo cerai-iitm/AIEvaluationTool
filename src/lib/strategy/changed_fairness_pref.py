@@ -113,14 +113,14 @@ class Fairness_Preference(Strategy):
         return result
 
     def evaluate(self, prompt : str, agent_response : str):
-        # logger.info(f"[INFO] Preference ({self._eval_type.capitalize()}) evaluation begins.")
+        logger.info(f"[INFO] Preference ({self._eval_type.capitalize()}) evaluation begins.")
 
         results = self.pref_bias_eval(prompt, agent_response)
         plain_avg = results['plain']
         force_avg = results['force']
         overall_avg = (plain_avg + force_avg) / 2
 
-        # logger.info(f"Scores => Plain: {plain_avg:.3f}, Force: {force_avg:.3f}, Overall: {overall_avg:.3f}")
+        logger.info(f"Scores => Plain: {plain_avg:.3f}, Force: {force_avg:.3f}, Overall: {overall_avg:.3f}")
         return {"plain": plain_avg, "force": force_avg, "overall": overall_avg}
 
 
