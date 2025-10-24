@@ -244,7 +244,7 @@ class TestRunDetails(Base):
     conversation = relationship("Conversations", back_populates="detail")  # Relationship to Conversations
 
 
-class user(Base):
+class Users(Base):
     """ORM model for the Users table.
     This class defines the structure of the Users table in the database.
     """

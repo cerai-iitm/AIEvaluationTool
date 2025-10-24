@@ -13,8 +13,8 @@ from datetime import datetime
 sys.path.append(os.path.dirname(__file__) + '/..')
 
 from data import Prompt, Language, Domain, Response, TestCase, TestPlan, \
-    Strategy, Metric, LLMJudgePrompt, Target, Conversation, Run, RunDetail
-from .tables import Base, Languages, Domains, Metrics, Responses, TestCases, TestPlans, Prompts, Strategies, LLMJudgePrompts, Targets, Conversations, TestRuns, TestRunDetails
+    Strategy, Metric, LLMJudgePrompt, Target, Conversation, Run, RunDetail, User
+from .tables import Base, Languages, Domains, Metrics, Responses, TestCases, TestPlans, Prompts, Strategies, LLMJudgePrompts, Targets, Conversations, TestRuns, TestRunDetails, Users
 from lib.utils import get_logger
 
 class DB:    
@@ -46,6 +46,26 @@ class DB:
         # Set up logging
         self.logger = get_logger(__name__, loglevel=loglevel)
 
+    @property
+    def users(self) -> List[User]:
+        """
+        Fetches all users from the database.
+        
+        Returns:
+            List[User]: A list of User objects or None if no users are found.
+        """
+        with self.Session() as session:
+            self.logger.debug("Fetching all users ..")
+            return [User(user_id=getattr(user, 'user_id'),
+                        user_name=getattr(user, 'user_name'),
+                        role=getattr(user, 'role'),
+                        password=getattr(user, 'password'),
+                        is_active=getattr(user, 'is_active'),
+                        created_at=getattr(user, 'created_at').isoformat() if getattr(user, 'created_at') else None,
+                        updated_at=getattr(user, 'updated_at').isoformat() if getattr(user, 'updated_at') else None) 
+                    for user in session.query(Users).all()]
+        return None
+    
     @property
     def languages(self) -> List[Language]:
         """
@@ -1973,4 +1993,222 @@ class DB:
                                  evaluation_reason=getattr(result, "evaluation_reason"),
                                  evaluation_ts=getattr(result, "evaluation_ts"),
                                  conversation_id=getattr(result, 'conversation_id')) for result in results]
+
+    def add_or_get_user(self, user: User) -> str:
+        """
+        Adds a new user to the database or fetches its ID if it already exists.
+        
+        Args:
+            user (User): The User object to be added.
+        
+        Returns:
+            str: The ID of the newly added user, or -1 if it already exists.
+        """
+        try:
+            with self.Session() as session:
+                # Check if the user already exists in the database
+                existing_user = session.query(Users).filter_by(user_name=user.user_name).first()
+                if existing_user:
+                    self.logger.debug(f"Returning the existing user ID: {existing_user.user_id}")
+                    # Return the ID of the existing user
+                    return getattr(existing_user, "user_id")
+                
+                self.logger.debug(f"Adding new user: {user.user_name}")
+                
+                # Create the Users object
+                new_user = Users(user_name=user.user_name,
+                                role=user.role,
+                                password=user.password,
+                                is_active=user.is_active)
+                
+                # Add the new user to the session
+                session.add(new_user)
+                # Commit the session to save the new user
+                session.commit()
+                # Ensure user_id is populated
+                session.refresh(new_user)
+                
+                self.logger.debug(f"User added successfully: {new_user.user_id}")
+                
+                # Return the ID of the newly added user
+                return getattr(new_user, "user_id")
+        except IntegrityError as e:
+            # Handle the case where the user already exists
+            self.logger.error(f"User already exists: {user}. Error: {e}")
+            return -1
+    
+    def get_user_by_id(self, user_id: str) -> Optional[User]:
+        """
+        Fetches a user by its ID.
+        
+        Args:
+            user_id (str): The ID of the user to fetch.
+        
+        Returns:
+            Optional[User]: The User object if found, otherwise None.
+        """
+        with self.Session() as session:
+            sql = select(Users).where(Users.user_id == user_id)
+            result = session.execute(sql).scalar_one_or_none()
+            if result is None:
+                self.logger.error(f"User with ID '{user_id}' does not exist.")
+                return None
+            return User(user_id=getattr(result, 'user_id'),
+                       user_name=getattr(result, 'user_name'),
+                       role=getattr(result, 'role'),
+                       password=getattr(result, 'password'),
+                       is_active=getattr(result, 'is_active'),
+                       created_at=result.created_at.isoformat() if getattr(result, 'created_at') else None,
+                       updated_at=result.updated_at.isoformat() if getattr(result, 'updated_at') else None)
+    
+    def get_user_by_name(self, user_name: str) -> Optional[User]:
+        """
+        Fetches a user by its username.
+        
+        Args:
+            user_name (str): The username of the user to fetch.
+        
+        Returns:
+            Optional[User]: The User object if found, otherwise None.
+        """
+        with self.Session() as session:
+            sql = select(Users).where(Users.user_name == user_name)
+            result = session.execute(sql).scalar_one_or_none()
+            if result is None:
+                self.logger.error(f"User with name '{user_name}' does not exist.")
+                return None
+            return User(user_id=getattr(result, 'user_id'),
+                       user_name=getattr(result, 'user_name'),
+                       role=getattr(result, 'role'),
+                       password=getattr(result, 'password'),
+                       is_active=getattr(result, 'is_active'),
+                       created_at=result.created_at.isoformat() if getattr(result, 'created_at') else None,
+                       updated_at=result.updated_at.isoformat() if getattr(result, 'updated_at') else None)
+    
+    def authenticate_user(self, user_name: str, password: str) -> Optional[User]:
+        """
+        Authenticates a user by username and password.
+        
+        Args:
+            user_name (str): The username of the user.
+            password (str): The password of the user (should be hashed).
+        
+        Returns:
+            Optional[User]: The User object if authentication succeeds, otherwise None.
+        """
+        user = self.get_user_by_name(user_name)
+        if user is None:
+            self.logger.error(f"User '{user_name}' does not exist.")
+            return None
+        
+        if not user.is_active:
+            self.logger.error(f"User '{user_name}' is not active.")
+            return None
+        
+        if user.password != password:
+            self.logger.error(f"Invalid password for user '{user_name}'.")
+            return None
+        
+        self.logger.debug(f"User '{user_name}' authenticated successfully.")
+        return user
+    
+    def update_user(self, user: User) -> bool:
+        """
+        Updates an existing user in the database.
+        
+        Args:
+            user (User): The User object with updated information.
+        
+        Returns:
+            bool: True if the user was updated successfully, False otherwise.
+        """
+        try:
+            with self.Session() as session:
+                # Fetch the existing user
+                existing_user = session.query(Users).filter_by(user_id=user.user_id).first()
+                if existing_user is None:
+                    self.logger.error(f"User with ID '{user.user_id}' does not exist.")
+                    return False
+                
+                self.logger.debug(f"Updating user: {user.user_name}")
+                
+                # Update the user's attributes
+                existing_user.user_name = user.user_name
+                existing_user.role = user.role
+                existing_user.password = user.password
+                existing_user.is_active = user.is_active
+                existing_user.updated_at = datetime.utcnow()
+                
+                # Commit the session to save the updated user
+                session.commit()
+                
+                self.logger.debug(f"User updated successfully: {user.user_id}")
+                return True
+        except IntegrityError as e:
+            self.logger.error(f"Failed to update user: {user}. Error: {e}")
+            return False
+    
+    def delete_user(self, user_id: str) -> bool:
+        """
+        Deletes a user from the database.
+        
+        Args:
+            user_id (str): The ID of the user to delete.
+        
+        Returns:
+            bool: True if the user was deleted successfully, False otherwise.
+        """
+        try:
+            with self.Session() as session:
+                # Fetch the existing user
+                existing_user = session.query(Users).filter_by(user_id=user_id).first()
+                if existing_user is None:
+                    self.logger.error(f"User with ID '{user_id}' does not exist.")
+                    return False
+                
+                self.logger.debug(f"Deleting user: {existing_user.user_name}")
+                
+                # Delete the user
+                session.delete(existing_user)
+                # Commit the session to save the deletion
+                session.commit()
+                
+                self.logger.debug(f"User deleted successfully: {user_id}")
+                return True
+        except IntegrityError as e:
+            self.logger.error(f"Failed to delete user with ID '{user_id}'. Error: {e}")
+            return False
+    
+    def deactivate_user(self, user_id: str) -> bool:
+        """
+        Deactivates a user account.
+        
+        Args:
+            user_id (str): The ID of the user to deactivate.
+        
+        Returns:
+            bool: True if the user was deactivated successfully, False otherwise.
+        """
+        try:
+            with self.Session() as session:
+                # Fetch the existing user
+                existing_user = session.query(Users).filter_by(user_id=user_id).first()
+                if existing_user is None:
+                    self.logger.error(f"User with ID '{user_id}' does not exist.")
+                    return False
+                
+                self.logger.debug(f"Deactivating user: {existing_user.user_name}")
+                
+                # Deactivate the user
+                existing_user.is_active = False
+                existing_user.updated_at = datetime.utcnow()
+                
+                # Commit the session to save the changes
+                session.commit()
+                
+                self.logger.debug(f"User deactivated successfully: {user_id}")
+                return True
+        except IntegrityError as e:
+            self.logger.error(f"Failed to deactivate user with ID '{user_id}'. Error: {e}")
+            return False
 

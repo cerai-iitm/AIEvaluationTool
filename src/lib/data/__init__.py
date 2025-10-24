@@ -11,4 +11,5 @@ from .target import Target
 from .conversation import Conversation
 from .run import Run
 from .run_detail import RunDetail
+from .user import User, Login
 

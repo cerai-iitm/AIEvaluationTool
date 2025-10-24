@@ -1,16 +1,17 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from lib.orm.tables import user
-from sqlalchemy.ext.declarative import declarative_base
+from lib.orm.tables import Users
+from utils import helpers
+# from sqlalchemy.ext.declarative import declarative_base
 
 
 URL_DATABASE = "mysql+pymysql://root:password@localhost:3306/test"
 
-engine = create_engine(URL_DATABASE)
+engine = create_engine(URL_DATABASE)  # done
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)  # probably done 
 
-Base = declarative_base()                                                                                  
+# Base = declarative_base()                                                                                  
 
 
 def get_db():
@@ -21,15 +22,17 @@ def get_db():
         db.close()
 
 def init_db():
-    user.__table__.create(bind=engine, checkfirst=True)
+    Users.__table__.create(bind=engine, checkfirst=True) # done
 
 
 def seed_users():
     db = SessionLocal()
-    if not db.query(user).first():
+    if not db.query(Users).first():
         users = [
-            user(user_id="ABC001", password=helpers.hash_password("abc@001"), is_active=True),
-            user(user_id="DEF001", password=helpers.hash_password("def@001"), is_active=True),
+            Users(user_name="admin", password=helpers.hash_password("admin123"), role="admin", is_active=True),
+            Users(user_name="manager", password=helpers.hash_password("manager123"), role="manager", is_active=True),
+            Users(user_name="curator", password=helpers.hash_password("curator123"), role="curator", is_active=True),
+            Users(user_name="user", password=helpers.hash_password("viewer123"), role="viewer", is_active=True),
         ]
         db.add_all(users)
         db.commit()
