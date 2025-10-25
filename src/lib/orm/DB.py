@@ -14,7 +14,8 @@ sys.path.append(os.path.dirname(__file__) + '/..')
 
 from data import Prompt, Language, Domain, Response, TestCase, TestPlan, \
     Strategy, Metric, LLMJudgePrompt, Target, Conversation, Run, RunDetail
-from .tables import Base, Languages, Domains, Metrics, Responses, TestCases, TestPlans, Prompts, Strategies, LLMJudgePrompts, Targets, Conversations, TestRuns, TestRunDetails
+from .tables import Base, Languages, Domains, Metrics, Responses, TestCases, \
+    TestPlans, Prompts, Strategies, LLMJudgePrompts, Targets, Conversations, TestRuns, TestRunDetails
 from lib.utils import get_logger
 
 class DB:    
@@ -102,6 +103,52 @@ class DB:
             return [TestPlan(plan_name=getattr(plan, 'plan_name'), 
                              plan_description=getattr(plan, 'plan_description'),
                              plan_id=getattr(plan, 'plan_id')) for plan in session.query(TestPlans).all()]
+
+    @property
+    def prompts(self) -> List[Prompt]:
+        """
+        Fetches all prompts from the database.
+        
+        Returns:
+            List[Prompt]: A list of Prompt objects or None if no prompts are found.
+        """
+        with self.Session() as session:
+            self.logger.debug("Fetching all prompts ..")
+            return [Prompt(system_prompt=getattr(prompt, 'system_prompt'), 
+                           user_prompt=getattr(prompt, 'user_prompt'),
+                           prompt_id=getattr(prompt, 'prompt_id'),
+                           domain_id=getattr(prompt, 'domain_id'),
+                           lang_id=getattr(prompt, 'lang_id')) for prompt in session.query(Prompts).all()]
+        
+    @property
+    def responses(self) -> List[Response]:
+        """
+        Fetches all responses from the database.
+        
+        Returns:
+            List[Response]: A list of Response objects or None if no responses are found.
+        """
+        with self.Session() as session:
+            self.logger.debug("Fetching all responses ..")
+            return [Response(response_text=getattr(response, 'response_text'), 
+                             response_type=getattr(response, 'response_type'),
+                             response_id=getattr(response, 'response_id'),
+                             prompt_id=getattr(response, 'prompt_id'),
+                             lang_id=getattr(response, 'lang_id')) for response in session.query(Responses).all()]
+        
+    @property
+    def llm_judge_prompts(self) -> List[LLMJudgePrompt]:
+        """
+        Fetches all LLM judge prompts from the database.
+        
+        Returns:
+            List[LLMJudgePrompt]: A list of LLMJudgePrompt objects or None if no judge prompts are found.
+        """
+        with self.Session() as session:
+            self.logger.debug("Fetching all LLM judge prompts ..")
+            return [LLMJudgePrompt(prompt=getattr(judge_prompt, 'prompt'),
+                                   lang_id=getattr(judge_prompt, 'lang_id'),
+                                   prompt_id=getattr(judge_prompt, 'prompt_id')) for judge_prompt in session.query(LLMJudgePrompts).all()]
 
     @property
     def testcases(self) -> List[TestCase]:
@@ -214,6 +261,48 @@ class DB:
                 r = Run(target=target, run_name=run_name, run_id=run_id, status=run_status, start_ts=start_ts, end_ts=end_ts, run_count=run_count)
                 runs.append(r)
             return runs
+        
+    def get_prompt_language_statistics(self) -> dict:
+        """
+        Fetches statistics of language distribution in prompts.
+        
+        Returns:
+            dict: A dictionary containing language ID and its corresponding prompt count.
+        """
+        with self.Session() as session:
+            self.logger.debug("Fetching prompt language statistics ..")
+            sql = select(Prompts.lang_id, func.count(Prompts.prompt_id).label('prompt_count')).group_by(Prompts.lang_id)
+            result = session.execute(sql).all()
+            stats = {row.lang_id : row.prompt_count for row in result}
+            return stats
+        
+    def get_response_language_statistics(self) -> dict:
+        """
+        Fetches statistics of language distribution in responses.
+        
+        Returns:
+            dict: A dictionary containing language ID and its corresponding response count.
+        """
+        with self.Session() as session:
+            self.logger.debug("Fetching response language statistics ..")
+            sql = select(Responses.lang_id, func.count(Responses.response_id).label('response_count')).group_by(Responses.lang_id)
+            result = session.execute(sql).all()
+            stats = {row.lang_id : row.response_count for row in result}
+            return stats
+        
+    def get_llm_judge_prompt_language_statistics(self) -> dict:
+        """
+        Fetches statistics of language distribution in LLM judge prompts.
+        
+        Returns:
+            dict: A dictionary containing language ID and its corresponding judge prompt count.
+        """
+        with self.Session() as session:
+            self.logger.debug("Fetching LLM judge prompt language statistics ..")
+            sql = select(LLMJudgePrompts.lang_id, func.count(LLMJudgePrompts.prompt_id).label('judge_prompt_count')).group_by(LLMJudgePrompts.lang_id)
+            result = session.execute(sql).all()
+            stats = {row.lang_id : row.judge_prompt_count for row in result}
+            return stats
     
     def add_or_get_strategy_id(self, strategy_name: str) -> int:
         """
@@ -710,45 +799,45 @@ class DB:
                                   lang_id=getattr(result, 'lang_id', Language.autodetect),  # Get the language ID from kwargs if provided
                                   digest=result.hash_value)
         
-    def add_or_get_judge_prompt(self, judge_prompt: LLMJudgePrompt) -> int:
-        """
-        Adds a new judge prompt to the database.
+    # def add_or_get_judge_prompt(self, judge_prompt: LLMJudgePrompt) -> int:
+    #     """
+    #     Adds a new judge prompt to the database.
         
-        Args:
-            judge_prompt (LLMJudgePrompt): The LLMJudgePrompt object to be added.
+    #     Args:
+    #         judge_prompt (LLMJudgePrompt): The LLMJudgePrompt object to be added.
         
-        Returns:
-            int: The ID of the newly added judge prompt, or -1 if it already exists.
-        """
-        try:
-            with self.Session() as session:
-                # check of the judge prompt already exists in the database.
-                existing_judge_prompt = session.query(LLMJudgePrompts).filter_by(hash_value=judge_prompt.digest).first()
-                if existing_judge_prompt:
-                    # Return the ID of the existing judge prompt
-                    return getattr(existing_judge_prompt, "prompt_id")
+    #     Returns:
+    #         int: The ID of the newly added judge prompt, or -1 if it already exists.
+    #     """
+    #     try:
+    #         with self.Session() as session:
+    #             # check of the judge prompt already exists in the database.
+    #             existing_judge_prompt = session.query(LLMJudgePrompts).filter_by(hash_value=judge_prompt.digest).first()
+    #             if existing_judge_prompt:
+    #                 # Return the ID of the existing judge prompt
+    #                 return getattr(existing_judge_prompt, "prompt_id")
                     
-                self.logger.debug(f"Adding new judge prompt: {judge_prompt.prompt}")
-                # create the orm object for the judge prompt to insert into the database table.
-                new_judge_prompt = LLMJudgePrompts(prompt=judge_prompt.prompt, 
-                                                   lang_id=getattr(judge_prompt, "lang_id", Language.autodetect),  # Get the language ID from kwargs if provided
-                                                   hash_value=judge_prompt.digest)
+    #             self.logger.debug(f"Adding new judge prompt: {judge_prompt.prompt}")
+    #             # create the orm object for the judge prompt to insert into the database table.
+    #             new_judge_prompt = LLMJudgePrompts(prompt=judge_prompt.prompt, 
+    #                                                lang_id=getattr(judge_prompt, "lang_id", Language.autodetect),  # Get the language ID from kwargs if provided
+    #                                                hash_value=judge_prompt.digest)
                 
-                # Add the new judge prompt to the session
-                session.add(new_judge_prompt)
-                # Commit the session to save the new judge prompt
-                session.commit()
-                # Ensure judge_prompt_id is populated
-                session.refresh(new_judge_prompt)  
+    #             # Add the new judge prompt to the session
+    #             session.add(new_judge_prompt)
+    #             # Commit the session to save the new judge prompt
+    #             session.commit()
+    #             # Ensure judge_prompt_id is populated
+    #             session.refresh(new_judge_prompt)  
 
-                self.logger.debug(f"Judge prompt added successfully: {new_judge_prompt.prompt_id}")
+    #             self.logger.debug(f"Judge prompt added successfully: {new_judge_prompt.prompt_id}")
                 
-                # Return the ID of the newly added judge prompt
-                return getattr(new_judge_prompt, "prompt_id")
-        except IntegrityError as e:
-            # Handle the case where the judge prompt already exists
-            self.logger.error(f"Judge prompt already exists: {judge_prompt}. Error: {e}")
-            return -1
+    #             # Return the ID of the newly added judge prompt
+    #             return getattr(new_judge_prompt, "prompt_id")
+    #     except IntegrityError as e:
+    #         # Handle the case where the judge prompt already exists
+    #         self.logger.error(f"Judge prompt already exists: {judge_prompt}. Error: {e}")
+    #         return -1
     
     def get_prompt(self, prompt_id: int) -> Optional[Prompt]:
         """
@@ -771,7 +860,59 @@ class DB:
                           system_prompt=str(result.system_prompt),
                           lang_id=getattr(result, 'lang_id'),
                           domain_id=getattr(result, 'domain_id'),
-                          digest=result.hash_value)
+                          hash_value=result.hash_value)
+        
+    def add_or_update_prompt(self, prompt: Prompt) -> int:
+        """
+        Adds a new prompt to the database or updates it if it already exists.
+        
+        Args:
+            prompt (Prompt): The Prompt object to be added or updated.
+        Returns:
+            int: The ID of the newly added or updated prompt.
+        """
+        try:
+            with self.Session() as session:
+                # check if the prompt already exists in the database.
+                existing_prompt = session.query(Prompts).filter_by(hash_value=prompt.digest).first()
+                if existing_prompt:
+                    self.logger.debug(f"Updating existing prompt ID: {existing_prompt.prompt_id}")
+                    # Update the existing prompt
+                    existing_prompt.user_prompt = prompt.user_prompt
+                    existing_prompt.system_prompt = prompt.system_prompt
+                    existing_prompt.lang_id = prompt.lang_id
+                    existing_prompt.domain_id = prompt.domain_id
+                    existing_prompt.hash_value = prompt.digest
+                    session.commit()
+                    return getattr(existing_prompt, "prompt_id")
+                
+                self.logger.debug(f"Adding new prompt: {prompt.user_prompt}")
+
+                # Default to the default language ID if not provided
+                lang_id = prompt.kwargs.get("lang_id", Language.autodetect)  # Get the language ID from kwargs if provided
+                domain_id = prompt.kwargs.get("domain_id", Domain.general)  # Get the domain ID from kwargs if provided
+
+                # create the orm object for the prompt to insert into the database table.
+                new_prompt = Prompts(user_prompt=prompt.user_prompt, 
+                                    system_prompt=prompt.system_prompt, 
+                                    lang_id=lang_id,
+                                    domain_id=domain_id,
+                                    hash_value=prompt.digest)
+                
+                # Add the new prompt to the session
+                session.add(new_prompt)
+                # Commit the session to save the new prompt
+                session.commit()
+                # Ensure prompt_id is populated
+                session.refresh(new_prompt)  
+
+                self.logger.debug(f"Prompt added successfully: {new_prompt.prompt_id}")
+                
+                # Return the ID of the newly added prompt
+                return getattr(new_prompt, "prompt_id")
+        except IntegrityError as e:
+            self.logger.error(f"Error adding or updating prompt: {prompt} Error: {e}")
+            return -1
 
     def add_or_get_prompt(self, prompt: Prompt) -> int:
         """
@@ -904,7 +1045,7 @@ class DB:
                 sql = sql.join(Prompts, TestCases.prompt).join(Languages, Prompts.lang_id == Languages.lang_id).where(Languages.lang_name.in_(lang_names))
             if domain_name:
                 self.logger.debug(f"Filtering test cases by domain: {domain_name} (ID: {domain_id})")
-                sql = sql.join(Prompts, TestCases.prompt).where(Prompts.domain_id == domain_id)
+                sql = sql.join(Prompts, TestCases.prompt).where((Prompts.domain_id == domain_id) | (Prompts.domain_id == 1))  # include prompts with domain_id = 1 (general) as well.
             if n > 0:
                 # If n is specified, we order them randomly and limit the number of test cases returned
                 sql = sql.order_by(func.random()).limit(n)
