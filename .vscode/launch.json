@@ -96,10 +96,10 @@
                 "1",
                 "--execute",
                 "--run-name",
-                "run-sweet-name-ultrices",
+                "new_run_with_august_ai",
                 "-n20",
                 "--run-continue",
-                "--domain-strict"
+                "--language-strict"
                 //"--testcase-id", "149"
             ]
         },

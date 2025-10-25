@@ -8,8 +8,8 @@
     },
     "target": {
         "application_type": "WHATSAPP_WEB",
-        "application_name": "Vaidya AI",
+        "application_name": "August AI",
         "application_url": "http://localhost:8000",
-        "agent_name": "Vaidya AI"
+        "agent_name": "August AI"
     }
 }

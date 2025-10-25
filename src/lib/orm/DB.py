@@ -1040,7 +1040,6 @@ class DB:
             sql = select(TestCases).join(Metrics, TestCases.metrics).where(Metrics.metric_name == metric_name)
 
             if lang_names:
-                # @NOTE: THIS IS TO BE TESTED YET.
                 self.logger.debug(f"Filtering test cases by languages: {lang_names}")
                 sql = sql.join(Prompts, TestCases.prompt).join(Languages, Prompts.lang_id == Languages.lang_id).where(Languages.lang_name.in_(lang_names))
             if domain_name:
@@ -1134,7 +1133,7 @@ class DB:
                         self.logger.error(f"Prompt '{testcase.prompt.user_prompt}' already exists. Cannot add test case.")
                         return False
                     
-                    judge_prompt_id = self.add_or_get_judge_prompt(testcase.judge_prompt) if testcase.judge_prompt else None
+                    judge_prompt_id = self.add_or_get_llm_judge_prompt(testcase.judge_prompt) if testcase.judge_prompt else None
                     if judge_prompt_id == -1:
                         self.logger.error(f"Judge prompt '{getattr(testcase.judge_prompt, "prompt")}' already exists. Cannot add test case.")
                         return False
