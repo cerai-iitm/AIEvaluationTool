@@ -15,10 +15,6 @@ from rich.table import Table
 from datetime import datetime
 import randomname  # Importing the randomname library for generating random names
 
-
-#@NOTE To add domain specific testcase sampling.
-
-
 sys.path.append(os.path.dirname(__file__) + "/../../")  # Adjust the path to include the "lib" directory
 
 from lib.interface_manager import InterfaceManagerClient  # Import the InterfaceManagerClient from the lib directory
@@ -116,7 +112,7 @@ def main():
     db_url = f"mariadb+mariadbconnector://{config['database']['user']}:{config['database']['password']}@{config['database']['host']}:{config['database']['port']}/{config['database']['database']}"
     try:
         logger.info(f"Database URL: {db_url}")
-        db = DB(db_url=db_url, debug=True, loglevel=loglevel)
+        db = DB(db_url=db_url, debug=False, loglevel=loglevel)
     except Exception as e:
         logger.error(f"Failed to connect to the database: {e}")
         return
@@ -326,6 +322,11 @@ def main():
                     logger.error(f"No run found with name '{args.run_name}'.  If you want to create a new one, pass '--run-continue' to the cmdline args.")
                     return
             else:
+                # check if the run is associated with the same target application
+                if run.target != target.target_name:
+                    logger.error(f"Run '{args.run_name}' is associated with target '{run.target}', which does not match the current target '{target.target_name}'.")
+                    return
+                
                 if run.status == "COMPLETED":
                     if args.run_continue:
                         run.end_ts = None  # Reset the end timestamp to allow continuation

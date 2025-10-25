@@ -7,9 +7,9 @@
         "database": "aieval"
     },
     "target": {
-        "application_type": "WEBAPP",
-        "application_name": "CPGRAMS",
-        "application_url": "https://cpgramsaichatbot.com/",
-        "agent_name": "CPGRAMS"
+        "application_type": "WHATSAPP_WEB",
+        "application_name": "August AI",
+        "application_url": "http://localhost:8000",
+        "agent_name": "August AI"
     }
 }
