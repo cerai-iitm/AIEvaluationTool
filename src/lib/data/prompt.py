@@ -25,6 +25,21 @@ class Prompt(BaseModel):
         """
         super().__init__(system_prompt=system_prompt, user_prompt=user_prompt, kwargs=kwargs)
 
+    def __setattr__(self, name: str, value: Any) -> None:
+        """
+        Allows setting additional keyword arguments as attributes.
+        Args:
+            name (str): The name of the attribute to set.
+            value (Any): The value to set for the attribute.
+        """
+        if name.startswith('_'):
+            # Prevent access to private attributes
+            raise AttributeError(f"'{self.__class__.__name__}' object does not allow setting the attribute '{name}'")
+
+        # set or update the attribute in kwargs
+        self.kwargs[name] = value
+        # return super().__setattr__(name, value)
+
     def __getattr__(self, name: str) -> Any:
         """
         Allows access to additional keyword arguments as attributes.
