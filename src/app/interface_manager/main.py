@@ -19,7 +19,7 @@ if SRC_DIR not in sys.path:
 from routers import common, chat_router, api
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from database import init_db, seed_users
+# from database import init_db, seed_users
 from contextlib import asynccontextmanager
 
 app = FastAPI(title="LLM Evaluation Suite - Interface Manager")

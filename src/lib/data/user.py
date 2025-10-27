@@ -1,4 +1,3 @@
-# @author: Gopinathan
 # @date: 2025-10-24
 #
 # This module defines the User class, which represents a user in the AI evaluation system.
