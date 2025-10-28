@@ -137,8 +137,8 @@ def login_webapp_cpgrams(driver: webdriver.Chrome) -> bool:
         password_xpath = "//input[@id='password']"
         login_button_xpath = "//button[normalize-space(.)='Sign In']"
 
-        email = "email"
-        password = "password"
+        email = "test@gmail.com"
+        password = "password@123"
 
         # Check for post-login success
         if is_logged_in(driver):
@@ -195,7 +195,7 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int = 3):
 
             # Get current messages before sending
             previous_messages = driver.find_elements(
-                By.XPATH, "//div[@class='select-text']/p"
+                By.XPATH, '//div[@class="relative leading-relaxed text-sm"]/div[@class="select-text selection:bg-blue-500 selection:text-white"]/p'
             )
             previous_count = len(previous_messages)
 
@@ -215,7 +215,7 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int = 3):
             WebDriverWait(driver, 50).until(
                 lambda d: len(d.find_elements(
                     By.XPATH,
-                    "//div[@class='select-text']/p"
+                    '//div[@class="relative leading-relaxed text-sm"]/div[@class="select-text selection:bg-blue-500 selection:text-white"]/p'
                 )) > previous_count
             )
 
@@ -223,7 +223,7 @@ def send_message(driver: webdriver.Chrome, prompt: str, max_retries: int = 3):
 
             # Fetch latest message
             bot_messages = driver.find_elements(
-                By.XPATH, "//div[@class='select-text']/p"
+                By.XPATH, '//div[@class="relative leading-relaxed text-sm"]/div[@class="select-text selection:bg-blue-500 selection:text-white"]/p'
             )
             new_response = bot_messages[-1].text.strip() if bot_messages else "[No response received]"
 
@@ -246,7 +246,7 @@ def send_prompt_cpgrams(chat_id: int, prompt_list: List[str], mode: str = "singl
     results = []
 
     if mode == "single_window":
-        profile_folder_path = os.path.expanduser('~') + "/whatsapp_profile"
+        profile_folder_path = os.path.expanduser('~') + "/test_profile"
         logger.info(f"Using profile folder: {profile_folder_path}")
 
         if is_profile_in_use(profile_folder_path) and cached_driver is not None:
