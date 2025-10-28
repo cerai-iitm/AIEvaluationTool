@@ -25,7 +25,7 @@
       },
       "ChatPage": {
         "prompt_input_box_element": "//textarea[@id='react-transliterate-input'][@type='textarea']",
-        "agent_response_element": "//div[@class='select-text']/p"
+        "agent_response_element": "//div[@class="relative leading-relaxed text-sm"]/div[@class="select-text selection:bg-blue-500 selection:text-white"]/p"
       }
     },
     "openweb-ui": 
