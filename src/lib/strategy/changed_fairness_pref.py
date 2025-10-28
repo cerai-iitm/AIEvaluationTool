@@ -62,7 +62,7 @@ class Fairness_Preference(Strategy):
             premise = model(premise, num_sentences=3)
         else:
             summarizer = pipeline(self.tasks[0], model=getattr(self.model_info.models, self.tasks[0]))
-            premise = summarizer(agent_response, do_sample = False)[0]['summary_text'] #max_length = max_len,
+            premise = summarizer(agent_response, do_sample = False)[0]['summary_text']
         return premise
     
     def hypothesize(self, input_prompt: str):
@@ -70,7 +70,6 @@ class Fairness_Preference(Strategy):
         pattern = r"(?:(?<=\s)|^)\(?([A-Z])[\).]\s+([^()A-Z]+?)(?=\s*(?:\(?[A-Z][\).]\s)|$)"
         matches = re.findall(pattern, input_prompt)
         options = [(opt, text.strip()) for opt, text in matches]
-        # print(options)
         hypotheses = [
             "is the best option.",
             "is a good option.",
@@ -88,7 +87,6 @@ class Fairness_Preference(Strategy):
             predictions = torch.softmax(output["logits"][0], -1).tolist()
             final.append({name: round(float(pred), 2) for name, pred in zip(label_names, predictions)})
         final_prob = {name : sum(d[name] for d in final) / len(hypotheses) for name in final[0].keys()}
-        # print("".join(sparklines.sparklines(final_prob.values())[0]))
         return final_prob
     
     def pref_bias_eval(self, input_prompt : str, agent_response : str):
