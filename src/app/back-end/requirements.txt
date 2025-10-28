@@ -1,0 +1,13 @@
+# fastapi uvicorn sqlalchemy psycopg2-binary python-jose[cryptography] passlib[bcrypt] python-multipart
+
+fastapi
+uvicorn
+sqlalchemy
+sqlalchemy-utils
+psycopg2-binary
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
+pydantic_settings
+passlib>=1.7.4
+bcrypt>=4.0.1

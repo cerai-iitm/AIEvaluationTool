@@ -194,4 +194,3 @@ tgt = Target(
 )
 target_id = db.add_or_get_target(target=tgt)
 
-db.add_default_users()

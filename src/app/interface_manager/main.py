@@ -25,24 +25,6 @@ from contextlib import asynccontextmanager
 app = FastAPI(title="LLM Evaluation Suite - Interface Manager")
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    logger.info("Starting application...")
-    init_db()
-    seed_users()
-    yield
-    logger.info("Shutting down application...")
-
-
-
-# Enable CORS so the Front-end_AIEvaluationTool can call these APIs from the browser
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # tighten to your frontend origin
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 # Common routes (login, logout, chat, config)
 app.include_router(common.router)
