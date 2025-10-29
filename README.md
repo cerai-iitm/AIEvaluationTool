@@ -3,6 +3,10 @@ A comprehensive evaluation tool for verifying conversational AI applications.
 
 This project offers a robust, end-to-end framework for evaluating the performance and reliability of conversational AI systems across a variety of real-world scenarios and quality metrics. The AIEvaluationTool is designed to automate the process of testing, analyzing, and benchmarking conversational agents, ensuring they meet high standards of accuracy, safety, and user experience.
 
+## Architecture
+
+![The overall architecture](screenshots/Arch.png)
+
 ## Directory Structure
 
 ```
@@ -80,6 +84,7 @@ Before installing Python dependencies, ensure you have the following prerequisit
 - **Python 3.10+**
 - **Google Chrome Browser**
 - **ChromeDriver** (must match your Chrome version; this is a mandatory install for interface automation)
+- **MariaDB Server**
 
 ---
 
@@ -91,7 +96,6 @@ Install all dependencies for each component using the provided `requirements.txt
 # For installing dependencies
 pip install -r requirements.txt
 ```
-
 ---
 
 ### 4. **Setting up the XPath and Credentials of the Accounts**
@@ -159,7 +163,7 @@ To keep credentials secure and maintainable, here is the template of the `creden
 
 ---
 
-### 5. **Model Setup for LLM-based Evaluation**
+### 4. **Model Setup for LLM-based Evaluation**
 
 To use the LLM-as-a-judge mechanism for evaluation, you must have a language model available. You can either:
 - **Run a model locally** (e.g., using Ollama, OpenAI-compatible local models, etc.), or
@@ -172,6 +176,11 @@ To use the LLM-as-a-judge mechanism for evaluation, you must have a language mod
 - Any OpenAI-compatible local model
 
 **Configuration:**
+- Ensure that `.env.example` in the root folder is initialized with appropriate values to create a `.env` file.
+- `OLLAMA_URL` points to the installed Ollama instance's endpoint address.  Typically it is `http://localhost:11434/`
+- `LLM_AS_JUDGE_MODEL` points to the name of the LLM (loaded via Ollama) that we want to use as a judge.  Typically, it is `llama3.1:70b`.
+- `PERSPECTIVE_API_KEY` should have the API KEY of Perspective service for toxicity detection.
+- `GPU_URL` should point to the Sarvam AI RestAPI server (./src/app/sarvam_ai/) hosted elsewhere.  Typically, the URL is `http://localhost:8000`.
 - For API-based models, set your API key in a `.env` file or as an environment variable (e.g., `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`).
 - For local models, ensure the model server is running and accessible at the expected endpoint (see your model provider's documentation).
 
@@ -179,7 +188,7 @@ Ensure your model is accessible and properly configured before running the evalu
 
 ---
 
-### 6. **Prepare Data Files**
+### 5. **Prepare Data Files**
 
 Ensure the `data/` directory contains the following files (already present in the repository):
 - `DataPoints.json` (sample test dataset)
@@ -195,13 +204,15 @@ Ensure the `data/` directory contains the following files (already present in th
 
 **Step 1: Import datapoints into Database**
 
+Create a database in the MariaDB server and authorize a database user with full privileges.  Replace the host, port number, username, password, and database name in the `config.json` file. 
+
 Open a terminal on your machine and run:
 
 ```bash
 python3 src/app/importer/main.py --config "path to the config file"
 ```
 
-Replace the host, port number, username, password, and database name in the `config.json` file. After running the importer script, the terminal shows the following outputs.
+After running the importer script, the terminal shows the following outputs.
 
 ![Importing datapoints to database](screenshots/importing%20data%20to%20database.png)
 
