@@ -5,6 +5,7 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     BASE_URL: str = "http://localhost:8000"
+    AIEVAL_DB_URL: str = "mariadb+mariadbconnector://root:password@localhost:3306/test"
 
     class Config:
         env_file = ".env"
