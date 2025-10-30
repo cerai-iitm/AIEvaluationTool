@@ -124,10 +124,6 @@ def load_creds() -> dict:
 # --------------------------------------------------------------------
 # Connectivity Helpers
 # --------------------------------------------------------------------
-# --------------------------------------------------------------------
-# Connectivity Helpers (Improved)
-# --------------------------------------------------------------------
-import requests
 
 def is_connected(test_url: str = "https://www.google.com", timeout: int = 5) -> bool:
     """Check internet connectivity using HTTPS GET (more reliable than raw sockets)."""
@@ -393,7 +389,8 @@ def send_message_whatsapp(driver: webdriver.Chrome, prompt: str):
     while attempt < max_retries:
         try:
             if not check_and_recover_connection():
-                return "Failed: Internet unavailable"
+                logger.warning("No internet connection available.")
+                return "No response received"
             
             logger.info(f"Sending prompt to the bot: {prompt}")
             # @bugfix.  The XPath has changed! -- Sudar 02.08.2025
@@ -476,8 +473,8 @@ def send_message_whatsapp(driver: webdriver.Chrome, prompt: str):
                 combined_response = " ".join(response_texts)
                 return combined_response
             else:
-                logger.warning("No response message found.")
-                return ["No response received"]
+                logger.warning("No response message received from whatsapp.")
+                return "No response received"
 
         except Exception as e:
             attempt += 1
@@ -486,7 +483,8 @@ def send_message_whatsapp(driver: webdriver.Chrome, prompt: str):
                 logger.info("Retrying chat...")
                 time.sleep(0.3)
             else:
-                return ["Error during chat after retries"]
+                logger.error("Max chat retries reached. Aborting.")
+                return "No response received"
 
 def send_message_webapp(
     driver: webdriver.Chrome,
@@ -511,7 +509,7 @@ def send_message_webapp(
 
     if not input_xpath or not response_xpath:
         logger.error(f"{app_name} ChatPage config incomplete: {chat_cfg}")
-        return "[Error: Invalid ChatPage config]"
+        return "No response received"
 
     # --- helpers (ensure interactable, clear, type) ---
     def _ensure_input_interactable(timeout=10):
@@ -672,7 +670,8 @@ def send_message_webapp(
                 continue
 
             # unchanged since last poll -> check stability window
-            if time.time() - last_change >= stability_window:
+            wait_time = time.time() - last_change
+            if wait_time >= stability_window:
                 return last_text.strip()
         # timed out, return last seen
         return last_text.strip()
@@ -682,9 +681,10 @@ def send_message_webapp(
     for attempt in range(1, max_retries + 1):
         try:
             if not check_and_recover_connection(driver):
-                return "[Failed: Internet unavailable]"
+                return "No response: Internet unavailable"
 
             logger.info(f"[{app_name}] Attempt {attempt}: preparing to send prompt.")
+            logger.info(f"Sending prompt to the bot: {prompt}")
 
             # Baseline snapshot BEFORE sending (index-aware)
             pre_snapshot = _snapshot_texts()
@@ -708,9 +708,13 @@ def send_message_webapp(
                     logger.debug(f"[{app_name}] send_button click failed: {e}")
 
             # Wait for any change (append or update) and for it to stabilize
+            start_wait = time.time()
             final_text = _wait_for_change_and_stability(pre_snapshot)
+            elapsed = time.time() - start_wait
+
             if final_text:
                 logger.info(f"[{app_name}] Received final response (len={len(final_text)})")
+                logger.info("(Waited: %.2fs) Received response from %s: %s", elapsed, app_name, final_text)
                 return final_text
 
             logger.warning(f"[{app_name}] No new response after {response_timeout}s (attempt {attempt}).")
@@ -733,4 +737,4 @@ def send_message_webapp(
     # final failure
     if last_exception:
         logger.error(f"[{app_name}] Last exception before giving up: {traceback.format_exception_only(type(last_exception), last_exception)}")
-    return "[Error: Max retries exceeded]"
+    return "No response received"
