@@ -92,6 +92,7 @@ def main():
         logger.error(f"No run details found for run '{args.run_name}'.")
         return
     
+    print(run_details)
     # let's group the all the run_details by strategy for computational convenience.
     grouped_run_details = {}
     for detail in run_details:
@@ -146,7 +147,11 @@ def main():
             if not conversation.agent_response:
                 logger.error(f"Agent response not found for conversation ID '{detail.conversation_id}' in run '{run.run_name}'.")
                 continue
-
+            
+            """
+            just need to change here, pass conversation and testcase objects
+            """
+            
             logger.debug(f"Evaluating strategy '{strategy_name}' for Testcase '{detail.testcase_name}'")
             score = strategy.execute(prompts=[testcase.prompt.user_prompt], 
                                      expected_responses=[testcase.response.response_text] if testcase.response else [None],

@@ -14,7 +14,7 @@ from .logger import get_logger
 
 logger = get_logger("indian_lang_grammatical_check")
 
-nltk.download('punkt')
+# nltk.download('punkt')
 
 class IndianLangGrammaticalCheck(Strategy):
     def __init__(self, model=None, tokenizer=None, name="indian_lang_grammatical_check", **kwargs):

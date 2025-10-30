@@ -25,8 +25,9 @@ load_dotenv(dotenv_path)
 warnings.filterwarnings("ignore")
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
-with open(os.path.join(dir_path, os.getenv("DEFAULT_VALUES")), "r") as f:
-    dflt_vals = json.load(f, object_hook=lambda d: SimpleNamespace(**d))
+with open(os.path.join(dir_path, os.getenv("DEFAULT_VALUES_PATH")), "r") as f:
+    vals = json.load(f)
+    dflt_vals = json.loads(json.dumps(vals["llm_judge"]), object_hook=lambda d: SimpleNamespace(**d))
 
 class CustomOllamaModel(DeepEvalBaseLLM):
     def __init__(self, model_name : str, url : str = os.getenv("OLLAMA_URL", dflt_vals.ollama_endpoint), *args, **kwargs):

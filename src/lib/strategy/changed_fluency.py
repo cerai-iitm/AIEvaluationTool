@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import gaussian_kde
 import re
-from utils_new import FileLoader
+from .utils_new import FileLoader
 import warnings
 
 from .strategy_base import Strategy

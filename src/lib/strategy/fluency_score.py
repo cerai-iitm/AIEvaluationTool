@@ -2,7 +2,7 @@
 import numpy as np
 from nltk.tokenize import sent_tokenize
 from typing import Optional
-import nltk
+# import nltk
 import requests
 import os
 from dotenv import load_dotenv
@@ -15,7 +15,7 @@ from .logger import get_logger
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 
-nltk.download('punkt')
+# nltk.download('punkt')
 logger = get_logger("fleuncy_score")
 
 class IndianLanguageFluencyScorer(Strategy):
