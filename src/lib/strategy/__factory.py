@@ -1,8 +1,7 @@
 from strategy import get_class
+import time
 
-# create_mapp()
-# load_strategies()
 cls = get_class("IndianLanguageFluencyScorer")
 if cls:
     obj = cls(name="indian_lang_fluency")
-    print(obj.evaluate("This is what I do."))
+    print(obj.evaluate("This is a sentence."))

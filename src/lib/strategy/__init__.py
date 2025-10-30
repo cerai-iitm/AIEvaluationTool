@@ -1,12 +1,12 @@
 import importlib
 # import pkgutil
-import inspect
+# import inspect
 import os
 import json
 import ast
 
 
-CACHE_PATH = os.path.join(os.path.dirname(__file__), "_strategy_registery_cache.json")
+CACHE_PATH = os.path.join(os.path.dirname(__file__), ".strategy_registery_cache.json")
 REGISTERY = {}
 MAPP = {}
 
@@ -40,8 +40,10 @@ def get_class(name:str):
     cls = REGISTERY.get(name)
     if cls:    
         return cls
+    
+    load_cache()
 
-    mod_name = MAPP[name]
+    mod_name = MAPP.get(name)
     if not mod_name:
         create_mapp()
         mod_name = MAPP.get(name)
@@ -72,10 +74,9 @@ def load_cache():
     if os.path.exists(CACHE_PATH):
         with open(CACHE_PATH, "r") as f:
             MAPP = json.load(f)
-    else:
-        create_mapp()
 
-load_cache()
+if __name__ == "__main__":
+    load_cache()
 
 # def load_strategies():
 #     start = time.time()

@@ -26,3 +26,4 @@ test_4_*.py
 *.png
 new_fairness_stereotype_recognition.py
 *.pkl
+.strategy_*.json
