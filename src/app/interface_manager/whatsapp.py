@@ -53,12 +53,12 @@ def send_prompt_whatsapp(chat_id: int, prompt_list: list[str]) -> list[dict]:
     driver = login_whatsapp()
     if not driver:
         logger.error("Could not initialize WhatsApp Web driver.")
-        return [{"chat_id": chat_id, "prompt": p, "response": "[Driver init failed]"} for p in prompt_list]
+        return [{"chat_id": chat_id, "prompt": p, "response": "No response received"} for p in prompt_list]
 
     try:
         if not search_llm(driver):
             logger.error("Could not open chat with LLM contact.")
-            return [{"chat_id": chat_id, "prompt": p, "response": "[Chat not found]"} for p in prompt_list]
+            return [{"chat_id": chat_id, "prompt": p, "response": "No response received"} for p in prompt_list]
 
         for prompt in prompt_list:
             response = send_whatsapp_message(driver, prompt)
