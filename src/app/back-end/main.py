@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from database.database import init_db, seed_users
-from api.v1.endpoints import auth, dashboard, testCase
+from api.v1.endpoints import auth, dashboard, testCase, response
 from middleware.middleware import AuthMiddleware
 
 
@@ -40,12 +40,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"]
 )
-app.add_middleware(AuthMiddleware)
+# app.add_middleware(AuthMiddleware)
 
 
 app.include_router(auth.auth_router, tags=["Authentication"])
 app.include_router(dashboard.dashboard_router, tags=["Dashboard"])
 app.include_router(testCase.testcase_router, tags=["Test Cases"])
+app.include_router(response.response_router, tags=["Responses"])
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

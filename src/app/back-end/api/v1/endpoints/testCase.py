@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse
+from schemas import TestCase
 import os
 import sys
 
@@ -7,8 +8,11 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../../")))
 
 from lib.orm.DB import DB
+from lib.orm.tables import TestCases
 
 AIEVAL_DB_URL='mariadb+mariadbconnector://root:password@localhost:3306/test'
+
+
 testcase_router = APIRouter(prefix="/api/testcases")
 
 _db_instance: DB | None = None
@@ -32,6 +36,7 @@ db = DB(db_url=AIEVAL_DB_URL, debug=False)
 @testcase_router.get("/t", summary="Get a test case")
 async def list_testcase():
     testcase_response = db.testcases
+    domain_name = db.domains
     
     items = []
     
@@ -44,7 +49,14 @@ async def list_testcase():
         # response_text = getattr(tc, "response_text", None)
         # prompt = getattr(tc, "prompt", None)
         # response = getattr(tc, "response", None)
+
+        domain_name = db.get_domain_name(tc.prompt.domain_id)
         
+        # if domain_name is not None:
+        #     domain_name = domain_name.domain_name
+        # else:
+        #     domain_name = "Unknown"
+
         items.append({
             "id": tc.testcase_id if tc.testcase_id else None,
             "testcase_name": tc.name if tc.name else None,
@@ -53,10 +65,35 @@ async def list_testcase():
             "system_prompt": tc.prompt.system_prompt if tc.prompt else None,
             "response_text": tc.response.response_text if tc.response else None,
             "prompt": tc.judge_prompt.prompt if tc.judge_prompt else None,
-            "domain": tc.prompt.kwargs.domain_id if tc.prompt.kwargs else None
+            "domain": domain_name
         })
     
     return JSONResponse(content={"items": items})
+
+
+@testcase_router.put("/t/{id}", summary="Update a test case by id")
+async def update_testcase(id: int, testcase: TestCase):
+    print(id)
+    testcase_update = db.Session().query(TestCases).filter(TestCases.testcase_id == id).first()
+    # testcase_sample = db.get_testcase_by_id(id)
+    # print(testcase_sample)
+    if not testcase_update:
+        raise HTTPException(status_code=404, detail="Test case not found")
+
+    testcase_update.name = testcase.testcase_name
+    testcase_update.strategy.strategy_name = testcase.strategy_name
+    # testcase_update.domain_name = testcase.domain_name
+    testcase_update.prompt.user_prompt = testcase.user_prompt
+    testcase_update.prompt.system_prompt = testcase.system_prompt
+    testcase_update.response.response_text = testcase.response_text
+    # testcase_update.judge_prompt.prompt = testcase.prompt if testcase.prompt else None
+    if testcase_update.judge_prompt is not None:
+        testcase_update.judge_prompt.prompt = testcase.prompt
+    
+
+    db.Session().commit()
+
+    return JSONResponse(content={"message": "Test case updated successfully"})
 
 
 #---------------------------------------------------
