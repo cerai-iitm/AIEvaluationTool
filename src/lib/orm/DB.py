@@ -174,7 +174,7 @@ class DB:
             # Fetch all test cases from the database
             testcases: List[TestCase] = []
             for testcase in session.query(TestCases).all():
-                name = getattr(testcase, "testcase_name")
+                testcase_name = getattr(testcase, "testcase_name")
                 testcase_id = getattr(testcase, "testcase_id")
 
                 prompt = Prompt(
@@ -200,7 +200,7 @@ class DB:
                 )
 
                 test_case = TestCase(
-                    name=name,
+                    name=testcase_name,
                     metric="Unknown",  # Metric is not fetched here, can be set later
                     prompt=prompt,
                     strategy=strategy.strategy_name,

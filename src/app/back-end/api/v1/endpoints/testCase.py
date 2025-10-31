@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse
-from schemas import TestCase
+from schemas import TestCase, TestCaseUpdate
 import os
 import sys
 
@@ -9,6 +9,11 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.
 
 from lib.orm.DB import DB
 from lib.orm.tables import TestCases
+from lib.orm.tables import Responses
+from lib.data.response import Response
+from lib.data.prompt import Prompt
+from lib.data.llm_judge_prompt import LLMJudgePrompt
+from sqlalchemy.orm import joinedload
 
 AIEVAL_DB_URL='mariadb+mariadbconnector://root:password@localhost:3306/test'
 
@@ -94,6 +99,169 @@ async def update_testcase(id: int, testcase: TestCase):
     db.Session().commit()
 
     return JSONResponse(content={"message": "Test case updated successfully"})
+
+#---------------------------------------------------
+@testcase_router.get("/{testcase_id}", response_model=TestCase )
+def get_testcase(testcase_id: int):
+    session = db.Session()
+    try:
+        db_testcase = (
+            session.query(TestCases)
+            .options(
+                joinedload(TestCases.response),
+                joinedload(TestCases.prompt),
+                joinedload(TestCases.strategy),
+                joinedload(TestCases.judge_prompt),
+            )
+            .filter(TestCases.testcase_id == testcase_id)
+            .first()
+        )
+        if not db_testcase:
+            raise HTTPException(status_code=404, detail="Test case not found")
+
+        # Collect related data while session is active
+        strategy_name = None
+        maybe_strategy = getattr(db_testcase, "strategy", None)
+        if maybe_strategy is not None:
+            strategy_name = getattr(maybe_strategy, "strategy_name", None)
+            if strategy_name is None and isinstance(maybe_strategy, str):
+                strategy_name = maybe_strategy
+
+        user_prompt = None
+        system_prompt = None
+        domain_name = None
+        prompt_obj = getattr(db_testcase, "prompt", None)
+        if prompt_obj is not None:
+            user_prompt = getattr(prompt_obj, "user_prompt", None)
+            system_prompt = getattr(prompt_obj, "system_prompt", None)
+            domain_id = getattr(prompt_obj, "domain_id", None)
+            if domain_id is not None:
+                domain_name = db.get_domain_name(domain_id)
+
+        response_text = None
+        response_obj = getattr(db_testcase, "response", None)
+        if response_obj is not None:
+            response_text = getattr(response_obj, "response_text", None)
+
+        judge_prompt_text = None
+        judge_prompt_obj = getattr(db_testcase, "judge_prompt", None)
+        if judge_prompt_obj is not None:
+            judge_prompt_text = getattr(judge_prompt_obj, "prompt", None)
+
+        return TestCase(
+            testcase_id=getattr(db_testcase, "testcase_id", None),
+            testcase_name=getattr(db_testcase, "testcase_name", None),
+            strategy_name=strategy_name,
+            domain_name=domain_name,
+            user_prompt=user_prompt,
+            system_prompt=system_prompt,
+            response_text=response_text,
+            prompt=judge_prompt_text,
+        )
+    finally:
+        session.close()
+
+
+@testcase_router.put("/{testcase_id}", response_model=TestCaseUpdate)
+async def update_testcase(testcase_id: int, testcase: TestCaseUpdate, db: DB = Depends(_get_db)):
+    session = db.Session()
+    try:
+        db_testcase = (
+            session.query(TestCases)
+            .options(
+                joinedload(TestCases.response),
+                joinedload(TestCases.prompt),
+                joinedload(TestCases.strategy),
+                joinedload(TestCases.judge_prompt),
+            )
+            .filter(TestCases.testcase_id == testcase_id)
+            .first()
+        )
+        if not db_testcase:
+            raise HTTPException(status_code=404, detail="Test case not found")
+
+        # Update strategy by name -> strategy_id
+        if testcase.strategy_name is not None:
+            current_strategy_name = (
+                db_testcase.strategy.strategy_name if db_testcase.strategy else None
+            )
+            if testcase.strategy_name != current_strategy_name:
+                new_strategy_id = db.add_or_get_strategy_id(testcase.strategy_name)
+                if new_strategy_id == -1:
+                    raise HTTPException(status_code=500, detail="Failed to add/get strategy")
+                session.query(TestCases).filter(TestCases.testcase_id == testcase_id).update({TestCases.strategy_id: new_strategy_id}, synchronize_session=False)
+                db_testcase.strategy_id = new_strategy_id
+
+        # Update Prompt (user/system) -> prompt_id
+        if testcase.user_prompt is not None or testcase.system_prompt is not None:
+            existing_user = db_testcase.prompt.user_prompt if db_testcase.prompt else None
+            existing_system = db_testcase.prompt.system_prompt if db_testcase.prompt else None
+            new_user = testcase.user_prompt if testcase.user_prompt is not None else existing_user
+            new_system = testcase.system_prompt if testcase.system_prompt is not None else existing_system
+            if new_user != existing_user or new_system != existing_system:
+                lang_id = getattr(db_testcase.prompt, "lang_id", None)
+                domain_id = getattr(db_testcase.prompt, "domain_id", None)
+                new_prompt = Prompt(system_prompt=new_system, user_prompt=new_user, lang_id=lang_id, domain_id=domain_id)
+                new_prompt_id = db.add_or_get_prompt(new_prompt)
+                if new_prompt_id == -1:
+                    raise HTTPException(status_code=500, detail="Failed to add/get prompt")
+                session.query(TestCases).filter(TestCases.testcase_id == testcase_id).update({TestCases.prompt_id: new_prompt_id}, synchronize_session=False)
+                db_testcase.prompt_id = new_prompt_id
+
+        # Update Response text -> response_id
+        if testcase.response_text is not None:
+            existing_resp_text = db_testcase.response.response_text if db_testcase.response else None
+            if testcase.response_text != existing_resp_text:
+                # Preserve response_type, language and existing prompt relation
+                resp_type = (
+                    getattr(db_testcase.response, "response_type", None) if db_testcase.response else None
+                ) or "GT"
+                prompt_id_for_resp = db_testcase.prompt_id
+                lang_id = getattr(db_testcase.prompt, "lang_id", None)
+                new_response = Response(
+                    response_text=testcase.response_text,
+                    response_type=resp_type,
+                    prompt_id=prompt_id_for_resp,
+                    lang_id=lang_id,
+                )
+                new_response_id = db.add_or_get_response(new_response, prompt_id_for_resp)
+                if new_response_id == -1:
+                    raise HTTPException(status_code=500, detail="Failed to add/get response")
+                session.query(TestCases).filter(TestCases.testcase_id == testcase_id).update({TestCases.response_id: new_response_id}, synchronize_session=False)
+                db_testcase.response_id = new_response_id
+
+        # Update judge prompt text -> judge_prompt_id
+        if testcase.prompt is not None:
+            existing_judge = db_testcase.judge_prompt.prompt if db_testcase.judge_prompt else None
+            if testcase.prompt != existing_judge:
+                jp = LLMJudgePrompt(prompt=testcase.prompt, lang_id=getattr(db_testcase.prompt, "lang_id", None))
+                new_judge_id = db.add_or_get_judge_prompt(jp)
+                if new_judge_id == -1:
+                    raise HTTPException(status_code=500, detail="Failed to add/get judge prompt")
+                session.query(TestCases).filter(TestCases.testcase_id == testcase_id).update({TestCases.judge_prompt_id: new_judge_id}, synchronize_session=False)
+                db_testcase.judge_prompt_id = new_judge_id
+
+        session.commit()
+        # Re-load to ensure we return the latest persisted FK values
+        latest = (
+            session.query(TestCases)
+            .filter(TestCases.testcase_id == testcase_id)
+            .first()
+        )
+        return JSONResponse({
+            "testcase_id": testcase_id,
+            "strategy_name": testcase.strategy_name,
+            "strategy_id": getattr(latest, "strategy_id", None),
+            "prompt_id": getattr(latest, "prompt_id", None),
+            "user_prompt": testcase.user_prompt,
+            "system_prompt": testcase.system_prompt,
+            "response_text": testcase.response_text,
+            "response_id": db_testcase.response_id,
+            "judge_prompt": testcase.prompt,
+            "judge_prompt_id": db_testcase.judge_prompt_id,
+        }, status_code=200)
+    finally:
+        session.close()
 
 
 #---------------------------------------------------
