@@ -5,15 +5,16 @@ from typing import Optional
 # import nltk
 import requests
 import os
-from dotenv import load_dotenv
-from os.path import join, dirname
+# from dotenv import load_dotenv
+# from os.path import join, dirname
 import json
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import gaussian_kde
-import re
+# import re
 from .utils_new import FileLoader
 import warnings
+from ..data import TestCase, Conversation
 
 from .strategy_base import Strategy
 from .logger import get_logger
@@ -61,8 +62,8 @@ class IndianLanguageFluencyScorer(Strategy):
         plt.legend()
         plt.savefig(path)
     
-    def evaluate(self, agent_response:str):
-        score = self.get_score(agent_response)
+    def evaluate(self, testcase:TestCase, conversation:Conversation):
+        score = self.get_score(conversation.agent_response)
         ex_results = self.run_examples()
         probs = {}
         for k, v in ex_results.items():
@@ -71,7 +72,7 @@ class IndianLanguageFluencyScorer(Strategy):
             dist_int = dist(interval) # kde applied to the interval
             probs[k] = np.trapezoid(dist_int, interval)
         # self.save_res_as_img(ex_results, "images/perplexity_dist.png")
-        print(f"{agent_response} : {score}, {probs}")
+        # print(f"{conversation.agent_response} : {score}, {probs}")
         probs_as_lst = list(probs.values())
         final_score = 1 if max(probs_as_lst) == probs_as_lst[0] else 0 # we need to return 0 if non fluent 1 if fluent
         logger.info(f"Fluency Score: {final_score}")

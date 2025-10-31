@@ -6,6 +6,7 @@ import warnings
 from typing import List, Tuple
 from sentence_transformers import SentenceTransformer, util
 from pprint import pprint
+from ..data import TestCase, Conversation
 
 from .strategy_base import Strategy
 from .logger import get_logger
@@ -87,11 +88,11 @@ class EntityRecognition(Strategy):
         f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
         return round(f1, 4)
 
-    def evaluate(self, agent_response: str, expected_response: str) -> float:
+    def evaluate(self, testcase:TestCase, conversation:Conversation) -> float:
         """
         Evaluates the agent response against expected and returns only the F1 score.
         """
-        result =  self.ner_recognition(expected_str=expected_response, response_str=agent_response)
+        result =  self.ner_recognition(expected_str=testcase.response.response_text, response_str=conversation.agent_response)
         logger.info(f"Result: {result}")
         return result
         

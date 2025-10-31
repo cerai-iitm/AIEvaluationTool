@@ -1,7 +1,6 @@
-from strategy import get_class
-import time
+from strategy import get_class, map_name_to_class
 
-cls = get_class("IndianLanguageFluencyScorer")
+cls = get_class(map_name_to_class("indian_lang_fluency"))
 if cls:
-    obj = cls(name="indian_lang_fluency")
+    obj = cls()
     print(obj.evaluate("This is a sentence."))

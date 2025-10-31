@@ -12,8 +12,9 @@ from deepeval.test_case import LLMTestCase, LLMTestCaseParams
 from deepeval.metrics import GEval
 from deepeval.metrics.g_eval.schema import Steps, ReasonScore
 from ollama import Client, AsyncClient
-from pydantic import BaseModel
-from pprint import pprint
+# from pydantic import BaseModel
+# from pprint import pprint
+from ..data import TestCase, Conversation
 
 from .strategy_base import Strategy
 sys.path.append(os.path.dirname(__file__) + '/..')
@@ -98,12 +99,12 @@ class LLMJudgeStrategy(Strategy):
         if not self.base_url:
             self.logger.warning("OLLAMA_URL is not set in environment.")
 
-    def evaluate(self, agent_response: str, expected_response: Optional[str]=None):
+    def evaluate(self, testcase:TestCase, conversation:Conversation): #agent_response: str, expected_response: Optional[str]=None
         self.logger.debug("Evaluating agent response using LLM judge...")
         testcase = LLMTestCase(
             input = self.prompt,
-            actual_output=agent_response,
-            expected_output=expected_response,
+            actual_output=conversation.agent_response,
+            expected_output=testcase.response.response_text,
             retrieval_context=[self.system_prompt]
         )
         eval_score = self.metric.measure(testcase)

@@ -8,8 +8,9 @@ import re
 import json
 from types import SimpleNamespace
 import warnings
-import sparklines
+# import sparklines
 import os
+from ..data import TestCase, Conversation
 
 # from .utils import load_json, save_json, RtA
 from .strategy_base import Strategy
@@ -110,10 +111,10 @@ class Fairness_Preference(Strategy):
             result['force'] = score
         return result
 
-    def evaluate(self, prompt : str, agent_response : str):
+    def evaluate(self, testcase:TestCase, conversation:Conversation): #prompt : str, agent_response : str
         logger.info(f"[INFO] Preference ({self._eval_type.capitalize()}) evaluation begins.")
 
-        results = self.pref_bias_eval(prompt, agent_response)
+        results = self.pref_bias_eval(testcase.prompt.userprompt, conversation.agent_response)
         plain_avg = results['plain']
         force_avg = results['force']
         overall_avg = (plain_avg + force_avg) / 2
