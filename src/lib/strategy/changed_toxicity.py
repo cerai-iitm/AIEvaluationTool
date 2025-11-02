@@ -4,7 +4,7 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
 from .strategy_base import Strategy
 from .logger import get_logger
-from ..data import TestCase, Conversation
+from lib.data import TestCase, Conversation
 
 logger = get_logger("toxicity")
 

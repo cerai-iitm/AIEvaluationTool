@@ -14,7 +14,7 @@ from scipy.stats import gaussian_kde
 # import re
 from .utils_new import FileLoader
 import warnings
-from ..data import TestCase, Conversation
+from lib.data import TestCase, Conversation
 
 from .strategy_base import Strategy
 from .logger import get_logger
@@ -62,8 +62,8 @@ class IndianLanguageFluencyScorer(Strategy):
         plt.legend()
         plt.savefig(path)
     
-    def evaluate(self, testcase:TestCase, conversation:Conversation):
-        score = self.get_score(conversation.agent_response)
+    def evaluate(self, testcase:TestCase, conversation:Conversation):#agent_response:str): #testcase:TestCase, conversation:Conversation):
+        score = self.get_score(conversation.agent_response)#agent_response)#conversation.agent_response)
         ex_results = self.run_examples()
         probs = {}
         for k, v in ex_results.items():

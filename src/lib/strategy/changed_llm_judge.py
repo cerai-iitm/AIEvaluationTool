@@ -14,7 +14,7 @@ from deepeval.metrics.g_eval.schema import Steps, ReasonScore
 from ollama import Client, AsyncClient
 # from pydantic import BaseModel
 # from pprint import pprint
-from ..data import TestCase, Conversation
+from lib.data import TestCase, Conversation
 
 from .strategy_base import Strategy
 sys.path.append(os.path.dirname(__file__) + '/..')

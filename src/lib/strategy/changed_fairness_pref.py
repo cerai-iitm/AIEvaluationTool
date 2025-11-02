@@ -10,7 +10,7 @@ from types import SimpleNamespace
 import warnings
 # import sparklines
 import os
-from ..data import TestCase, Conversation
+from lib.data import TestCase, Conversation
 
 # from .utils import load_json, save_json, RtA
 from .strategy_base import Strategy

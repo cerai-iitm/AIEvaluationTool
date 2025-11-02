@@ -6,7 +6,7 @@ import warnings
 from typing import List, Tuple
 from sentence_transformers import SentenceTransformer, util
 from pprint import pprint
-from ..data import TestCase, Conversation
+from lib.data import TestCase, Conversation
 
 from .strategy_base import Strategy
 from .logger import get_logger
@@ -41,8 +41,10 @@ class EntityRecognition(Strategy):
         """
         expected_pairs = set(self.extract_entity_pairs(expected_str))
         predicted_pairs = set(self.extract_entity_pairs(response_str))
+        # print(f"expected pairs : {expected_pairs}")
+        # print(f"predicted pairs : {predicted_pairs}")
 
-        return self.scoring(*self.semantic_matching(expected_pairs, predicted_pairs)), self.scoring(*self.exact_matching(expected_pairs, predicted_pairs))
+        return self.scoring(*self.semantic_matching(expected_pairs, predicted_pairs))#, self.scoring(*self.exact_matching(expected_pairs, predicted_pairs))
     
     def exact_matching(self, expected_pairs : set, predicted_pairs : set) -> tuple:
         tp = len(expected_pairs & predicted_pairs) 
@@ -70,10 +72,14 @@ class EntityRecognition(Strategy):
         return len(tp), len(fp), len(fn)
 
     def synonym_score(self, w1 : str, w2 : str) -> float:
-        synsets1 = wn.synsets(w1.lower())
-        synsets2 = wn.synsets(w2.lower())
-        return max([s1.wup_similarity(s2) for s1 in synsets1 for s2 in synsets2 if s1.wup_similarity(s2)])
-        
+        w1, w2 = re.split(r'[^a-zA-Z0-9]+', w1)[0], re.split(r'[^a-zA-Z0-9]+', w2)[0]    
+        try:
+            synsets1 = wn.synsets(w1.lower())
+            synsets2 = wn.synsets(w2.lower())
+            return max([s1.wup_similarity(s2) for s1 in synsets1 for s2 in synsets2 if s1.wup_similarity(s2)])
+        except Exception as e:
+            logger.error(f"[ERROR] : Synsets might be empty for {w1} or {w2}.")
+        return 0
         # return any(s1.wup_similarity(s2) and s1.wup_similarity(s2) > 0.9 for s1 in synsets1 for s2 in synsets2)
     
     def vec_similarity(self, w1 : str, w2 : str) -> float:
@@ -88,33 +94,25 @@ class EntityRecognition(Strategy):
         f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
         return round(f1, 4)
 
-    def evaluate(self, testcase:TestCase, conversation:Conversation) -> float:
+    def evaluate(self, testcase:TestCase, conversation:Conversation) -> float: #, expected_response, agent_response):
         """
         Evaluates the agent response against expected and returns only the F1 score.
         """
-        result =  self.ner_recognition(expected_str=testcase.response.response_text, response_str=conversation.agent_response)
+        result =  self.ner_recognition(expected_str= testcase.response.response_text, response_str=conversation.agent_response)#expected_response, response_str=agent_response) #testcase.response.response_text, response_str=conversation.agent_response)
         logger.info(f"Result: {result}")
         return result
         
 # Example usage
-# expected_response = """
-# {'entity' :  weeder ,  'ner_tag' :  TOOL },
-# { 'entity' :  floods ,  'ner_tag' :  DISASTER},
-# { 'entity' :  dibbler ,  'ner_tag' :  TOOL },  
-# { 'entity' :  saplings ,  'ner_tag' :  PLANT_STAGE },  
-# { 'entity' :  cutworm ,  'ner_tag' :  PEST },  
-# { 'entity' :  beetles ,  'ner_tag' :  PEST }
-# """
+# expected_response = "{ entity :  Vidarbha ,  ner_tag :  LOCATION },  { entity :  rice ,  ner_tag :  CROP },  { entity :  stress-tolerant hybrids ,  ner_tag :  CROP_TYPE },  { entity :  Sahbhagi Dhan ,  ner_tag :  CROP_VARIETY },  { entity :  DRR 42 ,  ner_tag :  CROP_VARIETY },  { entity :  monsoon ,  ner_tag :  WEATHER },  { entity :  cotton ,  ner_tag :  CROP }  "
 # agent_response = """
-# Here are the agricultural entities extracted from the text: 
-# {'entity': 'weeder', 'ner_tag': 'Tool'}\n
-# {'entity': 'dibbler', 'ner_tag': 'Instrument'}\n
-# {'entity': 'seedlings', 'ner_tag': 'Crop'}\n
-# {'entity': 'cutworm', 'ner_tag': 'Insect'}\n
-# {'entity': 'beetles', 'ner_tag': 'Pest'}
+# [
+#   {'entity': 'rice', 'ner_tag': 'Crop'},
+#   {'entity': 'Sahbhagi Dhan', 'ner_tag': 'Crop'},
+#   {'entity': 'DRR 42', 'ner_tag': 'Crop'},
+#   {'entity': 'cotton', 'ner_tag': 'Crop'}
+# ]
 # """
-
 # ner_eval = EntityRecognition()
 # res = ner_eval.ner_recognition(expected_response, agent_response)
 # pprint(f"expected_resp : {expected_response}, agent_resp : {agent_response}")
-# print(f"current_score: {res[0]}, prev_score : {res[1]}")
+# print(f"current_score: {res}") #{res[0]}, prev_score : {res[1]}")
