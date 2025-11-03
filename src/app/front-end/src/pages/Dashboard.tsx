@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from "@/components/Sidebar";
 import { Card, CardContent } from "@/components/ui/card";
 import { MoreVertical } from "lucide-react";
-import { on } from 'events';
+import { API_ENDPOINTS } from "@/config/api";
+import { useToast } from "@/hooks/use-toast";
 
 const MENU_OPTIONS = [
   { label: "Open", action: "open" },
@@ -21,21 +22,80 @@ const statCardHandlers = (navigate, stat) => ({
   delete: () => alert(`Delete ${stat.title}`),
 });
 
+interface DashboardStats {
+  test_cases: number;
+  targets: number;
+  domains: number;
+  strategies: number;
+  languages: number;
+  responses: number;
+  prompts: number;
+  llm_prompts: number;
+}
+
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [menuOpen, setMenuOpen] = useState(null);
+  const [stats, setStats] = useState([
+    { title: "Test cases", count: 0, onClick: () => navigate("/test-cases") },
+    { title: "Targets", count: 0, onClick: () => navigate("/targets") },
+    { title: "Domains", count: 0, onClick: () => navigate("/domains") },
+    { title: "Strategies", count: 0, onClick: () => navigate("/strategies") },
+    { title: "Languages", count: 0, onClick: () => navigate("/languages") },
+    { title: "Responses", count: 0, onClick: () => navigate("/responses") },
+    { title: "Prompts", count: 0, onClick: () => navigate("/prompts") },
+    { title: "LLM Prompts", count: 0, onClick: () => navigate("/llm-prompts") },
+  ]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const stats = [
-    { title: "Test cases", count: 1635, onClick: () => navigate("/test-cases") },
-    { title: "Targets", count: 534, onClick: () => navigate("/targets") },
-    { title: "Domains", count: 6, onClick: () => navigate("/domains") },
-    { title: "Strategies", count: 44, onClick: () => navigate("/strategies") },
-    { title: "Languages", count: 9, onClick: () => navigate("/languages") },
-    { title: "Responses", count: 288, onClick: () => navigate("/responses") },
-    { title: "Prompts", count: 407, onClick: () => navigate("/prompts") },
-    { title: "LLM Prompts", count: 20, onClick: () => navigate("/llm-prompts") },
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const token = localStorage.getItem("access_token");
+        const headers: HeadersInit = {
+          "Content-Type": "application/json",
+        };
 
-  ];
+        // Add auth token if available (even though middleware is disabled, it's good practice)
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(API_ENDPOINTS.DASHBOARD, { headers });
+        const data: DashboardStats = await response.json();
+
+        if (response.ok) {
+          setStats([
+            { title: "Test cases", count: data.test_cases, onClick: () => navigate("/test-cases") },
+            { title: "Targets", count: data.targets, onClick: () => navigate("/targets") },
+            { title: "Domains", count: data.domains, onClick: () => navigate("/domains") },
+            { title: "Strategies", count: data.strategies, onClick: () => navigate("/strategies") },
+            { title: "Languages", count: data.languages, onClick: () => navigate("/languages") },
+            { title: "Responses", count: data.responses, onClick: () => navigate("/responses") },
+            { title: "Prompts", count: data.prompts, onClick: () => navigate("/prompts") },
+            { title: "LLM Prompts", count: data.llm_prompts, onClick: () => navigate("/llm-prompts") },
+          ]);
+        } else {
+          toast({
+            title: "Error",
+            description: "Failed to load dashboard data",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to connect to server",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, [navigate, toast]);
 
   return (
     <>
@@ -81,7 +141,9 @@ const Dashboard = () => {
 
                 <CardContent className="pt-8 pb-8 text-center">
                   <h3 className="text-xl font-semibold mb-4">{stat.title}</h3>
-                  <p className="text-5xl font-bold">{stat.count.toString().padStart(3, '0')}</p>
+                  <p className="text-5xl font-bold">
+                    {isLoading ? "..." : stat.count.toString().padStart(3, '0')}
+                  </p>
                 </CardContent>
               </Card>
             ))}

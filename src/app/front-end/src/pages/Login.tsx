@@ -6,17 +6,71 @@ import { Label } from "@/components/ui/label";
 import ceraiLogo from "@/assets/cerai-logo.png";
 import iitLogo from "@/assets/iit-logo.png";
 import iitBackground from "@/assets/iit-background.jpeg";
+import { useToast } from "@/hooks/use-toast";
+import { API_ENDPOINTS } from "@/config/api";
 
 const Login = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simple validation - in production, this would authenticate with backend
-    if (username && password) {
-      navigate("/dashboard");
+    
+    if (!username || !password) {
+      toast({
+        title: "Error",
+        description: "Please enter both username and password",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(API_ENDPOINTS.LOGIN, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_name: username,
+          password: password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.Status) {
+        // Store the access token in localStorage
+        localStorage.setItem("access_token", data.access_token);
+        localStorage.setItem("user_name", username);
+        
+        toast({
+          title: "Success",
+          description: data.message || "Login successful",
+        });
+        
+        // Navigate to dashboard
+        navigate("/dashboard");
+      } else {
+        toast({
+          title: "Error",
+          description: data.detail || "Login failed",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to connect to server. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -80,9 +134,10 @@ const Login = () => {
             <div className="flex justify-center pt-4">
               <Button 
                 type="submit" 
+                disabled={isLoading}
                 className="bg-accent hover:bg-accent/90 text-accent-foreground px-12 py-6 text-lg font-medium"
               >
-                Login
+                {isLoading ? "Logging in..." : "Login"}
               </Button>
             </div>
           </form>

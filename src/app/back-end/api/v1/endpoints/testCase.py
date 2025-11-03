@@ -39,7 +39,7 @@ def _get_db() -> DB:
 db = DB(db_url=AIEVAL_DB_URL, debug=False)
 
 @testcase_router.get("/t", summary="Get a test case")
-async def list_testcase():
+async def list_testcases():
     testcase_response = db.testcases
     domain_name = db.domains
     
