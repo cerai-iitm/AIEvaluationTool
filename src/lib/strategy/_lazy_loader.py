@@ -75,17 +75,16 @@ class LazyLoader:
     def map_name_to_class(self, name:str):
         # if there is no cache loaded prior, then create the cache and save it
         if not self.STRAT_NAME_TO_CLASS_NAME:
-            print("I am in map_name to class")
             self.create_mapp()
         try:
             return self.STRAT_NAME_TO_CLASS_NAME.get(name)
         except Exception as e:
             print(f"[ERROR] : could not load the cache because the cache is empty. : {e}")
+            return None
 
     def save_cache(self):
         with open(self.CACHE_PATH , "w") as f:
             data = [self.CLASS_NAME_TO_MOD_NAME, self.STRAT_NAME_TO_CLASS_NAME]
-            print(data)
             json.dump(data, f)
             print(f"Saved strategy class registery to {self.CACHE_PATH}.")
     
