@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from schemas import Response
 import os
 import sys
-
+from sqlalchemy.orm import joinedload
 
 # Ensure the project 'src' directory is on sys.path so we can import lib.orm
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../../")))
@@ -33,12 +33,13 @@ def _get_db() -> DB:
 db = DB(db_url=AIEVAL_DB_URL, debug=False)
 
 
-@response_router.get("/")
+@response_router.get("/", response_model=list[Response])
 async def list_responses():
+    pass
 
-    response_list = db.get_response
+    # # response_list = db.get_response
     # response = db.testcases
-    # response = db.Session().query(TestCases).all()
+    # # response = db.Session().query(TestCases).all()
 
     # items = []
     # for res in response:
@@ -50,3 +51,21 @@ async def list_responses():
 
 
     # return JSONResponse(content={"items": items})
+    # session = db.Session()
+
+    # try:
+    #     db_response = session.query(TestCases).options(joinedload(TestCases.response)).all()
+    #     if not db_response:
+    #         raise HTTPException(status_code = 404, detail="No response found")
+
+    #     response_text = None
+    #     if response_obj = getattr(db_response, "response", None):
+    #     if response_obj is not None:
+    #         response_text = getattr(response_obj, "response_text", None)
+
+    #     items = []
+    #     for response in db_response:
+    #         items.append({
+    #             "id": response.response.response_id,
+    #             "response_text": response.response.response_text
+    #         })

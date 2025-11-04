@@ -1,11 +1,13 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from typing import Optional
 
 class UserCreate(BaseModel):
     user_name: str
-    password: str
+    email: EmailStr
     role: str
-    is_active: bool
+    password: str
+    confirm_password: str
+    is_active: Optional[bool] = True
     created_at: Optional[str]
     updated_at: Optional[str]
 
@@ -36,3 +38,29 @@ class Login(BaseModel):
             }
         }
 
+class UserHistory(BaseModel):
+    table: str
+    table_name: str
+    note: str
+    Operation: str
+
+
+class UserOut(BaseModel):
+    user_name: str
+    email: EmailStr
+    role: str
+
+
+class UserActivityCreate(BaseModel):
+    entity_type: str
+    entity_id: str
+    note: str
+    operation: str  # create | update | delete
+
+
+class UserActivityResponse(BaseModel):
+    description: str
+    type: str
+    testCaseId: str
+    status: str
+    timestamp: str
