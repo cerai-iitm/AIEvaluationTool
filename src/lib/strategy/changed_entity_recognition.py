@@ -1,19 +1,18 @@
 from nltk.corpus import wordnet as wn
 from nltk.stem import WordNetLemmatizer
 import re
-import json
 import warnings
 from typing import List, Tuple
 from sentence_transformers import SentenceTransformer, util
-from pprint import pprint
 from lib.data import TestCase, Conversation
-
 from .strategy_base import Strategy
 from .logger import get_logger
-
-logger = get_logger("entity_recognition")
+from .utils_new import FileLoader
 
 warnings.filterwarnings("ignore")
+
+FileLoader._load_env_vars(__file__)
+logger = get_logger("entity_recognition")
 
 class EntityRecognition(Strategy):
     def __init__(self, name: str = "entity_recognition", **kwargs) -> None:
@@ -41,8 +40,6 @@ class EntityRecognition(Strategy):
         """
         expected_pairs = set(self.extract_entity_pairs(expected_str))
         predicted_pairs = set(self.extract_entity_pairs(response_str))
-        # print(f"expected pairs : {expected_pairs}")
-        # print(f"predicted pairs : {predicted_pairs}")
 
         return self.scoring(*self.semantic_matching(expected_pairs, predicted_pairs))#, self.scoring(*self.exact_matching(expected_pairs, predicted_pairs))
     
@@ -80,7 +77,6 @@ class EntityRecognition(Strategy):
         except Exception as e:
             logger.error(f"[ERROR] : Synsets might be empty for {w1} or {w2}.")
         return 0
-        # return any(s1.wup_similarity(s2) and s1.wup_similarity(s2) > 0.9 for s1 in synsets1 for s2 in synsets2)
     
     def vec_similarity(self, w1 : str, w2 : str) -> float:
         words = [w1, w2]

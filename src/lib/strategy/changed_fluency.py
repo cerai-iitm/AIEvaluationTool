@@ -1,32 +1,23 @@
-# from utils import SarvamModel
 import numpy as np
-# from nltk.tokenize import sent_tokenize
-from typing import Optional
-# import nltk
 import requests
 import os
-# from dotenv import load_dotenv
-# from os.path import join, dirname
 import json
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import gaussian_kde
-# import re
 from .utils_new import FileLoader
 import warnings
 from lib.data import TestCase, Conversation
-
 from .strategy_base import Strategy
 from .logger import get_logger
-
-logger = get_logger("fluency")
 
 warnings.filterwarnings("ignore")
 
 FileLoader._load_env_vars(__file__)
+logger = get_logger("fluency_score")
 
 class IndianLanguageFluencyScorer(Strategy):
-    def __init__(self, name="indian_lang_fluency", **kwargs):
+    def __init__(self, name="fluency_score", **kwargs):
         super().__init__(name, kwargs=kwargs)
         self.gpu_url=os.getenv("GPU_URL")
         self.ex_dir = os.getenv("EXAMPLES_DIR")
@@ -72,7 +63,6 @@ class IndianLanguageFluencyScorer(Strategy):
             dist_int = dist(interval) # kde applied to the interval
             probs[k] = np.trapezoid(dist_int, interval)
         # self.save_res_as_img(ex_results, "images/perplexity_dist.png")
-        # print(f"{conversation.agent_response} : {score}, {probs}")
         probs_as_lst = list(probs.values())
         final_score = 1 if max(probs_as_lst) == probs_as_lst[0] else 0 # we need to return 0 if non fluent 1 if fluent
         logger.info(f"Fluency Score: {final_score}")

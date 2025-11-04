@@ -2,6 +2,13 @@ import os
 from dotenv import load_dotenv
 import json
 import ast
+from .logger import get_logger
+from types import SimpleNamespace
+from deepeval.metrics.g_eval.schema import Steps, ReasonScore
+from ollama import Client, AsyncClient
+from deepeval.models.base_model import DeepEvalBaseLLM
+
+logger = get_logger("utils_new")
 
 class FileLoader:
     """
@@ -19,8 +26,8 @@ class FileLoader:
             file_names = os.listdir(data_dir)
         except:
             file_names = list()
-            print(f"[ERROR] : The path {data_dir} does not exist. You might want to pass in data/{req_folder_path}.")
-        running_file_name = run_file_path.split('/')[-1].removesuffix('.py').split("_")[-1] # the last split should be removed later
+            logger.error(f"[ERROR] : The path {data_dir} does not exist. You might want to pass in data/{req_folder_path}.")
+        running_file_name = run_file_path.split('/')[-1].removesuffix('.py').split("_")[-1] # the last split should be removed later after removing changed from filenames
         file_content = {}
         if file_name != "":
             file_content = FileLoader._fill_values(file_content, data_dir, file_name, multiple=False)
@@ -62,6 +69,71 @@ class FileLoader:
         elif ext == "txt":
             with open(os.path.join(data_dir, file_name), "w") as f:
                 f.write(json.dumps(data))
+    
+    @staticmethod
+    def _to_dot_dict(run_file_path:str, dir_file_path:str, **kwargs):
+        full_path = os.path.join(os.path.dirname(run_file_path), dir_file_path)
+        if os.path.exists(full_path):
+            with open(full_path, "r") as f:
+                data = json.load(f)
+            def dot_dict(d):
+                if isinstance(d, dict):
+                    return SimpleNamespace(**{k : dot_dict(v) for k,v in d.items()})
+                else:
+                    return d
+            if kwargs.get("simple"):
+                return json.loads(json.dumps(data[kwargs.get("strat_name")]), object_hook=lambda d: SimpleNamespace(**d))
+            else:
+                return dot_dict(data)
+        else:
+            logger.error(f"[ERROR] : could not find the path specified : {full_path}")
+            return {}
+
+
+class CustomOllamaModel(DeepEvalBaseLLM):
+    def __init__(self, model_name : str, url : str, *args, **kwargs):
+        self.model_name = model_name
+        self.ollama_url = f"{url.rstrip()}"
+        self.ollama_client = Client(host=self.ollama_url)
+        self.score_reason = None
+        self.steps = None
+    
+    def generate(self, input : str, *args, **kwargs) -> str:
+        messages = [{"role": "user", "content": f'{input} /nothink'}] # nothink allows us to only get the final answer
+        response = self.ollama_client.chat(
+            model = self.model_name,
+            messages=messages,
+            format="json"
+        )
+        raw = json.loads(response.message.content)
+        schema_ =  kwargs.get("schema")(**raw) # the deepeval library uses different schemas to serialize the JSON, so we return the schemas as required by the library
+        if(kwargs.get("schema") is ReasonScore):
+            self.score_reason = {"Score": schema_.score, "Reason": schema_.reason}
+        if(kwargs.get("schema") is Steps):
+            self.steps = schema_.steps
+        return schema_ 
+    
+    def load_model(self, *args, **kwargs):
+        return None
+    
+    async def a_generate(self, input:str, *args, **kwargs):
+        client = AsyncClient(host=self.ollama_url)
+        messages = [{"role": "user", "content": f'{input} /nothink'}]
+        response = await client.chat(
+            model=self.model_name,
+            messages=messages,
+            format="json"
+        )
+        raw = json.loads(response.message.content)
+        schema_ =  kwargs.get("schema")(**raw)
+        if(kwargs.get("schema") is ReasonScore):
+            self.score_reason = {"Score": schema_.score, "Reason": schema_.reason}
+        if(kwargs.get("schema") is Steps):
+            self.steps = {"Steps" : schema_.steps}
+        return schema_
+    
+    def get_model_name(self, *args, **kwargs):
+         return self.model_name
             
     
 

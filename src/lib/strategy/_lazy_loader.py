@@ -10,6 +10,10 @@ import json
 import ast
 import importlib
 from lib.data import TestCase, Conversation
+from .logger import get_logger
+
+
+logger = get_logger("lazy_loader")
 
 class LazyLoader:
 
@@ -74,19 +78,19 @@ class LazyLoader:
     
     def map_name_to_class(self, name:str):
         # if there is no cache loaded prior, then create the cache and save it
-        if not self.STRAT_NAME_TO_CLASS_NAME:
+        if not self.STRAT_NAME_TO_CLASS_NAME or not self.STRAT_NAME_TO_CLASS_NAME.get(name):
             self.create_mapp()
         try:
             return self.STRAT_NAME_TO_CLASS_NAME.get(name)
         except Exception as e:
-            print(f"[ERROR] : could not load the cache because the cache is empty. : {e}")
+            logger.error(f"Could not load the cache because it is empty. : {e}")
             return None
 
     def save_cache(self):
         with open(self.CACHE_PATH , "w") as f:
             data = [self.CLASS_NAME_TO_MOD_NAME, self.STRAT_NAME_TO_CLASS_NAME]
             json.dump(data, f)
-            print(f"Saved strategy class registery to {self.CACHE_PATH}.")
+            # print(f"Saved strategy class registery to {self.CACHE_PATH}.")
     
     def load_cache(self):
         if os.path.exists(self.CACHE_PATH):
