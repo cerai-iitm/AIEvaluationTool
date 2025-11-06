@@ -5,6 +5,7 @@ import sys
 
 # Ensure the project 'src' directory is on sys.path so we can import lib.orm
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../../")))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../database")))
 
 from lib.orm.DB import DB
 from lib.orm.tables import (
@@ -17,30 +18,17 @@ from lib.orm.tables import (
     TestCases,
     Strategies,
 )
+from database.fastapi_deps import get_db
 # from config.settings import Settings
-AIEVAL_DB_URL='mariadb+mariadbconnector://root:password@localhost:3306/test'
 dashboard_router = APIRouter(prefix="/api/dashboard")
 
-_db_instance: DB | None = None
-
-
-def _get_db() -> DB:
-    global _db_instance
-    if _db_instance is not None:
-        return _db_instance
-    db_url =AIEVAL_DB_URL
-    # db_url = Settings.AVEVAL_DB_URL
-    if not db_url:
-        raise HTTPException(status_code=500, detail="Database URL not configured (AIEVAL_DB_URL)")
-    # Debug disabled for production-style endpoint
-    _db_instance = DB(db_url=db_url, debug=False)
-    return _db_instance
+ 
 
 
 @dashboard_router.get("/summary", summary="Dashboard summary counts", tags=["Dashboard"])
-async def get_dashboard_summary( db: DB = Depends(_get_db)):
+async def get_dashboard_summary( db: DB = Depends(get_db)):
     try:
-        db = _get_db()
+        db = get_db()
 
         # Use DB helpers where available
         test_cases_count = len(db.testcases) if db.testcases else 0

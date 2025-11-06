@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from database.database import init_db, seed_users
-from api.v1.endpoints import auth, dashboard, testCase, response, strategy, users
+from api.v1.endpoints import auth, dashboard, testCase, response, strategy, prompt, llmPrompt, users
 from middleware.middleware import AuthMiddleware
 
 
@@ -48,6 +48,8 @@ app.include_router(dashboard.dashboard_router, tags=["Dashboard"])
 app.include_router(testCase.testcase_router, tags=["Test Cases"])
 app.include_router(response.response_router, tags=["Responses"])
 app.include_router(strategy.strategy_router, tags=["Strategies"])
+app.include_router(prompt.prompt_router, tags=["Prompts"])
+app.include_router(llmPrompt.llmPrompt_router, tags=["LLM Prompts"])
 app.include_router(users.users_router, tags=["Users"])
 
 if __name__ == "__main__":
