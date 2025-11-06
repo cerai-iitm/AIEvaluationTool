@@ -29,3 +29,4 @@ sarvamai
 openpyxl
 randomname
 mariadb
+gliner
