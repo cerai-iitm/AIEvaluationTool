@@ -8,7 +8,7 @@ from itertools import combinations
 
 logger = get_logger("strategy_implementor")
 
-#only works with strategies that have "changed" in their name for now
+#only works with strategies that have "changed" in their name for now, which has been set in the lazyloader (changes should be made there)
 
 class StrategyImplementor:
 
@@ -40,8 +40,8 @@ class StrategyImplementor:
     # this is just in case , should be removable later
     def find_class_name(self, given_name:str):
         words = re.split(r"[_]+", given_name)
-        for i in range(len(words)):
-            for combo in combinations(words, i+1):
+        for i in range(len(words), 0, -1):
+            for combo in combinations(words, i):
                 possible_name = "_".join(list(combo))
                 cls_name = self.ll.map_name_to_class(possible_name)
                 if cls_name:

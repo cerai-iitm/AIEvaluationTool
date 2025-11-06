@@ -75,7 +75,7 @@ class EntityRecognition(Strategy):
             synsets2 = wn.synsets(w2.lower())
             return max([s1.wup_similarity(s2) for s1 in synsets1 for s2 in synsets2 if s1.wup_similarity(s2)])
         except Exception as e:
-            logger.error(f"[ERROR] : Synsets might be empty for {w1} or {w2}.")
+            logger.error(f"Synsets might be empty for {w1} or {w2}.")
         return 0
     
     def vec_similarity(self, w1 : str, w2 : str) -> float:

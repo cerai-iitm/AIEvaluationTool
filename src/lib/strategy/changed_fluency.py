@@ -64,12 +64,10 @@ class IndianLanguageFluencyScorer(Strategy):
             probs[k] = np.trapezoid(dist_int, interval)
         # self.save_res_as_img(ex_results, "images/perplexity_dist.png")
         probs_as_lst = list(probs.values())
-        final_score = 1 if max(probs_as_lst) == probs_as_lst[0] else 0 # we need to return 0 if non fluent 1 if fluent
+        final_score = 1 if max(probs_as_lst) == probs_as_lst[0] else 0 # we need to return 0 if non fluent, and 1 if fluent
         logger.info(f"Fluency Score: {final_score}")
         return final_score 
     
-    
-
     # def translate(self, agent_response:str):
     #     return json.loads(requests.post(f"{self.gpu_url}/translate", params={"input_text" : agent_response, "target_language" : "English"}).content.decode('utf-8'))
 

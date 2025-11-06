@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Optional
+from lib.data import TestCase, Conversation
 
 class Strategy(ABC):
     def __init__(self, name:str, **kwargs) -> None:
@@ -17,7 +18,7 @@ class Strategy(ABC):
         return self.__name
 
     @abstractmethod
-    def evaluate(self, agent_response: str, expected_response: Optional[str]=None) -> float:
+    def evaluate(self, testcase:Optional[TestCase], conversation: Optional[Conversation]) -> float:
         """
         Evaluate the agent's response against the expected response.
         

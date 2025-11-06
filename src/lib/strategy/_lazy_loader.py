@@ -1,17 +1,8 @@
-# from strategy import get_class, map_name_to_class
-
-# cls = get_class(map_name_to_class("indian_lang_fluency"))
-# if cls:
-#     obj = cls()
-#     print(obj.evaluate("This is a sentence."))
-
 import os
 import json
 import ast
 import importlib
-from lib.data import TestCase, Conversation
 from .logger import get_logger
-
 
 logger = get_logger("lazy_loader")
 
@@ -99,12 +90,3 @@ class LazyLoader:
                 self.CLASS_NAME_TO_MOD_NAME = data[0]
                 self.STRAT_NAME_TO_CLASS_NAME = data[1]
 
-# ll = LazyLoader()
-# try:
-#     cls = ll.get_class(ll.map_name_to_class("indian_lang_fluency"))
-# except Exception as e:
-#     print(f"[ERROR]: Could not load the class specified. {e}")
-# if cls:
-#     obj = cls()
-#     print(obj.evaluate("This my is the bad bad. I am the lovely of son my fathers. I come to India for study and I learn many thing and travel many places."))
-#     print(obj.evaluate("This is a sentence. There is a house nearby. I like to walk my dog and eat my sandwich. My wife is lovely and I love my parents."))
