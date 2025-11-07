@@ -22,6 +22,7 @@ class LLMJudgeStrategy(Strategy):
         self.model_name = os.getenv("LLM_AS_JUDGE_MODEL")
         self.base_url = os.getenv("OLLAMA_URL")
         self.model = CustomOllamaModel(model_name=self.model_name, url=self.base_url)
+        self.eval_type = name.split("_")[-1] if len(name.split("_")) > 2 else "positive"
         
         self.judge_prompt = dflt_vals.judge_prompt
         self.system_prompt = dflt_vals.sys_prompt
@@ -52,8 +53,9 @@ class LLMJudgeStrategy(Strategy):
 
 
         eval_score = self.metric.measure(to_evaluate)
-        logger.debug(f"Score: {eval_score}, Reason: {self.model.score_reason}")
-        return eval_score
+        final_score = eval_score if self.eval_type == "positive" else (1 - eval_score)
+        logger.debug(f"Score: {final_score}, Reason: {self.model.score_reason}")
+        return final_score
         
 
 # dir_path = os.path.dirname(os.path.realpath(__file__))
