@@ -10,12 +10,12 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.
 
 from lib.orm.DB import DB
 from lib.orm.tables import LLMJudgePrompts
-from database.fastapi_deps import get_db
+from database.fastapi_deps import _get_db
 
 llmPrompt_router = APIRouter(prefix="/api/llmPrompt")
 
 @llmPrompt_router.get("", response_model=list[LlmPromptIds])
-async def get_llmPrompt(db: DB = Depends(get_db)):
+async def get_llmPrompt(db: DB = Depends(_get_db)):
     session = db.Session()
     try:
         llmPrompts = session.query(LLMJudgePrompts).all()

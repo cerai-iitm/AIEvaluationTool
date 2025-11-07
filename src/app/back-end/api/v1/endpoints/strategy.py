@@ -11,13 +11,13 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.
 
 from lib.orm.DB import DB
 from lib.orm.tables import Strategies
-from database.fastapi_deps import get_db
+from database.fastapi_deps import _get_db
 
 strategy_router = APIRouter(prefix="/api/strategies")
 
 
 @strategy_router.get("/", response_model=list[StrategyIds])
-async def list_strategies(db: DB = Depends(get_db)):
+async def list_strategies(db: DB = Depends(_get_db)):
     session = db.Session()
     try:
         strategies = session.query(Strategies).all()

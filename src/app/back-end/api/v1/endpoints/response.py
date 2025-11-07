@@ -11,13 +11,13 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.
 
 from lib.orm.DB import DB
 from lib.orm.tables import TestCases, Responses
-from database.fastapi_deps import get_db
+from database.fastapi_deps import _get_db
 
 response_router = APIRouter(prefix="/api/response")
 
 
 @response_router.get("/", response_model=list[ResponseIds])
-async def list_responses(db: DB = Depends(get_db)):
+async def list_responses(db: DB = Depends(_get_db)):
     session = db.Session()
     try:
         responses = session.query(Responses).all()

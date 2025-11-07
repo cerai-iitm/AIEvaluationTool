@@ -18,7 +18,7 @@ from lib.orm.tables import (
     TestCases,
     Strategies,
 )
-from database.fastapi_deps import get_db
+from database.fastapi_deps import _get_db
 # from config.settings import Settings
 dashboard_router = APIRouter(prefix="/api/dashboard")
 
@@ -26,9 +26,9 @@ dashboard_router = APIRouter(prefix="/api/dashboard")
 
 
 @dashboard_router.get("/summary", summary="Dashboard summary counts", tags=["Dashboard"])
-async def get_dashboard_summary( db: DB = Depends(get_db)):
+async def get_dashboard_summary( db: DB = Depends(_get_db)):
     try:
-        db = get_db()
+        db = _get_db()
 
         # Use DB helpers where available
         test_cases_count = len(db.testcases) if db.testcases else 0

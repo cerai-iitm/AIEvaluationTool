@@ -1,5 +1,5 @@
 from .user import *
-from .testcase import TestCase, TestCaseUpdate
+from .testcase import *
 from .response import *
 from .strategy import *
 from .prompt import *

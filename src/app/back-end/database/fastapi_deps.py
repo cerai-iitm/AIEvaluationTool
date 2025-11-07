@@ -7,7 +7,7 @@ _DEFAULT_DB_URL = 'mariadb+mariadbconnector://root:password@localhost:3306/test'
 
 _db_instance: DB | None = None
 
-def get_db() -> DB:
+def _get_db() -> DB:
     global _db_instance
     if _db_instance is not None:
         return _db_instance
@@ -17,7 +17,7 @@ def get_db() -> DB:
     _db_instance = DB(db_url=db_url, debug=False)
     return _db_instance
 
-def get_session(db: DB = Depends(get_db)) -> Iterator[object]:
+def get_session(db: DB = Depends(_get_db)) -> Iterator[object]:
     session = db.Session()
     try:
         yield session

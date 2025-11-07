@@ -26,6 +26,7 @@ class Prompts(Base):
     domain_id = Column(Integer, ForeignKey('Domains.domain_id'), nullable=False)  # Foreign key to Domains
     hash_value = Column(String(100), nullable=False, unique=True)  # Hash value for the prompt
     test_cases = relationship("TestCases", back_populates="prompt")  # Relationship to TestCases
+    domain = relationship("Domains", back_populates="prompts")  # Relationship to Domains
 
 class LLMJudgePrompts(Base):
     """ORM model for the LLMJudgePrompts table.
@@ -71,7 +72,7 @@ class Domains(Base):
     
     domain_id = Column(Integer, primary_key=True)   
     domain_name = Column(String(255), nullable=False)
-
+    prompts = relationship("Prompts", back_populates="domain")  # Relationship to Prompts
     targets = relationship("Targets", back_populates="domain")
 
 class Responses(Base):
