@@ -15,7 +15,8 @@ sys.path.append(os.path.dirname(__file__) + '/..')
 from data import Prompt, Language, Domain, Response, TestCase, TestPlan, \
     Strategy, Metric, LLMJudgePrompt, Target, Conversation, Run, RunDetail
 from .tables import Base, Languages, Domains, Metrics, Responses, TestCases, \
-    TestPlans, Prompts, Strategies, LLMJudgePrompts, Targets, Conversations, TestRuns, TestRunDetails
+    TestPlans, Prompts, Strategies, LLMJudgePrompts, Targets, Conversations, \
+        TestRuns, TestRunDetails, TestPlanMetricMapping
 from lib.utils import get_logger
 
 class DB:    
@@ -1018,6 +1019,27 @@ class DB:
             # If n is 0, we return all test cases, otherwise we return a random sample of n test cases
             return all_testcases
         
+    def is_metric_in_testplan(self, metric_name: str, plan_name: str) -> bool:
+        """
+        Checks if a metric is associated with a specific test plan.
+        
+        Args:
+            metric_name (str): The name of the metric to check.
+            plan_name (str): The name of the test plan to check.
+
+        Returns:
+            bool: True if the metric is associated with the test plan, False otherwise.
+        """
+        with self.Session() as session:
+            sql = select(Metrics).join(TestPlanMetricMapping).join(TestPlans).where(
+                Metrics.metric_name == metric_name,
+                TestPlans.plan_name == plan_name,
+                TestPlanMetricMapping.metric_id == Metrics.metric_id,
+                TestPlanMetricMapping.plan_id == TestPlans.plan_id
+            )
+            result = session.execute(sql).scalars().first()
+            return result is not None
+
     def get_testcases_by_metric(self, metric_name:str, n:int = 0, lang_names:Optional[List[str]] = None, domain_name:Optional[str] = None) -> List[TestCase]:
         """
         Fetches test cases based on the metric name, language names, and domain name.

@@ -52,7 +52,7 @@ def main():
     parser.add_argument("--get-testcases", "-C", dest="get_testcases", action="store_true", help="Get the test cases for a specific test plan or all test cases if no plan ID is provided")
     parser.add_argument("--get-targets", "-G", dest="get_targets", action="store_true", help="Get all target applications")
     parser.add_argument("--get-runs", "-N", dest="get_runs", action="store_true", help="Get all test runs")
-    parser.add_argument("--testplan-id", "-p", dest="plan_id", type=int, help="ID of the test plan to execute")
+    parser.add_argument("--testplan-id", "-p", dest="plan_id", type=int, help="ID of the test plan to execute", required=True)
     parser.add_argument("--testcase-id", "-t", dest="testcase_id", type=int, help="ID of the specific test case to execute")
     parser.add_argument("--metric-id", "-m", dest="metric_id", type=int, help="ID of the evaluation metric to use")
     parser.add_argument("--max-testcases", "-n", dest="max_testcases", type=int, default=10, help="Maximum number of test cases to execute (default: 10)")
@@ -292,8 +292,8 @@ def main():
 
     if args.execute:
         # Logic to execute the test case or test plan
-        if args.plan_id is None and args.testcase_id is None:
-            logger.error("Either test plan ID or test case ID must be provided for execution.")
+        if args.plan_id is None: # and args.testcase_id is None and args.metric_id is None:
+            logger.error("Test plan ID is mandatory with optionally a test case or metric ID to be provided for execution.")
             return
         
         # handle the "run" by creating a new run entry in the database or
@@ -448,6 +448,12 @@ def main():
                     logger.error(f"No metric found with ID {args.metric_id}.")
                     return
                 
+                # Verify that the metric is part of the test plan
+                is_metric_in_plan = db.is_metric_in_testplan(metric_name=metric_name, plan_name=plan_name)
+                if not is_metric_in_plan:
+                    logger.error(f"Metric '{metric_name}' (ID: {args.metric_id}) is not part of the test plan '{plan_name}' (ID: {args.plan_id}).")
+                    return
+
                 # get the test cases for the metric
                 logger.debug(f"Fetching test cases for metric: {metric_name} (Plan: {plan_name}, Metric ID: {args.metric_id})")
                 testcases = db.get_testcases_by_metric(metric_name=metric_name, n=args.max_testcases, lang_names=lang_names, domain_name=domain_name)

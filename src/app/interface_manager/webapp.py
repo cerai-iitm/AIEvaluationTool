@@ -30,7 +30,7 @@ def login_webapp(app_name: str):
     Wrapper for generic login_app.
     """
     cfg = load_config()
-    url = cfg.get("application_url")
+    url = cfg.get("application_url", "UNKNOWN")
     driver = driver_manager.get_driver(app_name, url)
     return login_app(driver, app_name)
 
@@ -46,8 +46,8 @@ def search_llm(driver):
     """
     Specific: OpenWeb-UI model search.
     """
-    app_name = load_config().get("application_name")
-    agent_name = load_config().get("agent_name")
+    app_name = load_config().get("application_name", "UNKNOWN")
+    agent_name = load_config().get("agent_name", "UNKNOWN")
     cfg = load_xpaths()["applications"]["openweb-ui"]["ChatPage"]
 
     try:
@@ -80,7 +80,7 @@ def send_prompt(app_name: str, chat_id: int, prompt_list: List[str]) -> list[dic
     """
     results = []
     cfg = load_config()
-    url = cfg.get("application_url")
+    url = cfg.get("application_url", "UNKNOWN")
     app_name = app_name.lower()
 
     driver = driver_manager.get_driver(app_name, url)
@@ -92,6 +92,10 @@ def send_prompt(app_name: str, chat_id: int, prompt_list: List[str]) -> list[dic
     for prompt in prompt_list:
         result = {"chat_id": chat_id, "prompt": prompt, "response": "[Not available]"}
         if login_ok:
+            # replace new line characters to avoid UI issues
+            # CPGRAMS treats prompts with new lines as new prompts.
+            prompt = prompt.replace("\n", " ")
+            prompt += "\n"  # Ensure prompt submission
             result["response"] = send_message_webapp(driver, app_name, prompt)
         results.append(result)
 
