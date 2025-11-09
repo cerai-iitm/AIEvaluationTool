@@ -58,34 +58,62 @@ const TestCases = () => {
         }
 
         const response = await fetch(API_ENDPOINTS.TEST_CASES, { headers });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
+        console.log("API Response:", data);
+        console.log("Is Array:", Array.isArray(data));
+        console.log("Data length:", Array.isArray(data) ? data.length : "N/A");
 
-        if (response.ok && data.items) {
+        // Backend returns an array directly, not wrapped in items
+        if (Array.isArray(data)) {
           // Map API response to frontend interface
-          const mappedData: TestCase[] = data.items.map((item: any) => ({
-            id: item.id,
+          const mappedData: TestCase[] = data.map((item: any) => ({
+            id: item.testcase_id || item.id || 0,
             name: item.testcase_name || "",
             strategyName: item.strategy_name || "",
-            domainName: item.domain || "",
+            domainName: item.domain_name || item.domain || "",
             userPrompts: item.user_prompt || "",
             systemPrompts: item.system_prompt || "",
             responseText: item.response_text || "",
-            llmPrompt: item.prompt || "",
+            llmPrompt: item.llm_judge_prompt || item.prompt || "",
           }));
+          console.log("Mapped test cases:", mappedData);
           setTestCases(mappedData);
         } else {
-          toast({
-            title: "Error",
-            description: "Failed to load test cases",
-            variant: "destructive",
-          });
+          // Fallback: check if it's wrapped in items (for backward compatibility)
+          if (data.items && Array.isArray(data.items)) {
+            const mappedData: TestCase[] = data.items.map((item: any) => ({
+              id: item.testcase_id || item.id || 0,
+              name: item.testcase_name || "",
+              strategyName: item.strategy_name || "",
+              domainName: item.domain_name || item.domain || "",
+              userPrompts: item.user_prompt || "",
+              systemPrompts: item.system_prompt || "",
+              responseText: item.response_text || "",
+              llmPrompt: item.llm_judge_prompt || item.prompt || "",
+            }));
+            setTestCases(mappedData);
+          } else {
+            console.error("Unexpected data format:", data);
+            toast({
+              title: "Error",
+              description: "Invalid data format received from server",
+              variant: "destructive",
+            });
+          }
         }
       } catch (error) {
+        console.error("Error fetching test cases:", error);
         toast({
           title: "Error",
-          description: "Failed to connect to server",
+          description: error instanceof Error ? error.message : "Failed to connect to server",
           variant: "destructive",
         });
+        setTestCases([]); // Set empty array on error to prevent showing stale data
       } finally {
         setIsLoading(false);
       }

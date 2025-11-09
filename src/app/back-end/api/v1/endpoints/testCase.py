@@ -8,7 +8,7 @@ import hashlib
 
 # Ensure the project 'src' directory is on sys.path so we can import lib.orm
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../../")))
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../database")))
+# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../database")))
 
 from lib.orm.DB import DB
 from lib.orm.tables import TestCases, Prompts, Responses, Strategies, LLMJudgePrompts
@@ -17,7 +17,7 @@ from sqlalchemy.orm import joinedload
 
 testcase_router = APIRouter(prefix="/api/testcases")
 
-@testcase_router.get("/", summary="Get a test cases", response_model=list[TestCaseIds])
+@testcase_router.get("", summary="Get a test cases", response_model=list[TestCaseIds])
 async def list_testcases( db: DB = Depends(_get_db)):
     session = db.Session()
     try:
@@ -26,12 +26,12 @@ async def list_testcases( db: DB = Depends(_get_db)):
             TestCaseIds(
                 testcase_id = tc.testcase_id,
                 testcase_name = tc.testcase_name,
-                strategy_name = tc.strategy.strategy_name,
-                llm_judge_prompt = tc.judge_prompt.prompt if tc.judge_prompt else None,
-                domain_name = tc.prompt.domain.domain_name if tc.prompt.domain else None,
-                user_prompt = tc.prompt.user_prompt if tc.prompt else None,
-                system_prompt = tc.prompt.system_prompt if tc.prompt else None,
-                response_text = tc.response.response_text if tc.response else None
+                strategy_name = getattr(tc.strategy, "strategy_name", None) if tc.strategy else None,
+                llm_judge_prompt = getattr(tc.judge_prompt, "prompt", None) if tc.judge_prompt else None,
+                domain_name = getattr(getattr(tc.prompt, "domain", None), "domain_name", None) if tc.prompt and tc.prompt.domain else None,
+                user_prompt = getattr(tc.prompt, "user_prompt", None) if tc.prompt else None,
+                system_prompt = getattr(tc.prompt, "system_prompt", None) if tc.prompt else None,
+                response_text = getattr(tc.response, "response_text", None) if tc.response else None
             )
             for tc in testcases
         
