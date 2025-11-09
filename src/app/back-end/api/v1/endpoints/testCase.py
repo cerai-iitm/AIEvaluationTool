@@ -1,16 +1,17 @@
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse
-from schemas import TestCaseIds, TestCaseUpdate, TestCaseCreate
+from schemas import TestCaseIds, TestCaseUpdate, TestCaseCreate, TestCaseId
 from database.fastapi_deps import _get_db
 import os
 import sys
+import hashlib
 
 # Ensure the project 'src' directory is on sys.path so we can import lib.orm
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../../")))
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../database")))
 
 from lib.orm.DB import DB
-from lib.orm.tables import TestCases
+from lib.orm.tables import TestCases, Prompts, Responses, Strategies, LLMJudgePrompts
 from sqlalchemy.orm import joinedload
 
 
@@ -59,15 +60,24 @@ def get_testcase(testcase_id: int, db: DB = Depends(_get_db)):
         tc = session.query(TestCases).filter(TestCases.testcase_id == testcase_id).first()
         if not tc:
             raise HTTPException(status_code=404, detail="Test case not found")
+
+        # Defensive attribute access for all possible None objects
+        strategy_name = getattr(tc.strategy, "strategy_name", None) if tc.strategy else None
+        llm_judge_prompt = getattr(tc.judge_prompt, "prompt", None) if tc.judge_prompt else None
+        domain_name = getattr(getattr(tc.prompt, "domain", None), "domain_name", None) if tc.prompt and tc.prompt.domain else None
+        user_prompt = getattr(tc.prompt, "user_prompt", None) if tc.prompt else None
+        system_prompt = getattr(tc.prompt, "system_prompt", None) if tc.prompt else None
+        response_text = getattr(tc.response, "response_text", None) if tc.response else None
+
         return TestCaseIds(
             testcase_id = tc.testcase_id,
             testcase_name = tc.testcase_name,
-            strategy_name = tc.strategy.strategy_name,
-            llm_judge_prompt = tc.judge_prompt.prompt if tc.judge_prompt else None,
-            domain_name = tc.prompt.domain.domain_name if tc.prompt.domain else None,
-            user_prompt = tc.prompt.user_prompt if tc.prompt else None,
-            system_prompt = tc.prompt.system_prompt if tc.prompt else None,
-            response_text = tc.response.response_text if tc.response else None
+            strategy_name = strategy_name,
+            llm_judge_prompt = llm_judge_prompt,
+            domain_name = domain_name,
+            user_prompt = user_prompt,
+            system_prompt = system_prompt,
+            response_text = response_text
         )
     finally:
         session.close()
@@ -79,32 +89,140 @@ def get_testcase(testcase_id: int, db: DB = Depends(_get_db)):
     # return {"id": tc.testcase_id, "name": tc.name, "prompt": tc.prompt.name, "domain": domain_name}
 
 @testcase_router.put("/{testcase_id}", response_model=TestCaseUpdate)
-async def update_testcase(testcase_id: int, testcase: TestCaseUpdate, db: DB = Depends(_get_db)):
+async def update_testcase(testcase_id: int, testcase: TestCaseId, db: DB = Depends(_get_db)):
     session = db.Session()
     try:
         tc = session.query(TestCases).filter(TestCases.testcase_id == testcase_id).first()
         if not tc:
             raise HTTPException(status_code=404, detail="Test case not found")
         
-        tc.prompt_id = testcase.prompt_id
-        tc.strategy_id = testcase.strategy_id
-        tc.judge_prompt_id = testcase.llm_judge_prompt if testcase.llm_judge_prompt else None
-        tc.prompt_id = testcase.prompt_id
-        tc.response_id = testcase.response_id
-        db.Session().commit()
-        return TestCaseIds(
+        # Update testcase_name if provided
+        if testcase.testcase_name is not None:
+            tc.testcase_name = testcase.testcase_name
+
+        # Update prompt fields if provided
+        if tc.prompt:
+            # Check if any prompt fields have actually changed
+            user_prompt_changed = testcase.user_prompt is not None and testcase.user_prompt != tc.prompt.user_prompt
+            system_prompt_changed = testcase.system_prompt is not None and testcase.system_prompt != tc.prompt.system_prompt
+            
+            if user_prompt_changed or system_prompt_changed:
+                new_user_prompt = testcase.user_prompt if testcase.user_prompt is not None else tc.prompt.user_prompt
+                new_system_prompt = testcase.system_prompt if testcase.system_prompt is not None else tc.prompt.system_prompt
+                
+                # Compute hash the same way as in Prompt.digest
+                prompt_str = f"System: '{new_system_prompt or ''}'\tUser: '{new_user_prompt}'"
+                hashing = hashlib.sha1()
+                hashing.update(prompt_str.encode('utf-8'))
+                new_hash = hashing.hexdigest()
+                
+                # Check if a prompt with this hash already exists (excluding current prompt)
+                existing_prompt = session.query(Prompts).filter(
+                    Prompts.hash_value == new_hash,
+                    Prompts.prompt_id != tc.prompt.prompt_id
+                ).first()
+                
+                if existing_prompt:
+                    # If a prompt with this hash exists, point test case to that prompt
+                    tc.prompt_id = existing_prompt.prompt_id
+                else:
+                    # Update the current prompt's fields and hash
+                    if user_prompt_changed:
+                        tc.prompt.user_prompt = testcase.user_prompt
+                    if system_prompt_changed:
+                        tc.prompt.system_prompt = testcase.system_prompt
+                    tc.prompt.hash_value = new_hash
+
+        # Update response_text if provided
+        if testcase.response_text is not None:
+            if tc.response:
+                # Skip if text hasn't actually changed
+                if tc.response.response_text != testcase.response_text:
+                    # Compute the new hash for the updated response text
+                    response_str = f"Response Text: '{testcase.response_text}'\tResponse Type: '{tc.response.response_type}'"
+                    hashing = hashlib.sha1()
+                    hashing.update(response_str.encode('utf-8'))
+                    new_hash = hashing.hexdigest()
+                    
+                    # Check if a response with this hash already exists (excluding current response)
+                    existing_response = session.query(Responses).filter(
+                        Responses.hash_value == new_hash,
+                        Responses.response_id != tc.response.response_id
+                    ).first()
+                    
+                    if existing_response:
+                        # If a response with this hash exists, point test case to that response
+                        tc.response_id = existing_response.response_id
+                    else:
+                        # Update the current response's text and hash
+                        tc.response.response_text = testcase.response_text
+                        tc.response.hash_value = new_hash
+            else:
+                # If no response exists, we might need to create one
+                # For now, we'll skip if response doesn't exist
+                pass
+
+        # Update strategy_id if strategy_name is provided
+        if testcase.strategy_name is not None:
+            # Look up strategy by name and update the test case's strategy_id
+            strategy = session.query(Strategies).filter(Strategies.strategy_name == testcase.strategy_name).first()
+            if strategy:
+                tc.strategy_id = strategy.strategy_id
+            else:
+                raise HTTPException(status_code=404, detail=f"Strategy '{testcase.strategy_name}' not found")
+
+        # Update llm_judge_prompt if provided
+        if testcase.llm_judge_prompt is not None:
+            if tc.judge_prompt:
+                # Skip if prompt hasn't actually changed
+                if tc.judge_prompt.prompt != testcase.llm_judge_prompt:
+                    # Compute hash the same way as in LLMJudgePrompt.digest (just the prompt text)
+                    hashing = hashlib.sha1()
+                    hashing.update(testcase.llm_judge_prompt.encode('utf-8'))
+                    new_hash = hashing.hexdigest()
+                    
+                    # Check if a judge prompt with this hash already exists (excluding current judge_prompt)
+                    existing_judge_prompt = session.query(LLMJudgePrompts).filter(
+                        LLMJudgePrompts.hash_value == new_hash,
+                        LLMJudgePrompts.prompt_id != tc.judge_prompt.prompt_id
+                    ).first()
+                    
+                    if existing_judge_prompt:
+                        # If a judge prompt with this hash exists, point test case to that judge prompt
+                        tc.judge_prompt_id = existing_judge_prompt.prompt_id
+                    else:
+                        # Update the current judge prompt's text and hash
+                        tc.judge_prompt.prompt = testcase.llm_judge_prompt
+                        tc.judge_prompt.hash_value = new_hash
+            else:
+                # If no judge_prompt exists, we might need to create one
+                # For now, we'll skip if judge_prompt doesn't exist
+                pass
+
+        session.commit()
+        session.refresh(tc)
+
+        # Safely retrieve related information for response model from database object
+        strategy_name = getattr(tc.strategy, "strategy_name", None) if tc.strategy else None
+        llm_judge_prompt = getattr(tc.judge_prompt, "prompt", None) if tc.judge_prompt else None
+        domain_name = getattr(getattr(tc.prompt, "domain", None), "domain_name", None) if tc.prompt and tc.prompt.domain else None
+        user_prompt = getattr(tc.prompt, "user_prompt", None) if tc.prompt else None
+        system_prompt = getattr(tc.prompt, "system_prompt", None) if tc.prompt else None
+        response_text = getattr(tc.response, "response_text", None) if tc.response else None
+
+        return TestCaseUpdate(
             testcase_id=tc.testcase_id, 
             testcase_name=tc.testcase_name, 
             strategy_id=tc.strategy_id,
-            strategy_name=tc.strategy.strategy_name, 
+            strategy_name=strategy_name, 
             llm_judge_prompt_id=tc.judge_prompt_id,
-            llm_judge_prompt=tc.judge_prompt.prompt if tc.judge_prompt else None, 
-            domain_name=tc.prompt.domain.domain_name if tc.prompt.domain else None, 
+            llm_judge_prompt=llm_judge_prompt, 
+            domain_name=domain_name, 
             prompt_id=tc.prompt_id,
-            user_prompt=tc.prompt.user_prompt if tc.prompt else None, 
-            system_prompt=tc.prompt.system_prompt if tc.prompt else None, 
+            user_prompt=user_prompt, 
+            system_prompt=system_prompt, 
             response_id=tc.response_id,
-            response_text=tc.response.response_text if tc.response else None
+            response_text=response_text
             )
     finally:
         session.close()
