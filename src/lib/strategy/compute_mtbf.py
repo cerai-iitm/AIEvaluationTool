@@ -1,19 +1,22 @@
 from datetime import datetime
 import warnings
-from typing import Optional
-
+import os
+from lib.data import TestCase, Conversation
+from .utils_new import FileLoader
 from .strategy_base import Strategy
 from .logger import get_logger
 
-logger = get_logger("compute_mtbf")
-
 warnings.filterwarnings("ignore")
+
+FileLoader._load_env_vars(__file__)
+logger = get_logger("compute_mtbf")
+dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), simple=True, strat_name="compute_mtbf")
 
 # this module compute mean time between failures from the log file generated during interaction with AI agents
 class Compute_MTBF(Strategy):
     def __init__(self, name: str = "compute_mtbf", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
-        self.file_path = kwargs.get("file_path")
+        self.file_path = dflt_vals.file_path
 
     def extract_failure_timestamps(self, log_path, keyword="ERROR"):
         """
@@ -56,7 +59,7 @@ class Compute_MTBF(Strategy):
         logger.info(f"Mean Time Between Failure (MTBF) in hrs: {mtbf}")
         return mtbf, uptimes
 
-    def evaluate(self, agent_response: Optional[str] = None, expected_response: Optional[str] = None) -> float:
+    def evaluate(self, testcase:TestCase, conversation:Conversation):#agent_response: Optional[str] = None, expected_response: Optional[str] = None) -> float:
         """
         Calculate Mean Time Between Failures (MTBF) using the interaction log file
 

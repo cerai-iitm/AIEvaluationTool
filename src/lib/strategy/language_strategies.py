@@ -22,7 +22,6 @@ class LanguageStrategies(Strategy):
         super().__init__(name, **kwargs)
         self.__strategy_name = name
         self.gpu_url=os.getenv("GPU_URL")
-        
         self.embedding_model = SentenceTransformer(dflt_vals.embed_model)
     
     def language_detect_langdetect(self, prompt: str, agent_response: str) -> float:

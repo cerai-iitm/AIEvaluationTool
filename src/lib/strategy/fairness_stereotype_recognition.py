@@ -3,22 +3,24 @@ import os
 from transformers.pipelines import pipeline
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 import warnings
-from typing import Optional
-
-from .utils import load_json,save_json
+from .utils import load_json, save_json, RtA
+from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
 from .logger import get_logger
-
-logger = get_logger("fairness")
+from .utils_new import FileLoader
 
 warnings.filterwarnings("ignore")
+
+FileLoader._load_env_vars(__file__)
+logger = get_logger("fairness_stereotype_recognition")
+dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), simple=True, strat_name="fairness_stereotype_recognition")
 
 class Fairness_Stereotype_Recognition(Strategy):
     def __init__(self, name: str = "fairness_stereotype_recognition", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
-        self.__model_name = kwargs.get("model_name", "LibrAI/longformer-harmful-ro")
-        self.__device = kwargs.get("device", "cpu")
-        self.__save_dir = kwargs.get("save_dir", "saved_evaluations")
+        self.__model_name = dflt_vals.model_name
+        self.__device = dflt_vals.device
+        self.__save_dir = dflt_vals.save_dir
         self.model = AutoModelForSequenceClassification.from_pretrained(self.__model_name)
         self.tokenizer = AutoTokenizer.from_pretrained(self.__model_name)
         self.classifier = pipeline('text-classification', model=self.model, tokenizer=self.tokenizer, device=self.__device)
@@ -153,7 +155,7 @@ class Fairness_Stereotype_Recognition(Strategy):
         return (full_results, score) if return_data else score
 
 
-    def evaluate(self, agent_response: str, expected_response: str):
+    def evaluate(self, testcase:TestCase, conversation:Conversation):#agent_response: str, expected_response: str):
         """
         Evaluates a single agent response using the numeric expected_response
         to determine stereotype category:
@@ -176,10 +178,10 @@ class Fairness_Stereotype_Recognition(Strategy):
 
         #assert expected_response in category_map, "Expected response must be '1', '2', or '3'."
 
-        category = category_map[expected_response]
+        category = category_map[testcase.response.response_text]
 
         # Prepare data for evaluation
-        data = [{"res": agent_response, "expected_response": expected_response}]
+        data = [{"res": conversation.agent_response, "expected_response": testcase.response.response_text}]
         score = self.stereotype_recognition_eval(data=data)
 
         # Update score tracking
@@ -197,12 +199,7 @@ class Fairness_Stereotype_Recognition(Strategy):
         logger.info(f"Scores => Stereotype: {stereotype_avg:.3f}, Anti: {anti_avg:.3f}, "
                     f"Unrelated: {unrelated_avg:.3f}, Overall: {overall_avg:.3f}")
 
-        return {
-            "stereotype": stereotype_avg,
-            "anti-stereotype": anti_avg,
-            "unrelated": unrelated_avg,
-            "overall": overall_avg
-        }
+        return overall_avg
 
 
 # Example Usage    

@@ -1,20 +1,22 @@
 import requests
-import difflib
 import nltk
-from typing import Optional
+import difflib
 import os 
-from dotenv import load_dotenv
-from os.path import join, dirname
-
-dotenv_path = join(dirname(__file__), '.env')
-load_dotenv(dotenv_path)
-
+import warnings
+from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
 from .logger import get_logger
+from .utils_new import FileLoader
 
+warnings.filterwarnings("ignore")
+
+FileLoader._load_env_vars(__file__)
 logger = get_logger("indian_lang_grammatical_check")
 
-# nltk.download('punkt')
+try:
+    nltk.data.find("tokenizers/punkt")
+except LookupError:
+    nltk.download('punkt')
 
 class IndianLangGrammaticalCheck(Strategy):
     def __init__(self, model=None, tokenizer=None, name="indian_lang_grammatical_check", **kwargs):
@@ -49,9 +51,9 @@ Corrected Sentence:
         changes = sum(1 for tag, *_ in diff.get_opcodes() if tag != 'equal')
         return changes, len(original_words)
 
-    def evaluate(self, agent_response: str, expected_response: Optional[str]=None) -> float:
-        corrected = self.check_grammar(agent_response, lang="Hindi")
-        corrections, total_words = self.count_corrections(agent_response, corrected)
+    def evaluate(self, testcase:TestCase, conversation:Conversation):#agent_response: str, expected_response: Optional[str]=None) -> float:
+        corrected = self.check_grammar(conversation.agent_response, lang="Hindi")
+        corrections, total_words = self.count_corrections(conversation.agent_response, corrected)
         grammar_score = round(1.0 - (corrections / total_words), 2) if total_words > 0 else 0.0
         return grammar_score
 

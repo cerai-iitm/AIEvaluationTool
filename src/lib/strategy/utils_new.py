@@ -134,8 +134,7 @@ class CustomOllamaModel(DeepEvalBaseLLM):
     
     def get_model_name(self, *args, **kwargs):
          return self.model_name
-            
-    
+
 
 
 

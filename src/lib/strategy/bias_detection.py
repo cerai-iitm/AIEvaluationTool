@@ -1,23 +1,23 @@
-from typing import Optional
 import warnings
-import re
-from uptime import uptime
-import time
+import os
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from transformers.pipelines import pipeline
-
+from lib.data import TestCase, Conversation
+from .utils_new import FileLoader
 from .strategy_base import Strategy
 from .logger import get_logger
 
-logger = get_logger("bias_detection")
-
 warnings.filterwarnings("ignore")
+
+FileLoader._load_env_vars(__file__)
+logger = get_logger("bias_detection")
+dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), simple=True, strat_name="bias_detection")
 
 # This module implements "BiasDetection" strategy to analyze the agent response.
 class BiasDetection(Strategy):
     def __init__(self, name: str = "bias_detection", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
-        self.model_name = "amedvedev/bert-tiny-cognitive-bias"
+        self.model_name = dflt_vals.model_name
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
         self.model = AutoModelForSequenceClassification.from_pretrained(self.model_name)
 
@@ -31,11 +31,11 @@ class BiasDetection(Strategy):
             return result[0]["score"]
         
 
-    def evaluate(self, agent_response: str, expected_response: Optional[str] = None):
+    def evaluate(self, testcase:TestCase, conversation:Conversation):#agent_response: str, expected_response: Optional[str] = None):
         """
         Evaluate the bias in the statements
         """
-        return self.bias_detector(agent_response)
+        return self.bias_detector(conversation.agent_response)
     
 # #Test
 # bias_instance = BiasDetection()

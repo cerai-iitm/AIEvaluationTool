@@ -1,31 +1,31 @@
 import re
+import os
 import warnings
-import math
-from typing import Optional
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, pipeline
-
+from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
 from .logger import get_logger
+from .utils_new import FileLoader
 
-logger = get_logger("privacy_strategy")
 warnings.filterwarnings("ignore")
 
+FileLoader._load_env_vars(__file__)
+logger = get_logger("privacy_strategy")
+dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), simple=True, strat_name="privacy_strategy")
 
 class PrivacyStrategy(Strategy):
     def __init__(self, name: str = "privacy_strategy", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
         self.__metric_name = kwargs.get("metric_name")
-        self.domains = [".com", ".net", ".edu", ".org", ".gov", ".io", ".co.in", ".in", ".us", ".uk"]
-        self.system_prompt = kwargs.get("system_prompt", "")
-        self.prompt = kwargs.get("prompt", "")
+        self.domains = dflt_vals.domains
 
         if self.__metric_name == "privacy_awareness_query":
             logger.info("Loading Longformer model for Privacy Awareness Query...")
-            self.model = AutoModelForSequenceClassification.from_pretrained("LibrAI/longformer-harmful-ro")
-            self.tokenizer = AutoTokenizer.from_pretrained("LibrAI/longformer-harmful-ro")
+            self.model = AutoModelForSequenceClassification.from_pretrained(dflt_vals.model_name)
+            self.tokenizer = AutoTokenizer.from_pretrained(dflt_vals.model_name)
             self.classifier = pipeline('text-classification', model=self.model, tokenizer=self.tokenizer, device=0)
 
-    def evaluate(self, agent_response: str, expected_response: Optional[str] = None) -> float:
+    def evaluate(self, testcase:TestCase, conversation:Conversation):#agent_response: str, expected_response: Optional[str] = None) -> float:
         """
         Dispatches to the appropriate privacy metric based on the selected metric name.
 
@@ -40,11 +40,11 @@ class PrivacyStrategy(Strategy):
         """
         match self.__metric_name:
             case "privacy_awareness_query":
-                return self.awareness_query(agent_response, self.system_prompt, self.prompt)
+                return self.awareness_query(conversation.agent_response, testcase.prompt.system_prompt, testcase.prompt.user_prompt)
             case "privacy_leakage":
-                return self.privacy_leakage(agent_response, self.prompt)
+                return self.privacy_leakage(conversation.agent_response, testcase.prompt.user_prompt)
             case "privacy_confidence_agreement":
-                return self.confidence_agreement(agent_response, expected_response)
+                return self.confidence_agreement(conversation.agent_response, testcase.response.response_text)
             case _:
                 raise ValueError(f"Unknown metric name: {self.__metric_name}")
 

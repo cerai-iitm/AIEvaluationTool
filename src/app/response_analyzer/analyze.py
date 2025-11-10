@@ -15,7 +15,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__) + '/../../'))  # Adjust t
 from lib.orm.DB import DB
 from lib.utils import get_logger, get_logger_verbosity
 # from lib.strategy.strategy_implementor import StrategyImplementor
-from lib.strategy.changed_strategy_implementor import StrategyImplementor
+from lib.strategy.strategy_implementor import StrategyImplementor
 
 def main():
     # setup up logging

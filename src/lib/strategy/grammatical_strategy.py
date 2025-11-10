@@ -1,16 +1,15 @@
-from typing import Optional
-import asyncio
-import logging
 import warnings
 import language_tool_python
-
-from .strategy_base import Strategy
 from .utils import language_detection
+from lib.data import TestCase, Conversation
+from .strategy_base import Strategy
 from .logger import get_logger
+from .utils_new import FileLoader
 
-logger = get_logger("grammatical_strategy")
 warnings.filterwarnings("ignore")
 
+FileLoader._load_env_vars(__file__)
+logger = get_logger("grammatical_strategies")
 
 # This module implements grammatical strategies to analyze the agent response.
 class GrammaticalStrategy(Strategy):
@@ -24,7 +23,7 @@ class GrammaticalStrategy(Strategy):
         result = tool.check(text)
         return result
     
-    def evaluate(self, agent_response: str, expected_response: Optional[str] = None) -> float:
+    def evaluate(self, testcase:TestCase, conversation:Conversation):#agent_response: str, expected_response: Optional[str] = None) -> float:
         """
         Check the grammatical correctness in the response
         :param prompt: The prompt sent to the agent to generate the response.
@@ -32,8 +31,8 @@ class GrammaticalStrategy(Strategy):
         :return: A score representing the quality of the agent's response.
         """
         logger.info("Evaluating Grammatical Errors...")
-        if language_detection(agent_response[0]) == "en":
-            grammar_check = GrammaticalStrategy.grammarChecker(agent_response[0])
+        if language_detection(conversation.agent_response[0]) == "en":
+            grammar_check = GrammaticalStrategy.grammarChecker(conversation.agent_response[0])
             print("Grammar Check:",grammar_check)
             score = 0.0 if len(grammar_check) >= 1 else 1.0
             logger.info(f"Grammatical Score: {score}")
