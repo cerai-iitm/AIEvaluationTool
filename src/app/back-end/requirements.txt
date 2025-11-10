@@ -5,6 +5,7 @@ uvicorn
 sqlalchemy
 sqlalchemy-utils
 psycopg2-binary
+mariadb
 python-jose[cryptography]
 passlib[bcrypt]
 python-multipart

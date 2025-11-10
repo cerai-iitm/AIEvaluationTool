@@ -13,7 +13,7 @@ from lib.orm.DB import DB
 from lib.orm.tables import TestCases, Responses
 from database.fastapi_deps import _get_db
 
-response_router = APIRouter(prefix="/api/response")
+response_router = APIRouter(prefix="/api/responses")
 
 
 @response_router.get("/", response_model=list[ResponseIds])

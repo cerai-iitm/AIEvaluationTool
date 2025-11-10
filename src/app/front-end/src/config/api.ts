@@ -4,9 +4,14 @@ export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localho
 // API endpoints
 export const API_ENDPOINTS = {
   LOGIN: `${API_BASE_URL}/login`,
-  DASHBOARD: `${API_BASE_URL}/api/dashboard/summary`,
-  TEST_CASES: `${API_BASE_URL}/api/testcases/t`,
-  TEST_CASE_BY_ID: (id: number) => `${API_BASE_URL}/api/testcases/${id}`,
+  DASHBOARD: `${API_BASE_URL}/api/dashboard`,
+  TEST_CASES: `${API_BASE_URL}/api/testcases`,
+  TEST_CASE_BY_ID: (testcase_id: number) => `${API_BASE_URL}/api/testcases/${testcase_id}`,
+  TEST_CASES_UPDATE_BY_ID: (testcase_id: number) => `${API_BASE_URL}/api/testcases/${testcase_id}`,
+
+  STRATEGIES: `${API_BASE_URL}/api/strategies`,
   RESPONSES: `${API_BASE_URL}/api/responses`,
+  PROMPTS: `${API_BASE_URL}/api/prompts`,
+  LLM_PROMPTS: `${API_BASE_URL}/api/llmPrompts`,
 };
 

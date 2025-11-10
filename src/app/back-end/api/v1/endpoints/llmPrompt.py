@@ -12,7 +12,7 @@ from lib.orm.DB import DB
 from lib.orm.tables import LLMJudgePrompts
 from database.fastapi_deps import _get_db
 
-llmPrompt_router = APIRouter(prefix="/api/llmPrompt")
+llmPrompt_router = APIRouter(prefix="/api/llmPrompts")
 
 @llmPrompt_router.get("", response_model=list[LlmPromptIds])
 async def get_llmPrompt(db: DB = Depends(_get_db)):
@@ -21,7 +21,7 @@ async def get_llmPrompt(db: DB = Depends(_get_db)):
         llmPrompts = session.query(LLMJudgePrompts).all()
         return [
             LlmPromptIds(
-                prompt_id=getattr(llmPrompt, "prompt_id", None),
+                llmPromptId=getattr(llmPrompt, "prompt_id", None),
                 prompt=getattr(llmPrompt, "prompt", None),
             )
             for llmPrompt in llmPrompts
