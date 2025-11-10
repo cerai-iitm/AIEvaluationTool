@@ -8,18 +8,18 @@ import { useToast } from "@/hooks/use-toast";
 
 const MENU_OPTIONS = [
   { label: "Open", action: "open" },
-  { label: "Add test case", action: "addTestCase" },
-  { label: "Export", action: "export" },
+  // { label: "Add test case", action: "addTestCase" },
+  // { label: "Export", action: "export" },
   { label: "History", action: "history" },
-  { label: "Delete", action: "delete", className: "text-red-600" }
+  // { label: "Delete", action: "delete", className: "text-red-600" }
 ];
 
 const statCardHandlers = (navigate, stat) => ({
   open: () => stat.onClick && stat.onClick(),
-  addTestCase: () => alert(`Add test case for ${stat.title}`),
-  export: () => alert(`Export ${stat.title}`),
+  // addTestCase: () => alert(`Add test case for ${stat.title}`),
+  // export: () => alert(`Export ${stat.title}`),
   history: () => alert(`Show history for ${stat.title}`),
-  delete: () => alert(`Delete ${stat.title}`),
+  // delete: () => alert(`Delete ${stat.title}`),
 });
 
 interface DashboardStats {
@@ -104,8 +104,8 @@ const Dashboard = () => {
           <aside className="fixed top-0 left-0 h-screen w-[220px] bg-[#5252c2] z-20">
             <Sidebar />
           </aside>
-        <main className="flex-1 p-12 ml-[240px]">
-          <div className="grid grid-cols-3 gap-8 max-w-6xl">
+        <main className="flex-1 p-28 ml-[220px] min-h-screen items-center justify-center">
+          <div className="grid grid-cols-3 gap-14 max-w-7xl mx-auto">
             {stats.map((stat, idx) => (
               <Card
                 key={stat.title}

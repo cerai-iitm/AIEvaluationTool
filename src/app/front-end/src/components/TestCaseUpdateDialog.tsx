@@ -17,7 +17,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search, X } from "lucide-react";
-import { PromptSearchDialog } from "./PromptSearchDialog";
+import {
+  PromptSearchDialog,
+  PromptSearchSelection,
+  PromptSearchType,
+} from "./PromptSearchDialog";
 import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
 
@@ -61,9 +65,9 @@ export const TestCaseUpdateDialog = ({
   const [isFetchingStrategies, setIsFetchingStrategies] = useState(false);
   
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
-  const [searchType, setSearchType] = useState<"userPrompt" | "response" | "llm">("userPrompt");
+  const [searchType, setSearchType] = useState<PromptSearchType>("userPrompt");
 
-  const handleSearchClick = (type: "userPrompt" | "response" | "llm") => {
+  const handleSearchClick = (type: PromptSearchType) => {
     setSearchType(type);
     setSearchDialogOpen(true);
   };
@@ -80,16 +84,30 @@ export const TestCaseUpdateDialog = ({
     const height = getTextareaHeight(lineCount);
   }
 
-  const handleSelectPrompt = (prompt: string) => {
-    if (searchType === "userPrompt") {
-      setUserPrompts(prompt);
-      // Simulate backend call to update system prompts
-      setSystemPrompts("You are an AI assistant that not only provides the answer but explains your reasoning in a clear manner.");
-    } else if (searchType === "response") {
-      setResponseText(prompt);
-    } else if (searchType === "llm") {
-      setLlmPrompt(prompt);
+  const handleSelectPrompt = (selection: PromptSearchSelection) => {
+    switch (selection.type) {
+      case "userPrompt":
+        setUserPrompts(selection.userPrompt);
+        if (selection.systemPrompt !== undefined) {
+          setSystemPrompts(selection.systemPrompt ?? "");
+        }
+        break;
+      case "systemPrompt":
+        setSystemPrompts(selection.systemPrompt);
+        if (selection.userPrompt) {
+          setUserPrompts(selection.userPrompt);
+        }
+        break;
+      case "response":
+        setResponseText(selection.responseText);
+        break;
+      case "llm":
+        setLlmPrompt(selection.llmPrompt);
+        break;
+      default:
+        break;
     }
+    setFocusedField(null);
     setSearchDialogOpen(false);
   };
 

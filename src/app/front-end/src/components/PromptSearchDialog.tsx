@@ -9,13 +9,66 @@ import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { API_ENDPOINTS } from "@/config/api";
 
+export type PromptSearchType = "userPrompt" | "systemPrompt" | "response" | "llm";
+
+export type PromptSearchSelection =
+  | {
+      type: "userPrompt";
+      promptId?: number | null;
+      userPrompt: string;
+      systemPrompt?: string | null;
+      language?: string | null;
+      domain?: string | null;
+      raw?: unknown;
+    }
+  | {
+      type: "systemPrompt";
+      promptId?: number | null;
+      systemPrompt: string;
+      userPrompt?: string | null;
+      language?: string | null;
+      domain?: string | null;
+      raw?: unknown;
+    }
+  | {
+      type: "response";
+      responseId?: number | null;
+      promptId?: number | null;
+      responseText: string;
+      raw?: unknown;
+    }
+  | {
+      type: "llm";
+      promptId?: number | null;
+      llmPrompt: string;
+      language?: string | null;
+      raw?: unknown;
+    };
+
+interface PromptSearchItem {
+  id: string;
+  displayPrimary: string;
+  displaySecondary?: string;
+  searchIndex: string;
+  selection: PromptSearchSelection;
+}
+
 interface PromptSearchDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSelect: (prompt: string) => void;
-  searchType: "userPrompt" | "response" | "llm";
+  onSelect: (selection: PromptSearchSelection) => void;
+  searchType: PromptSearchType;
 }
 
+const normalizeString = (value: unknown): string => {
+  if (typeof value === "string") {
+    return value;
+  }
+  if (value === null || value === undefined) {
+    return "";
+  }
+  return String(value);
+};
 
 export const PromptSearchDialog = ({
   open,
@@ -24,7 +77,7 @@ export const PromptSearchDialog = ({
   searchType,
 }: PromptSearchDialogProps) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [items, setItems] = useState<string[]>([]);
+  const [items, setItems] = useState<PromptSearchItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,6 +99,7 @@ export const PromptSearchDialog = ({
         let endpoint: string;
         switch (searchType) {
           case "userPrompt":
+          case "systemPrompt":
             endpoint = API_ENDPOINTS.PROMPTS;
             break;
           case "response":
@@ -75,42 +129,222 @@ export const PromptSearchDialog = ({
         }
 
         const data = await response.json();
-        
-        console.log("API Response for", searchType, ":", data);
-        
-        // Handle different response formats - could be array or object with items
-        const itemsArray = Array.isArray(data) ? data : (data.items || data.data || []);
-        
-        // Extract text from items if they are objects, otherwise use as strings
-        const extractedItems = itemsArray
-          .map((item: any) => {
-            if (typeof item === "string") {
-              return item;
-            }
-            
-            // Extract the appropriate field based on searchType
-            let text: string | undefined;
-            if (searchType === "userPrompt") {
-              text = item.user_prompt;
-            } else if (searchType === "response") {
-              text = item.response_text;
-            } else if (searchType === "llm") {
-              // LLM prompts API returns 'prompt' field, not 'llm_prompt'
-              text = item.prompt;
-            }
-            
-            // Fallback to common field names if specific field not found
-            if (!text) {
-              text = item.text || item.prompt || item.response || item.content;
-            }
-            
-            // If still no text, convert to string or return empty
-            return text || "";
-          })
-          .filter((item: string) => item && item.trim() !== ""); // Filter out empty strings
 
-        console.log("Extracted items:", extractedItems);
-        setItems(extractedItems);
+        // Handle different response formats - could be array or object with items/data
+        const itemsArray: any[] = Array.isArray(data)
+          ? data
+          : data?.items || data?.data || [];
+
+        const mappedItems: PromptSearchItem[] = itemsArray
+          .map((rawItem, index): PromptSearchItem | null => {
+            const promptId =
+              rawItem?.prompt_id ??
+              rawItem?.promptId ??
+              rawItem?.id ??
+              null;
+
+            if (searchType === "userPrompt") {
+              const userPrompt =
+                normalizeString(rawItem?.user_prompt) ||
+                normalizeString(rawItem?.userPrompt) ||
+                normalizeString(rawItem?.prompt);
+              const systemPrompt =
+                normalizeString(rawItem?.system_prompt) ||
+                normalizeString(rawItem?.systemPrompt);
+
+              if (!userPrompt.trim() && !systemPrompt.trim()) {
+                return null;
+              }
+
+              const language =
+                rawItem?.language ??
+                rawItem?.lang_name ??
+                rawItem?.lang ??
+                rawItem?.langName ??
+                null;
+              const domain =
+                rawItem?.domain ??
+                rawItem?.domain_name ??
+                rawItem?.domainName ??
+                null;
+
+              const displayPrimary =
+                userPrompt.trim() || "(No user prompt text)";
+              const displaySecondary = systemPrompt.trim()
+                ? systemPrompt
+                : undefined;
+              const searchIndex = [
+                userPrompt,
+                systemPrompt,
+                language,
+                domain,
+              ]
+                .filter(Boolean)
+                .map((value) => value.toString().toLowerCase())
+                .join(" ");
+
+              return {
+                id: `userPrompt-${promptId ?? index}`,
+                displayPrimary,
+                displaySecondary,
+                searchIndex,
+                selection: {
+                  type: "userPrompt",
+                  promptId: typeof promptId === "number" ? promptId : null,
+                  userPrompt,
+                  systemPrompt: systemPrompt || null,
+                  language,
+                  domain,
+                  raw: rawItem,
+                },
+              };
+            }
+
+            if (searchType === "systemPrompt") {
+              const systemPrompt =
+                normalizeString(rawItem?.system_prompt) ||
+                normalizeString(rawItem?.systemPrompt);
+              const userPrompt =
+                normalizeString(rawItem?.user_prompt) ||
+                normalizeString(rawItem?.userPrompt);
+
+              if (!systemPrompt.trim() && !userPrompt.trim()) {
+                return null;
+              }
+
+              const language =
+                rawItem?.language ??
+                rawItem?.lang_name ??
+                rawItem?.lang ??
+                rawItem?.langName ??
+                null;
+              const domain =
+                rawItem?.domain ??
+                rawItem?.domain_name ??
+                rawItem?.domainName ??
+                null;
+
+              const displayPrimary =
+                systemPrompt.trim() || "(No system prompt text)";
+              const displaySecondary = userPrompt.trim()
+                ? userPrompt
+                : undefined;
+              const searchIndex = [
+                systemPrompt,
+                userPrompt,
+                language,
+                domain,
+              ]
+                .filter(Boolean)
+                .map((value) => value.toString().toLowerCase())
+                .join(" ");
+
+              return {
+                id: `systemPrompt-${promptId ?? index}`,
+                displayPrimary,
+                displaySecondary,
+                searchIndex,
+                selection: {
+                  type: "systemPrompt",
+                  promptId: typeof promptId === "number" ? promptId : null,
+                  systemPrompt,
+                  userPrompt: userPrompt || null,
+                  language,
+                  domain,
+                  raw: rawItem,
+                },
+              };
+            }
+
+            if (searchType === "response") {
+              const responseText =
+                normalizeString(rawItem?.response_text) ||
+                normalizeString(rawItem?.response) ||
+                normalizeString(rawItem?.text);
+
+              if (!responseText.trim()) {
+                return null;
+              }
+
+              const responseId =
+                rawItem?.response_id ??
+                rawItem?.responseId ??
+                rawItem?.id ??
+                null;
+              const associatedUserPrompt =
+                normalizeString(rawItem?.user_prompt) ||
+                normalizeString(rawItem?.userPrompt);
+              const associatedSystemPrompt =
+                normalizeString(rawItem?.system_prompt) ||
+                normalizeString(rawItem?.systemPrompt);
+
+              const searchIndex = [
+                responseText,
+                associatedUserPrompt,
+                associatedSystemPrompt,
+              ]
+                .filter(Boolean)
+                .map((value) => value.toString().toLowerCase())
+                .join(" ");
+
+              return {
+                id: `response-${responseId ?? index}`,
+                displayPrimary: responseText,
+                displaySecondary: associatedUserPrompt
+                  ? `User: ${associatedUserPrompt}`
+                  : undefined,
+                searchIndex,
+                selection: {
+                  type: "response",
+                  responseId: typeof responseId === "number" ? responseId : null,
+                  promptId: typeof promptId === "number" ? promptId : null,
+                  responseText,
+                  raw: rawItem,
+                },
+              };
+            }
+
+            // searchType === "llm"
+            const llmPrompt =
+              normalizeString(rawItem?.prompt) ||
+              normalizeString(rawItem?.llm_prompt) ||
+              normalizeString(rawItem?.text);
+
+            if (!llmPrompt.trim()) {
+              return null;
+            }
+
+            const language =
+              rawItem?.language ??
+              rawItem?.lang_name ??
+              rawItem?.lang ??
+              rawItem?.langName ??
+              null;
+
+            const searchIndex = [llmPrompt, language]
+              .filter(Boolean)
+              .map((value) => value.toString().toLowerCase())
+              .join(" ");
+
+            return {
+              id: `llm-${promptId ?? index}`,
+              displayPrimary: llmPrompt,
+              displaySecondary: language
+                ? `Language: ${language}`
+                : undefined,
+              searchIndex,
+              selection: {
+                type: "llm",
+                promptId: typeof promptId === "number" ? promptId : null,
+                llmPrompt,
+                language,
+                raw: rawItem,
+              },
+            };
+          })
+          .filter(Boolean) as PromptSearchItem[];
+
+        setItems(mappedItems);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to fetch data");
         setItems([]);
@@ -122,23 +356,17 @@ export const PromptSearchDialog = ({
     fetchData();
   }, [open, searchType]);
 
-  const filteredItems = items.filter((item) =>
-    item.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const filteredItems =
+    normalizedQuery.length === 0
+      ? items
+      : items.filter((item) => item.searchIndex.includes(normalizedQuery));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[80vh]">
         <DialogHeader>
           <DialogTitle className="sr-only">Search Prompts</DialogTitle>
-          {/* <Button
-            variant="ghost"
-            size="icon"
-            className="absolute right-4 top-4"
-            onClick={() => onOpenChange(false)}
-          >
-            <X className="w-5 h-5" />
-          </Button> */}
         </DialogHeader>
 
         <div className="space-y-4 pt-4">
@@ -166,13 +394,21 @@ export const PromptSearchDialog = ({
                 <p className="text-sm italic">No results found.</p>
               </div>
             ) : (
-              filteredItems.map((item, index) => (
+              filteredItems.map((item) => (
                 <button
-                  key={index}
-                  onClick={() => onSelect(item)}
+                  key={item.id}
+                  onClick={() => {
+                    onSelect(item.selection);
+                    onOpenChange(false);
+                  }}
                   className="w-full text-left p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
                 >
-                  <p className="text-sm">{item}</p>
+                  <p className="text-sm font-medium">{item.displayPrimary}</p>
+                  {item.displaySecondary ? (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {item.displaySecondary}
+                    </p>
+                  ) : null}
                 </button>
               ))
             )}

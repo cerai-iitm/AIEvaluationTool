@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Sidebar from "@/components/Sidebar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -44,6 +44,12 @@ const TestCases = () => {
   const [testCases, setTestCases] = useState<TestCase[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
+  
+  // Refs for textareas to enable auto-scroll
+  const userPromptsRef = useRef<HTMLTextAreaElement>(null);
+  const systemPromptsRef = useRef<HTMLTextAreaElement>(null);
+  const responseTextRef = useRef<HTMLTextAreaElement>(null);
+  const llmPromptRef = useRef<HTMLTextAreaElement>(null);
 
   const fetchTestCases = async () => {
     setIsLoading(true);
@@ -196,15 +202,71 @@ const TestCases = () => {
     currentPage * itemsPerPage
   );
 
-  function getTextareaHeight(lineCount: number){
-    if (lineCount <= 1 ) return 40;
-    if (lineCount <= 4 ) return lineCount * 40;
-    return 160
+  // Calculate line count from text more accurately
+  // Estimates based on typical textarea width (~700px) and average char width (~7px)
+  // This gives us roughly 100 characters per line
+  function getLineCount(text: string): number {
+    if (!text || text.trim() === "") return 1;
+    
+    const lines = text.split('\n');
+    let totalLines = 0;
+    
+    // Average characters per line for a textarea in a max-w-3xl dialog
+    // Assuming ~700px width and ~7px per character = ~100 chars per line
+    const charsPerLine = 100;
+    
+    lines.forEach(line => {
+      if (line.length === 0) {
+        // Empty line still counts as 1 line
+        totalLines += 1;
+      } else {
+        // Calculate how many lines this line will wrap to
+        const wrappedLines = Math.ceil(line.length / charsPerLine);
+        totalLines += Math.max(1, wrappedLines);
+      }
+    });
+    
+    return Math.max(1, totalLines);
   }
-  const SmartTextarea = ({ value, ...props }) => {
-    const lineCount = value.split("\n").length;
-    const height = getTextareaHeight(lineCount);
+
+  // Calculate height based on line count
+  function getTextareaHeight(lineCount: number): number {
+    if (lineCount <= 1) return 40; // minimum height for single line
+    if (lineCount <= 3) return lineCount * 40; // 2 lines = 80px, 3 = 120px, 4 = 160px
+    return 85; // max height with scroll for >4 lines
   }
+
+  // Auto-scroll to line 3 if content has more than 3 lines
+  useEffect(() => {
+    if (!selectedCase) return;
+
+    const scrollToLine3 = (ref: React.RefObject<HTMLTextAreaElement>, text: string) => {
+      if (!ref.current) return;
+      const lineCount = getLineCount(text);
+      if (lineCount > 3) {
+        // Scroll to show line 3: scroll past first 2 lines (2 * 40px = 80px)
+        // This positions line 3 at the top of the visible area
+        setTimeout(() => {
+          if (ref.current) {
+            ref.current.scrollTop = 80; // 2 lines * 40px per line
+          }
+        }, 100); // Small delay to ensure textarea is rendered
+      }
+    };
+    if (selectedCase.userPrompts) {
+      scrollToLine3(userPromptsRef, selectedCase.userPrompts);
+    }
+    if (selectedCase.systemPrompts) {
+      scrollToLine3(systemPromptsRef, selectedCase.systemPrompts);
+    }
+    if (selectedCase.responseText) {
+      scrollToLine3(responseTextRef, selectedCase.responseText);
+    }
+    if (selectedCase.llmPrompt) {
+      scrollToLine3(llmPromptRef, selectedCase.llmPrompt);
+    }
+  
+  }, [selectedCase]);
 
   return (
     <div className="flex min-h-screen">
@@ -369,67 +431,74 @@ const TestCases = () => {
               <div className="space-y-1">
                 <Label className="text-base font-semibold">User Prompts</Label>
                 <Textarea
+                  ref={userPromptsRef}
                   value={selectedCase.userPrompts}
                   readOnly
-                  style = {{
-                    height: '${height}px',
+                  style={{
+                    height: `${getTextareaHeight(getLineCount(selectedCase.userPrompts))}px`,
                     maxHeight: "160px",
                     minHeight: "40px",
                     overflowY: "auto"
                   }}
-                  className="bg-muted min-h-[80px]"
+                  className="bg-muted"
                 />
               </div>
 
               <div className="space-y-1">
                 <Label className="text-base font-semibold">System prompts</Label>
                 <Textarea
+                  ref={systemPromptsRef}
                   value={selectedCase.systemPrompts}
                   readOnly
-                  style = {{
-                    height: '${height}px',
+                  style={{
+                    height: `${getTextareaHeight(getLineCount(selectedCase.systemPrompts))}px`,
                     maxHeight: "160px",
                     minHeight: "40px",
                     overflowY: "auto"
                   }}
-                  className="bg-muted min-h-[80px]"
+                  className="bg-muted"
                 />
               </div>
 
+              { selectedCase.responseText && selectedCase.responseText.trim() !== "" && (
               <div className="space-y-1">
                 <Label className="text-base font-semibold">Response Text</Label>
                 <Textarea
+                  ref={responseTextRef}
                   value={selectedCase.responseText}
                   readOnly
-                  style = {{
-                    height: '${height}px',
+                  style={{
+                    height: `${getTextareaHeight(getLineCount(selectedCase.responseText))}px`,
                     maxHeight: "160px",
                     minHeight: "40px",
                     overflowY: "auto"
                   }}
-                  className="bg-muted min-h-[80px]"
+                  className="bg-muted"
                 />
               </div>
-
+              )}
+              
               <div className="space-y-1">
                 <Label className="text-base font-semibold">Strategy Name</Label>
                 <Input value={selectedCase.strategyName} readOnly className="bg-muted" />
               </div>
+              
 
               {/* Only show LLM Prompt if not empty */}
               {selectedCase.llmPrompt && selectedCase.llmPrompt.trim() !== "" && (
               <div className="space-y-1">
                 <Label className="text-base font-semibold">LLM Prompt</Label>
                 <Textarea
+                  ref={llmPromptRef}
                   value={selectedCase.llmPrompt}
                   readOnly
-                  style = {{
-                    height: '${height}px',
+                  style={{
+                    height: `${getTextareaHeight(getLineCount(selectedCase.llmPrompt))}px`,
                     maxHeight: "160px",
                     minHeight: "40px",
                     overflowY: "auto"
                   }}
-                  className="bg-muted min-h-[80px]"
+                  className="bg-muted"
                 />
               </div>
               )}

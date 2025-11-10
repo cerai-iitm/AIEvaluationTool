@@ -17,7 +17,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search, X } from "lucide-react";
-import { PromptSearchDialog } from "./PromptSearchDialog";
+import {
+  PromptSearchDialog,
+  PromptSearchSelection,
+  PromptSearchType,
+} from "./PromptSearchDialog";
 
 interface Response {
   id: number;
@@ -70,22 +74,33 @@ export const ResponseUpdateDialog = ({
   const [notes, setNotes] = useState(response?.notes || "");
   
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
-  const [searchType, setSearchType] = useState<"userPrompt" | "response" | "systemPrompt">("userPrompt");
+  const [searchType, setSearchType] = useState<PromptSearchType>("userPrompt");
 
-  const handleSearchClick = (type: "userPrompt" | "response" | "systemPrompt") => {
+  const handleSearchClick = (type: PromptSearchType) => {
     setSearchType(type);
     setSearchDialogOpen(true);
   };
 
-  const handleSelectPrompt = (prompt: string) => {
-    if (searchType === "userPrompt") {
-      setUserPrompts(prompt);
-      // Simulate backend call to update system prompts
-      setSystemPrompts("You are an AI assistant that not only provides the answer but explains your reasoning in a clear manner.");
-    } else if (searchType === "response") {
-      setResponseText(prompt);
-    } else if (searchType === "systemPrompt") {
-      setSystemPrompts(prompt);
+  const handleSelectPrompt = (selection: PromptSearchSelection) => {
+    switch (selection.type) {
+      case "userPrompt":
+        setUserPrompts(selection.userPrompt);
+        setSystemPrompts(selection.systemPrompt ?? "");
+        break;
+      case "systemPrompt":
+        setSystemPrompts(selection.systemPrompt);
+        if (selection.userPrompt) {
+          setUserPrompts(selection.userPrompt);
+        }
+        break;
+      case "response":
+        setResponseText(selection.responseText);
+        break;
+      case "llm":
+        // No-op for response dialog, but keeping for completeness.
+        break;
+      default:
+        break;
     }
     setSearchDialogOpen(false);
   };

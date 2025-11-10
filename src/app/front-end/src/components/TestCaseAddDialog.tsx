@@ -17,7 +17,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search, X, Check } from "lucide-react";
-import { PromptSearchDialog } from "./PromptSearchDialog";
+import {
+  PromptSearchDialog,
+  PromptSearchSelection,
+  PromptSearchType,
+} from "./PromptSearchDialog";
 
 interface TestCaseAddDialogProps {
   open: boolean;
@@ -70,7 +74,7 @@ export const TestCaseAddDialog = ({
   const [notes, setNotes] = useState("");
   
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
-  const [searchType, setSearchType] = useState<"userPrompt" | "response" | "llm">("userPrompt");
+  const [searchType, setSearchType] = useState<PromptSearchType>("userPrompt");
 
   // Check test case name availability
   useEffect(() => {
@@ -90,25 +94,41 @@ export const TestCaseAddDialog = ({
   //   setSearchDialogOpen(true);
   // };
 
-  const handleSelectPrompt = (prompt: string) => {
-    if (searchType === "userPrompt") {
-      setUserPrompts(prompt);
-      // Simulate backend call to update system prompts
-      setSystemPrompts("You are an AI assistant that not only provides the answer but explains your reasoning in a clear manner.");
-    } else if (searchType === "response") {
-      setResponseText(prompt);
-    } else if (searchType === "llm") {
-      setLlmPrompt(prompt);
+  const handleSelectPrompt = (selection: PromptSearchSelection) => {
+    switch (selection.type) {
+      case "userPrompt":
+        setUserPrompts(selection.userPrompt);
+        setSystemPrompts(selection.systemPrompt ?? "");
+        break;
+      case "systemPrompt":
+        setSystemPrompts(selection.systemPrompt);
+        if (selection.userPrompt) {
+          setUserPrompts(selection.userPrompt);
+        }
+        break;
+      case "response":
+        setResponseText(selection.responseText);
+        break;
+      case "llm":
+        setLlmPrompt(selection.llmPrompt);
+        break;
+      default:
+        break;
     }
     setSearchDialogOpen(false);
+    setFocusedField(null);
   };
 
   const [focusedField, setFocusedField] = useState<null | "userPrompt" | "response" | "llm">(null);
 
-  const handleSearchClick = (type: "userPrompt" | "response" | "llm") => {
-  setSearchType(type);
-  setSearchDialogOpen(true);
-  setFocusedField(type);
+  const handleSearchClick = (type: PromptSearchType) => {
+    setSearchType(type);
+    setSearchDialogOpen(true);
+    if (type === "userPrompt" || type === "response" || type === "llm") {
+      setFocusedField(type);
+    } else {
+      setFocusedField(null);
+    }
   };
 
   const handleSubmit = () => {
