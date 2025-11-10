@@ -18,6 +18,8 @@ import {
 } from "@/components/ui/select";
 import { Search, X } from "lucide-react";
 import { PromptSearchDialog } from "./PromptSearchDialog";
+import { API_ENDPOINTS } from "@/config/api";
+import { useToast } from "@/hooks/use-toast";
 
 
 interface TestCase {
@@ -35,20 +37,8 @@ interface TestCaseUpdateDialogProps {
   testCase: TestCase | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onUpdateSuccess?: () => void; // Callback to refresh test cases list
 }
-
-const strategies = [
-  "robustness_advglue_mnli",
-  "robustness_advins",
-  "safety_strategy",
-  "String Matching - Wrong - Not implemented",
-  "language_detect_langdetect",
-  "tat_inm_mvh",
-  "toxicity",
-  "truthfulness_external",
-  "truthfulness_internal_squad",
-  "uptime_calculation",
-];
 
 // const domains = ["General", "Education", "agriculture", "Healthcare", "Learning Disability"];
 
@@ -56,7 +46,9 @@ export const TestCaseUpdateDialog = ({
   testCase,
   open,
   onOpenChange,
+  onUpdateSuccess,
 }: TestCaseUpdateDialogProps) => {
+  const { toast } = useToast();
   const [userPrompts, setUserPrompts] = useState(testCase?.userPrompts);
   const [systemPrompts, setSystemPrompts] = useState(testCase?.systemPrompts || "");
   const [responseText, setResponseText] = useState(testCase?.responseText || "");
@@ -64,6 +56,9 @@ export const TestCaseUpdateDialog = ({
   const [strategy, setStrategy] = useState(testCase?.strategyName || "");
   // const [domain, setDomain] = useState(testCase?.domainName || "");
   const [notes, setNotes] = useState("");
+  const [strategies, setStrategies] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isFetchingStrategies, setIsFetchingStrategies] = useState(false);
   
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
   const [searchType, setSearchType] = useState<"userPrompt" | "response" | "llm">("userPrompt");
@@ -75,6 +70,15 @@ export const TestCaseUpdateDialog = ({
 
   const [focusedField, setFocusedField] = useState<null | "userPrompt" | "response" | "llm">(null);
 
+  function getTextareaHeight(lineCount: number){
+    if (lineCount <=1) return 40;
+    if (lineCount <=4) return lineCount * 40;
+    return 160
+  }
+  const SmartTextarea = ({ value, ...props}) => {
+    const lineCount = value.split("\n").length;
+    const height = getTextareaHeight(lineCount);
+  }
 
   const handleSelectPrompt = (prompt: string) => {
     if (searchType === "userPrompt") {
@@ -88,6 +92,58 @@ export const TestCaseUpdateDialog = ({
     }
     setSearchDialogOpen(false);
   };
+
+  // Fetch strategies from API
+  useEffect(() => {
+    const fetchStrategies = async () => {
+      setIsFetchingStrategies(true);
+      try {
+        const token = localStorage.getItem("access_token");
+        const headers: HeadersInit = {
+          "Content-Type": "application/json",
+        };
+
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(API_ENDPOINTS.STRATEGIES, { headers });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (Array.isArray(data)) {
+          const strategyNames = data
+            .map((item: any) => item.strategy_name)
+            .filter((name: string | null | undefined) => name != null) as string[];
+          setStrategies(strategyNames);
+        } else {
+          console.error("Unexpected strategies data format:", data);
+          toast({
+            title: "Error",
+            description: "Failed to load strategies",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching strategies:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load strategies from server",
+          variant: "destructive",
+        });
+      } finally {
+        setIsFetchingStrategies(false);
+      }
+    };
+
+    if (open) {
+      fetchStrategies();
+    }
+  }, [open, toast]);
 
   useEffect(() => {
     setUserPrompts(testCase?.userPrompts || '');
@@ -120,17 +176,89 @@ export const TestCaseUpdateDialog = ({
 
 
 
-  const handleSubmit = () => {
-    console.log("Submitting:", {
-      userPrompts,
-      systemPrompts,
-      responseText,
-      llmPrompt,
-      strategy,
-      // domain,
-      notes,
-    });
-    onOpenChange(false);
+  const handleSubmit = async () => {
+    if (!testCase?.id) {
+      toast({
+        title: "Error",
+        description: "Test case ID is missing",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem("access_token");
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+      };
+
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      // Prepare update payload - only include fields that have changed
+      const updatePayload: any = {};
+      
+      if (userPrompts !== testCaseInitial.userPrompts) {
+        updatePayload.user_prompt = userPrompts;
+      }
+      if (systemPrompts !== (testCaseInitial.systemPrompts || "")) {
+        updatePayload.system_prompt = systemPrompts;
+      }
+      if (responseText !== (testCaseInitial.responseText || "")) {
+        updatePayload.response_text = responseText;
+      }
+      if (llmPrompt !== (testCaseInitial.llmPrompt || "")) {
+        updatePayload.llm_judge_prompt = llmPrompt;
+      }
+      if (strategy !== (testCaseInitial.strategyName || "")) {
+        updatePayload.strategy_name = strategy;
+      }
+
+      const response = await fetch(
+        API_ENDPOINTS.TEST_CASES_UPDATE_BY_ID(testCase.id),
+        {
+          method: "PUT",
+          headers,
+          body: JSON.stringify(updatePayload),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.detail || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      const updatedData = await response.json();
+      console.log("Update successful:", updatedData);
+
+      toast({
+        title: "Success",
+        description: "Test case updated successfully",
+      });
+
+      // Call the callback to refresh the test cases list
+      if (onUpdateSuccess) {
+        onUpdateSuccess();
+      }
+
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Error updating test case:", error);
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to update test case",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (!testCase) return null;
@@ -172,6 +300,12 @@ export const TestCaseUpdateDialog = ({
                 <div className="relative">
                   <Textarea
                     value={userPrompts}
+                    style = {{
+                      height: '${height}px',
+                      maxHeight: "160px",
+                      minHeight: "40px",
+                      overflowY: "auto"
+                    }}
                     onFocus={() => setFocusedField("userPrompt")}
                     onBlur={() => setTimeout(() => setFocusedField(null))}
                     onChange={(e) => setUserPrompts(e.target.value)}
@@ -196,6 +330,12 @@ export const TestCaseUpdateDialog = ({
                 <Label className="text-sm font-normal">System prompts</Label>
                 <Textarea
                   value={systemPrompts}
+                  style = {{
+                      height: '${height}px',
+                      maxHeight: "160px",
+                      minHeight: "40px",
+                      overflowY: "auto"
+                  }}
                   onChange={(e) => setSystemPrompts(e.target.value)}
                   className="bg-muted min-h-[80px]"
                 />
@@ -207,10 +347,15 @@ export const TestCaseUpdateDialog = ({
               <div className="relative">
                 <Textarea
                   value={responseText}
+                  style = {{
+                      height: '${height}px',
+                      maxHeight: "160px",
+                      minHeight: "40px",
+                      overflowY: "auto"
+                  }}
                   onFocus = { () => setFocusedField("response")}
                   onBlur={() => setTimeout(() => setFocusedField(null))}
                   onChange={(e) => setResponseText(e.target.value)}
-                  readOnly
                   className="bg-muted min-h-[80px] pr-10"
                 />
                 { focusedField === "response" && (
@@ -226,201 +371,25 @@ export const TestCaseUpdateDialog = ({
                   <Search className="w-4 h-4" />
                 </Button>
                 )}
-                  <Dialog open={open} onOpenChange={onOpenChange}>
-                    <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto"
-                      onOpenAutoFocus = {(e) => e.preventDefault()}
-                    >
-                      <DialogHeader>
-                        <DialogTitle className="sr-only">Update Test Case</DialogTitle>
-                        {/* <Button
-                          variant="ghost"
-                          size="icon"
-                          className="absolute right-4 top-4"
-                          onClick={() => onOpenChange(false)}
-                        >
-                          <X className="w-5 h-5" />
-                        </Button> */}
-                      </DialogHeader>
-
-                      <div className = "overflow-y-auto flex-1 pr-1 pl-1">
-                      
-                        <div className="space-y-1 pb-4">
-                          <Label className="text-base font-semibold">Test Case</Label>
-                          <Input
-                            value={testCase.name}
-                            readOnly
-                            className="bg-muted"
-                          />
-                        </div>
-
-                        <div className="space-y-1 pb-4">
-                          <Label className="text-base font-semibold">Prompt</Label>
-                          <div className="space-y-1">
-                            <Label className="text-sm font-normal">User Prompts</Label>
-                            <div className="relative">
-                              <Textarea
-                                value={userPrompts}
-                                onFocus={() => setFocusedField("userPrompt")}
-                                onBlur={() => setTimeout(() => setFocusedField(null))}
-                                onChange={(e) => setUserPrompts(e.target.value)}
-                                className="bg-muted min-h-[100px] pr-10"
-                                required
-                              />
-                              { focusedField === "userPrompt" && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="absolute right-2 top-2"
-                                  onMouseDown={e => e.preventDefault()}
-                                  onClick={() => handleSearchClick("userPrompt")}
-                                >
-                                  <Search className="w-4 h-4" />
-                                </Button>
-                              )}
-                            </div>
-
-                          </div>
-
-                          <div className="space-y-1">
-                            <Label className="text-sm font-normal">System prompts</Label>
-                            <Textarea
-                              value={systemPrompts}
-                              onChange={(e) => setSystemPrompts(e.target.value)}
-                              className="bg-muted min-h-[80px]"
-                              required
-                            />
-                          </div>
-                        </div>
-
-                        <div className="space-y-1 pb-4">
-                          <Label className="text-base font-semibold">Response</Label>
-                          <div className="relative">
-                            <Textarea
-                              value={responseText}
-                              onFocus = { () => setFocusedField("response")}
-                              onBlur={() => setTimeout(() => setFocusedField(null))}
-                              onChange={(e) => setResponseText(e.target.value)}
-                              readOnly
-                              className="bg-muted min-h-[80px] pr-10"
-                            />
-                            { focusedField === "response" && (
-                              
-                            
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="absolute right-2 top-2"
-                              onMouseDown={e => e.preventDefault()}
-                              onClick={() => handleSearchClick("response")}
-                            >
-                              <Search className="w-4 h-4" />
-                            </Button>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="space-y-1 pb-4">
-                          <Label className="text-base font-semibold">Strategy</Label>
-                          <Select value={strategy} onValueChange={setStrategy}>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="bg-popover max-h-[300px]">
-                              {strategies.map((s) => (
-                                <SelectItem key={s} value={s}>
-                                  {s}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="space-y-1 pb-4">
-                          <Label className="text-base font-semibold">LLM Prompt</Label>
-                          <div className="relative">
-                            <Textarea
-                              value={llmPrompt}
-                              onFocus={() => setFocusedField("llm")}
-                              onBlur = {() => setTimeout(() => setFocusedField(null), 100)}
-                              onChange={(e) => setLlmPrompt(e.target.value)}
-                              readOnly
-                              className="bg-muted min-h-[80px] pr-10"
-                            />
-                            { focusedField === "llm" && (
-                              
-                            
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="absolute right-2 top-2"
-                              onClick={() => handleSearchClick("llm")}
-                            >
-                              <Search className="w-4 h-4" />
-                            </Button>
-                            )}
-                          </div>
-                        </div>
-
-
-
-                        {/* <div className="space-y-2">
-                          <Label className="text-base font-semibold">Domain</Label>
-                          <Select value={domain} onValueChange={setDomain}>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="bg-popover">
-                              {domains.map((d) => (
-                                <SelectItem key={d} value={d}>
-                                  {d}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div> */}
-
-                      
-
-                      </div>
-
-                      <div className="flex justify-center items-center p-4 border-gray-300 bg-white sticky bottom-0 z-10">
-                        <label className="text-base font-bold mr-2">
-                          Notes :
-                        </label>
-                        <input
-                          type="text"
-                          value={notes}
-                          onChange={(e) => setNotes(e.target.value)}
-                          className="bg-gray-200 rounded px-4 py-1 mr-4 w-96"
-                        />
-                        <button
-                          className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800"
-                          onClick={handleSubmit}
-                          disabled={!isChanged}
-                        >
-                          Submit
-                        </button>
-                      </div>
-
-          
-                        
-                      </DialogContent>
-                    </Dialog>
-                  </div>
+              </div>
             </div>
 
             <div className="space-y-1 pb-4">
               <Label className="text-base font-semibold">Strategy</Label>
-              <Select value={strategy} onValueChange={setStrategy}>
+              <Select value={strategy} onValueChange={setStrategy} disabled={isFetchingStrategies}>
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder={isFetchingStrategies ? "Loading strategies..." : "Select strategy"} />
                 </SelectTrigger>
                 <SelectContent className="bg-popover max-h-[300px]">
-                  {strategies.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {s}
-                    </SelectItem>
-                  ))}
+                  {strategies.length === 0 && !isFetchingStrategies ? (
+                    <SelectItem value="" disabled>No strategies available</SelectItem>
+                  ) : (
+                    strategies.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {s}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -430,10 +399,15 @@ export const TestCaseUpdateDialog = ({
               <div className="relative">
                 <Textarea
                   value={llmPrompt}
+                  style = {{
+                      height: '${height}px',
+                      maxHeight: "160px",
+                      minHeight: "40px",
+                      overflowY: "auto"
+                  }}
                   onFocus={() => setFocusedField("llm")}
                   onBlur = {() => setTimeout(() => setFocusedField(null), 100)}
                   onChange={(e) => setLlmPrompt(e.target.value)}
-                  readOnly
                   className="bg-muted min-h-[80px] pr-10"
                 />
                 { focusedField === "llm" && (
@@ -484,11 +458,11 @@ export const TestCaseUpdateDialog = ({
                 className="bg-gray-200 rounded px-4 py-1 mr-4 w-96"
               />
               <button
-                className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800"
+                className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleSubmit}
-                disabled={!isChanged}
+                disabled={!isChanged || isLoading}
               >
-                Submit
+                {isLoading ? "Updating..." : "Submit"}
               </button>
           </div>
 

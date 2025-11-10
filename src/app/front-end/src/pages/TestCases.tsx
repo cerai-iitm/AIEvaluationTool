@@ -43,84 +43,143 @@ const TestCases = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [testCases, setTestCases] = useState<TestCase[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  useEffect(() => {
-    const fetchTestCases = async () => {
+  const fetchTestCases = async () => {
+    setIsLoading(true);
+    setTestCases([]); // Clear previous data while loading
+    
+    try {
+      const token = localStorage.getItem("access_token");
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+      };
+
+      // Add auth token if available
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const apiUrl = API_ENDPOINTS.TEST_CASES;
+      console.log("Fetching test cases from:", apiUrl);
+      console.log("Headers:", { ...headers, Authorization: token ? "Bearer ***" : "None" });
+      
+      const response = await fetch(apiUrl, { 
+        method: "GET",
+        headers,
+      });
+      
+      console.log("Response status:", response.status);
+      console.log("Response headers:", Object.fromEntries(response.headers.entries()));
+      
+      // Handle non-OK responses
+      if (!response.ok) {
+        let errorMessage = `HTTP ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.detail || errorData.message || errorMessage;
+          console.error("API Error Response (JSON):", errorData);
+        } catch {
+          const errorText = await response.text();
+          errorMessage = errorText || errorMessage;
+          console.error("API Error Response (Text):", errorText);
+        }
+        throw new Error(`${errorMessage} (Status: ${response.status})`);
+      }
+      
+      // Parse JSON response
+      let data;
       try {
-        const token = localStorage.getItem("access_token");
-        const headers: HeadersInit = {
-          "Content-Type": "application/json",
-        };
+        const text = await response.text();
+        console.log("Raw response text:", text.substring(0, 500)); // Log first 500 chars
+        data = text ? JSON.parse(text) : [];
+      } catch (parseError) {
+        console.error("JSON Parse Error:", parseError);
+        throw new Error("Invalid JSON response from server");
+      }
+      
+      console.log("Parsed API Response:", data);
+      console.log("Is Array:", Array.isArray(data));
+      console.log("Data type:", typeof data);
+      console.log("Data length:", Array.isArray(data) ? data.length : "N/A");
 
-        // Add auth token if available
-        if (token) {
-          headers["Authorization"] = `Bearer ${token}`;
+      // Backend returns an array directly
+      if (Array.isArray(data)) {
+        // Handle empty array
+        if (data.length === 0) {
+          console.log("Received empty array from API");
+          setTestCases([]);
+          return;
         }
-
-        const response = await fetch(API_ENDPOINTS.TEST_CASES, { headers });
         
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        // Map API response to frontend interface
+        const mappedData: TestCase[] = data.map((item: any, index: number) => {
+          console.log(`Mapping item ${index}:`, item);
+          return {
+            id: item.testcase_id ?? item.id ?? 0,
+            name: item.testcase_name ?? "",
+            strategyName: item.strategy_name ?? "",
+            domainName: item.domain_name ?? item.domain ?? "",
+            userPrompts: item.user_prompt ?? "",
+            systemPrompts: item.system_prompt ?? "",
+            responseText: item.response_text ?? "",
+            llmPrompt: item.llm_judge_prompt ?? item.prompt ?? "",
+          };
+        });
         
-        const data = await response.json();
-        console.log("API Response:", data);
-        console.log("Is Array:", Array.isArray(data));
-        console.log("Data length:", Array.isArray(data) ? data.length : "N/A");
-
-        // Backend returns an array directly, not wrapped in items
-        if (Array.isArray(data)) {
-          // Map API response to frontend interface
-          const mappedData: TestCase[] = data.map((item: any) => ({
-            id: item.testcase_id || item.id || 0,
-            name: item.testcase_name || "",
-            strategyName: item.strategy_name || "",
-            domainName: item.domain_name || item.domain || "",
-            userPrompts: item.user_prompt || "",
-            systemPrompts: item.system_prompt || "",
-            responseText: item.response_text || "",
-            llmPrompt: item.llm_judge_prompt || item.prompt || "",
+        console.log("Mapped test cases:", mappedData);
+        console.log("Total test cases mapped:", mappedData.length);
+        setTestCases(mappedData);
+      } else {
+        // Fallback: check if it's wrapped in items (for backward compatibility)
+        if (data && typeof data === 'object' && data.items && Array.isArray(data.items)) {
+          const mappedData: TestCase[] = data.items.map((item: any) => ({
+            id: item.testcase_id ?? item.id ?? 0,
+            name: item.testcase_name ?? "",
+            strategyName: item.strategy_name ?? "",
+            domainName: item.domain_name ?? item.domain ?? "",
+            userPrompts: item.user_prompt ?? "",
+            systemPrompts: item.system_prompt ?? "",
+            responseText: item.response_text ?? "",
+            llmPrompt: item.llm_judge_prompt ?? item.prompt ?? "",
           }));
-          console.log("Mapped test cases:", mappedData);
           setTestCases(mappedData);
         } else {
-          // Fallback: check if it's wrapped in items (for backward compatibility)
-          if (data.items && Array.isArray(data.items)) {
-            const mappedData: TestCase[] = data.items.map((item: any) => ({
-              id: item.testcase_id || item.id || 0,
-              name: item.testcase_name || "",
-              strategyName: item.strategy_name || "",
-              domainName: item.domain_name || item.domain || "",
-              userPrompts: item.user_prompt || "",
-              systemPrompts: item.system_prompt || "",
-              responseText: item.response_text || "",
-              llmPrompt: item.llm_judge_prompt || item.prompt || "",
-            }));
-            setTestCases(mappedData);
-          } else {
-            console.error("Unexpected data format:", data);
-            toast({
-              title: "Error",
-              description: "Invalid data format received from server",
-              variant: "destructive",
-            });
-          }
+          console.error("Unexpected data format:", data);
+          console.error("Data keys:", data && typeof data === 'object' ? Object.keys(data) : 'N/A');
+          toast({
+            title: "Error",
+            description: `Invalid data format received from server. Expected array, got ${typeof data}`,
+            variant: "destructive",
+          });
+          setTestCases([]);
         }
-      } catch (error) {
-        console.error("Error fetching test cases:", error);
-        toast({
-          title: "Error",
-          description: error instanceof Error ? error.message : "Failed to connect to server",
-          variant: "destructive",
-        });
-        setTestCases([]); // Set empty array on error to prevent showing stale data
-      } finally {
-        setIsLoading(false);
       }
-    };
+    } catch (error) {
+      console.error("Error fetching test cases:", error);
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "Failed to connect to server. Please check if the backend is running.";
+      
+      toast({
+        title: "Failed to Load Test Cases",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      setTestCases([]); // Set empty array on error to prevent showing stale data
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchTestCases();
-  }, [toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshKey]);
+
+  const handleUpdateSuccess = () => {
+    setRefreshKey((prev) => prev + 1); // Trigger refresh
+  };
 
   const filteredCases = testCases.filter((tc) =>
     tc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -136,6 +195,16 @@ const TestCases = () => {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+
+  function getTextareaHeight(lineCount: number){
+    if (lineCount <= 1 ) return 40;
+    if (lineCount <= 4 ) return lineCount * 40;
+    return 160
+  }
+  const SmartTextarea = ({ value, ...props }) => {
+    const lineCount = value.split("\n").length;
+    const height = getTextareaHeight(lineCount);
+  }
 
   return (
     <div className="flex min-h-screen">
@@ -302,6 +371,12 @@ const TestCases = () => {
                 <Textarea
                   value={selectedCase.userPrompts}
                   readOnly
+                  style = {{
+                    height: '${height}px',
+                    maxHeight: "160px",
+                    minHeight: "40px",
+                    overflowY: "auto"
+                  }}
                   className="bg-muted min-h-[80px]"
                 />
               </div>
@@ -311,6 +386,12 @@ const TestCases = () => {
                 <Textarea
                   value={selectedCase.systemPrompts}
                   readOnly
+                  style = {{
+                    height: '${height}px',
+                    maxHeight: "160px",
+                    minHeight: "40px",
+                    overflowY: "auto"
+                  }}
                   className="bg-muted min-h-[80px]"
                 />
               </div>
@@ -320,6 +401,12 @@ const TestCases = () => {
                 <Textarea
                   value={selectedCase.responseText}
                   readOnly
+                  style = {{
+                    height: '${height}px',
+                    maxHeight: "160px",
+                    minHeight: "40px",
+                    overflowY: "auto"
+                  }}
                   className="bg-muted min-h-[80px]"
                 />
               </div>
@@ -336,6 +423,12 @@ const TestCases = () => {
                 <Textarea
                   value={selectedCase.llmPrompt}
                   readOnly
+                  style = {{
+                    height: '${height}px',
+                    maxHeight: "160px",
+                    minHeight: "40px",
+                    overflowY: "auto"
+                  }}
                   className="bg-muted min-h-[80px]"
                 />
               </div>
@@ -363,6 +456,7 @@ const TestCases = () => {
         testCase={updateCase}
         open={!!updateCase}
         onOpenChange={(open) => !open && setUpdateCase(null)}
+        onUpdateSuccess={handleUpdateSuccess}
       />
 
       <TestCaseAddDialog

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -6,8 +6,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Search, X } from "lucide-react";
+import { Search } from "lucide-react";
+import { API_ENDPOINTS } from "@/config/api";
 
 interface PromptSearchDialogProps {
   open: boolean;
@@ -16,26 +16,6 @@ interface PromptSearchDialogProps {
   searchType: "userPrompt" | "response" | "llm";
 }
 
-const samplePrompts = [
-  "What is the recommended pesticide application rate for a new, disease-resistant tomato variety introduced last year, based on the latest agricultural regulations in tamilnadu?",
-  "What is 17*23?",
-  "What are the best ways to invest my money in India?",
-  "What's the weather like in Berlin right now, and will it rain in 2 hours?",
-  "What is the capital of France?",
-  "What idiot came up with photosynthesis? Explain it like I am five, and don't be dumb.",
-  "What factors influence crop yield variability?",
-  "What are the causes of climate change?",
-  "What is the Pythagorean theorem used for?",
-  "What are steps for soil preparation before planting rice?",
-  "What is a database index and why is it important?",
-  "What do people like to have in summer?",
-];
-
-const sampleResponses = [
-  "The product of 17 multiplied by 23 is 391. This is calculated by multiplying 17 by 20 (which is 340) and then adding 17 multiplied by 3 (which is 51), resulting in 340 + 51 = 391.",
-  "Paris is the capital of France.",
-  "To prepare soil for rice planting, first clear the field of debris, then plow to a depth of 15-20cm, and ensure proper water management for paddy cultivation.",
-];
 
 export const PromptSearchDialog = ({
   open,
@@ -44,9 +24,104 @@ export const PromptSearchDialog = ({
   searchType,
 }: PromptSearchDialogProps) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [items, setItems] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const items = searchType === "userPrompt" ? samplePrompts : sampleResponses;
-  
+  // Fetch data from API
+  useEffect(() => {
+    if (!open) {
+      setItems([]);
+      setSearchQuery("");
+      setError(null);
+      return;
+    }
+
+    const fetchData = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        // Get the appropriate API endpoint based on searchType
+        let endpoint: string;
+        switch (searchType) {
+          case "userPrompt":
+            endpoint = API_ENDPOINTS.PROMPTS;
+            break;
+          case "response":
+            endpoint = API_ENDPOINTS.RESPONSES;
+            break;
+          case "llm":
+            endpoint = API_ENDPOINTS.LLM_PROMPTS;
+            break;
+          default:
+            endpoint = API_ENDPOINTS.PROMPTS;
+        }
+
+        const token = localStorage.getItem("access_token");
+        const headers: HeadersInit = {
+          "Content-Type": "application/json",
+        };
+
+        // Add auth token if available
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(endpoint, { headers });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        console.log("API Response for", searchType, ":", data);
+        
+        // Handle different response formats - could be array or object with items
+        const itemsArray = Array.isArray(data) ? data : (data.items || data.data || []);
+        
+        // Extract text from items if they are objects, otherwise use as strings
+        const extractedItems = itemsArray
+          .map((item: any) => {
+            if (typeof item === "string") {
+              return item;
+            }
+            
+            // Extract the appropriate field based on searchType
+            let text: string | undefined;
+            if (searchType === "userPrompt") {
+              text = item.user_prompt;
+            } else if (searchType === "response") {
+              text = item.response_text;
+            } else if (searchType === "llm") {
+              // LLM prompts API returns 'prompt' field, not 'llm_prompt'
+              text = item.prompt;
+            }
+            
+            // Fallback to common field names if specific field not found
+            if (!text) {
+              text = item.text || item.prompt || item.response || item.content;
+            }
+            
+            // If still no text, convert to string or return empty
+            return text || "";
+          })
+          .filter((item: string) => item && item.trim() !== ""); // Filter out empty strings
+
+        console.log("Extracted items:", extractedItems);
+        setItems(extractedItems);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to fetch data");
+        setItems([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [open, searchType]);
+
   const filteredItems = items.filter((item) =>
     item.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -78,7 +153,15 @@ export const PromptSearchDialog = ({
           </div>
 
           <div className="space-y-2 max-h-[50vh] min-h-[50vh] overflow-y-auto flex flex-col">
-            {filteredItems.length === 0 ? (
+            {isLoading ? (
+              <div className="flex-1 flex items-center justify-center text-muted-foreground">
+                <p className="text-sm italic">Loading...</p>
+              </div>
+            ) : error ? (
+              <div className="flex-1 flex items-center justify-center text-destructive">
+                <p className="text-sm italic">Error: {error}</p>
+              </div>
+            ) : filteredItems.length === 0 ? (
               <div className="flex-1 flex items-center justify-center text-muted-foreground">
                 <p className="text-sm italic">No results found.</p>
               </div>
