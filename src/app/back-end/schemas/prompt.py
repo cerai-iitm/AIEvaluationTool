@@ -5,3 +5,10 @@ class PromptIds(BaseModel):
     prompt_id: Optional[int]
     user_prompt: Optional[str]
     system_prompt: Optional[str]
+
+class Prompts(BaseModel):
+    prompt_id: Optional[int]
+    user_prompt: Optional[str]
+    system_prompt: Optional[str]
+    language: Optional[str]
+    domain: Optional[str]

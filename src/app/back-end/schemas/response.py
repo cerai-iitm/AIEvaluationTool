@@ -13,3 +13,12 @@ class Response(BaseModel):
 class ResponseIds(BaseModel):
     response_id: Optional[int]
     response_text: Optional[str]
+
+
+class Responses(BaseModel):
+    response_id: Optional[int]
+    response_text: Optional[str]
+    response_type: Optional[str]
+    user_prompt: Optional[str]
+    system_prompt: Optional[str]
+    lang_name: Optional[str]
