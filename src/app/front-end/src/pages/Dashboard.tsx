@@ -2,25 +2,38 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from "@/components/Sidebar";
 import { Card, CardContent } from "@/components/ui/card";
-import { MoreVertical } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { MoreVertical, Users } from "lucide-react";
 import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
 
 const MENU_OPTIONS = [
-  { label: "Open", action: "open" },
+  { label: "Open", action: "open", className: "" },
   // { label: "Add test case", action: "addTestCase" },
   // { label: "Export", action: "export" },
-  { label: "History", action: "history" },
+  { label: "History", action: "history", className: "" },
   // { label: "Delete", action: "delete", className: "text-red-600" }
-];
+] as const;
 
-const statCardHandlers = (navigate, stat) => ({
-  open: () => stat.onClick && stat.onClick(),
-  // addTestCase: () => alert(`Add test case for ${stat.title}`),
-  // export: () => alert(`Export ${stat.title}`),
-  history: () => alert(`Show history for ${stat.title}`),
-  // delete: () => alert(`Delete ${stat.title}`),
-});
+// Map table titles to entity types for API calls
+const TABLE_TO_ENTITY_TYPE: Record<string, string> = {
+  "Test cases": "Test Case",
+  "Targets": "Target",
+  "Domains": "Domain",
+  "Strategies": "Strategy",
+  "Languages": "Language",
+  "Responses": "Response",
+  "Prompts": "Prompt",
+  "LLM Prompts": "LLM Prompt",
+};
+
+interface Activity {
+  description: string;
+  type: string;
+  testCaseId: string;
+  status: "Created" | "Updated" | "Deleted";
+  timestamp: string;
+}
 
 interface DashboardStats {
   test_cases: number;
@@ -36,7 +49,7 @@ interface DashboardStats {
 const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [menuOpen, setMenuOpen] = useState(null);
+  const [menuOpen, setMenuOpen] = useState<number | null>(null);
   const [stats, setStats] = useState([
     { title: "Test cases", count: 0, onClick: () => navigate("/test-cases") },
     { title: "Targets", count: 0, onClick: () => navigate("/targets") },
@@ -48,6 +61,10 @@ const Dashboard = () => {
     { title: "LLM Prompts", count: 0, onClick: () => navigate("/llm-prompts") },
   ]);
   const [isLoading, setIsLoading] = useState(true);
+  const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
+  const [historyTitle, setHistoryTitle] = useState("");
+  const [historyActivities, setHistoryActivities] = useState<Activity[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -97,6 +114,76 @@ const Dashboard = () => {
     fetchDashboardData();
   }, [navigate, toast]);
 
+  const getStatusColor = (status: Activity["status"]) => {
+    switch (status) {
+      case "Created":
+        return "text-blue-600";
+      case "Updated":
+        return "text-accent";
+      case "Deleted":
+        return "text-destructive";
+      default:
+        return "text-foreground";
+    }
+  };
+
+  const fetchHistory = async (tableTitle: string) => {
+    const entityType = TABLE_TO_ENTITY_TYPE[tableTitle];
+    if (!entityType) {
+      toast({
+        title: "Error",
+        description: `No entity type found for "${tableTitle}"`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setHistoryLoading(true);
+    setHistoryTitle(tableTitle);
+    setHistoryDialogOpen(true);
+
+    try {
+      const token = localStorage.getItem("access_token");
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+      };
+
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      // URL encode the entity type
+      const encodedEntityType = encodeURIComponent(entityType);
+      const response = await fetch(API_ENDPOINTS.ENTITY_ACTIVITY(encodedEntityType), { headers });
+      
+      if (response.ok) {
+        const data: Activity[] = await response.json();
+        setHistoryActivities(data);
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to load history",
+          variant: "destructive",
+        });
+        setHistoryActivities([]);
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to connect to server",
+        variant: "destructive",
+      });
+      setHistoryActivities([]);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const statCardHandlers = (stat: typeof stats[0]) => ({
+    open: () => stat.onClick && stat.onClick(),
+    history: () => fetchHistory(stat.title),
+  });
+
   return (
     <>
       <div className="flex min-h-screen">
@@ -126,10 +213,10 @@ const Dashboard = () => {
                     {MENU_OPTIONS.map(opt => (
                       <button
                         key={opt.label}
-                        className={`px-4 py-2 text-left hover:bg-gray-100 ${opt.className || ''}`}
+                        className={`px-4 py-2 text-left hover:bg-gray-100 ${(opt as any).className || ''}`}
                         onClick={(e) => {
                           e.stopPropagation();
-                          statCardHandlers(navigate, stat)[opt.action]();
+                          statCardHandlers(stat)[opt.action as keyof ReturnType<typeof statCardHandlers>]();
                           setMenuOpen(null);
                         }}
                       >
@@ -150,6 +237,57 @@ const Dashboard = () => {
           </div>
         </main>
       </div>
+
+      <Dialog open={historyDialogOpen} onOpenChange={setHistoryDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>History - {historyTitle}</DialogTitle>
+          </DialogHeader>
+          
+          {historyLoading ? (
+            <div className="text-center py-12">
+              <p className="text-lg text-muted-foreground">Loading history...</p>
+            </div>
+          ) : historyActivities.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-lg text-muted-foreground">No history found for {historyTitle}.</p>
+            </div>
+          ) : (
+            <div className="space-y-4 mt-4">
+              {historyActivities.map((activity, index) => (
+                <div
+                  key={index}
+                  className="bg-white rounded-lg shadow-md p-6 border-l-4 border-primary"
+                >
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                          <Users className="w-4 h-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">{activity.type}</p>
+                        </div>
+                      </div>
+                      <p className="text-lg mb-2">{activity.description}</p>
+                    </div>
+                    <div className="text-right">
+                      <div className="flex items-center gap-2 justify-end mb-1">
+                        <span className="font-medium">{activity.testCaseId}</span>
+                        <span className="text-xl">-</span>
+                        <span className={`font-semibold ${getStatusColor(activity.status)}`}>
+                          {activity.status}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{activity.timestamp}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

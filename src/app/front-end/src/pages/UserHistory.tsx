@@ -1,5 +1,8 @@
 import { useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
 import Sidebar from "@/components/Sidebar";
+import { API_ENDPOINTS } from "@/config/api";
+import { useToast } from "@/hooks/use-toast";
 
 interface Activity {
   description: string;
@@ -11,58 +14,49 @@ interface Activity {
 
 const UserHistory = () => {
   const { username } = useParams();
+  const { toast } = useToast();
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const activities: Activity[] = [
-    {
-      description: "Column added language ID",
-      type: "Test Case",
-      testCaseId: "P312",
-      status: "Deleted",
-      timestamp: "2025-09-03 13:40",
-    },
-    {
-      description: "File import and some other changes made",
-      type: "Test Case",
-      testCaseId: "P312",
-      status: "Updated",
-      timestamp: "2025-09-03 13:40",
-    },
-    {
-      description: "Initial commit",
-      type: "Target",
-      testCaseId: "Gooye",
-      status: "Created",
-      timestamp: "2025-09-03 13:40",
-    },
-    {
-      description: "Column added language ID",
-      type: "Test Case",
-      testCaseId: "P312",
-      status: "Deleted",
-      timestamp: "2025-09-03 13:40",
-    },
-    {
-      description: "File import and some other changes made",
-      type: "Target",
-      testCaseId: "Vaidya",
-      status: "Updated",
-      timestamp: "2025-09-03 13:40",
-    },
-    {
-      description: "Initial commit",
-      type: "Test Case",
-      testCaseId: "P312",
-      status: "Created",
-      timestamp: "2025-09-03 13:40",
-    },
-    {
-      description: "Initial commit",
-      type: "Test Case",
-      testCaseId: "P312",
-      status: "Created",
-      timestamp: "2025-09-03 13:40",
-    },
-  ];
+  useEffect(() => {
+    const fetchUserActivity = async () => {
+      if (!username) return;
+
+      try {
+        const token = localStorage.getItem("access_token");
+        const headers: HeadersInit = {
+          "Content-Type": "application/json",
+        };
+
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(API_ENDPOINTS.USER_ACTIVITY(username), { headers });
+        
+        if (response.ok) {
+          const data: Activity[] = await response.json();
+          setActivities(data);
+        } else {
+          toast({
+            title: "Error",
+            description: "Failed to load user activity",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to connect to server",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserActivity();
+  }, [username, toast]);
 
   const getStatusColor = (status: Activity["status"]) => {
     switch (status) {
@@ -79,13 +73,24 @@ const UserHistory = () => {
 
   return (
     <div className="flex min-h-screen">
-      <Sidebar />
+      <aside className="fixed top-0 left-0 h-screen w-[220px] z-20">
+        <Sidebar />
+      </aside>
 
-      <main className="flex-1 bg-background p-8">
+      <main className="flex-1 ml-[220px] p-28 min-h-screen items-center justify-center">
         <h1 className="text-4xl font-bold mb-12">Activity of {username}</h1>
 
-        <div className="space-y-4 max-w-5xl">
-          {activities.map((activity, index) => (
+        {isLoading ? (
+          <div className="text-center py-12">
+            <p className="text-lg text-muted-foreground">Loading activities...</p>
+          </div>
+        ) : activities.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-lg text-muted-foreground">No activities found for this user.</p>
+          </div>
+        ) : (
+          <div className="space-y-4 max-w-5xl">
+            {activities.map((activity, index) => (
             <div
               key={index}
               className="bg-white rounded-lg shadow-md p-6 border-l-4 border-primary"
@@ -107,8 +112,9 @@ const UserHistory = () => {
                 </div>
               </div>
             </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </main>
     </div>
   );

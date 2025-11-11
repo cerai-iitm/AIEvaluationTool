@@ -1,7 +1,13 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Header
 from fastapi.responses import JSONResponse
 from schemas import TestCaseIds, TestCaseUpdate, TestCaseCreate, TestCaseId
 from database.fastapi_deps import _get_db
+from database.database import get_current_user
+from models import user as user_model
+from utils.activity_logger import log_activity
+from jose import jwt, JWTError
+from config.settings import settings
+from typing import Optional
 import os
 import sys
 import hashlib
@@ -16,6 +22,25 @@ from sqlalchemy.orm import joinedload
 
 
 testcase_router = APIRouter(prefix="/api/testcases")
+
+
+def get_username_from_token(authorization: Optional[str] = Header(None)) -> Optional[str]:
+    """Extract username from JWT token."""
+    if not authorization:
+        return None
+    
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            return None
+    except ValueError:
+        return None
+    
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        return payload.get("user_name")
+    except JWTError:
+        return None
 
 @testcase_router.get("", summary="Get a test cases", response_model=list[TestCaseIds])
 async def list_testcases( db: DB = Depends(_get_db)):
@@ -89,12 +114,20 @@ def get_testcase(testcase_id: int, db: DB = Depends(_get_db)):
     # return {"id": tc.testcase_id, "name": tc.name, "prompt": tc.prompt.name, "domain": domain_name}
 
 @testcase_router.put("/{testcase_id}", response_model=TestCaseUpdate)
-async def update_testcase(testcase_id: int, testcase: TestCaseId, db: DB = Depends(_get_db)):
+async def update_testcase(
+    testcase_id: int, 
+    testcase: TestCaseId, 
+    db: DB = Depends(_get_db),
+    authorization: Optional[str] = Header(None)
+):
     session = db.Session()
     try:
         tc = session.query(TestCases).filter(TestCases.testcase_id == testcase_id).first()
         if not tc:
             raise HTTPException(status_code=404, detail="Test case not found")
+        
+        # Store original testcase name for logging
+        original_name = tc.testcase_name
         
         # Update testcase_name if provided
         if testcase.testcase_name is not None:
@@ -202,6 +235,36 @@ async def update_testcase(testcase_id: int, testcase: TestCaseId, db: DB = Depen
         session.commit()
         session.refresh(tc)
 
+        # Log the activity
+        username = get_username_from_token(authorization)
+        if username:
+            # Determine what changed for the note
+            changes = []
+            if testcase.testcase_name is not None and testcase.testcase_name != original_name:
+                changes.append(f"name changed to '{tc.testcase_name}'")
+            if testcase.user_prompt is not None or testcase.system_prompt is not None:
+                changes.append("prompt updated")
+            if testcase.response_text is not None:
+                changes.append("response updated")
+            if testcase.strategy_name is not None:
+                changes.append("strategy updated")
+            if testcase.llm_judge_prompt is not None:
+                changes.append("judge prompt updated")
+            
+            note = f"Test case '{tc.testcase_name}' updated"
+            if changes:
+                note += f": {', '.join(changes)}"
+            else:
+                note += " (no changes detected)"
+            
+            log_activity(
+                username=username,
+                entity_type="Test Case",
+                entity_id=str(tc.testcase_name),
+                operation="update",
+                note=note
+            )
+
         # Safely retrieve related information for response model from database object
         strategy_name = getattr(tc.strategy, "strategy_name", None) if tc.strategy else None
         llm_judge_prompt = getattr(tc.judge_prompt, "prompt", None) if tc.judge_prompt else None
@@ -229,7 +292,11 @@ async def update_testcase(testcase_id: int, testcase: TestCaseId, db: DB = Depen
 
 
 @testcase_router.post("/create", response_model=TestCaseIds)
-async def create_testcase(testcase: TestCaseCreate, db: DB = Depends(_get_db)):
+async def create_testcase(
+    testcase: TestCaseCreate, 
+    db: DB = Depends(_get_db),
+    authorization: Optional[str] = Header(None)
+):
     session = db.Session()
     try:
         tc = TestCases(
@@ -242,6 +309,19 @@ async def create_testcase(testcase: TestCaseCreate, db: DB = Depends(_get_db)):
 
         session.add(tc)
         session.commit()
+        session.refresh(tc)
+        
+        # Log the activity
+        username = get_username_from_token(authorization)
+        if username:
+            log_activity(
+                username=username,
+                entity_type="Test Case",
+                entity_id=str(tc.testcase_name),
+                operation="create",
+                note=f"Test case '{tc.testcase_name}' created"
+            )
+        
         return TestCaseIds(
             testcase_id=tc.testcase_id, 
             testcase_name=tc.testcase_name, 
@@ -257,14 +337,35 @@ async def create_testcase(testcase: TestCaseCreate, db: DB = Depends(_get_db)):
 
 
 @testcase_router.delete("/{testcase_id}")
-async def delete_testcase(testcase_id: int, db: DB = Depends(_get_db)):
+async def delete_testcase(
+    testcase_id: int, 
+    db: DB = Depends(_get_db),
+    authorization: Optional[str] = Header(None)
+):
     session = db.Session()
     try:
         tc = session.query(TestCases).filter(TestCases.testcase_id == testcase_id).first()
         if not tc:
             raise HTTPException(status_code=404, detail="Test case not found")
+        
+        # Store testcase name for logging before deletion
+        testcase_name = tc.testcase_name
+        testcase_id_str = str(tc.testcase_id)
+        
         session.delete(tc)
         session.commit()
+        
+        # Log the activity
+        username = get_username_from_token(authorization)
+        if username:
+            log_activity(
+                username=username,
+                entity_type="Test Case",
+                entity_id=testcase_name,
+                operation="delete",
+                note=f"Test case '{testcase_name}' deleted"
+            )
+        
         return JSONResponse(content={"message": "Test case deleted successfully"}, status_code=200)
     finally:
         session.close()

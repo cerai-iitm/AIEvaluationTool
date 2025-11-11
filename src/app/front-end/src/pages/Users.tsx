@@ -32,13 +32,16 @@ const Users = () => {
     { username: "Viewer24", email: "eamilviwer@iitm.ac.in", role: "Viewer" },
     { username: "Viewer27", email: "eamilviwer22@iitm.ac.in", role: "Viewer" },
     { username: "Viewer22", email: "eamilviwer42@iitm.ac.in", role: "Viewer" },
+
   ];
 
   return (
     <div className="flex min-h-screen">
-      <Sidebar />
+      <aside className="fixed top-0 left-0 h-screen bg-background w-[220px] ">
+        <Sidebar />
+      </aside>
 
-      <main className="flex-1 bg-background">
+      <main className="flex-1 bg-background ml-[224px]">
         <div className="p-8">
           <h1 className="text-4xl font-bold mb-12 text-center">User's List</h1>
 

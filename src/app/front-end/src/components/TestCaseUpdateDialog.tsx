@@ -478,7 +478,7 @@ export const TestCaseUpdateDialog = ({
               <button
                 className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleSubmit}
-                disabled={!isChanged || isLoading}
+                disabled={!isChanged || !notes ||isLoading}
               >
                 {isLoading ? "Updating..." : "Submit"}
               </button>

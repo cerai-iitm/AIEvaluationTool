@@ -37,6 +37,32 @@ async def create_user(payload: UserCreate, db: Session = Depends(get_db)):
     return UserOut(user_name=user.user_name, email=user.email, role=str(user.role))
 
 
+@users_router.get("/activity/{entity_type}", response_model=List[UserActivityResponse])
+async def get_activity_by_entity_type(entity_type: str, db: Session = Depends(get_db)):
+    """Get activity logs for a specific entity type (e.g., 'Test Case', 'Target', 'Domain')."""
+    rows = users_controller.list_activity_by_entity_type(db, entity_type)
+    def map_status(op: str) -> str:
+        title = str(op).capitalize()
+        if title == 'Create':
+            return 'Created'
+        if title == 'Update':
+            return 'Updated'
+        if title == 'Delete':
+            return 'Deleted'
+        return title
+
+    return [
+        UserActivityResponse(
+            description=row.note,
+            type=row.entity_type,
+            testCaseId=row.entity_id,
+            status=map_status(row.operation),
+            timestamp=row.created_at.strftime("%Y-%m-%d %H:%M"),
+        )
+        for row in rows
+    ]
+
+
 @users_router.get("/{username}", response_model=List[UserActivityResponse])
 async def get_user_activity(username: str, db: Session = Depends(get_db)):
     rows = users_controller.list_user_activity(db, username)

@@ -56,8 +56,8 @@ class ActivityLog(Base):
     id = Column(Integer, primary_key=True)
     user_name = Column(String(100), nullable=False)
     role = Column(ChoiceType(ROLE), nullable=False)
-    entity_type = Column(String(100), nullable=False)
-    entity_id = Column(String(100), nullable=False)
+    entity_type = Column(String(100), nullable=False)  # e.g., "Test Case", "Target", "Domain"
+    entity_id = Column(String(100), nullable=False)  # e.g., testcase_id, target_id
     note = Column(String(255), nullable=False)
     operation = Column(ChoiceType(OPERATION), nullable=False)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
