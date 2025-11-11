@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
@@ -10,30 +10,161 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { X } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { API_ENDPOINTS } from "@/config/api";
+import { useToast } from "@/hooks/use-toast";
 
 interface User {
-  username: string;
+  user_name: string;
   email: string;
   role: string;
 }
 
 const Users = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [showCreateUser, setShowCreateUser] = useState(false);
+  const [users, setUsers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Form state
+  const [formData, setFormData] = useState({
+    user_name: "",
+    email: "",
+    role: "",
+    password: "",
+    confirm_password: "",
+  });
 
-  const users: User[] = [
-    { username: "UserName", email: "eamil@iitm.ac.in", role: "Admin" },
-    { username: "Manger22", email: "eamilmanager@iitm.ac.in", role: "Manager" },
-    { username: "Manger44", email: "eamilmanager22@iitm.ac.in", role: "Manager" },
-    { username: "CuratorUser", email: "eamilcurator@iitm.ac.in", role: "Curator" },
-    { username: "CuratorUser22", email: "eamilcurator22@iitm.ac.in", role: "Curator" },
-    { username: "CuratorUser44", email: "eamilcurator42@iitm.ac.in", role: "Curator" },
-    { username: "Viewer24", email: "eamilviwer@iitm.ac.in", role: "Viewer" },
-    { username: "Viewer27", email: "eamilviwer22@iitm.ac.in", role: "Viewer" },
-    { username: "Viewer22", email: "eamilviwer42@iitm.ac.in", role: "Viewer" },
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
-  ];
+  const fetchUsers = async () => {
+    try {
+      setIsLoading(true);
+      const token = localStorage.getItem("access_token");
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+      };
+
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(API_ENDPOINTS.USERS, { headers });
+      
+      if (response.ok) {
+        const data: User[] = await response.json();
+        setUsers(data);
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to load users",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to connect to server",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validation
+    if (!formData.user_name || !formData.email || !formData.role || !formData.password) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (formData.password !== formData.confirm_password) {
+      toast({
+        title: "Error",
+        description: "Passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const token = localStorage.getItem("access_token");
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+      };
+
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(API_ENDPOINTS.USERS, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          user_name: formData.user_name,
+          email: formData.email,
+          role: formData.role.toLowerCase(),
+          password: formData.password,
+          confirm_password: formData.confirm_password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: "User created successfully",
+        });
+        setShowCreateUser(false);
+        setFormData({
+          user_name: "",
+          email: "",
+          role: "",
+          password: "",
+          confirm_password: "",
+        });
+        fetchUsers(); // Refresh the list
+      } else {
+        toast({
+          title: "Error",
+          description: data.detail || "Failed to create user",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to connect to server",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const capitalizeRole = (role: string) => {
+    return role.charAt(0).toUpperCase() + role.slice(1);
+  };
 
   return (
     <div className="flex min-h-screen">
@@ -45,30 +176,44 @@ const Users = () => {
         <div className="p-8">
           <h1 className="text-4xl font-bold mb-12 text-center">User's List</h1>
 
-          <div className="max-w-5xl mx-auto bg-white rounded-lg shadow overflow-hidden">
-            <table className="w-full">
-              <thead className="border-b-2">
-                <tr>
-                  <th className="text-left p-6 font-semibold text-lg">User Name</th>
-                  <th className="text-left p-6 font-semibold text-lg">Email Address</th>
-                  <th className="text-left p-6 font-semibold text-lg">Roll</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((user, index) => (
-                  <tr
-                    key={index}
-                    className="border-b hover:bg-muted/50 cursor-pointer"
-                    onClick={() => navigate(`/user-history/${user.username}`)}
-                  >
-                    <td className="p-6">{user.username}</td>
-                    <td className="p-6">{user.email}</td>
-                    <td className="p-6">{user.role}</td>
+          {isLoading ? (
+            <div className="text-center py-12">
+              <p className="text-lg text-muted-foreground">Loading users...</p>
+            </div>
+          ) : (
+            <div className="max-w-5xl mx-auto bg-white rounded-lg shadow overflow-hidden">
+              <table className="w-full">
+                <thead className="border-b-2">
+                  <tr>
+                    <th className="text-left p-6 font-semibold text-lg">User Name</th>
+                    <th className="text-left p-6 font-semibold text-lg">Email Address</th>
+                    <th className="text-left p-6 font-semibold text-lg">Role</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {users.length === 0 ? (
+                    <tr>
+                      <td colSpan={3} className="p-6 text-center text-muted-foreground">
+                        No users found
+                      </td>
+                    </tr>
+                  ) : (
+                    users.map((user, index) => (
+                      <tr
+                        key={index}
+                        className="border-b hover:bg-muted/50 cursor-pointer"
+                        onClick={() => navigate(`/user-history/${encodeURIComponent(user.user_name)}`)}
+                      >
+                        <td className="p-6">{user.user_name}</td>
+                        <td className="p-6">{user.email}</td>
+                        <td className="p-6">{capitalizeRole(user.role)}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
 
           <div className="mt-8 max-w-5xl mx-auto">
             <Button
@@ -81,59 +226,111 @@ const Users = () => {
         </div>
       </main>
 
-      <Dialog open={showCreateUser} onOpenChange={setShowCreateUser}>
+      <Dialog 
+        open={showCreateUser} 
+        onOpenChange={(open) => {
+          setShowCreateUser(open);
+          if (!open) {
+            // Reset form when dialog is closed
+            setFormData({
+              user_name: "",
+              email: "",
+              role: "",
+              password: "",
+              confirm_password: "",
+            });
+          }
+        }}
+      >
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="text-3xl font-bold text-center">Create User</DialogTitle>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-4 top-4"
-              onClick={() => setShowCreateUser(false)}
-            >
-              <X className="w-5 h-5" />
-            </Button>
           </DialogHeader>
 
-          <form className="space-y-6 pt-8">
+          <form onSubmit={handleSubmit} className="space-y-6 pt-8">
             <div className="grid grid-cols-[200px_1fr] items-center gap-4">
               <Label htmlFor="username" className="text-right font-semibold">
                 User Name :
               </Label>
-              <Input id="username" className="bg-muted" />
+              <Input
+                id="username"
+                className="bg-muted"
+                value={formData.user_name}
+                onChange={(e) => setFormData({ ...formData, user_name: e.target.value })}
+                required
+              />
             </div>
 
             <div className="grid grid-cols-[200px_1fr] items-center gap-4">
               <Label htmlFor="email" className="text-right font-semibold">
                 Email Address :
               </Label>
-              <Input id="email" type="email" className="bg-muted" />
+              <Input
+                id="email"
+                type="email"
+                className="bg-muted"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                required
+              />
             </div>
 
             <div className="grid grid-cols-[200px_1fr] items-center gap-4">
               <Label htmlFor="role" className="text-right font-semibold">
-                User Roll :
+                User Role :
               </Label>
-              <Input id="role" className="bg-muted" />
+              <Select
+                value={formData.role}
+                onValueChange={(value) => setFormData({ ...formData, role: value })}
+                required
+              >
+                <SelectTrigger className="bg-muted">
+                  <SelectValue placeholder="Select a role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="manager">Manager</SelectItem>
+                  <SelectItem value="curator">Curator</SelectItem>
+                  <SelectItem value="viewer">Viewer</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="grid grid-cols-[200px_1fr] items-center gap-4">
               <Label htmlFor="password" className="text-right font-semibold">
                 Password :
               </Label>
-              <Input id="password" type="password" className="bg-muted" />
+              <Input
+                id="password"
+                type="password"
+                className="bg-muted"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                required
+              />
             </div>
 
             <div className="grid grid-cols-[200px_1fr] items-center gap-4">
               <Label htmlFor="confirm-password" className="text-right font-semibold">
                 Confirm Password :
               </Label>
-              <Input id="confirm-password" type="password" className="bg-muted" />
+              <Input
+                id="confirm-password"
+                type="password"
+                className="bg-muted"
+                value={formData.confirm_password}
+                onChange={(e) => setFormData({ ...formData, confirm_password: e.target.value })}
+                required
+              />
             </div>
 
             <div className="flex justify-center pt-6">
-              <Button type="submit" className="bg-primary hover:bg-primary/90 px-12">
-                Submit
+              <Button
+                type="submit"
+                className="bg-primary hover:bg-primary/90 px-12"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Creating..." : "Submit"}
               </Button>
             </div>
           </form>

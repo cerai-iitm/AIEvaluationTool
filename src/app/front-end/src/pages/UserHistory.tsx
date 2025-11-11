@@ -32,7 +32,9 @@ const UserHistory = () => {
           headers["Authorization"] = `Bearer ${token}`;
         }
 
-        const response = await fetch(API_ENDPOINTS.USER_ACTIVITY(username), { headers });
+        // Decode username from URL and encode for API call
+        const decodedUsername = decodeURIComponent(username);
+        const response = await fetch(API_ENDPOINTS.USER_ACTIVITY(encodeURIComponent(decodedUsername)), { headers });
         
         if (response.ok) {
           const data: Activity[] = await response.json();
@@ -78,7 +80,9 @@ const UserHistory = () => {
       </aside>
 
       <main className="flex-1 ml-[220px] p-28 min-h-screen items-center justify-center">
-        <h1 className="text-4xl font-bold mb-12">Activity of {username}</h1>
+        <h1 className="text-4xl font-bold mb-12">
+          Activity of {username ? decodeURIComponent(username) : "User"}
+        </h1>
 
         {isLoading ? (
           <div className="text-center py-12">

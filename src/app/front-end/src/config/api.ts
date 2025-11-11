@@ -14,6 +14,7 @@ export const API_ENDPOINTS = {
   PROMPTS: `${API_BASE_URL}/api/prompts`,
   LLM_PROMPTS: `${API_BASE_URL}/api/llmPrompts`,
   CURRENT_USER: `${API_BASE_URL}/api/users/me`,
+  USERS: `${API_BASE_URL}/api/users`,
   USER_ACTIVITY: (username: string) => `${API_BASE_URL}/api/users/${username}`,
   ENTITY_ACTIVITY: (entityType: string) => `${API_BASE_URL}/api/users/activity/${entityType}`,
 };
