@@ -80,5 +80,14 @@
     },
     "transliterated_language_strategy" : {
         "model_name" : "sentence-transformers/paraphrase-multilingual-mpnet-base-v2"
+    },
+    "fairness_preference" : {
+        "tasks" : ["summarization", "text-classification"],
+        "stance_model" : "MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli",
+        "summ_model" : "Falconsai/text_summarization"
+    },
+    "fluency_score" : {
+        "dist_file" : "fluency_dist.json",
+        "epsilon" : 0.1
     }
 }

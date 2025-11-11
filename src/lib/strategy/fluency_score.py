@@ -15,14 +15,15 @@ warnings.filterwarnings("ignore")
 
 FileLoader._load_env_vars(__file__)
 logger = get_logger("fluency_score")
+dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), simple=True, strat_name="fluency_score")
 
 class IndianLanguageFluencyScorer(Strategy):
     def __init__(self, name="fluency_score", **kwargs):
         super().__init__(name, kwargs=kwargs)
         self.gpu_url=os.getenv("GPU_URL")
         self.ex_dir = os.getenv("EXAMPLES_DIR")
-        self.dist_file = os.getenv("FLUENCY_DIST")
-        self.epsilon = 0.1
+        self.dist_file = dflt_vals.dist_file
+        self.epsilon = dflt_vals.epsilon
 
     def run_examples(self):
         if(not FileLoader._check_if_present(__file__, self.ex_dir, self.dist_file)):
