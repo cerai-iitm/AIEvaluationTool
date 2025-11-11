@@ -1,2 +1,2 @@
-from .database import get_db
+from .database import *
 from .fastapi_deps import _get_db

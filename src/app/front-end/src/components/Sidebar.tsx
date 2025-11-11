@@ -1,14 +1,72 @@
 import { Home, Users, LogOut } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import ceraiLogo from "@/assets/cerai-logo.png";
+import { API_ENDPOINTS } from "@/config/api";
+import { useToast } from "@/hooks/use-toast";
 
-interface SidebarProps {
-  username?: string;
-  role?: string;
+interface UserInfo {
+  user_name: string;
+  email: string;
+  role: string;
 }
 
-const Sidebar = ({ username = "UserName", role = "Admin" }: SidebarProps) => {
+const Sidebar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [userInfo, setUserInfo] = useState<UserInfo>({ user_name: "UserName", email: "", role: "Admin" });
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const token = localStorage.getItem("access_token");
+        if (!token) {
+          navigate("/");
+          return;
+        }
+
+        const response = await fetch(API_ENDPOINTS.CURRENT_USER, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (response.ok) {
+          const data: UserInfo = await response.json();
+          setUserInfo(data);
+        } else if (response.status === 401) {
+          // Token expired or invalid
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("user_name");
+          navigate("/");
+          toast({
+            title: "Session Expired",
+            description: "Please login again",
+            variant: "destructive",
+          });
+        } else {
+          // Use fallback values from localStorage if API fails
+          const storedUsername = localStorage.getItem("user_name");
+          if (storedUsername) {
+            setUserInfo({ user_name: storedUsername, email: "", role: "User" });
+          }
+        }
+      } catch (error) {
+        // Use fallback values from localStorage if API fails
+        const storedUsername = localStorage.getItem("user_name");
+        if (storedUsername) {
+          setUserInfo({ user_name: storedUsername, email: "", role: "User" });
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserInfo();
+  }, [navigate, toast]);
 
   const navItems = [
     { icon: Home, label: "Home", path: "/dashboard" },
@@ -52,12 +110,18 @@ const Sidebar = ({ username = "UserName", role = "Admin" }: SidebarProps) => {
             <Users className="w-5 h-5" />
           </div>
           <div className="flex-1">
-            <div className="text-sm font-medium">{username}</div>
-            <div className="text-xs text-primary-foreground/60">{role}</div>
+            <div className="text-sm font-medium">{isLoading ? "Loading..." : userInfo.user_name}</div>
+            <div className="text-xs text-primary-foreground/60">
+              {isLoading ? "" : userInfo.role.charAt(0).toUpperCase() + userInfo.role.slice(1)}
+            </div>
           </div>
         </div>
         <Link
           to="/"
+          onClick={() => {
+            localStorage.removeItem("access_token");
+            localStorage.removeItem("user_name");
+          }}
           className="flex items-center gap-3 px-4 py-3 text-primary-foreground/80 hover:bg-white/10 rounded-lg transition-colors"
         >
           <LogOut className="w-5 h-5" />

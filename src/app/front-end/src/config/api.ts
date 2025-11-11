@@ -13,5 +13,6 @@ export const API_ENDPOINTS = {
   RESPONSES: `${API_BASE_URL}/api/responses`,
   PROMPTS: `${API_BASE_URL}/api/prompts`,
   LLM_PROMPTS: `${API_BASE_URL}/api/llmPrompts`,
+  CURRENT_USER: `${API_BASE_URL}/api/users/me`,
 };
 

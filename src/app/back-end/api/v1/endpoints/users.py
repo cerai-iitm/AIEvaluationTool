@@ -2,12 +2,23 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from typing import List
 
-from database import get_db
+from database import get_db, get_current_user
+from models import user as user_model
 from controllers import users as users_controller
 from schemas import UserCreate, UserOut, UserActivityCreate, UserActivityResponse
 
 
 users_router = APIRouter(prefix="/api/users")
+
+
+@users_router.get("/me", response_model=UserOut)
+async def get_current_user_info(current_user: user_model.Users = Depends(get_current_user)):
+    """Get current authenticated user information."""
+    return UserOut(
+        user_name=current_user.user_name,
+        email=current_user.email,
+        role=str(current_user.role)
+    )
 
 
 @users_router.get("", response_model=List[UserOut])
