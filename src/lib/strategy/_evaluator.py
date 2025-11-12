@@ -38,10 +38,10 @@ class Evaluator:
             strategy = self.strat_name,
             response = Response(
                 response_text = ex.expected_output,
-                response_type = random.choice("GT", "GTDesc")
+                response_type = random.choice(["GT", "GTDesc"])
             ),
             judge_prompt = LLMJudgePrompt(
-                prompt = ex.judge_prmompt
+                prompt = ex.judge_prompt
             )
         )
         conversation = Conversation(
@@ -52,7 +52,19 @@ class Evaluator:
         )
         return test_case, conversation
     
-    def main(self, strategy_name:str, metric_name:str) -> dict:
+    def combine_examples(self, multiple_examples:dict):
+        combined = {}
+        name = os.path.commonprefix(list(multiple_examples.keys()))
+        name = name.removesuffix("_")
+        for _, v in multiple_examples.items():
+            if(isinstance(v, list)):
+                if name in combined:
+                    combined[name] += v
+                else:
+                    combined[name] = v
+        return combined
+    
+    def main(self, strategy_name:str = "", metric_name:str = "") -> dict:
         """
         use this function to parse the examples file using the strategy_name, and
         for each example in the file, use the runner to run the example and get the score,
@@ -68,19 +80,23 @@ class Evaluator:
             "response_score" : ,
         }
 
-        The example files must start with the same name as the "strategy file name", not the strategy name
+        The example files must start with the same name as the strategy name in the strategy file, not the actual strategy name
+        e.g. llm_judge, not llm_judge_positive
 
         """
         self.set_strategy(strategy_name, metric_name)
         examples = FileLoader._load_file_content(__file__, os.getenv("EXAMPLES_DIR"), strategy_name=strategy_name)
-        print(examples)
-
-        # try:
-        #     self.runner.set_metric_strategy(strategy_name, metric_name)
-        #     self.runner.execute()
-        # except Exception as e:
-        #     logger.error(f"Could not find the specified strategy name or the metric name. Additional info : {e}")
-            
-
+        if len(examples) < 1:
+            logger.error("Could not find files for the specified strategy.")
+            return examples
+        combined = self.combine_examples(examples)
+        for ex_list in combined.values():
+            for example in ex_list[:5]:
+                self.runner.set_metric_strategy(strategy_name, metric_name)
+                try:
+                    self.runner.execute(*self.get_testcase_obj(example))
+                except Exception as e:
+                    logger.error(f"Could not find the specified strategy name or the metric name. Additional info : {e}")
+                
 ev = Evaluator()
-ev.main("fluency", "")
+ev.main(strategy_name="fluency_score", metric_name="")

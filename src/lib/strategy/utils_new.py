@@ -49,18 +49,22 @@ class FileLoader:
             logger.error(f"The path {data_dir} does not exist.")
         file_content = {}
         if file_name != "":
-            file_content = FileLoader._fill_values(file_content, data_dir, file_name, multiple=False)
+            file_content = FileLoader._fill_values(file_content, data_dir, file_name, multiple=False) # multiple false means only one file
             return file_content
         else:
             strat = kwargs.get("strategy_name")
             if not strat:
-                logger.error("No such strategy.")
+                logger.error("strategy_name was not inilialized.")
                 return file_content
             else:
-                files = [f for f in file_names if f.startswith(strat)]
+                prefixes = [os.path.commonprefix([strat, f]) for f in file_names]
+                longest = max(prefixes, key=len, default=None)
+                files = [f for f in file_names if f.startswith(longest)]
                 if len(files) > 0:
                     for f in files:
                         file_content = FileLoader._fill_values(file_content, data_dir, f)
+                else:
+                    logger.error("None of the files in the directory match the strategy name.")
         return file_content
 
     @staticmethod

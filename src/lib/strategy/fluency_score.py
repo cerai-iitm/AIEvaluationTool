@@ -20,6 +20,7 @@ dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), 
 class IndianLanguageFluencyScorer(Strategy):
     def __init__(self, name="fluency_score", **kwargs):
         super().__init__(name, kwargs=kwargs)
+        self.name = name
         self.gpu_url=os.getenv("GPU_URL")
         self.ex_dir = os.getenv("EXAMPLES_DIR")
         self.dist_file = dflt_vals.dist_file
@@ -27,14 +28,15 @@ class IndianLanguageFluencyScorer(Strategy):
 
     def run_examples(self):
         if(not FileLoader._check_if_present(__file__, self.ex_dir, self.dist_file)):
-            examples = FileLoader._load_file_content(__file__, self.ex_dir)
+            examples = FileLoader._load_file_content(__file__, self.ex_dir, strategy_name=self.name)
             score_dist = {}
             for k, v in examples.items():
-                for para in v:
-                    if k in score_dist:
-                        score_dist[k].append(self.get_score(para["text"]))
-                    else:
-                        score_dist[k] = [self.get_score(para["text"])]
+                if(isinstance(v, list)):                        
+                    for para in v:
+                        if k in score_dist:
+                            score_dist[k].append(self.get_score(para["text"]))
+                        else:
+                            score_dist[k] = [self.get_score(para["text"])]
             FileLoader._save_values(score_dist, self.ex_dir, self.dist_file)
         else:
             score_dist = FileLoader._load_file_content(__file__, self.ex_dir, self.dist_file)

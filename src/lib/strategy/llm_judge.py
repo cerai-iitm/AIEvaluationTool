@@ -22,7 +22,7 @@ class LLMJudgeStrategy(Strategy):
         self.model_name = os.getenv("LLM_AS_JUDGE_MODEL")
         self.base_url = os.getenv("OLLAMA_URL")
         self.model = CustomOllamaModel(model_name=self.model_name, url=self.base_url)
-        self.eval_type = name.split("_")[-1] if len(name.split("_")) > 2 else dflt_vals.default_type
+        self.eval_type = name.split("_")[-1] if len(name.split("_")) > 2 else dflt_vals.eval_type
         
         self.judge_prompt = dflt_vals.judge_prompt
         self.system_prompt = dflt_vals.sys_prompt
