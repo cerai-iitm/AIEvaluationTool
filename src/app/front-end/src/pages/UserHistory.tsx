@@ -80,7 +80,7 @@ const UserHistory = () => {
       </aside>
 
       <main className="flex-1 ml-[220px] p-28 min-h-screen items-center justify-center">
-        <h1 className="text-4xl font-bold mb-12">
+        <h1 className="text-4xl font-bold mb-12 sticky top-0 bg-white rounded-lg px-4 py-4 shadow-md max-w-5xl z-10 ">
           Activity of {username ? decodeURIComponent(username) : "User"}
         </h1>
 
@@ -102,7 +102,7 @@ const UserHistory = () => {
               <div className="flex justify-between items-start">
                 <div className="flex-1">
                   <p className="text-lg mb-2">{activity.description}</p>
-                  <p className="text-xl font-semibold">{activity.type}</p>
+                  {/* <p className="text-xl font-semibold">{activity.type}</p> */}
                 </div>
                 <div className="text-right">
                   <div className="flex items-center gap-2 justify-end mb-1">

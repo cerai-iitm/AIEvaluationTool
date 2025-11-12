@@ -59,6 +59,7 @@ class UserActivityCreate(BaseModel):
 
 
 class UserActivityResponse(BaseModel):
+    user_name: str
     description: str
     type: str
     testCaseId: str

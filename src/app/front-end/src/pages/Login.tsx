@@ -16,6 +16,14 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  const getToastColor = (variant) => {
+    switch(variant) {
+      case "success": return "bg-green-500 text-white";
+      case "destructive": return "bg-red-500 text-white";
+      default: return "bg-blue-500 text-white";
+    }
+  }
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -52,6 +60,7 @@ const Login = () => {
         toast({
           title: "Success",
           description: data.message || "Login successful",
+          variant: "success",
         });
         
         // Navigate to dashboard

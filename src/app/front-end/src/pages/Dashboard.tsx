@@ -240,8 +240,8 @@ const Dashboard = () => {
 
       <Dialog open={historyDialogOpen} onOpenChange={setHistoryDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>History - {historyTitle}</DialogTitle>
+          <DialogHeader className='mt-4 sticky top-0 mb-2 bg-white rounded-lg px-4 py-4 shadow-md  '>
+            <DialogTitle className='sticky'>History - {historyTitle}</DialogTitle>
           </DialogHeader>
           
           {historyLoading ? (
@@ -266,7 +266,7 @@ const Dashboard = () => {
                           <Users className="w-4 h-4 text-primary" />
                         </div>
                         <div>
-                          <p className="text-sm text-muted-foreground">{activity.type}</p>
+                          <p className="text-sm text-muted-foreground">{activity.user_name}</p>
                         </div>
                       </div>
                       <p className="text-lg mb-2">{activity.description}</p>

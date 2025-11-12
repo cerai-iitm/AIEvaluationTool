@@ -53,6 +53,7 @@ async def get_activity_by_entity_type(entity_type: str, db: Session = Depends(ge
 
     return [
         UserActivityResponse(
+            user_name=row.user_name,
             description=row.note,
             type=row.entity_type,
             testCaseId=row.entity_id,
@@ -78,6 +79,7 @@ async def get_user_activity(username: str, db: Session = Depends(get_db)):
 
     return [
         UserActivityResponse(
+            user_name=row.user_name,
             description=row.note,
             type=row.entity_type,
             testCaseId=row.entity_id,
