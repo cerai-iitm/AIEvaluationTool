@@ -31,69 +31,11 @@ interface TestCaseAddDialogProps {
   onSuccess?: () => void;
 }
 
-const strategies = [
-  "robustness_advins",
-  "fairness_stereotype_query",
-  "safety_strategy",
-  "language_similarity_gt",
-  "truthfulness_external",
-  "privacy_strategy",
-  "toxicity",
-  "robustness_ood",
-  "fluency_score",
-  "fairness_stereotype_recognition",
-  "fairness_stereotype_agreement",
-  "robustness_advglue_mnli",
-  "hallucination_mc",
-  "tat_tpm_mvh",
-  "fdetect_toxicity_using_perspective_api",
-  "indian_lang_grammatical_check",
-  "entity_recognition",
-  "truthfulness_internal_hotpot",
-  "robustness_advglue_qqp",
-  "robustness_advglue_sst2",
-  "robustness_advglue_qnli",
-  "truthfulness_internal_codah",
-  "truthfulness_internal_squad",
-  "fairness_preference_force",
-  "hallucination_haluqa",
-  "hallucination_halusumm",
-  "efficacy_of_content_filtering",
-  "language_detect_langdetect",
-  "language_similarity_sarvam",
-  "uptime_calculation",
-  "compute_error_rate",
-  "llm_judge_positive",
-  "lexicaldiversity",
-  "transliterated_language_strategy",
-  "fairness_preference_plain",
-  "String Matching - Wrong - Not implemented",
-  "grammatical_strategies",
-  "language_detect_gt",
-  "compute_mtbf",
-  "llm_judge_negative",
-  "similarity_match",
-  "language_similarity_gts"
-];
-
-// Strategies that show LLM Prompt field
-const strategiesWithLLMPrompt = [
-  "language_detect_langdetect",
-  "language_similarity_sarvam",
-  "uptime_calculation",
-  "compute_error_rate",
-  "llm_judge_positive",
-  "lexicaldiversity",
-  "transliterated_language_strategy",
-  "fairness_preference_plain",
-  "String Matching - Wrong - Not implemented",
-  "grammatical_strategies",
-  "language_detect_gt",
-  "compute_mtbf",
-  "llm_judge_negative",
-  "similarity_match",
-  "language_similarity_gts"
-];
+interface Strategy {
+  strategy_id: number | null;
+  strategy_name: string | null;
+  requires_llm_prompt: boolean | null;
+}
 
 export const TestCaseAddDialog = ({
   open,
@@ -111,9 +53,60 @@ export const TestCaseAddDialog = ({
   const [strategy, setStrategy] = useState("");
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [strategies, setStrategies] = useState<Strategy[]>([]);
+  const [isFetchingStrategies, setIsFetchingStrategies] = useState(false);
   
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
   const [searchType, setSearchType] = useState<PromptSearchType>("userPrompt");
+
+  // Fetch strategies from API
+  useEffect(() => {
+    const fetchStrategies = async () => {
+      setIsFetchingStrategies(true);
+      try {
+        const token = localStorage.getItem("access_token");
+        const headers: HeadersInit = {
+          "Content-Type": "application/json",
+        };
+
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(API_ENDPOINTS.STRATEGIES, { headers });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (Array.isArray(data)) {
+          setStrategies(data);
+        } else {
+          console.error("Unexpected strategies data format:", data);
+          toast({
+            title: "Error",
+            description: "Failed to load strategies",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching strategies:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load strategies from server",
+          variant: "destructive",
+        });
+      } finally {
+        setIsFetchingStrategies(false);
+      }
+    };
+
+    if (open) {
+      fetchStrategies();
+    }
+  }, [open, toast]);
 
   // Check test case name availability against database
   useEffect(() => {
@@ -173,6 +166,10 @@ export const TestCaseAddDialog = ({
   //   setSearchDialogOpen(true);
   // };
 
+  const isAdded = (
+    userPrompts && systemPrompts && responseText && strategy && testCaseName
+  )
+
   const handleSelectPrompt = (selection: PromptSearchSelection) => {
     switch (selection.type) {
       case "userPrompt":
@@ -210,7 +207,10 @@ export const TestCaseAddDialog = ({
     }
   };
 
-  const showLLMPrompt = strategy && strategiesWithLLMPrompt.includes(strategy);
+  // Check if the selected strategy requires LLM prompt
+  const showLLMPrompt = strategy && strategies.some(
+    (s) => s.strategy_name === strategy && s.requires_llm_prompt === true
+  );
 
   const handleSubmit = async () => {
     // Validate required fields
@@ -465,16 +465,22 @@ export const TestCaseAddDialog = ({
 
             <div className="space-y-2">
               <Label className="text-base font-semibold">Strategy</Label>
-              <Select value={strategy} onValueChange={setStrategy}>
+              <Select 
+                value={strategy} 
+                onValueChange={setStrategy}
+                disabled={isFetchingStrategies}
+              >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select strategy" />
+                  <SelectValue placeholder={isFetchingStrategies ? "Loading strategies..." : "Select strategy"} />
                 </SelectTrigger>
                 <SelectContent className="bg-popover max-h-[300px]">
-                  {strategies.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {s}
-                    </SelectItem>
-                  ))}
+                  {strategies
+                    .filter((s) => s.strategy_name != null)
+                    .map((s) => (
+                      <SelectItem key={s.strategy_name} value={s.strategy_name!}>
+                        {s.strategy_name}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
@@ -514,11 +520,12 @@ export const TestCaseAddDialog = ({
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
                 className="bg-gray-200 rounded px-4 py-1 mr-4 w-96"
+                required
               />
               <button
                 className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleSubmit}
-                disabled={isSubmitting || isCheckingName || isNameAvailable === false}
+                disabled={isSubmitting || isCheckingName || isNameAvailable === false || !isAdded || !notes}
               >
                 {isSubmitting ? "Submitting..." : "Submit"}
               </button>
