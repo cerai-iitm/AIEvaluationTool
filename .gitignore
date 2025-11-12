@@ -27,5 +27,3 @@ test_4_*.py
 new_fairness_stereotype_recognition.py
 *.pkl
 .strategy_*.json
-__factory.py
-strategy_runner.py

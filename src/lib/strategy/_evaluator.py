@@ -5,6 +5,7 @@ from .utils_new import FileLoader
 import random
 import os
 from .logger import get_logger
+import pprint
 
 logger = get_logger("evaluator")
 FileLoader._load_env_vars(__file__)
@@ -37,7 +38,7 @@ class Evaluator:
             strategy = self.strat_name,
             response = Response(
                 response_text = ex.expected_output,
-                response_type = "GT"
+                response_type = random.choice("GT", "GTDesc")
             ),
             judge_prompt = LLMJudgePrompt(
                 prompt = ex.judge_prmompt
@@ -71,11 +72,8 @@ class Evaluator:
 
         """
         self.set_strategy(strategy_name, metric_name)
-        examples = FileLoader._load_file_content(self.strat_name, os.getenv("EXAMPLES_DIR"))
+        examples = FileLoader._load_file_content(__file__, os.getenv("EXAMPLES_DIR"), strategy_name=strategy_name)
         print(examples)
-
-
-
 
         # try:
         #     self.runner.set_metric_strategy(strategy_name, metric_name)
@@ -85,4 +83,4 @@ class Evaluator:
             
 
 ev = Evaluator()
-ev.main("fluency_score", "")
+ev.main("fluency", "")
