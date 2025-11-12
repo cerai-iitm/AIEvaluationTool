@@ -8,6 +8,7 @@ export const API_ENDPOINTS = {
   TEST_CASES: `${API_BASE_URL}/api/testcases`,
   TEST_CASE_BY_ID: (testcase_id: number) => `${API_BASE_URL}/api/testcases/${testcase_id}`,
   TEST_CASES_UPDATE_BY_ID: (testcase_id: number) => `${API_BASE_URL}/api/testcases/${testcase_id}`,
+  TEST_CASE_CREATE: `${API_BASE_URL}/api/testcases/create`,
 
   STRATEGIES: `${API_BASE_URL}/api/strategies`,
   RESPONSES: `${API_BASE_URL}/api/responses`,

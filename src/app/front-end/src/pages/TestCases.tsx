@@ -531,6 +531,7 @@ const TestCases = () => {
       <TestCaseAddDialog
         open={addDialogOpen}
         onOpenChange={setAddDialogOpen}
+        onSuccess={handleUpdateSuccess}
       />
     </div>
   );

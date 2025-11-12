@@ -17,7 +17,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.
 # sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../database")))
 
 from lib.orm.DB import DB
-from lib.orm.tables import TestCases, Prompts, Responses, Strategies, LLMJudgePrompts
+from lib.orm.tables import TestCases, Prompts, Responses, Strategies, LLMJudgePrompts, Languages, Domains
 from sqlalchemy.orm import joinedload
 
 
@@ -299,13 +299,153 @@ async def create_testcase(
 ):
     session = db.Session()
     try:
-        tc = TestCases(
-            testcase_name=testcase.testcase_name, # whic is not equal to the testcase_name in the database
-            strategy_id=testcase.strategy_id,
-            judge_prompt_id=testcase.llm_judge_prompt if testcase.llm_judge_prompt else None, 
-            prompt_id=testcase.prompt_id ,
-            response_id=testcase.response_id
+        # 1. Check if testcase_name already exists
+        existing_testcase = session.query(TestCases).filter(
+            TestCases.testcase_name == testcase.testcase_name
+        ).first()
+        if existing_testcase:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Test case with name '{testcase.testcase_name}' already exists"
             )
+
+        # 2. Find Strategy by name
+        strategy = session.query(Strategies).filter(
+            Strategies.strategy_name == testcase.strategy_name
+        ).first()
+        if not strategy:
+            raise HTTPException(
+                status_code=404, 
+                detail=f"Strategy '{testcase.strategy_name}' not found"
+            )
+        strategy_id = strategy.strategy_id
+
+        # 3. Find or create Prompt
+        # Compute hash for prompt
+        # Handle system_prompt: can be empty string, treat as None for database
+        system_prompt_value = testcase.system_prompt.strip() if testcase.system_prompt else ""
+        system_prompt_db = system_prompt_value if system_prompt_value else None
+        
+        prompt_str = f"System: '{system_prompt_value}'\tUser: '{testcase.user_prompt}'"
+        hashing = hashlib.sha1()
+        hashing.update(prompt_str.encode('utf-8'))
+        prompt_hash = hashing.hexdigest()
+
+        # Check if prompt with this hash already exists
+        existing_prompt = session.query(Prompts).filter(
+            Prompts.hash_value == prompt_hash
+        ).first()
+
+        if existing_prompt:
+            prompt_id = existing_prompt.prompt_id
+        else:
+            # Create new prompt - need lang_id and domain_id
+            # Get default language (first one) or raise error
+            default_lang = session.query(Languages).first()
+            if not default_lang:
+                raise HTTPException(
+                    status_code=500, 
+                    detail="No languages found in database. Please add a language first."
+                )
+            
+            # Get default domain (first one) or raise error
+            default_domain = session.query(Domains).first()
+            if not default_domain:
+                raise HTTPException(
+                    status_code=500, 
+                    detail="No domains found in database. Please add a domain first."
+                )
+
+            new_prompt = Prompts(
+                user_prompt=testcase.user_prompt,
+                system_prompt=system_prompt_db,
+                lang_id=default_lang.lang_id,
+                domain_id=default_domain.domain_id,
+                hash_value=prompt_hash
+            )
+            session.add(new_prompt)
+            session.flush()  # Flush to get the prompt_id
+            prompt_id = new_prompt.prompt_id
+
+        # 4. Find or create Response
+        response_id = None
+        if testcase.response_text and testcase.response_text.strip():
+            # Compute hash for response
+            response_str = f"Response Text: '{testcase.response_text}'\tResponse Type: 'GT'"
+            hashing = hashlib.sha1()
+            hashing.update(response_str.encode('utf-8'))
+            response_hash = hashing.hexdigest()
+
+            # Check if response with this hash already exists
+            existing_response = session.query(Responses).filter(
+                Responses.hash_value == response_hash
+            ).first()
+
+            if existing_response:
+                response_id = existing_response.response_id
+            else:
+                # Create new response
+                # Get default language
+                default_lang = session.query(Languages).first()
+                if not default_lang:
+                    raise HTTPException(
+                        status_code=500, 
+                        detail="No languages found in database. Please add a language first."
+                    )
+
+                new_response = Responses(
+                    response_text=testcase.response_text,
+                    response_type='GT',  # Default to Ground Truth
+                    prompt_id=prompt_id,
+                    lang_id=default_lang.lang_id,
+                    hash_value=response_hash
+                )
+                session.add(new_response)
+                session.flush()  # Flush to get the response_id
+                response_id = new_response.response_id
+
+        # 5. Find or create LLMJudgePrompt (if provided)
+        judge_prompt_id = None
+        if testcase.llm_judge_prompt:
+            # Compute hash for LLM judge prompt
+            hashing = hashlib.sha1()
+            hashing.update(testcase.llm_judge_prompt.encode('utf-8'))
+            judge_prompt_hash = hashing.hexdigest()
+
+            # Check if judge prompt with this hash already exists
+            existing_judge_prompt = session.query(LLMJudgePrompts).filter(
+                LLMJudgePrompts.hash_value == judge_prompt_hash
+            ).first()
+
+            if existing_judge_prompt:
+                judge_prompt_id = existing_judge_prompt.prompt_id
+            else:
+                # Create new judge prompt
+                # Get default language
+                default_lang = session.query(Languages).first()
+                if not default_lang:
+                    raise HTTPException(
+                        status_code=500, 
+                        detail="No languages found in database. Please add a language first."
+                    )
+
+                new_judge_prompt = LLMJudgePrompts(
+                    prompt=testcase.llm_judge_prompt,
+                    lang_id=default_lang.lang_id,
+                    hash_value=judge_prompt_hash
+                )
+                session.add(new_judge_prompt)
+                session.flush()  # Flush to get the prompt_id
+                judge_prompt_id = new_judge_prompt.prompt_id
+
+        # 6. Create TestCase
+        tc = TestCases(
+            testcase_name=testcase.testcase_name,
+            strategy_id=strategy_id,
+            prompt_id=prompt_id,
+            response_id=response_id,
+            judge_prompt_id=judge_prompt_id
+        )
 
         session.add(tc)
         session.commit()
@@ -322,16 +462,30 @@ async def create_testcase(
                 note=f"Test case '{tc.testcase_name}' created"
             )
         
+        # Safely retrieve related information for response
+        strategy_name = getattr(tc.strategy, "strategy_name", None) if tc.strategy else None
+        llm_judge_prompt = getattr(tc.judge_prompt, "prompt", None) if tc.judge_prompt else None
+        domain_name = getattr(getattr(tc.prompt, "domain", None), "domain_name", None) if tc.prompt and tc.prompt.domain else None
+        user_prompt = getattr(tc.prompt, "user_prompt", None) if tc.prompt else None
+        system_prompt = getattr(tc.prompt, "system_prompt", None) if tc.prompt else None
+        response_text = getattr(tc.response, "response_text", None) if tc.response else None
+
         return TestCaseIds(
             testcase_id=tc.testcase_id, 
             testcase_name=tc.testcase_name, 
-            strategy_name=tc.strategy.strategy_name, 
-            llm_judge_prompt=tc.judge_prompt.prompt if tc.judge_prompt else None, 
-            domain_name=tc.prompt.domain.domain_name if tc.prompt.domain else None, 
-            user_prompt=tc.prompt.user_prompt if tc.prompt else None, 
-            system_prompt=tc.prompt.system_prompt if tc.prompt else None, 
-            response_text=tc.response.response_text if tc.response else None
-            )
+            strategy_name=strategy_name, 
+            llm_judge_prompt=llm_judge_prompt, 
+            domain_name=domain_name, 
+            user_prompt=user_prompt, 
+            system_prompt=system_prompt, 
+            response_text=response_text
+        )
+    except HTTPException:
+        session.rollback()
+        raise
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail=f"Error creating test case: {str(e)}")
     finally:
         session.close()
 

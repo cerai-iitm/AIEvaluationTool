@@ -16,16 +16,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, X, Check } from "lucide-react";
+import { Search, X, Check, AlertCircle } from "lucide-react";
 import {
   PromptSearchDialog,
   PromptSearchSelection,
   PromptSearchType,
 } from "./PromptSearchDialog";
+import { API_ENDPOINTS } from "@/config/api";
+import { useToast } from "@/hooks/use-toast";
 
 interface TestCaseAddDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
 }
 
 const strategies = [
@@ -63,30 +66,74 @@ const strategiesWithLLMPrompt = [
 export const TestCaseAddDialog = ({
   open,
   onOpenChange,
+  onSuccess,
 }: TestCaseAddDialogProps) => {
+  const { toast } = useToast();
   const [testCaseName, setTestCaseName] = useState("");
   const [isNameAvailable, setIsNameAvailable] = useState<boolean | null>(null);
+  const [isCheckingName, setIsCheckingName] = useState(false);
   const [userPrompts, setUserPrompts] = useState("");
   const [systemPrompts, setSystemPrompts] = useState("");
   const [responseText, setResponseText] = useState("");
   const [llmPrompt, setLlmPrompt] = useState("");
   const [strategy, setStrategy] = useState("");
   const [notes, setNotes] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
   const [searchType, setSearchType] = useState<PromptSearchType>("userPrompt");
 
-  // Check test case name availability
+  // Check test case name availability against database
   useEffect(() => {
-    if (testCaseName.trim()) {
-      // Simulate availability check
-      const timeout = setTimeout(() => {
-        setIsNameAvailable(true);
-      }, 300);
-      return () => clearTimeout(timeout);
-    } else {
-      setIsNameAvailable(null);
-    }
+    const checkNameAvailability = async () => {
+      const name = testCaseName.trim();
+      if (!name) {
+        setIsNameAvailable(null);
+        return;
+      }
+
+      setIsCheckingName(true);
+      try {
+        const token = localStorage.getItem("access_token");
+        const headers: HeadersInit = {
+          "Content-Type": "application/json",
+        };
+
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(API_ENDPOINTS.TEST_CASES, { headers });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const testCases = Array.isArray(data) ? data : [];
+        
+        // Check if any test case has the same name (case-insensitive)
+        const nameExists = testCases.some(
+          (tc: any) => 
+            tc.testcase_name && 
+            tc.testcase_name.toLowerCase().trim() === name.toLowerCase().trim()
+        );
+
+        setIsNameAvailable(!nameExists);
+      } catch (error) {
+        console.error("Error checking name availability:", error);
+        setIsNameAvailable(null); // Set to null on error to not show incorrect status
+      } finally {
+        setIsCheckingName(false);
+      }
+    };
+
+    // Debounce the check
+    const timeout = setTimeout(() => {
+      checkNameAvailability();
+    }, 500);
+
+    return () => clearTimeout(timeout);
   }, [testCaseName]);
 
   // const handleSearchClick = (type: "userPrompt" | "response" | "llm") => {
@@ -131,28 +178,141 @@ export const TestCaseAddDialog = ({
     }
   };
 
-  const handleSubmit = () => {
-    console.log("Adding test case:", {
-      testCaseName,
-      userPrompts,
-      systemPrompts,
-      responseText,
-      llmPrompt,
-      strategy,
-      notes,
-    });
-    onOpenChange(false);
-    // Reset form
-    setTestCaseName("");
-    setUserPrompts("");
-    setSystemPrompts("");
-    setResponseText("");
-    setLlmPrompt("");
-    setStrategy("");
-    setNotes("");
-  };
-
   const showLLMPrompt = strategy && strategiesWithLLMPrompt.includes(strategy);
+
+  const handleSubmit = async () => {
+    // Validate required fields
+    if (!testCaseName.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Test case name is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!userPrompts.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "User prompt is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!responseText.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Response text is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!strategy) {
+      toast({
+        title: "Validation Error",
+        description: "Strategy is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if name is available
+    if (isNameAvailable === false) {
+      toast({
+        title: "Validation Error",
+        description: "Test case name already exists. Please choose a different name.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isCheckingName) {
+      toast({
+        title: "Please wait",
+        description: "Checking name availability...",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const token = localStorage.getItem("access_token");
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+      };
+
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const payload = {
+        testcase_name: testCaseName.trim(),
+        strategy_name: strategy,
+        user_prompt: userPrompts.trim(),
+        system_prompt: systemPrompts.trim() || null,
+        response_text: responseText.trim() || null,
+        llm_judge_prompt: showLLMPrompt && llmPrompt.trim() ? llmPrompt.trim() : null,
+      };
+
+      console.log("Creating test case:", payload);
+
+      const response = await fetch(API_ENDPOINTS.TEST_CASE_CREATE, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.detail || errorData.message || errorMessage;
+        } catch {
+          const errorText = await response.text();
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+      console.log("Test case created successfully:", data);
+
+      toast({
+        title: "Success",
+        description: `Test case "${testCaseName}" created successfully`,
+      });
+
+      // Reset form
+      setTestCaseName("");
+      setUserPrompts("");
+      setSystemPrompts("");
+      setResponseText("");
+      setLlmPrompt("");
+      setStrategy("");
+      setNotes("");
+      setIsNameAvailable(null);
+
+      // Close dialog
+      onOpenChange(false);
+
+      // Trigger refresh in parent component
+      if (onSuccess) {
+        onSuccess();
+      }
+    } catch (error) {
+      console.error("Error creating test case:", error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to create test case",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <>
@@ -178,13 +338,27 @@ export const TestCaseAddDialog = ({
                   placeholder="Enter New Test Case Name"
                   value={testCaseName}
                   onChange={(e) => setTestCaseName(e.target.value)}
-                  className="bg-muted pr-24"
+                  className={`bg-muted pr-24 ${
+                    isNameAvailable === false ? "border-destructive" : ""
+                  }`}
                   required
+                  disabled={isSubmitting}
                 />
-                {isNameAvailable && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-accent">
+                {isCheckingName && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-muted-foreground">
+                    <span className="text-sm">Checking...</span>
+                  </div>
+                )}
+                {!isCheckingName && isNameAvailable === true && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-green-600">
                     <Check className="w-4 h-4" />
                     <span className="text-sm font-medium">Available</span>
+                  </div>
+                )}
+                {!isCheckingName && isNameAvailable === false && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-destructive">
+                    <AlertCircle className="w-4 h-4" />
+                    <span className="text-sm font-medium">Taken</span>
                   </div>
                 )}
               </div>
@@ -310,10 +484,11 @@ export const TestCaseAddDialog = ({
                 className="bg-gray-200 rounded px-4 py-1 mr-4 w-96"
               />
               <button
-                className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800"
+                className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleSubmit}
+                disabled={isSubmitting || isCheckingName || isNameAvailable === false}
               >
-                Submit
+                {isSubmitting ? "Submitting..." : "Submit"}
               </button>
             </div>
           </div>
