@@ -87,7 +87,8 @@
         "summ_model" : "Falconsai/text_summarization"
     },
     "fluency_score" : {
-        "dist_file" : "fluency_dist.json",
-        "epsilon" : 0.1
+        "dist_file" : "fluency_score_dist",
+        "epsilon" : 0.5,
+        "type" : "slor"
     }
 }

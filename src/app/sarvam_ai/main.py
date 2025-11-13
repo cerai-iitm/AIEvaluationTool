@@ -87,6 +87,12 @@ def get_perplexity(text : str):
     print(f"Perplexity : {perplexity}")
     return {"text" : text, "perplexity" : perplexity}
 
+@app.post("/slor")
+def get_perplexity(text : str):
+    slor = generator.get_SLOR(text)
+    print(f"SLOR : {slor}")
+    return {"text" : text, "SLOR" : slor}
+
 if __name__ == "__main__":
     # Parse command line arguments for host and port
     parser = argparse.ArgumentParser(description="Sarvam AI application")

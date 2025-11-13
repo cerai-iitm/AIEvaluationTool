@@ -119,4 +119,16 @@ class SarvamAIGenerator:
             perplexity = math.exp(loss.item()) # this calculates the perplexity in the text -> e ^(- 1/N SUM(1->N) (log(w_{i}|c_{0:i-1})) )
         return perplexity
 
+    def get_SLOR(self, text:str):
+        inputs = self.tokenizer(text, return_tensors="pt", truncation=True, max_length=512).to(self.device)
+        seq_len = inputs["input_ids"].size(1)
+        with torch.no_grad():
+            outputs = self.model(**inputs, labels=inputs["input_ids"])
+            loss = outputs.loss
+            log_prob = -1 * loss.item() * seq_len
+        vocab_size = len(self.tokenizer.get_vocab())
+        unigram_prob = 1.0 / vocab_size
+        uni_log_prob = seq_len * math.log(unigram_prob)
+
+        return (log_prob - uni_log_prob) / seq_len
         

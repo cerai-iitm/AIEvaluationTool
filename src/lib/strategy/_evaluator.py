@@ -5,7 +5,7 @@ from .utils_new import FileLoader
 import random
 import os
 from .logger import get_logger
-import pprint
+import numpy as np
 
 logger = get_logger("evaluator")
 FileLoader._load_env_vars(__file__)
@@ -90,13 +90,17 @@ class Evaluator:
             logger.error("Could not find files for the specified strategy.")
             return examples
         combined = self.combine_examples(examples)
+        scores = []
         for ex_list in combined.values():
-            for example in ex_list[:5]:
+            for example in ex_list[:1]: #later do for all the examples, just for now we are taking 5 examples
                 self.runner.set_metric_strategy(strategy_name, metric_name)
                 try:
-                    self.runner.execute(*self.get_testcase_obj(example))
+                    scores.append(self.runner.execute(*self.get_testcase_obj(example)))
                 except Exception as e:
                     logger.error(f"Could not find the specified strategy name or the metric name. Additional info : {e}")
+        avg_score = np.mean(scores)
+        logger.info(f"The everage score for {strategy_name} based on the evaluation of examples is : {avg_score}")
+        return avg_score
                 
 ev = Evaluator()
-ev.main(strategy_name="fluency_score", metric_name="")
+ev.main(strategy_name="llm_judge_positive", metric_name="Inclusivity")

@@ -91,15 +91,15 @@ class FileLoader:
             return False
     
     @staticmethod
-    def _save_values(data:dict, data_dir:str, file_name:str):
+    def _save_values(run_file_path:str, data:dict, data_dir:str, file_name:str):
         ext = file_name.split(".")[1]
-        if ext == "json":
-            with open(os.path.join(data_dir, file_name), "w") as f:
+        run_file_dir = os.path.dirname(run_file_path)
+        with open(os.path.join(os.path.join(run_file_dir, data_dir), file_name), "w") as f:
+            if ext == "json":
                 json.dump(data, f)
-        elif ext == "txt":
-            with open(os.path.join(data_dir, file_name), "w") as f:
+            elif ext == "txt":
                 f.write(json.dumps(data))
-    
+
     @staticmethod
     def dot_dict(d):
         if isinstance(d, dict):

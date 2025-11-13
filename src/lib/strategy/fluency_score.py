@@ -10,6 +10,7 @@ import warnings
 from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
 from .logger import get_logger
+import math
 
 warnings.filterwarnings("ignore")
 
@@ -18,46 +19,50 @@ logger = get_logger("fluency_score")
 dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), simple=True, strat_name="fluency_score")
 
 class IndianLanguageFluencyScorer(Strategy):
-    def __init__(self, name="fluency_score", **kwargs):
+    def __init__(self, name:str="fluency_score", **kwargs):
         super().__init__(name, kwargs=kwargs)
-        self.name = name
+        self.name__ = name #self.name is a property of the base class, so the naming should be different
         self.gpu_url=os.getenv("GPU_URL")
         self.ex_dir = os.getenv("EXAMPLES_DIR")
         self.dist_file = dflt_vals.dist_file
         self.epsilon = dflt_vals.epsilon
 
     def run_examples(self):
-        if(not FileLoader._check_if_present(__file__, self.ex_dir, self.dist_file)):
-            examples = FileLoader._load_file_content(__file__, self.ex_dir, strategy_name=self.name)
+        if(not FileLoader._check_if_present(__file__, self.ex_dir, f"{self.dist_file}_{dflt_vals.type}.json")):
+            examples = FileLoader._load_file_content(__file__, self.ex_dir, strategy_name=self.name__)
             score_dist = {}
             for k, v in examples.items():
                 if(isinstance(v, list)):                        
                     for para in v:
                         if k in score_dist:
-                            score_dist[k].append(self.get_score(para["text"]))
+                            score_dist[k].append(self.get_score(para["agent_response"], type=dflt_vals.type))
                         else:
-                            score_dist[k] = [self.get_score(para["text"])]
-            FileLoader._save_values(score_dist, self.ex_dir, self.dist_file)
+                            score_dist[k] = [self.get_score(para["agent_response"], dflt_vals.type)]
+            FileLoader._save_values(__file__, score_dist, self.ex_dir, f"{self.dist_file}_{dflt_vals.type}.json")
         else:
-            score_dist = FileLoader._load_file_content(__file__, self.ex_dir, self.dist_file)
+            score_dist = FileLoader._load_file_content(__file__, self.ex_dir, f"{self.dist_file}_{dflt_vals.type}.json")
         return score_dist
 
-    def get_score(self, text:str):
-        response = requests.post(f"{self.gpu_url}/perplexity", params={"text" : text})
-        score = json.loads(response.content.decode('utf-8'))["perplexity"]
+    def get_score(self, text:str, type:str):
+        if type == "perplexity":
+            response = requests.post(f"{self.gpu_url}/perplexity", params={"text" : text})
+            score = json.loads(response.content.decode('utf-8'))["perplexity"]
+        else:
+            response = requests.post(f"{self.gpu_url}/slor", params={"text" : text})
+            score = json.loads(response.content.decode('utf-8'))["SLOR"]
         return score
     
     def save_res_as_img(self, results:dict, path:str):
         for k , v in results.items():
             sns.kdeplot(v, label=k, fill=True)
-        plt.title("Perplexity distribution for fluent and non fluent indic language paragraphs.")
+        plt.title("Perplexity for fluent and non fluent indic language paragraphs.")
         plt.xlabel('Value')
         plt.ylabel('Density')
         plt.legend()
         plt.savefig(path)
     
-    def evaluate(self, testcase:TestCase, conversation:Conversation):#agent_response:str): #testcase:TestCase, conversation:Conversation):
-        score = self.get_score(conversation.agent_response)#agent_response)#conversation.agent_response)
+    def evaluate(self, testcase:TestCase, conversation:Conversation): #agent_response:str): #testcase:TestCase, conversation:Conversation):
+        score = self.get_score(conversation.agent_response, dflt_vals.type) #agent_response)#conversation.agent_response)
         ex_results = self.run_examples()
         probs = {}
         for k, v in ex_results.items():
@@ -65,11 +70,15 @@ class IndianLanguageFluencyScorer(Strategy):
             interval = np.linspace(score-self.epsilon, score+self.epsilon, 500)
             dist_int = dist(interval) # kde applied to the interval
             probs[k] = np.trapezoid(dist_int, interval)
-        # self.save_res_as_img(ex_results, "images/perplexity_dist.png")
+
+        self.save_res_as_img(ex_results, os.path.join(os.path.dirname(__file__), f"images/{dflt_vals.type}_dist.png"))
+        
         probs_as_lst = list(probs.values())
-        final_score = 1 if max(probs_as_lst) == probs_as_lst[0] else 0 # we need to return 0 if non fluent, and 1 if fluent
-        logger.info(f"Fluency Score: {final_score}")
-        return final_score 
+        # if the differnce is positive the value is closer to fluent dist than non fluent
+        log_ratio = math.log(max(probs_as_lst[0], 1e-40)) - math.log(max(probs_as_lst[1], 1e-40))
+        final_score = 1 / (1 + math.exp(-log_ratio)) # sigmoid function for the difference in log values
+        logger.info(f"Fluency Score: {final_score} for : {conversation.agent_response}")
+        return round(final_score, 3) 
     
     # def translate(self, agent_response:str):
     #     return json.loads(requests.post(f"{self.gpu_url}/translate", params={"input_text" : agent_response, "target_language" : "English"}).content.decode('utf-8'))
