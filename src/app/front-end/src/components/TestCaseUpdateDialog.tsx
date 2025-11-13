@@ -44,6 +44,12 @@ interface TestCaseUpdateDialogProps {
   onUpdateSuccess?: () => void; // Callback to refresh test cases list
 }
 
+interface Strategy {
+  strategy_id: number | null;
+  strategy_name: string | null;
+  requires_llm_prompt: boolean | null;
+}
+
 // const domains = ["General", "Education", "agriculture", "Healthcare", "Learning Disability"];
 
 export const TestCaseUpdateDialog = ({
@@ -60,7 +66,7 @@ export const TestCaseUpdateDialog = ({
   const [strategy, setStrategy] = useState(testCase?.strategyName || "");
   // const [domain, setDomain] = useState(testCase?.domainName || "");
   const [notes, setNotes] = useState("");
-  const [strategies, setStrategies] = useState<string[]>([]);
+  const [strategies, setStrategies] = useState<Strategy[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingStrategies, setIsFetchingStrategies] = useState(false);
   
@@ -134,10 +140,7 @@ export const TestCaseUpdateDialog = ({
         const data = await response.json();
         
         if (Array.isArray(data)) {
-          const strategyNames = data
-            .map((item: any) => item.strategy_name)
-            .filter((name: string | null | undefined) => name != null) as string[];
-          setStrategies(strategyNames);
+          setStrategies(data);
         } else {
           console.error("Unexpected strategies data format:", data);
           toast({
@@ -191,6 +194,16 @@ export const TestCaseUpdateDialog = ({
     strategy !== (testCaseInitial.strategyName || "") ||
     notes !== ""
   );
+
+  // Check if the selected strategy requires LLM prompt or if test case already has one
+  // For update dialog, show LLM prompt field if:
+  // 1. Selected strategy requires it, OR
+  // 2. Test case has existing LLM prompt value (so user can view/edit/clear it)
+  const selectedStrategyRequiresLLM = strategy && strategies.some(
+    (s) => s.strategy_name === strategy && s.requires_llm_prompt === true
+  );
+  const hasExistingLLMPrompt = testCaseInitial.llmPrompt && testCaseInitial.llmPrompt.trim() !== "";
+  const showLLMPrompt = selectedStrategyRequiresLLM || hasExistingLLMPrompt;
 
 
 
@@ -402,46 +415,49 @@ export const TestCaseUpdateDialog = ({
                   {strategies.length === 0 && !isFetchingStrategies ? (
                     <SelectItem value="" disabled>No strategies available</SelectItem>
                   ) : (
-                    strategies.map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {s}
-                      </SelectItem>
-                    ))
+                    strategies
+                      .filter((s) => s.strategy_name != null)
+                      .map((s) => (
+                        <SelectItem key={s.strategy_name} value={s.strategy_name!}>
+                          {s.strategy_name}
+                        </SelectItem>
+                      ))
                   )}
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="space-y-1 pb-4">
-              <Label className="text-base font-semibold">LLM Prompt</Label>
-              <div className="relative">
-                <Textarea
-                  value={llmPrompt}
-                  style = {{
-                      height: '${height}px',
-                      maxHeight: "160px",
-                      minHeight: "40px",
-                      overflowY: "auto"
-                  }}
-                  onFocus={() => setFocusedField("llm")}
-                  onBlur = {() => setTimeout(() => setFocusedField(null), 100)}
-                  onChange={(e) => setLlmPrompt(e.target.value)}
-                  className="bg-muted min-h-[80px] pr-10"
-                />
-                { focusedField === "llm" && (
-                  
-                
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-2 top-2"
-                  onClick={() => handleSearchClick("llm")}
-                >
-                  <Search className="w-4 h-4" />
-                </Button>
-                )}
+            {showLLMPrompt && (
+              <div className="space-y-1 pb-4">
+                <Label className="text-base font-semibold">LLM Prompt</Label>
+                <div className="relative">
+                  <Textarea
+                    value={llmPrompt}
+                    style = {{
+                        height: '${height}px',
+                        maxHeight: "160px",
+                        minHeight: "40px",
+                        overflowY: "auto"
+                    }}
+                    onFocus={() => setFocusedField("llm")}
+                    onBlur = {() => setTimeout(() => setFocusedField(null), 100)}
+                    onChange={(e) => setLlmPrompt(e.target.value)}
+                    className="bg-muted min-h-[80px] pr-10"
+                  />
+                  { focusedField === "llm" && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-2 top-2"
+                      onMouseDown={e => e.preventDefault()}
+                      onClick={() => handleSearchClick("llm")}
+                    >
+                      <Search className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
 
 
