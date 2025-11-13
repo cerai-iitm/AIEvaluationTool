@@ -7,10 +7,11 @@ import uvicorn
 import logging
 # from config.logger import get_logger
 from fastapi import FastAPI 
+from fastapi.staticfiles import StaticFiles as static_files
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from database.database import init_db, seed_users
-from api.v1.endpoints import auth, dashboard, testCase, response, strategy, prompt, llmPrompt, users
+from api.v1.endpoints import auth, dashboard, testCase, response, strategy, prompt, llmPrompt, target, users
 from middleware.middleware import AuthMiddleware
 
 
@@ -37,6 +38,11 @@ app = FastAPI(
     version = '1.0.0',
     lifespan=lifespan
 )
+# static_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'static'))
+
+
+
+# app.mount("/static", static_files(directory=static_dir), name="static")
 
 app.add_middleware(
     CORSMiddleware,
@@ -55,6 +61,7 @@ app.include_router(response.response_router, tags=["Responses"])
 app.include_router(strategy.strategy_router, tags=["Strategies"])
 app.include_router(prompt.prompt_router, tags=["Prompts"])
 app.include_router(llmPrompt.llmPrompt_router, tags=["LLM Prompts"])
+app.include_router(target.target_router, tags=["Targets"])
 app.include_router(users.users_router, tags=["Users"])
 
 if __name__ == "__main__":

@@ -42,7 +42,7 @@ def get_username_from_token(authorization: Optional[str] = Header(None)) -> Opti
     except JWTError:
         return None
 
-@testcase_router.get("", summary="Get a test cases", response_model=list[TestCaseIds])
+@testcase_router.get("", summary="Get all test cases", response_model=list[TestCaseIds])
 async def list_testcases( db: DB = Depends(_get_db)):
     session = db.Session()
     try:

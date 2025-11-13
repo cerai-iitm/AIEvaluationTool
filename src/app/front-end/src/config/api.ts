@@ -10,6 +10,10 @@ export const API_ENDPOINTS = {
   TEST_CASES_UPDATE_BY_ID: (testcase_id: number) => `${API_BASE_URL}/api/testcases/${testcase_id}`,
   TEST_CASE_CREATE: `${API_BASE_URL}/api/testcases/create`,
 
+  TARGETS: `${API_BASE_URL}/api/targets`,
+  TARGET_TYPES: `${API_BASE_URL}/api/targets/target/types`,
+  TARGET_BY_ID: (target_id: number) => `${API_BASE_URL}/api/targets/${target_id}`,
+
   STRATEGIES: `${API_BASE_URL}/api/strategies`,
   RESPONSES: `${API_BASE_URL}/api/responses`,
   PROMPTS: `${API_BASE_URL}/api/prompts`,

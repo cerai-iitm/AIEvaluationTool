@@ -4,3 +4,5 @@ from .response import *
 from .strategy import *
 from .prompt import *
 from .llmPrompt import *
+from .target import *
+from .domain import Domain

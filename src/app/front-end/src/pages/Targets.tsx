@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Sidebar from '@/components/Sidebar';
 import {Input} from '@/components/ui/input';
 import {Textarea} from '@/components/ui/textarea';
@@ -9,6 +9,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import TargetUpdateDialog from '@/components/TargetUpdateDialog';
 // import TargetAddDialog from '@/components/TargetAddDialog';
+import { API_ENDPOINTS } from '@/config/api';
 
 interface Target {
   id: number;
@@ -21,35 +22,110 @@ interface Target {
 //   notes: string;
 }
 
-// Example target data
-const initialTargets: Target[] = [
-  { 
-    id: 1, 
-    name: 'Gooey', 
-    type: 'WhatsApp', 
-    description: 'Gooey AI is a WhatsApp-based AI assistant for farmers, providing information and assistance on agricultural practices and crop management.', 
-    url: 'https://wa.me/88220323028', 
-    domain: 'General', 
-    languages: ['Tamil', 'Hindi', 'Gujarati'] 
-},
-  { id: 2, 
-    name: 'Vaidya AI', 
-    type: 'WhatsApp', 
-    description: 'Vaidya AI is a WhatsApp-based AI assistant for providing healthcare advices.', 
-    url: 'https://wa.me/8828808350', 
-    domain: 'Healthcare', 
-    languages: ['Tamil', 'Hindi', 'Gujarati', 'Bengali', 'English'] 
-},
-  // ...Add more objects as needed
-];
+const mapTargetResponse = (item: Record<string, any>): Target => ({
+  id: item?.target_id ?? item?.id ?? 0,
+  name: item?.target_name ?? item?.name ?? '',
+  type: item?.target_type ?? item?.type ?? '',
+  description: item?.target_description ?? item?.description ?? '',
+  url: item?.target_url ?? item?.url ?? '',
+  domain: item?.domain_name ?? item?.domain ?? '',
+  languages: Array.isArray(item?.lang_list) ? item.lang_list.filter(Boolean) : [],
+});
 
 const Targets = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [selectedTarget, setSelectedTarget] = useState<Target | null>(null);
   const [updateTarget, setUpdateTarget] = useState<Target | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [targets, setTargets] = useState<Target[]>(initialTargets);
+  const [targets, setTargets] = useState<Target[]>([]);
   const [ currentPage, setCurrentPage ] = useState(1);
+  const [isLoadingTargets, setIsLoadingTargets] = useState(false);
+  const [targetsError, setTargetsError] = useState<string | null>(null);
+  const [isDetailLoading, setIsDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState<string | null>(null);
+
+  const authHeaders = useCallback((): HeadersInit => {
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+    };
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    return headers;
+  }, []);
+
+  const fetchTargets = useCallback(async () => {
+    setIsLoadingTargets(true);
+    setTargetsError(null);
+    try {
+      const response = await fetch(API_ENDPOINTS.TARGETS, {
+        headers: authHeaders(),
+      });
+
+      if (!response.ok) {
+        let message = `Unable to fetch targets (status ${response.status})`;
+        try {
+          const data = await response.json();
+          message = data?.detail ?? data?.message ?? message;
+        } catch {
+          // ignore json parse errors
+        }
+        throw new Error(message);
+      }
+
+      const data = await response.json();
+      if (!Array.isArray(data)) {
+        throw new Error('Unexpected response format while fetching targets');
+      }
+
+      setTargets(data.map(mapTargetResponse));
+    } catch (error) {
+      console.error('Failed to load targets', error);
+      setTargets([]);
+      setTargetsError(error instanceof Error ? error.message : 'Failed to load targets');
+    } finally {
+      setIsLoadingTargets(false);
+    }
+  }, [authHeaders]);
+
+  const fetchTargetDetails = useCallback(
+    async (targetId: number) => {
+      setIsDetailLoading(true);
+      setDetailError(null);
+      setSelectedTarget(null);
+      try {
+        const response = await fetch(API_ENDPOINTS.TARGET_BY_ID(targetId), {
+          headers: authHeaders(),
+        });
+
+        if (!response.ok) {
+          let message = `Unable to fetch target ${targetId} (status ${response.status})`;
+          try {
+            const data = await response.json();
+            message = data?.detail ?? data?.message ?? message;
+          } catch {
+            // ignore parse errors
+          }
+          throw new Error(message);
+        }
+
+        const data = await response.json();
+        setSelectedTarget(mapTargetResponse(data));
+      } catch (error) {
+        console.error('Failed to load target details', error);
+        setDetailError(error instanceof Error ? error.message : 'Failed to load target details');
+      } finally {
+        setIsDetailLoading(false);
+      }
+    },
+    [authHeaders]
+  );
+
+  useEffect(() => {
+    fetchTargets();
+  }, [fetchTargets]);
 
   const filteredTargets = targets.filter(
     t =>
@@ -61,15 +137,22 @@ const Targets = () => {
   const totalItems = filteredTargets.length;
   const itemsPerPage = 20;
   const TotalPages = Math.ceil(totalItems / itemsPerPage);
-
-  //Pagination logic: get items for current page
-  const paginatedTargets = filteredTargets.slice(
-    (currentPage -1) * itemsPerPage,
-    currentPage * itemsPerPage
-  )
+  const paginatedTargets = useMemo(
+    () =>
+      filteredTargets.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+      ),
+    [filteredTargets, currentPage]
+  );
 
   const handleUrlClick = (url: string) => {
     window.open(url, '_blank');
+  };
+
+  const handleSelectTarget = (targetId: number) => {
+    setIsDetailDialogOpen(true);
+    fetchTargetDetails(targetId);
   };
 
   return (
@@ -138,19 +221,48 @@ const Targets = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredTargets.map(target => (
-                  <tr key={target.id} className="border-b-2 cursor-pointer hover:bg-muted/50"
-                      onClick={() => setSelectedTarget(target)}>
-                    <td className="p-2">{target.id}</td>
-                    <td className="p-2">{target.name}</td>
-                    <td className="p-2">
-                      <span onClick={e => { e.stopPropagation(); handleUrlClick(target.url); }} style={{ color: '#3b82f6', textDecoration: 'underline', cursor: 'pointer' }}>
-                        {target.type}
-                      </span>
+                {isLoadingTargets ? (
+                  <tr>
+                    <td className="p-4 text-center" colSpan={4}>
+                      Loading targets...
                     </td>
-                    <td className="p-2">{target.domain}</td>
                   </tr>
-                ))}
+                ) : targetsError ? (
+                  <tr>
+                    <td className="p-4 text-center text-destructive" colSpan={4}>
+                      {targetsError}
+                    </td>
+                  </tr>
+                ) : paginatedTargets.length === 0 ? (
+                  <tr>
+                    <td className="p-4 text-center" colSpan={4}>
+                      No targets found.
+                    </td>
+                  </tr>
+                ) : (
+                  paginatedTargets.map(target => (
+                    <tr
+                      key={target.id}
+                      className="border-b-2 cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSelectTarget(target.id)}
+                    >
+                      <td className="p-2">{target.id}</td>
+                      <td className="p-2">{target.name}</td>
+                      <td className="p-2">
+                        <span
+                          onClick={e => {
+                            e.stopPropagation();
+                            handleUrlClick(target.url);
+                          }}
+                          style={{ color: '#3b82f6', textDecoration: 'underline', cursor: 'pointer' }}
+                        >
+                          {target.type}
+                        </span>
+                      </td>
+                      <td className="p-2">{target.domain}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -167,7 +279,13 @@ const Targets = () => {
       </main>
 
         {/* Details/Edit Dialog */}
-        <Dialog open={!!selectedTarget} onOpenChange={() => setSelectedTarget(null)}>
+        <Dialog open={isDetailDialogOpen} onOpenChange={(open) => {
+          if (!open) {
+            setIsDetailDialogOpen(false);
+            setSelectedTarget(null);
+            setDetailError(null);
+          }
+        }}>
           <DialogContent
             className="max-w-3xl max-h-[90vh] overflow-y-auto"
             onOpenAutoFocus = {(e) => e.preventDefault()}
@@ -178,7 +296,11 @@ const Targets = () => {
                 </DialogTitle>
             </DialogHeader>
             {/* ...show target details... */}
-            {selectedTarget && (
+            {isDetailLoading ? (
+              <div className="p-4 text-center">Loading target details...</div>
+            ) : detailError ? (
+              <div className="p-4 text-center text-destructive">{detailError}</div>
+            ) : selectedTarget ? (
               <div className='flex-1 p-1 overflow-y-auto space-y-6 pb-5'>
                 <div className="space-y-1">
                     <Label className = 'text-base font-semibold'>Target Name</Label>
@@ -205,9 +327,9 @@ const Targets = () => {
                     <Input value={selectedTarget.languages.join(', ')} readOnly className='bg-muted'></Input>
                 </div>
                 
-
               </div>
-              
+            ) : (
+              <div className="p-4 text-center">No target selected.</div>
             )}
             <div className="sticky bottom-0 pt-4 flex justify-center gap-4 border-gray-200 z-10">
                 <Button
@@ -218,9 +340,10 @@ const Targets = () => {
                 <Button
                     className="bg-primary hover:bg-primary/90"
                     onClick={() => {
-                        setUpdateTarget(selectedTarget);
-                        setSelectedTarget(null);
-
+                        if (selectedTarget) {
+                          setUpdateTarget(selectedTarget);
+                        }
+                        setIsDetailDialogOpen(false);
                     }}
                 >
                     Update
