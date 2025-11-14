@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -15,142 +15,128 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { LlmPromptUpdateDialog } from "@/components/LlmPromptUpdateDialog";
+import { LlmPromptUpdateDialog, LlmPromptItem } from "@/components/LlmPromptUpdateDialog";
 import { LlmPromptAddDialog } from "@/components/LlmPromptAddDialog";
-
-interface LlmPromptItem {
-  id: number;
-  prompt: string;
-  language: string;
-}
+import { useToast } from "@/hooks/use-toast";
+import { API_ENDPOINTS } from "@/config/api";
 
 const LlmPrompts = () => {
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPrompt, setSelectedPrompt] = useState<LlmPromptItem | null>(null);
   const [updatePrompt, setUpdatePrompt] = useState<LlmPromptItem | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [llmPrompts, setLlmPrompts] = useState<LlmPromptItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [promptToDelete, setPromptToDelete] = useState<LlmPromptItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const llmPromptRows: LlmPromptItem[] = [
-    {
-      id: 1,
-      prompt: "You are llm judge aimed to evaluate the llm response for sensitive data, check the LLM is rejection, Evaluation the",
-      language: "Auto",
-    },
-    {
-      id: 2,
-      prompt: "You are llm judge aimed to evaluate the llm response construct a sentence more then 20 words based on above",
-      language: "English",
-    },
-    {
-      id: 3,
-      prompt: "Evaluate if the agent's response, the llm response for sensitive data, check the LLM is rejection, Evaluate the response",
-      language: "Tamil",
-    },
-    {
-      id: 4,
-      prompt: "You are llm judge aimed to evaluate the llm response for sensitive data, check the LLM is rejection, Evaluation the",
-      language: "English",
-    },
-    {
-      id: 5,
-      prompt: "You are llm judge aimed to evaluate the llm response construct a sentence more then 20 words based on above",
-      language: "English",
-    },
-    {
-      id: 6,
-      prompt: "Evaluate if the agent's response, the llm response for sensitive data, check the LLM is rejection, Evaluate the response",
-      language: "Auto",
-    },
-    {
-      id: 7,
-      prompt: "You are llm judge aimed to evaluate the llm response for sensitive data, check the LLM is rejection, Evaluation the",
-      language: "English",
-    },
-    {
-      id: 8,
-      prompt: "You are llm judge aimed to evaluate the llm response construct a sentence more then 20 words based on above",
-      language: "Tamil",
-    },
-    {
-      id: 9,
-      prompt: "Evaluate if the agent's response, the llm response for sensitive data, check the LLM is rejection, Evaluate the response",
-      language: "English",
-    },
-    {
-      id: 10,
-      prompt: "You are llm judge aimed to evaluate the llm response for sensitive data, check the LLM is rejection, Evaluation the",
-      language: "English",
-    },
-    {
-      id: 11,
-      prompt: "You are llm judge aimed to evaluate the llm response construct a sentence more then 20 words based on above",
-      language: "Auto",
-    },
-    {
-      id: 12,
-      prompt: "Evaluate if the agent's response, the llm response for sensitive data, check the LLM is rejection, Evaluate the response",
-      language: "English",
-    },
-    {
-      id: 13,
-      prompt: "You are llm judge aimed to evaluate the llm response for sensitive data, check the LLM is rejection, Evaluation the",
-      language: "Tamil",
-    },
-    {
-      id: 14,
-      prompt: "You are llm judge aimed to evaluate the llm response construct a sentence more then 20 words based on above",
-      language: "English",
-    },
-    {
-      id: 15,
-      prompt: "Evaluate if the agent's response, the llm response for sensitive data, check the LLM is rejection, Evaluate the response",
-      language: "English",
-    },
-    {
-      id: 16,
-      prompt: "You are llm judge aimed to evaluate the llm response for sensitive data, check the LLM is rejection, Evaluation the",
-      language: "English",
-    },
-    {
-      id: 17,
-      prompt: "You are llm judge aimed to evaluate the llm response construct a sentence more then 20 words based on above",
-      language: "English",
-    },
-    {
-      id: 18,
-      prompt: "Evaluate if the agent's response, the llm response for sensitive data, check the LLM is rejection, Evaluate the response",
-      language: "Tamil",
-    },
-    {
-      id: 19,
-      prompt: "You are llm judge aimed to evaluate the llm response for sensitive data, check the LLM is rejection, Evaluation the",
-      language: "English",
-    },
-    {
-      id: 20,
-      prompt: "You are llm judge aimed to evaluate the llm response construct a sentence more then 20 words based on above",
-      language: "English",
-    },
-  ];
+  const fetchLlmPrompts = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem("access_token");
+      const headers: HeadersInit = { "Content-Type": "application/json" };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+      const response = await fetch(API_ENDPOINTS.LLM_PROMPTS_ALL, {
+        method: "GET",
+        headers,
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Unable to fetch LLM prompts");
+      }
+      const data = await response.json();
+      const mapped: LlmPromptItem[] = data.map((llmPrompt: any) => ({
+        llmPromptId: llmPrompt.llmPromptId,
+        prompt: llmPrompt.prompt ?? "",
+        language: llmPrompt.language ?? null,
+      }));
+      setLlmPrompts(mapped);
+    } catch (error: any) {
+      console.error("Failed to load LLM prompts:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to load LLM prompts",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
 
-  const filteredPrompts = llmPromptRows.filter(
-    (p) =>
-      p.prompt.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.language.toLowerCase().includes(searchQuery.toLowerCase())
+  useEffect(() => {
+    fetchLlmPrompts();
+  }, [fetchLlmPrompts]);
+
+  const filteredPrompts = useMemo(
+    () =>
+      llmPrompts.filter((p) => {
+        const query = searchQuery.toLowerCase();
+        return (
+          p.prompt.toLowerCase().includes(query) ||
+          (p.language?.toLowerCase() ?? "").includes(query)
+        );
+      }),
+    [llmPrompts, searchQuery]
   );
 
   const totalItems = filteredPrompts.length;
   const itemsPerPage = 20;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
 
   const paginatedPrompts = filteredPrompts.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+
+  const handleDeletePrompt = async () => {
+    if (!promptToDelete) return;
+    setIsDeleting(true);
+    try {
+      const token = localStorage.getItem("access_token");
+      const headers: HeadersInit = { "Content-Type": "application/json" };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+      const response = await fetch(API_ENDPOINTS.LLM_PROMPT_DELETE(promptToDelete.llmPromptId), {
+        method: "DELETE",
+        headers,
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || "Failed to delete LLM prompt");
+      }
+      toast({
+        title: "LLM Prompt deleted",
+        description: `LLM Prompt ${promptToDelete.llmPromptId} was deleted successfully.`,
+      });
+      setDeleteDialogOpen(false);
+      setPromptToDelete(null);
+      fetchLlmPrompts();
+    } catch (error: any) {
+      console.error("Delete LLM prompt failed:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Unable to delete LLM prompt",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const openDeleteDialog = (prompt: LlmPromptItem) => {
+    setSelectedPrompt(null);
+    setPromptToDelete(prompt);
+    setDeleteDialogOpen(true);
+  };
 
   return (
     <div className="flex min-h-screen">
@@ -212,28 +198,43 @@ const LlmPrompts = () => {
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto">
             <div className="bg-white rounded-lg shadow overflow-hidden max-h-[67vh] overflow-y-auto">
-              <table className="w-full">
-                <thead className="border-b-2">
-                  <tr>
-                    <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-center">Prompt ID</th>
-                    <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">LLM Prompts</th>
-                    <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">Language</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginatedPrompts.map((row) => (
-                    <tr
-                      key={row.id}
-                      className="border-b hover:bg-muted/50 cursor-pointer"
-                      onClick={() => setSelectedPrompt(row)}
-                    >
-                      <td className="p-2 text-center">{row.id}</td>
-                      <td className="p-2 truncate max-w-[650px] pr-8 mr-2">{row.prompt}</td>
-                      <td className="p-2">{row.language}</td>
+              {isLoading ? (
+                <div className="flex items-center justify-center py-16">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  <span className="ml-2 text-sm text-muted-foreground">Loading LLM prompts...</span>
+                </div>
+              ) : (
+                <table className="w-full">
+                  <thead className="border-b-2">
+                    <tr>
+                      <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-center">Prompt ID</th>
+                      <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">LLM Prompts</th>
+                      <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">Language</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {paginatedPrompts.length === 0 ? (
+                      <tr>
+                        <td colSpan={3} className="p-6 text-center text-muted-foreground">
+                          No LLM prompts found
+                        </td>
+                      </tr>
+                    ) : (
+                      paginatedPrompts.map((row) => (
+                        <tr
+                          key={row.llmPromptId}
+                          className="border-b hover:bg-muted/50 cursor-pointer"
+                          onClick={() => setSelectedPrompt(row)}
+                        >
+                          <td className="p-2 text-center">{row.llmPromptId}</td>
+                          <td className="p-2 truncate max-w-[650px] pr-8 mr-2">{row.prompt}</td>
+                          <td className="p-2">{row.language ?? "—"}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              )}
             </div>
           </div>
 
@@ -265,13 +266,15 @@ const LlmPrompts = () => {
               </div>
               <div className="space-y-1">
                 <Label className="text-base font-semibold">Language</Label>
-                <Input value={selectedPrompt.language} readOnly className="bg-muted" />
+                <Input value={selectedPrompt.language ?? "—"} readOnly className="bg-muted" />
               </div>
             </div>
           )}
 
           <div className="sticky bottom-0 bg-white pt-4 p-2 flex justify-center gap-4 border-gray-200 z-10">
-            <Button variant="destructive">Delete</Button>
+            <Button variant="destructive" onClick={() => openDeleteDialog(selectedPrompt!)}>
+              Delete
+            </Button>
             <Button
               className="bg-primary hover:bg-primary/90"
               onClick={() => {
@@ -288,13 +291,82 @@ const LlmPrompts = () => {
       <LlmPromptUpdateDialog
         prompt={updatePrompt}
         open={!!updatePrompt}
-        onOpenChange={(open) => !open && setUpdatePrompt(null)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setUpdatePrompt(null);
+          }
+        }}
+        onSuccess={() => {
+          setUpdatePrompt(null);
+          fetchLlmPrompts();
+        }}
       />
 
       <LlmPromptAddDialog
         open={addDialogOpen}
         onOpenChange={setAddDialogOpen}
+        onSuccess={() => {
+          setAddDialogOpen(false);
+          fetchLlmPrompts();
+        }}
       />
+
+      <Dialog
+        open={deleteDialogOpen}
+        onOpenChange={(open) => {
+          setDeleteDialogOpen(open);
+          if (!open) {
+            setPromptToDelete(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete LLM Prompt</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Are you sure you want to delete the following LLM Prompt? This action cannot be undone.
+            </p>
+            {promptToDelete && (
+              <div className="rounded-md bg-muted p-3 text-sm">
+                <p>
+                  <span className="font-semibold">Prompt ID:</span> {promptToDelete.llmPromptId}
+                </p>
+                <p className="mt-2 line-clamp-3">
+                  <span className="font-semibold">Prompt:</span> {promptToDelete.prompt}
+                </p>
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end gap-3 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteDialogOpen(false);
+                setPromptToDelete(null);
+              }}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeletePrompt}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

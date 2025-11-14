@@ -23,6 +23,13 @@ export const API_ENDPOINTS = {
   PROMPT_UPDATE: (prompt_id: number) => `${API_BASE_URL}/api/prompts/update/${prompt_id}`,
   PROMPT_DELETE: (prompt_id: number) => `${API_BASE_URL}/api/prompts/delete/${prompt_id}`,
   LLM_PROMPTS: `${API_BASE_URL}/api/llmPrompts`,
+
+  LLM_PROMPTS_ALL: `${API_BASE_URL}/api/llmPrompts/all`,
+  LLM_PROMPT_BY_ID: (llmPrompt_id: number) => `${API_BASE_URL}/api/llmPrompts/${llmPrompt_id}`,
+  LLM_PROMPT_CREATE: `${API_BASE_URL}/api/llmPrompts/create`,
+  LLM_PROMPT_UPDATE: (llmPrompt_id: number) => `${API_BASE_URL}/api/llmPrompts/update/${llmPrompt_id}`,
+  LLM_PROMPT_DELETE: (llmPrompt_id: number) => `${API_BASE_URL}/api/llmPrompts/delete/${llmPrompt_id}`,
+  
   CURRENT_USER: `${API_BASE_URL}/api/users/me`,
   USERS: `${API_BASE_URL}/api/users`,
   USER_ACTIVITY: (username: string) => `${API_BASE_URL}/api/users/${username}`,
