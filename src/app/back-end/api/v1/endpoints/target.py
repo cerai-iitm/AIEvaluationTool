@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, Header
 from fastapi.responses import JSONResponse
-from schemas import User, Domain
+from schemas import User, Domain, Language
 from schemas import TargetIds, TargetCreate, TargetUpdate
 
 from database.fastapi_deps import _get_db
@@ -70,6 +70,23 @@ async def get_domains(db: DB = Depends(_get_db)):
                 domain_name = domain.domain_name
             ) 
             for domain in domains
+        ]
+    finally:
+        session.close()
+
+
+@target_router.get("/languages", response_model=list[Language], summary="Get all languages")
+async def get_languages(db: DB = Depends(_get_db)):
+    session = db.Session()
+    try:
+        languages = session.query(Languages).all()
+        
+        return [
+            Domain(
+                lang_id = lang.lang_id,
+                lang_name = lang.lang_name
+            ) 
+            for lang in languages
         ]
     finally:
         session.close()

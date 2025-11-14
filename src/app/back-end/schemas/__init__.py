@@ -6,3 +6,4 @@ from .prompt import *
 from .llmPrompt import *
 from .target import *
 from .domain import Domain
+from .language import *

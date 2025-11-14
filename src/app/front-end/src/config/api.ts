@@ -22,5 +22,11 @@ export const API_ENDPOINTS = {
   USERS: `${API_BASE_URL}/api/users`,
   USER_ACTIVITY: (username: string) => `${API_BASE_URL}/api/users/${username}`,
   ENTITY_ACTIVITY: (entityType: string) => `${API_BASE_URL}/api/users/activity/${entityType}`,
+  
+  LANGUAGES: `${API_BASE_URL}/api/languages`,
+  LANGUAGE_BY_ID: (lang_id: number) => `${API_BASE_URL}/api/languages/${lang_id}`,
+  LANGUAGE_CREATE: `${API_BASE_URL}/api/languages/create`,
+  LANGUAGE_UPDATE: (lang_id: number) => `${API_BASE_URL}/api/languages/update/${lang_id}`,
+  LANGUAGE_DELETE: (lang_id: number) => `${API_BASE_URL}/api/languages/delete/${lang_id}`,
 };
 
