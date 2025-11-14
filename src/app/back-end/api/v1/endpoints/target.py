@@ -163,13 +163,6 @@ async def update_target(
 
         # Validate unique target name if provided
         if target_update.target_name:
-            existing_name = (
-                session.query(Targets)
-                .filter(Targets.target_name == target_update.target_name, Targets.target_id != target_id)
-                .first()
-            )
-            if existing_name:
-                raise HTTPException(status_code=400, detail="Target name already exists")
             target.target_name = target_update.target_name
 
         if target_update.target_type:
@@ -262,13 +255,13 @@ async def create_target(
     session = db.Session()
     try:
         # Ensure target name is unique
-        existing_target = (
-            session.query(Targets)
-            .filter(Targets.target_name == target_create.target_name)
-            .first()
-        )
-        if existing_target:
-            raise HTTPException(status_code=400, detail="Target name already exists")
+        # existing_target = (
+        #     session.query(Targets)
+        #     .filter(Targets.target_name == target_create.target_name)
+        #     .first()
+        # )
+        # if existing_target:
+        #     raise HTTPException(status_code=400, detail="Target name already exists")
 
         # Ensure target URL is unique
         existing_url = (

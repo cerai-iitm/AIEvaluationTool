@@ -1,20 +1,20 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-const domains = ["General", "Education", "Agriculture", "Healthcare", "Learning Disability"];
-const languages = ["Auto", "English", "Tamil", "Hindi", "Gujarati", "Bengali"];
+import { Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { API_ENDPOINTS } from "@/config/api";
 
 export interface PromptItem {
-  id: number;
-  userPrompt: string;
-  systemPrompt: string;
-  language: string;
-  domain: string;
+  prompt_id: number;
+  user_prompt: string;
+  system_prompt: string;
+  language: string | null;
+  domain: string | null;
   notes?: string;
 }
 
@@ -23,33 +23,200 @@ interface PromptUpdateDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdate?: (prompt: PromptItem) => void;
+  onSuccess?: () => void;
 }
 
-export function PromptUpdateDialog({ prompt, open, onOpenChange, onUpdate }: PromptUpdateDialogProps) {
+export function PromptUpdateDialog({ prompt, open, onOpenChange, onUpdate, onSuccess }: PromptUpdateDialogProps) {
+  const { toast } = useToast();
   const [userPrompt, setUserPrompt] = useState("");
   const [systemPrompt, setSystemPrompt] = useState("");
-  const [language, setLanguage] = useState(languages[0]);
-  const [domain, setDomain] = useState(domains[0]);
+  const [language, setLanguage] = useState("");
+  const [domain, setDomain] = useState("");
   const [notes, setNotes] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [languageOptions, setLanguageOptions] = useState<string[]>([]);
+  const [domainOptions, setDomainOptions] = useState<string[]>([]);
+  const [isOptionsLoading, setIsOptionsLoading] = useState(false);
 
-  // const isValid = userPrompt.trim().length > 0 && systemPrompt.trim().length > 0;
+  const promptLanguage = prompt?.language ?? "";
+  const promptDomain = prompt?.domain ?? "";
 
   useEffect(() => {
     if (prompt) {
-      setUserPrompt(prompt.userPrompt);
-      setSystemPrompt(prompt.systemPrompt);
-      setLanguage(prompt.language);
-      setDomain(prompt.domain);
+      setUserPrompt(prompt.user_prompt);
+      setSystemPrompt(prompt.system_prompt);
+      setLanguage(promptLanguage);
+      setDomain(promptDomain);
+      setNotes("");
     }
-  }, [prompt]);
+  }, [prompt, promptLanguage, promptDomain]);
+
+  useEffect(() => {
+    if (!open) {
+      setNotes("");
+      setIsSubmitting(false);
+      setLanguageOptions([]);
+      setDomainOptions([]);
+    }
+  }, [open]);
+
+  const fetchReferenceData = useCallback(async () => {
+    setIsOptionsLoading(true);
+    try {
+      const token = localStorage.getItem("access_token");
+      const headers: HeadersInit = { "Content-Type": "application/json" };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const [languagesResponse, domainsResponse] = await Promise.all([
+        fetch(API_ENDPOINTS.LANGUAGES, { method: "GET", headers }),
+        fetch(API_ENDPOINTS.DOMAINS, { method: "GET", headers }),
+      ]);
+
+      if (!languagesResponse.ok || !domainsResponse.ok) {
+        const langError = await languagesResponse.json().catch(() => ({}));
+        const domainError = await domainsResponse.json().catch(() => ({}));
+        throw new Error(langError.detail || domainError.detail || "Failed to load reference data");
+      }
+
+      const languageData = await languagesResponse.json();
+      const domainData = await domainsResponse.json();
+
+      const languageNames = Array.from(
+        new Set(
+          [
+            ...(Array.isArray(languageData) ? languageData : [])
+              .map((lang: any) => lang?.lang_name)
+              .filter((name: string | null | undefined): name is string => Boolean(name)),
+            ...(promptLanguage ? [promptLanguage] : []),
+          ]
+        )
+      );
+      const domainNames = Array.from(
+        new Set(
+          [
+            ...(Array.isArray(domainData) ? domainData : [])
+              .map((dom: any) => dom?.domain_name)
+              .filter((name: string | null | undefined): name is string => Boolean(name)),
+            ...(promptDomain ? [promptDomain] : []),
+          ]
+        )
+      );
+
+      setLanguageOptions(languageNames);
+      setDomainOptions(domainNames);
+
+      setLanguage((current) => {
+        if (current && languageNames.includes(current)) {
+          return current;
+        }
+        if (promptLanguage && languageNames.includes(promptLanguage)) {
+          return promptLanguage;
+        }
+        return languageNames[0] ?? "";
+      });
+      setDomain((current) => {
+        if (current && domainNames.includes(current)) {
+          return current;
+        }
+        if (promptDomain && domainNames.includes(promptDomain)) {
+          return promptDomain;
+        }
+        return domainNames[0] ?? "";
+      });
+    } catch (error: any) {
+      console.error("Failed to load reference data:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Unable to load languages/domains",
+        variant: "destructive",
+      });
+    } finally {
+      setIsOptionsLoading(false);
+    }
+  }, [promptLanguage, promptDomain, toast]);
+
+  useEffect(() => {
+    if (open) {
+      fetchReferenceData();
+    }
+  }, [open, fetchReferenceData]);
 
   if (!prompt) return null;
 
+  const originalLanguage = prompt.language ?? "";
+  const originalDomain = prompt.domain ?? "";
+
   const isChanged =
-    userPrompt !== prompt.userPrompt ||
-    systemPrompt !== prompt.systemPrompt ||
-    language !== prompt.language ||
-    domain !== prompt.domain;
+    userPrompt !== prompt.user_prompt ||
+    systemPrompt !== prompt.system_prompt ||
+    language !== originalLanguage ||
+    domain !== originalDomain;
+
+  const handleSubmit = async () => {
+    if (!isChanged || !notes.trim() || !language || !domain) {
+      toast({
+        title: "Validation error",
+        description: "Please modify the prompt, select language and domain, and add notes.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const token = localStorage.getItem("access_token");
+      const headers: HeadersInit = { "Content-Type": "application/json" };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(API_ENDPOINTS.PROMPT_UPDATE(prompt.prompt_id), {
+        method: "PUT",
+        headers,
+        body: JSON.stringify({
+          prompt_id: prompt.prompt_id,
+          user_prompt: userPrompt.trim(),
+          system_prompt: systemPrompt.trim(),
+          language,
+          domain,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || "Failed to update prompt");
+      }
+
+      const updated = {
+        ...prompt,
+        prompt_id: prompt.prompt_id,
+        user_prompt: userPrompt,
+        system_prompt: systemPrompt,
+        language,
+        domain,
+      };
+      onUpdate?.(updated);
+      onSuccess?.();
+
+      toast({
+        title: "Prompt updated",
+        description: `Prompt ${prompt.prompt_id} updated successfully.`,
+      });
+
+      onOpenChange(false);
+    } catch (error: any) {
+      console.error("Update prompt failed:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Unable to update prompt",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
     
 
   return (
@@ -69,27 +236,51 @@ export function PromptUpdateDialog({ prompt, open, onOpenChange, onUpdate }: Pro
           </div>
           <div className="space-y-1">
             <Label className="text-base font-semibold">language Name</Label>
-            <Select value={language} onValueChange={setLanguage}>
+            <Select
+              value={language || undefined}
+              onValueChange={setLanguage}
+              disabled={isOptionsLoading || !languageOptions.length}
+            >
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue placeholder={isOptionsLoading ? "Loading languages..." : "Select a language"} />
               </SelectTrigger>
               <SelectContent className="bg-popover max-h-[300px]">
-                {languages.map((l) => (
-                  <SelectItem key={l} value={l}>{l}</SelectItem>
-                ))}
+                {languageOptions.length ? (
+                  languageOptions.map((l) => (
+                    <SelectItem key={l} value={l}>
+                      {l}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="__no-language" disabled>
+                    No languages available
+                  </SelectItem>
+                )}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-1 pb-4">
             <Label className="text-base font-semibold">Domain Name</Label>
-            <Select value={domain} onValueChange={setDomain}>
+            <Select
+              value={domain || undefined}
+              onValueChange={setDomain}
+              disabled={isOptionsLoading || !domainOptions.length}
+            >
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue placeholder={isOptionsLoading ? "Loading domains..." : "Select a domain"} />
               </SelectTrigger>
               <SelectContent className="bg-popover max-h-[300px]">
-                {domains.map((d) => (
-                  <SelectItem key={d} value={d}>{d}</SelectItem>
-                ))}
+                {domainOptions.length ? (
+                  domainOptions.map((d) => (
+                    <SelectItem key={d} value={d}>
+                      {d}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="__no-domain" disabled>
+                    No domains available
+                  </SelectItem>
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -101,14 +292,17 @@ export function PromptUpdateDialog({ prompt, open, onOpenChange, onUpdate }: Pro
           <Input value={notes} onChange={(e) => setNotes(e.target.value)} className="bg-gray-200 rounded px-4 py-1 mr-4 w-96" placeholder="Enter notes" required />
           <Button
             className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800 "
-            disabled={!isChanged || !notes}
-            onClick={() => {
-              const updated = { ...prompt, userPrompt, systemPrompt, language, domain };
-              onUpdate?.(updated);
-              onOpenChange(false);
-            }}
+            disabled={!isChanged || !notes.trim() || !language || !domain || isSubmitting}
+            onClick={handleSubmit}
           >
-            Submit
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Submitting...
+              </>
+            ) : (
+              "Submit"
+            )}
           </Button>
         </div>
       </DialogContent>

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, Header, Response
-from schemas import Language, LanguageCreate, LanguageUpdate
+from schemas import Language, LanguageCreate, LanguageUpdate, LanguageDelete
 from database.fastapi_deps import _get_db
 from database.database import get_current_user
 from models import user as user_model
@@ -160,7 +160,7 @@ async def update_language(
         session.close()
 
 
-@language_router.delete("/delete/{lang_id}", summary="Delete a language by ID")
+@language_router.delete("/delete/{lang_id}",response_model=LanguageDelete, summary="Delete a language by ID")
 async def delete_language(
         lang_id: int, 
         db: DB = Depends(_get_db),
@@ -189,6 +189,10 @@ async def delete_language(
                 operation="delete",
                 note=f"Language '{language_to_delete.lang_name}' deleted"
             )
+
+        return LanguageDelete(
+            lang_id=lang_id
+        )
 
     finally:
         session.close()

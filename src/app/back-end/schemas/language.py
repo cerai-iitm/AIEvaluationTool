@@ -12,3 +12,6 @@ class LanguageCreate(BaseModel):
 
 class LanguageUpdate(BaseModel):
     lang_name: Optional[str]
+
+class LanguageDelete(BaseModel):
+    lang_id: int

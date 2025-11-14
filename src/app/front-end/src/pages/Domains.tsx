@@ -318,13 +318,13 @@ const DomainList: React.FC = () => {
             </div>
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto">
-            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[67vh] w-full overflow-x-auto">
+            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[67vh] max-w-[60vh] overflow-y-auto">
               {isLoading ? (
                 <div className="flex items-center justify-center p-8">
                   <span>Loading...</span>
                 </div>
               ) : (
-                <table className="w-full min-w-[400px]">
+                <table className="w-full min-w-[400px] ">
                   <thead className="border-b-2">
                     <tr>
                       <th className="sticky top-0 bg-white z-10 p-2 md:p-4 font-semibold text-center text-xs md:text-base">Domain ID</th>

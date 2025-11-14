@@ -327,7 +327,7 @@ const StrategyList: React.FC = () => {
           </div>
           
           <div className="flex-1 min-h-0 overflow-y-auto">
-            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[67vh] w-full overflow-x-auto">
+            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[67vh] w-full overflow-y-auto">
               {isLoading ? (
                 <div className="flex items-center justify-center p-8">
                   <span>Loading...</span>
