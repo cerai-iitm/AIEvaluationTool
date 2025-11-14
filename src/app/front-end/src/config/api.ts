@@ -14,7 +14,7 @@ export const API_ENDPOINTS = {
   TARGET_TYPES: `${API_BASE_URL}/api/targets/target/types`,
   TARGET_BY_ID: (target_id: number) => `${API_BASE_URL}/api/targets/${target_id}`,
 
-  STRATEGIES: `${API_BASE_URL}/api/strategies`,
+  //STRATEGIES: `${API_BASE_URL}/api/strategies`,
   RESPONSES: `${API_BASE_URL}/api/responses`,
   PROMPTS: `${API_BASE_URL}/api/prompts`,
   LLM_PROMPTS: `${API_BASE_URL}/api/llmPrompts`,
@@ -34,5 +34,11 @@ export const API_ENDPOINTS = {
   DOMAIN_CREATE: `${API_BASE_URL}/api/domains/create`,
   DOMAIN_UPDATE: (domain_id: number) => `${API_BASE_URL}/api/domains/update/${domain_id}`,
   DOMAIN_DELETE: (domain_id: number) => `${API_BASE_URL}/api/domains/delete/${domain_id}`,
+  
+  STRATEGIES: `${API_BASE_URL}/api/strategies/all`,
+  STRATEGY_BY_ID: (strategy_id: number) => `${API_BASE_URL}/api/strategies/${strategy_id}`,
+  STRATEGY_CREATE: `${API_BASE_URL}/api/strategies/create`,
+  STRATEGY_UPDATE: (strategy_id: number) => `${API_BASE_URL}/api/strategies/update/${strategy_id}`,
+  STRATEGY_DELETE: (strategy_id: number) => `${API_BASE_URL}/api/strategies/delete/${strategy_id}`,
 };
 
