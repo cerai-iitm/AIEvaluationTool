@@ -11,7 +11,7 @@ from fastapi.staticfiles import StaticFiles as static_files
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from database.database import init_db, seed_users
-from api.v1.endpoints import auth, dashboard, testCase, response, strategy, prompt, llmPrompt, target,language, users
+from api.v1.endpoints import auth, dashboard, testCase, response, strategy, prompt, llmPrompt, target, language, domain, users
 from middleware.middleware import AuthMiddleware
 
 
@@ -63,6 +63,7 @@ app.include_router(prompt.prompt_router, tags=["Prompts"])
 app.include_router(llmPrompt.llmPrompt_router, tags=["LLM Prompts"])
 app.include_router(target.target_router, tags=["Targets"])
 app.include_router(language.language_router, tags=["Languages"])
+app.include_router(domain.domain_router, tags=["Domains"])
 app.include_router(users.users_router, tags=["Users"])
 
 if __name__ == "__main__":

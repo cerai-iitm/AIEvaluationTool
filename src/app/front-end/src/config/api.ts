@@ -28,5 +28,11 @@ export const API_ENDPOINTS = {
   LANGUAGE_CREATE: `${API_BASE_URL}/api/languages/create`,
   LANGUAGE_UPDATE: (lang_id: number) => `${API_BASE_URL}/api/languages/update/${lang_id}`,
   LANGUAGE_DELETE: (lang_id: number) => `${API_BASE_URL}/api/languages/delete/${lang_id}`,
+  
+  DOMAINS: `${API_BASE_URL}/api/domains`,
+  DOMAIN_BY_ID: (domain_id: number) => `${API_BASE_URL}/api/domains/${domain_id}`,
+  DOMAIN_CREATE: `${API_BASE_URL}/api/domains/create`,
+  DOMAIN_UPDATE: (domain_id: number) => `${API_BASE_URL}/api/domains/update/${domain_id}`,
+  DOMAIN_DELETE: (domain_id: number) => `${API_BASE_URL}/api/domains/delete/${domain_id}`,
 };
 

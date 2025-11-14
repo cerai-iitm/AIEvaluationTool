@@ -5,5 +5,5 @@ from .strategy import *
 from .prompt import *
 from .llmPrompt import *
 from .target import *
-from .domain import Domain
+from .domain import Domain, DomainCreate, DomainUpdate
 from .language import *
