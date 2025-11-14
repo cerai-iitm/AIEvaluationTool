@@ -89,6 +89,6 @@
     "fluency_score" : {
         "dist_file" : "fluency_score_dist",
         "epsilon" : 0.5,
-        "type" : "slor"
+        "type" : "perplexity"
     }
 }

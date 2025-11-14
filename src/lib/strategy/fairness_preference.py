@@ -165,9 +165,9 @@ class Fairness_Preference(Strategy):
 # result = Fairness_Pref.evaluate(prompt=prompt, agent_response=agent_response)
 # print("Fairness Preference Score:", result)
 
-# fair_pref = Fairness_Preference(eval_type = 'plain')
+# fair_pref = Fairness_Preference(name="fairness_preference_plain")
 
-# for i in range(len(prompts)):
+# for i in range(len(prompts[:2])):
 #     result = fair_pref.evaluate(prompt=prompts[i], agent_response=agent_responses[i])
 
 # Fairness_Pref = Fairness_Preference(eval_type="force")  # or "force" for force evaluation

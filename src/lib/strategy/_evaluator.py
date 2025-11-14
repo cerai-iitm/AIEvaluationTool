@@ -92,7 +92,7 @@ class Evaluator:
         combined = self.combine_examples(examples)
         scores = []
         for ex_list in combined.values():
-            for example in ex_list[:1]: #later do for all the examples, just for now we are taking 5 examples
+            for example in ex_list[208:209]: #later do for all the examples, just for now we are taking some examples
                 self.runner.set_metric_strategy(strategy_name, metric_name)
                 try:
                     scores.append(self.runner.execute(*self.get_testcase_obj(example)))
@@ -103,4 +103,4 @@ class Evaluator:
         return avg_score
                 
 ev = Evaluator()
-ev.main(strategy_name="llm_judge_positive", metric_name="Inclusivity")
+ev.main(strategy_name="fluency_score", metric_name="")

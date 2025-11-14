@@ -29,8 +29,11 @@ class StrategyImplementor:
                 logger.info(f"Strategy name is : {self.strategy_name}")
                 cls_name = self.find_class_name(self.strategy_name)
                 if cls_name is not None:
+                    logger.debug(f"Class has been identified...")
                     obj : Strategy = self.ll.get_class(cls_name)(name=self.strategy_name, metric_name = self.metric_name)
+                    logger.debug(f"Object has been created and evaluation is starting...")
                     score = obj.evaluate(testcase, conversation)
+                    logger.info(f"Evaluation is complete...")
                 else:
                     logger.info(f"The specified class name : {cls_name} could not be found.")
         except Exception as e:

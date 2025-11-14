@@ -62,6 +62,7 @@ class EntityRecognition(Strategy):
             syn_score = self.synonym_score(self.lemm.lemmatize(en1[1]), self.lemm.lemmatize(en2[1]))
             vec_score = self.vec_similarity(self.lemm.lemmatize(en1[1]), self.lemm.lemmatize(en2[1])) if vec_model else 0
             total_score = (syn_score + vec_score)/2 if vec_model else syn_score
+            # print(f"ex_entity : {en1}, pr_entity : {en2}, syn_score : {syn_score}, vec_score : {vec_score}")
             if(total_score > 0.7):
                 tp.append(en1)
             else:
@@ -69,16 +70,24 @@ class EntityRecognition(Strategy):
         return len(tp), len(fp), len(fn)
 
     def synonym_score(self, w1 : str, w2 : str) -> float:
-        w1, w2 = re.split(r'[^a-zA-Z0-9]+', w1)[0], re.split(r'[^a-zA-Z0-9]+', w2)[0]    
+        if w1 == w2:
+            return 1
+        w1s, w2s = re.split(r'[^a-zA-Z0-9]+', w1), re.split(r'[^a-zA-Z0-9]+', w2)
+        scores = [0]    
         try:
-            synsets1 = wn.synsets(w1.lower())
-            synsets2 = wn.synsets(w2.lower())
-            return max([s1.wup_similarity(s2) for s1 in synsets1 for s2 in synsets2 if s1.wup_similarity(s2)])
+            for w1 in w1s:
+                for w2 in w2s:
+                    synsets1 = wn.synsets(w1.lower())
+                    synsets2 = wn.synsets(w2.lower())
+                    scores.append(max([s1.wup_similarity(s2) for s1 in synsets1 for s2 in synsets2 if s1.wup_similarity(s2)]))
+            return max(scores)
         except Exception as e:
-            logger.error(f"Synsets might be empty for {w1} or {w2}.")
+            logger.error(f"Synsets might be empty for {w1} or {w2}. Additional info : {e}")
         return 0
     
     def vec_similarity(self, w1 : str, w2 : str) -> float:
+        if w1 == w2:
+            return 1
         words = [w1, w2]
         embeddings = self.model.encode(words, convert_to_tensor=True, normalize_embeddings=True)
         similarity = util.cos_sim(embeddings, embeddings).detach()[0][1].item()
