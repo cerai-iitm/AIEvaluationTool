@@ -75,6 +75,7 @@ export const ResponseUpdateDialog = ({
   
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
   const [searchType, setSearchType] = useState<PromptSearchType>("userPrompt");
+  const [focusedField, setFocusedField] = useState<null | "userPrompt" | "response" | "llm">(null);
 
   const handleSearchClick = (type: PromptSearchType) => {
     setSearchType(type);
@@ -85,7 +86,9 @@ export const ResponseUpdateDialog = ({
     switch (selection.type) {
       case "userPrompt":
         setUserPrompts(selection.userPrompt);
-        setSystemPrompts(selection.systemPrompt ?? "");
+        if (selection.systemPrompt !== undefined) {
+          setSystemPrompts(selection.systemPrompt ?? "");
+        }
         break;
       case "systemPrompt":
         setSystemPrompts(selection.systemPrompt);
@@ -102,6 +105,7 @@ export const ResponseUpdateDialog = ({
       default:
         break;
     }
+    setFocusedField(null);
     setSearchDialogOpen(false);
   };
 
@@ -130,21 +134,26 @@ export const ResponseUpdateDialog = ({
 
           <div className="space-y-4 pt-4">
             <div className="space-y-2">
-              <Label className="text-base font-semibold">Response Text</Label>
+              <Label className="text-base font-semibold">Response</Label>
               <div className="relative">
                 <Textarea
                   value={responseText}
                   onChange={(e) => setResponseText(e.target.value)}
-                  className="min-h-[100px] pr-10"
+                  onFocus={() => setFocusedField("response")}
+                  onBlur={() => setTimeout(() => setFocusedField(null), 100)}
+                  className="bg-muted min-h-[100px] pr-10"
                 />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-2 top-2"
-                  onClick={() => handleSearchClick("response")}
-                >
-                  <Search className="w-4 h-4" />
-                </Button>
+                {focusedField === "response" && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-2 top-2"
+                    onMouseDown={e => e.preventDefault()}
+                    onClick={() => handleSearchClick("response")}
+                  >
+                    <Search className="w-4 h-4" />
+                  </Button>
+                )}
               </div>
             </div>
 
@@ -183,64 +192,38 @@ export const ResponseUpdateDialog = ({
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label className="text-base font-semibold">Prompt Section</Label>
-                <div className="flex gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleSearchClick("userPrompt")}
-                    title="Search User Prompts"
-                  >
-                    <Search className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleSearchClick("systemPrompt")}
-                    title="Search System Prompts"
-                  >
-                    <Search className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
+              <Label className="text-base font-semibold">Prompt</Label>
+              <div className="space-y-1">
                 <Label className="text-sm font-normal">User Prompts</Label>
                 <div className="relative">
                   <Textarea
                     value={userPrompts}
                     onChange={(e) => setUserPrompts(e.target.value)}
-                    className="min-h-[80px] pr-10"
+                    onFocus={() => setFocusedField("userPrompt")}
+                    onBlur={() => setTimeout(() => setFocusedField(null), 100)}
+                    className="bg-muted min-h-[100px] pr-10"
                   />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-2 top-2"
-                    onClick={() => handleSearchClick("userPrompt")}
-                  >
-                    <Search className="w-4 h-4" />
-                  </Button>
+                  {focusedField === "userPrompt" && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-2 top-2"
+                      onMouseDown={e => e.preventDefault()}
+                      onClick={() => handleSearchClick("userPrompt")}
+                    >
+                      <Search className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label className="text-sm font-normal">System prompts</Label>
-                <div className="relative">
-                  <Textarea
-                    value={systemPrompts}
-                    onChange={(e) => setSystemPrompts(e.target.value)}
-                    className="min-h-[80px] pr-10"
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-2 top-2"
-                    onClick={() => handleSearchClick("systemPrompt")}
-                  >
-                    <Search className="w-4 h-4" />
-                  </Button>
-                </div>
+                <Textarea
+                  value={systemPrompts}
+                  onChange={(e) => setSystemPrompts(e.target.value)}
+                  className="bg-muted min-h-[80px]"
+                />
               </div>
             </div>
 
