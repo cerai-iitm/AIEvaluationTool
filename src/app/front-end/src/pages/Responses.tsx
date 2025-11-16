@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Sidebar from "@/components/Sidebar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -15,112 +15,204 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ResponseUpdateDialog } from "@/components/ResponseUpdateDialog";
 import { ResponseAddDialog } from "@/components/ResponseAddDialog";
+import { API_ENDPOINTS } from "@/config/api";
+import { useToast } from "@/hooks/use-toast";
 
 interface Response {
   id: number;
-  name: string;
+  response_id: number;
+  name?: string;
   responseText: string;
   responseType: string;
   language: string;
   userPrompts: string;
   systemPrompts: string;
-  notes: string;
+  notes?: string;
 }
 
 const Responses = () => {
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedResponse, setSelectedResponse] = useState<Response | null>(null);
   const [updateResponse, setUpdateResponse] = useState<Response | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [responseToDelete, setResponseToDelete] = useState<Response | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const totalItems = 288;
+  const [responses, setResponses] = useState<Response[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   const itemsPerPage = 100;
 
-  // Sample data based on the images
-  const responses: Response[] = [
-    {
-      id: 1,
-      name: "Response 1",
-      responseText: "I'm a farmer in Tamil Nadu, India, Currently growing rice during the Kharif season. I want to implement an effective crop rotation plan and integrated pest management strategy for the next three years. Can you suggest suitable crop sequences and pest control",
-      responseType: "Ground Truth",
-      language: "English",
-      userPrompts: "What is the recommended pesticide application rate for a new, disease-resistant tomato variety introduced last year, based on the latest agricultural regulations in tamilnadu?",
-      systemPrompts: "You are an AI assistant that not only provides the answer but explains your reasoning in a clear manner.",
-      notes: "Random message for update and add"
-    },
-    {
-      id: 2,
-      name: "Response 2",
-      responseText: "दुनिया का सबसे ऊँचा रेल पुल और आर्च ब्रिज भारत में चेनाब ब्रिज (Chenab Bridge)",
-      responseType: "Ground Truth",
-      language: "Hindi",
-      userPrompts: "Tell me about the highest railway bridge in India",
-      systemPrompts: "You are an AI assistant that provides information about Indian infrastructure.",
-      notes: ""
-    },
-    {
-      id: 3,
-      name: "Response 3",
-      responseText: "Gujarati: ફોટોસિન્થેસિસ થી ખેતર પ્રક્રિયા છે માં... Summary in English:",
-      responseType: "Ground Truth",
-      language: "Gujarati",
-      userPrompts: "Explain the process of photosynthesis in Gujarati",
-      systemPrompts: "You are an AI assistant that explains scientific concepts in regional languages.",
-      notes: ""
-    },
-    {
-      id: 4,
-      name: "Response 4",
-      responseText: "இந்தியாவில் முக்கியமான 3 பயிர் பருவங்கள் உள்ளன:",
-      responseType: "Ground Truth",
-      language: "Tamil",
-      userPrompts: "What are the main crop seasons in India?",
-      systemPrompts: "You are an AI assistant that provides agricultural information in Tamil.",
-      notes: ""
-    },
-    {
-      id: 5,
-      name: "Response 5",
-      responseText: "Accessible information on COVID-19 vaccines for deaf individuals",
-      responseType: "Ground Truth",
-      language: "English",
-      userPrompts: "How can deaf individuals access COVID-19 vaccine information?",
-      systemPrompts: "You are an AI assistant that provides accessible health information.",
-      notes: ""
-    },
-    {
-      id: 6,
-      name: "Response 6",
-      responseText: "Yes, as an AIDS patient, you can get a full-body scan (like a full-body MRI or CT scan)",
-      responseType: "Ground Truth",
-      language: "English",
-      userPrompts: "Can AIDS patients get full-body scans?",
-      systemPrompts: "You are an AI assistant that provides medical information and advice.",
-      notes: ""
-    },
-    // Add more sample data as needed
-    ...Array.from({ length: 10 }, (_, i) => ({
-      id: i + 7,
-      name: `Response ${i + 7}`,
-      responseText: `Sample response text for response ${i + 7}. This is placeholder content that represents the actual response data.`,
-      responseType: "Ground Truth",
-      language: ["English", "Hindi", "Tamil", "Gujarati"][i % 4],
-      userPrompts: `Sample user prompt for response ${i + 7}`,
-      systemPrompts: `Sample system prompt for response ${i + 7}`,
-      notes: ""
-    }))
-  ];
+  // Map backend response type to display name
+  const mapResponseTypeToDisplay = (type: string): string => {
+    const mapping: Record<string, string> = {
+      'GT': 'Ground Truth',
+      'GTDesc': 'Ground Truth Description',
+      'NA': 'Not Applicable',
+    };
+    return mapping[type] || type;
+  };
+
+  // Map display name to backend response type
+  const mapDisplayToResponseType = (display: string): string => {
+    const mapping: Record<string, string> = {
+      'Ground Truth': 'GT',
+      'Ground Truth Description': 'GTDesc',
+      'Not Applicable': 'NA',
+    };
+    return mapping[display] || display;
+  };
+
+  // Fetch responses from API
+  const fetchResponses = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem("access_token");
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+      };
+
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(API_ENDPOINTS.RESPONSES_ALL, { headers });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (Array.isArray(data)) {
+        const mappedResponses: Response[] = data.map((item: any) => ({
+          id: item.response_id ?? 0,
+          response_id: item.response_id ?? 0,
+          responseText: item.response_text ?? "",
+          responseType: mapResponseTypeToDisplay(item.response_type ?? ""),
+          language: item.lang_name ?? "",
+          userPrompts: item.user_prompt ?? "",
+          systemPrompts: item.system_prompt ?? "",
+          notes: "", // Notes field is not in API response, will be handled separately
+        }));
+        setResponses(mappedResponses);
+      } else {
+        console.error("Unexpected responses data format:", data);
+        toast({
+          title: "Error",
+          description: "Failed to load responses",
+          variant: "destructive",
+        });
+        setResponses([]);
+      }
+    } catch (error) {
+      console.error("Error fetching responses:", error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to load responses from server",
+        variant: "destructive",
+      });
+      setResponses([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    fetchResponses();
+  }, [fetchResponses, refreshKey]);
+
+  const handleUpdateSuccess = () => {
+    setRefreshKey((prev) => prev + 1);
+  };
+
+  const handleDeleteClick = (response: Response) => {
+    setResponseToDelete(response);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!responseToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      const token = localStorage.getItem("access_token");
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+      };
+
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(
+        API_ENDPOINTS.RESPONSE_DELETE(responseToDelete.response_id),
+        {
+          method: "DELETE",
+          headers,
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.detail || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      toast({
+        title: "Success",
+        description: "Response deleted successfully",
+      });
+
+      setDeleteDialogOpen(false);
+      setResponseToDelete(null);
+      setSelectedResponse(null);
+      handleUpdateSuccess();
+    } catch (error) {
+      console.error("Error deleting response:", error);
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to delete response",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const filteredResponses = responses.filter((response) =>
-    response.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     response.responseText.toLowerCase().includes(searchQuery.toLowerCase()) ||
     response.language.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    response.responseType.toLowerCase().includes(searchQuery.toLowerCase())
+    response.responseType.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    response.response_id.toString().includes(searchQuery.toLowerCase())
+  );
+
+  const totalItems = filteredResponses.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+  const paginatedResponses = filteredResponses.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
   );
 
   return (
@@ -128,20 +220,19 @@ const Responses = () => {
       <aside className="fixed top-0 left-0 h-screen w-[220px] bg-[#5252c2] z-20">
         <Sidebar />
       </aside>
-      
 
       <main className="flex-1 bg-background ml-[224px]">
         <div className="p-8">
           <h1 className="text-4xl font-bold mb-8 text-center">Responses</h1>
 
-          <div className="flex gap-4 mb-6">
-            <Select defaultValue="responsename">
+          <div className="flex gap-4 mb-6 flex-wrap">
+            <Select defaultValue="responseid">
               <SelectTrigger className="w-48">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="responsename">Response Name</SelectItem>
                 <SelectItem value="responseid">Response ID</SelectItem>
+                <SelectItem value="responsetext">Response Text</SelectItem>
                 <SelectItem value="responsetype">Response Type</SelectItem>
                 <SelectItem value="language">Language</SelectItem>
               </SelectContent>
@@ -156,21 +247,33 @@ const Responses = () => {
 
             <div className="ml-auto flex items-center gap-4">
               <span className="text-sm text-muted-foreground">
-                {currentPage === 1 ? "00" : `${(currentPage - 1) * itemsPerPage + 1}`} of {totalItems}
+                {isLoading ? (
+                  "Loading..."
+                ) : totalItems === 0 ? (
+                  "0"
+                ) : (
+                  `${(currentPage - 1) * itemsPerPage + 1} - ${Math.min(
+                    currentPage * itemsPerPage,
+                    totalItems
+                  )} of ${totalItems}`
+                )}
               </span>
               <div className="flex gap-1">
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
+                  disabled={currentPage === 1 || isLoading}
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </Button>
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setCurrentPage((p) => p + 1)}
+                  onClick={() =>
+                    setCurrentPage((p) => Math.min(totalPages, p + 1))
+                  }
+                  disabled={currentPage === totalPages || isLoading}
                 >
                   <ChevronRight className="w-5 h-5" />
                 </Button>
@@ -178,7 +281,7 @@ const Responses = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="bg-white rounded-lg shadow overflow-hidden max-h-[67vh] w-full overflow-y-auto">
             <table className="w-full">
               <thead className="border-b-2">
                 <tr>
@@ -189,24 +292,49 @@ const Responses = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredResponses.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((response) => (
-                  <tr
-                    key={response.id}
-                    className="border-b hover:bg-muted/50 cursor-pointer"
-                    onClick={() => setSelectedResponse(response)}
-                  >
-                    <td className="p-2">{response.id}</td>
-                    <td className="p-2 max-w-md truncate">{response.responseText}</td>
-                    <td className="p-2">{response.language}</td>
-                    <td className="p-2">{response.responseType === "Ground Truth" ? "GT" : response.responseType}</td>
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={4} className="p-8 text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span className="text-muted-foreground">
+                          Loading responses...
+                        </span>
+                      </div>
+                    </td>
                   </tr>
-                ))}
+                ) : paginatedResponses.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="p-8 text-center text-muted-foreground">
+                      No responses found
+                    </td>
+                  </tr>
+                ) : (
+                  paginatedResponses.map((response) => (
+                    <tr
+                      key={response.response_id}
+                      className="border-b hover:bg-muted/50 cursor-pointer"
+                      onClick={() => setSelectedResponse(response)}
+                    >
+                      <td className="p-2">{response.response_id}</td>
+                      <td className="p-2 max-w-md truncate">
+                        {response.responseText}
+                      </td>
+                      <td className="p-2">{response.language}</td>
+                      <td className="p-2">
+                        {response.responseType === "Ground Truth"
+                          ? "GT"
+                          : response.responseType}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
 
           <div className="mt-6">
-            <Button 
+            <Button
               className="bg-primary hover:bg-primary/90"
               onClick={() => setAddDialogOpen(true)}
             >
@@ -216,7 +344,10 @@ const Responses = () => {
         </div>
       </main>
 
-      <Dialog open={!!selectedResponse} onOpenChange={() => setSelectedResponse(null)}>
+      <Dialog
+        open={!!selectedResponse}
+        onOpenChange={() => setSelectedResponse(null)}
+      >
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="sr-only">Response Details</DialogTitle>
@@ -235,12 +366,20 @@ const Responses = () => {
 
               <div className="space-y-2">
                 <Label>Response Type</Label>
-                <Input value={selectedResponse.responseType} readOnly className="bg-muted" />
+                <Input
+                  value={selectedResponse.responseType}
+                  readOnly
+                  className="bg-muted"
+                />
               </div>
 
               <div className="space-y-2">
                 <Label>Language</Label>
-                <Input value={selectedResponse.language} readOnly className="bg-muted" />
+                <Input
+                  value={selectedResponse.language}
+                  readOnly
+                  className="bg-muted"
+                />
               </div>
 
               <div className="space-y-2">
@@ -263,12 +402,21 @@ const Responses = () => {
 
               <div className="space-y-2">
                 <Label>Notes</Label>
-                <Input value={selectedResponse.notes} readOnly className="bg-muted" />
+                <Input
+                  value={selectedResponse.notes || ""}
+                  readOnly
+                  className="bg-muted"
+                />
               </div>
 
               <div className="flex justify-center gap-4 pt-4">
-                <Button variant="destructive">Delete</Button>
-                <Button 
+                <Button
+                  variant="destructive"
+                  onClick={() => handleDeleteClick(selectedResponse)}
+                >
+                  Delete
+                </Button>
+                <Button
                   className="bg-primary hover:bg-primary/90"
                   onClick={() => {
                     setUpdateResponse(selectedResponse);
@@ -283,15 +431,54 @@ const Responses = () => {
         </DialogContent>
       </Dialog>
 
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the following Response? This
+              action cannot be undone.
+              {responseToDelete && (
+                <div className="mt-4 p-4 bg-muted rounded-md">
+                  <p className="font-semibold">Response ID: {responseToDelete.response_id}</p>
+                  <p className="text-sm mt-2 line-clamp-3">
+                    {responseToDelete.responseText}
+                  </p>
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <ResponseUpdateDialog
         response={updateResponse}
         open={!!updateResponse}
         onOpenChange={(open) => !open && setUpdateResponse(null)}
+        onUpdateSuccess={handleUpdateSuccess}
       />
 
       <ResponseAddDialog
         open={addDialogOpen}
         onOpenChange={setAddDialogOpen}
+        onSuccess={handleUpdateSuccess}
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -16,68 +16,109 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, X, Check } from "lucide-react";
+import { Search } from "lucide-react";
 import {
   PromptSearchDialog,
   PromptSearchSelection,
   PromptSearchType,
 } from "./PromptSearchDialog";
+import { API_ENDPOINTS } from "@/config/api";
+import { useToast } from "@/hooks/use-toast";
 
 interface ResponseAddDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
 }
 
 const responseTypes = [
-  "Ground Truth",
-  "Model Response",
-  "Reference Response",
-  "Human Response",
-];
-
-const languages = [
-  "English",
-  "Hindi",
-  "Tamil",
-  "Gujarati",
-  "Bengali",
-  "Telugu",
-  "Marathi",
-  "Kannada",
-  "Malayalam",
-  "Punjabi",
-  "Auto",
+  { value: "GT", label: "Ground Truth" },
+  { value: "GTDesc", label: "Ground Truth Description" },
+  { value: "NA", label: "Not Applicable" },
 ];
 
 export const ResponseAddDialog = ({
   open,
   onOpenChange,
+  onSuccess,
 }: ResponseAddDialogProps) => {
-  const [responseName, setResponseName] = useState("");
-  const [isNameAvailable, setIsNameAvailable] = useState<boolean | null>(null);
+  const { toast } = useToast();
   const [userPrompts, setUserPrompts] = useState("");
   const [systemPrompts, setSystemPrompts] = useState("");
   const [responseText, setResponseText] = useState("");
   const [responseType, setResponseType] = useState("");
   const [language, setLanguage] = useState("");
   const [notes, setNotes] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [languageOptions, setLanguageOptions] = useState<string[]>([]);
+  const [isFetchingLanguages, setIsFetchingLanguages] = useState(false);
   
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
   const [searchType, setSearchType] = useState<PromptSearchType>("userPrompt");
-  const [focusedField, setFocusedField] = useState<null | "userPrompt" | "response" | "llm">(null);
+  const [focusedField, setFocusedField] = useState<null | "userPrompt" | "systemPrompt">(null);
 
-  // Check response name availability
-  useEffect(() => {
-    if (responseName.trim()) {
-      // Simulate availability check
-      const timeout = setTimeout(() => {
-        setIsNameAvailable(true);
-      }, 300);
-      return () => clearTimeout(timeout);
-    } else {
-      setIsNameAvailable(null);
+  // Fetch languages from API
+  const fetchLanguages = useCallback(async () => {
+    setIsFetchingLanguages(true);
+    try {
+      const token = localStorage.getItem("access_token");
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+      };
+
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(API_ENDPOINTS.LANGUAGES, { headers });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const languageNames = Array.from(
+        new Set(
+          (Array.isArray(data) ? data : [])
+            .map((lang: any) => lang?.lang_name)
+            .filter((name: string | null | undefined): name is string => Boolean(name))
+        )
+      );
+
+      setLanguageOptions(languageNames);
+      if (languageNames.length > 0 && !language) {
+        setLanguage(languageNames[0]);
+      }
+    } catch (error) {
+      console.error("Error fetching languages:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load languages",
+        variant: "destructive",
+      });
+    } finally {
+      setIsFetchingLanguages(false);
     }
-  }, [responseName]);
+  }, [toast, language]);
+
+  useEffect(() => {
+    if (open) {
+      fetchLanguages();
+    }
+  }, [open, fetchLanguages]);
+
+  useEffect(() => {
+    if (!open) {
+      // Reset form when dialog closes
+      setUserPrompts("");
+      setSystemPrompts("");
+      setResponseText("");
+      setResponseType("");
+      setLanguage("");
+      setNotes("");
+      setIsSubmitting(false);
+    }
+  }, [open]);
 
   const handleSearchClick = (type: PromptSearchType) => {
     setSearchType(type);
@@ -98,12 +139,6 @@ export const ResponseAddDialog = ({
           setUserPrompts(selection.userPrompt);
         }
         break;
-      case "response":
-        setResponseText(selection.responseText);
-        break;
-      case "llm":
-        // Not used in response add dialog.
-        break;
       default:
         break;
     }
@@ -111,25 +146,138 @@ export const ResponseAddDialog = ({
     setSearchDialogOpen(false);
   };
 
-  const handleSubmit = () => {
-    console.log("Adding response:", {
-      responseName,
-      userPrompts,
-      systemPrompts,
-      responseText,
-      responseType,
-      language,
-      notes,
-    });
-    onOpenChange(false);
-    // Reset form
-    setResponseName("");
-    setUserPrompts("");
-    setSystemPrompts("");
-    setResponseText("");
-    setResponseType("");
-    setLanguage("");
-    setNotes("");
+  const isFormValid = (
+    userPrompts.trim() &&
+    responseText.trim() &&
+    responseType &&
+    language &&
+    notes.trim()
+  );
+
+  const handleSubmit = async () => {
+    // Validate required fields
+    if (!responseText.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Response text is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!userPrompts.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "User prompt is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!responseType) {
+      toast({
+        title: "Validation Error",
+        description: "Response type is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!language) {
+      toast({
+        title: "Validation Error",
+        description: "Language is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!notes.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Notes field is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const token = localStorage.getItem("access_token");
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+      };
+
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      // Find the backend response type value
+      const backendResponseType = responseTypes.find(
+        (rt) => rt.label === responseType
+      )?.value || responseType;
+
+      const payload = {
+        response_text: responseText.trim(),
+        response_type: backendResponseType,
+        lang_name: language,
+        user_prompt: userPrompts.trim(),
+        system_prompt: systemPrompts.trim() || null,
+      };
+
+      const response = await fetch(API_ENDPOINTS.RESPONSE_CREATE, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.detail || errorData.message || errorMessage;
+        } catch {
+          const errorText = await response.text();
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+      console.log("Response created successfully:", data);
+
+      toast({
+        title: "Success",
+        description: "Response created successfully",
+      });
+
+      // Reset form
+      setUserPrompts("");
+      setSystemPrompts("");
+      setResponseText("");
+      setResponseType("");
+      setLanguage("");
+      setNotes("");
+
+      // Close dialog
+      onOpenChange(false);
+
+      // Trigger refresh in parent component
+      if (onSuccess) {
+        onSuccess();
+      }
+    } catch (error) {
+      console.error("Error creating response:", error);
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Failed to create response",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -142,46 +290,14 @@ export const ResponseAddDialog = ({
 
           <div className="space-y-4 pt-4">
             <div className="space-y-2">
-              <Label className="text-base font-semibold">Response Name</Label>
-              <div className="relative">
-                <Input
-                  placeholder="Enter Response Name"
-                  value={responseName}
-                  onChange={(e) => setResponseName(e.target.value)}
-                  className="pr-24"
-                />
-                {isNameAvailable && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-accent">
-                    <Check className="w-4 h-4" />
-                    <span className="text-sm font-medium">Available</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-2">
               <Label className="text-base font-semibold">Response</Label>
-              <div className="relative">
-                <Textarea
-                  value={responseText}
-                  onChange={(e) => setResponseText(e.target.value)}
-                  onFocus={() => setFocusedField("response")}
-                  onBlur={() => setTimeout(() => setFocusedField(null), 100)}
-                  className="bg-muted min-h-[100px] pr-10"
-                  placeholder="Enter the response text..."
-                />
-                {focusedField === "response" && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-2 top-2"
-                    onMouseDown={e => e.preventDefault()}
-                    onClick={() => handleSearchClick("response")}
-                  >
-                    <Search className="w-4 h-4" />
-                  </Button>
-                )}
-              </div>
+              <Textarea
+                value={responseText}
+                onChange={(e) => setResponseText(e.target.value)}
+                className="bg-muted min-h-[100px]"
+                placeholder="Enter the response text..."
+                required
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -193,8 +309,8 @@ export const ResponseAddDialog = ({
                   </SelectTrigger>
                   <SelectContent className="bg-popover max-h-[300px]">
                     {responseTypes.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {type}
+                      <SelectItem key={type.value} value={type.label}>
+                        {type.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -203,16 +319,32 @@ export const ResponseAddDialog = ({
 
               <div className="space-y-2">
                 <Label className="text-base font-semibold">Language</Label>
-                <Select value={language} onValueChange={setLanguage}>
+                <Select
+                  value={language}
+                  onValueChange={setLanguage}
+                  disabled={isFetchingLanguages}
+                >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select language" />
+                    <SelectValue
+                      placeholder={
+                        isFetchingLanguages
+                          ? "Loading languages..."
+                          : "Select language"
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent className="bg-popover max-h-[300px]">
-                    {languages.map((lang) => (
-                      <SelectItem key={lang} value={lang}>
-                        {lang}
+                    {languageOptions.length === 0 && !isFetchingLanguages ? (
+                      <SelectItem value="" disabled>
+                        No languages available
                       </SelectItem>
-                    ))}
+                    ) : (
+                      languageOptions.map((lang) => (
+                        <SelectItem key={lang} value={lang}>
+                          {lang}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -230,14 +362,16 @@ export const ResponseAddDialog = ({
                     onBlur={() => setTimeout(() => setFocusedField(null), 100)}
                     className="bg-muted min-h-[100px] pr-10"
                     placeholder="Enter user prompt..."
+                    required
                   />
                   {focusedField === "userPrompt" && (
                     <Button
                       variant="ghost"
                       size="icon"
                       className="absolute right-2 top-2"
-                      onMouseDown={e => e.preventDefault()}
+                      onMouseDown={(e) => e.preventDefault()}
                       onClick={() => handleSearchClick("userPrompt")}
+                      tabIndex={-1}
                     >
                       <Search className="w-4 h-4" />
                     </Button>
@@ -247,12 +381,28 @@ export const ResponseAddDialog = ({
 
               <div className="space-y-1">
                 <Label className="text-sm font-normal">System prompts</Label>
-                <Textarea
-                  value={systemPrompts}
-                  onChange={(e) => setSystemPrompts(e.target.value)}
-                  className="bg-muted min-h-[80px]"
-                  placeholder="Enter system prompt..."
-                />
+                <div className="relative">
+                  <Textarea
+                    value={systemPrompts}
+                    onChange={(e) => setSystemPrompts(e.target.value)}
+                    onFocus={() => setFocusedField("systemPrompt")}
+                    onBlur={() => setTimeout(() => setFocusedField(null), 100)}
+                    className="bg-muted min-h-[80px] pr-10"
+                    placeholder="Enter system prompt..."
+                  />
+                  {focusedField === "systemPrompt" && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-2 top-2"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => handleSearchClick("systemPrompt")}
+                      tabIndex={-1}
+                    >
+                      <Search className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -262,6 +412,7 @@ export const ResponseAddDialog = ({
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Enter notes..."
+                required
               />
             </div>
 
@@ -269,8 +420,9 @@ export const ResponseAddDialog = ({
               <Button
                 className="bg-accent hover:bg-accent/90 text-accent-foreground px-8"
                 onClick={handleSubmit}
+                disabled={!isFormValid || isSubmitting}
               >
-                Submit
+                {isSubmitting ? "Submitting..." : "Submit"}
               </Button>
             </div>
           </div>
@@ -286,4 +438,3 @@ export const ResponseAddDialog = ({
     </>
   );
 };
-
