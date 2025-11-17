@@ -5,11 +5,22 @@ import {Textarea} from '@/components/ui/textarea';
 import {Button} from '@/components/ui/button';
 import  {Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import  {Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import TargetUpdateDialog from '@/components/TargetUpdateDialog';
-// import TargetAddDialog from '@/components/TargetAddDialog';
+import TargetAddDialog from '@/components/TargetAddDialog';
 import { API_ENDPOINTS } from '@/config/api';
+import { useToast } from '@/hooks/use-toast';
 
 interface Target {
   id: number;
@@ -19,7 +30,7 @@ interface Target {
   url: string;
   domain: string;
   languages: string[];
-//   notes: string;
+  notes?: string;
 }
 
 const mapTargetResponse = (item: Record<string, any>): Target => ({
@@ -33,17 +44,22 @@ const mapTargetResponse = (item: Record<string, any>): Target => ({
 });
 
 const Targets = () => {
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [selectedTarget, setSelectedTarget] = useState<Target | null>(null);
   const [updateTarget, setUpdateTarget] = useState<Target | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [targets, setTargets] = useState<Target[]>([]);
-  const [ currentPage, setCurrentPage ] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
   const [isLoadingTargets, setIsLoadingTargets] = useState(false);
   const [targetsError, setTargetsError] = useState<string | null>(null);
   const [isDetailLoading, setIsDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [targetToDelete, setTargetToDelete] = useState<Target | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const authHeaders = useCallback((): HeadersInit => {
     const headers: HeadersInit = {
@@ -125,7 +141,70 @@ const Targets = () => {
 
   useEffect(() => {
     fetchTargets();
-  }, [fetchTargets]);
+  }, [fetchTargets, refreshKey]);
+
+  const handleUpdateSuccess = () => {
+    setRefreshKey((prev) => prev + 1);
+  };
+
+  const handleDeleteClick = (target: Target) => {
+    setTargetToDelete(target);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!targetToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      const token = localStorage.getItem('access_token');
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(
+        API_ENDPOINTS.TARGET_DELETE(targetToDelete.id),
+        {
+          method: 'DELETE',
+          headers,
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.detail || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      toast({
+        title: 'Success',
+        description: 'Target deleted successfully',
+      });
+
+      setDeleteDialogOpen(false);
+      setTargetToDelete(null);
+      setSelectedTarget(null);
+      setIsDetailDialogOpen(false);
+      handleUpdateSuccess();
+    } catch (error) {
+      console.error('Error deleting target:', error);
+      toast({
+        title: 'Error',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Failed to delete target',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const filteredTargets = targets.filter(
     t =>
@@ -334,6 +413,7 @@ const Targets = () => {
             <div className="sticky bottom-0 pt-4 flex justify-center gap-4 border-gray-200 z-10">
                 <Button
                     variant='destructive'
+                    onClick={() => selectedTarget && handleDeleteClick(selectedTarget)}
                 >
                     Delete
                 </Button>
@@ -352,27 +432,56 @@ const Targets = () => {
           </DialogContent>
         </Dialog>
 
-        {/* // Update Target Dialog */}
-        {/* <TargetUpdateDialog
+        {/* Update Target Dialog */}
+        <TargetUpdateDialog
           target={updateTarget}
           open={!!updateTarget}
           onOpenChange={(open) => !open && setUpdateTarget(null)}
-          onUpdate={updated => {
-            setTargets(ts => ts.map(t => t.id === updated.id ? updated : t));
-            setUpdateTarget(null);
-          }}
-        /> */}
+          onUpdateSuccess={handleUpdateSuccess}
+        />
 
-        {/* Add Target Dialog
+        {/* Add Target Dialog */}
         <TargetAddDialog
           open={addDialogOpen}
           onOpenChange={setAddDialogOpen}
-          onAdd={newTarget => {
-            setTargets(ts => [...ts, { ...newTarget, id: ts.length ? ts[ts.length - 1].id + 1 : 1 }]);
-            setAddDialogOpen(false);
-          }}
-          existingNames={targets.map(t => t.name)}
-        /> */}
+          onSuccess={handleUpdateSuccess}
+        />
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete the following target? This
+                action cannot be undone.
+                {targetToDelete && (
+                  <div className="mt-4 p-4 bg-muted rounded-md">
+                    <p className="font-semibold">Target ID: {targetToDelete.id}</p>
+                    <p className="font-semibold">Target Name: {targetToDelete.name}</p>
+                  </div>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteConfirm}
+                disabled={isDeleting}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  "Delete"
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       
     </div>
   );

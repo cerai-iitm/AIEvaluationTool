@@ -15,7 +15,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { ChevronLeft, ChevronRight, X, Loader2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { TestCaseUpdateDialog } from "@/components/TestCaseUpdateDialog";
@@ -44,6 +54,9 @@ const TestCases = () => {
   const [testCases, setTestCases] = useState<TestCase[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [testCaseToDelete, setTestCaseToDelete] = useState<TestCase | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   // Refs for textareas to enable auto-scroll
   const userPromptsRef = useRef<HTMLTextAreaElement>(null);
@@ -185,6 +198,64 @@ const TestCases = () => {
 
   const handleUpdateSuccess = () => {
     setRefreshKey((prev) => prev + 1); // Trigger refresh
+  };
+
+  const handleDeleteClick = (testCase: TestCase) => {
+    setTestCaseToDelete(testCase);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!testCaseToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      const token = localStorage.getItem("access_token");
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+      };
+
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(
+        API_ENDPOINTS.TESTCASE_DELETE(testCaseToDelete.id),
+        {
+          method: "DELETE",
+          headers,
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.detail || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      toast({
+        title: "Success",
+        description: "Test case deleted successfully",
+      });
+
+      setDeleteDialogOpen(false);
+      setTestCaseToDelete(null);
+      setSelectedCase(null);
+      handleUpdateSuccess();
+    } catch (error) {
+      console.error("Error deleting test case:", error);
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to delete test case",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const filteredCases = testCases.filter((tc) =>
@@ -507,7 +578,12 @@ const TestCases = () => {
           )}
           <div className="sticky bottom-0 bg-white pt-4 p-2 flex justify-center gap-4 border-gray-200 z-10">
           {/* <div className="flex justify-center gap-4 pt-4"> */}
-            <Button variant="destructive">Delete</Button>
+            <Button 
+              variant="destructive"
+              onClick={() => handleDeleteClick(selectedCase)}
+            >
+              Delete
+            </Button>
             <Button 
               className="bg-primary hover:bg-primary/90"
               onClick={() => {
@@ -533,6 +609,41 @@ const TestCases = () => {
         onOpenChange={setAddDialogOpen}
         onSuccess={handleUpdateSuccess}
       />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the following testcase? This
+              action cannot be undone.
+              {testCaseToDelete && (
+                <div className="mt-4 p-4 bg-muted rounded-md">
+                  <p className="font-semibold">Test Case ID: {testCaseToDelete.id}</p>
+                  <p className="font-semibold">Test Case Name: {testCaseToDelete.name}</p>
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

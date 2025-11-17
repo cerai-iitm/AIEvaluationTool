@@ -150,6 +150,14 @@ async def update_target(
         if target is None:
             raise HTTPException(status_code=404, detail="Target not found")
 
+        # Store original values for change detection
+        original_name = target.target_name
+        original_type = target.target_type
+        original_description = target.target_description
+        original_url = target.target_url
+        original_domain_name = target.domain.domain_name if target.domain else None
+        original_lang_names = sorted([lang.lang_name for lang in target.langs]) if target.langs else []
+
         # Validate URL uniqueness if provided
         if target_update.target_url:
             existing_url = (
@@ -196,31 +204,38 @@ async def update_target(
         username = get_username_from_token(authorization)
         if not username:
             raise HTTPException(status_code=401, detail="Invalid or expired token")
-            
-            changes = []
-            if target.target_name is not None and target.target_name != target_update.target_name:
-                changes.append(f"name changed from '{target.target_name}' to '{target_update.target_name}'")
-            if target.target_type is not None and target.target_type != target_update.target_type:
-                changes.append("type updated")
-            if target.target_description is not None and target.target_description != target_update.target_description:
-                changes.append("description updated")
-            if target.domain_name is not None and target.domain_name != target_update.domain_name:
-                changes.append("domain updated")
-            if target.lang_list is not None and target.lang_list != target_update.lang_list:
+        
+        # Build changes list for logging
+        changes = []
+        
+        if target_update.target_name and original_name != target_update.target_name:
+            changes.append(f"name changed from '{original_name}' to '{target_update.target_name}'")
+        if target_update.target_type and original_type != target_update.target_type:
+            changes.append("type updated")
+        if target_update.target_description is not None and original_description != target_update.target_description:
+            changes.append("description updated")
+        if target_update.target_url and original_url != target_update.target_url:
+            changes.append("URL updated")
+        if target_update.domain_name and original_domain_name != target_update.domain_name:
+            changes.append("domain updated")
+        if target_update.lang_list is not None:
+            updated_lang_names = sorted(target_update.lang_list)
+            if updated_lang_names != original_lang_names:
                 changes.append("languages updated")
-            note = f"Target '{target.target_name}' updated"
-            if changes:
-                note += f": {', '.join(changes)}"
-            else:
-                note += " (no changes detected)"
+        
+        note = f"Target '{target.target_name}' updated"
+        if changes:
+            note += f": {', '.join(changes)}"
+        else:
+            note += " (no changes detected)"
 
-            log_activity(
-                username=username,
-                entity_type="Target",
-                entity_id=str(target.target_id),
-                operation="update",
-                note=f"Updated target '{target.target_name}'"
-            )
+        log_activity(
+            username=username,
+            entity_type="Target",
+            entity_id=str(target.target_id),
+            operation="update",
+            note=note
+        )
 
         return TargetIds(
             target_id=target.target_id,
@@ -333,5 +348,49 @@ async def create_target(
     except Exception as exc:
         session.rollback()
         raise HTTPException(status_code=500, detail=str(exc))
+    finally:
+        session.close()
+
+
+@target_router.delete("/delete/{target_id}", summary="Delete a target by ID")
+async def delete_target(
+    target_id: int,
+    db: DB = Depends(_get_db),
+    authorization: Optional[str] = Header(None)
+):
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Authorization header missing")
+
+    session = db.Session()
+    try:
+        target = session.query(Targets).filter(Targets.target_id == target_id).first()
+        if target is None:
+            raise HTTPException(status_code=404, detail="Target not found")
+        
+        # Store target name for logging before deletion
+        target_name = target.target_name
+        target_id_str = str(target.target_id)
+        
+        session.delete(target)
+        session.commit()
+        
+        # Log the activity
+        username = get_username_from_token(authorization)
+        if username:
+            log_activity(
+                username=username,
+                entity_type="Target",
+                entity_id=target_id_str,
+                operation="delete",
+                note=f"Target '{target_name}' deleted"
+            )
+        
+        return JSONResponse(content={"message": "Target deleted successfully"}, status_code=200)
+    except HTTPException:
+        session.rollback()
+        raise
+    except Exception as exc:
+        session.rollback()
+        raise HTTPException(status_code=500, detail=f"Error deleting target: {str(exc)}")
     finally:
         session.close()

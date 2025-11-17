@@ -9,12 +9,14 @@ export const API_ENDPOINTS = {
   TEST_CASE_BY_ID: (testcase_id: number) => `${API_BASE_URL}/api/testcases/${testcase_id}`,
   TEST_CASES_UPDATE_BY_ID: (testcase_id: number) => `${API_BASE_URL}/api/testcases/${testcase_id}`,
   TEST_CASE_CREATE: `${API_BASE_URL}/api/testcases/create`,
+  TESTCASE_DELETE: (testcase_id: number) => `${API_BASE_URL}/api/testcases/delete/${testcase_id}`,
 
   TARGETS: `${API_BASE_URL}/api/targets`,
   TARGET_TYPES: `${API_BASE_URL}/api/targets/target/types`,
   TARGET_BY_ID: (target_id: number) => `${API_BASE_URL}/api/targets/${target_id}`,
   TARGET_CREATE: `${API_BASE_URL}/api/targets/create`,
   TARGET_UPDATE: (target_id: number) => `${API_BASE_URL}/api/targets/${target_id}`,
+  TARGET_DELETE: (target_id: number) => `${API_BASE_URL}/api/targets/delete/${target_id}`,
 
   //STRATEGIES: `${API_BASE_URL}/api/strategies`,
   RESPONSES: `${API_BASE_URL}/api/responses`,

@@ -490,12 +490,15 @@ async def create_testcase(
         session.close()
 
 
-@testcase_router.delete("/{testcase_id}")
+@testcase_router.delete("/delete/{testcase_id}")
 async def delete_testcase(
     testcase_id: int, 
     db: DB = Depends(_get_db),
     authorization: Optional[str] = Header(None)
 ):
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Authorization header missing")
+    
     session = db.Session()
     try:
         tc = session.query(TestCases).filter(TestCases.testcase_id == testcase_id).first()
@@ -521,5 +524,11 @@ async def delete_testcase(
             )
         
         return JSONResponse(content={"message": "Test case deleted successfully"}, status_code=200)
+    except HTTPException:
+        session.rollback()
+        raise
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail=f"Error deleting test case: {str(e)}")
     finally:
         session.close()

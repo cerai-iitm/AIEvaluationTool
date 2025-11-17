@@ -257,6 +257,18 @@ async def update_response(
         # Log the activity
         username = get_username_from_token(authorization)
         if username:
+
+            changes = []
+
+            if response_update.response_text is not None and response_update.response_text != original_name:
+                changes.append(f"text changed")
+            if response_udpate.user_prompt is not None or response_update.system_prompt is not None:
+                changes.append("prompt updated")
+            if response_update.response_type is not None:
+                changes.append("type updated")
+            if response_update.lang is not None:
+                changes.append("language updated")
+
             note = f"Response '{response.response_id}' updated"
             if changes:
                 note += f": {', '.join(changes)}"
