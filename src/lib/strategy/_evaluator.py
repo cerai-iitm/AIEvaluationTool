@@ -90,17 +90,19 @@ class Evaluator:
             logger.error("Could not find files for the specified strategy.")
             return examples
         combined = self.combine_examples(examples)
-        scores = []
+        assigned_scores, human_scores = [], []
         for ex_list in combined.values():
-            for example in ex_list[208:209]: #later do for all the examples, just for now we are taking some examples
+            for example in ex_list[:20]: # later do for all the examples, just for now we are taking some examples
                 self.runner.set_metric_strategy(strategy_name, metric_name)
                 try:
-                    scores.append(self.runner.execute(*self.get_testcase_obj(example)))
+                    human_scores.append(example["response_score"])
+                    assigned_scores.append(self.runner.execute(*self.get_testcase_obj(example)))
                 except Exception as e:
                     logger.error(f"Could not find the specified strategy name or the metric name. Additional info : {e}")
-        avg_score = np.mean(scores)
-        logger.info(f"The everage score for {strategy_name} based on the evaluation of examples is : {avg_score}")
+        avg_score = np.mean(assigned_scores)
+        logger.info(f"The average score for {strategy_name} based on the evaluation of examples is : {avg_score}")
+        logger.info(f"The average human score for {strategy_name} is : {np.mean(human_scores)}")
         return avg_score
                 
 ev = Evaluator()
-ev.main(strategy_name="fluency_score", metric_name="")
+ev.main(strategy_name="llm_judge_positive", metric_name="Inclusivity")
