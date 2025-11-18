@@ -42,7 +42,6 @@ interface Response {
   language: string;
   userPrompts: string;
   systemPrompts: string;
-  notes?: string;
 }
 
 const Responses = () => {
@@ -400,14 +399,14 @@ const Responses = () => {
                 />
               </div>
 
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <Label>Notes</Label>
                 <Input
                   value={selectedResponse.notes || ""}
                   readOnly
                   className="bg-muted"
                 />
-              </div>
+              </div> */}
 
               <div className="flex justify-center gap-4 pt-4">
                 <Button

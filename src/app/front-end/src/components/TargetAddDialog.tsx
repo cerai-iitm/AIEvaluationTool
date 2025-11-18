@@ -240,7 +240,7 @@ export default function TargetAddDialog({ open, onOpenChange, onSuccess }: Targe
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Enter unique name"
+              placeholder="Enter target name"
               required
             />
           </div>
@@ -311,7 +311,7 @@ export default function TargetAddDialog({ open, onOpenChange, onSuccess }: Targe
 
           <div className="space-y-2">
             <Label className="text-base font-semibold">Languages</Label>
-            <div className="bg-muted p-4 rounded-md max-h-[200px] overflow-y-auto">
+            <div className="bg-muted p-4 rounded-md max-h-[100px] overflow-y-auto">
               {isFetchingOptions ? (
                 <div className="text-sm text-muted-foreground">Loading languages...</div>
               ) : languageOptions.length === 0 ? (
@@ -338,17 +338,18 @@ export default function TargetAddDialog({ open, onOpenChange, onSuccess }: Targe
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-base font-semibold">Notes</Label>
+          <div className="flex justify-center items-center p-4 ">
+            <Label className="text-base font-semibold mr-2">Notes</Label>
             <Input
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Enter notes..."
+              className="bg-gray-200 rounded px-4 py-1 mr-4 "
               required
             />
-          </div>
+          
 
-          <div className="flex justify-center pt-4">
+          
             <Button
               className="bg-accent hover:bg-accent/90 text-accent-foreground px-8"
               onClick={handleSubmit}

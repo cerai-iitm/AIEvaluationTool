@@ -552,7 +552,7 @@ const StrategyList: React.FC = () => {
             </div>
             
             <div className="flex flex-col md:flex-row items-center gap-2 md:gap-0">
-              <label className="text-base md:text-lg min-w-[80px]">Message :</label>
+              <label className="text-base md:text-lg min-w-[80px]">Note :</label>
               <input
                 value={addMessage}
                 onChange={e => setAddMessage(e.target.value)}

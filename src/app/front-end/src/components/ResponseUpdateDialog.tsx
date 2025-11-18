@@ -404,19 +404,17 @@ export const ResponseUpdateDialog = ({
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-base font-semibold">Notes</Label>
+            <div className="flex justify-center items-center p-4 border-gray-300 bg-white sticky bottom-0 z-10">
+              <Label className="text-base font-semibold mr-4">Notes</Label>
               <Input
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Enter notes..."
                 required
               />
-            </div>
-
-            <div className="flex justify-center pt-4">
+         
               <Button
-                className="bg-accent hover:bg-accent/90 text-accent-foreground px-8"
+                className="bg-accent hover:bg-accent/90 ml-4 text-accent-foreground px-8"
                 onClick={handleSubmit}
                 disabled={!isChanged || !notes || isLoading}
               >

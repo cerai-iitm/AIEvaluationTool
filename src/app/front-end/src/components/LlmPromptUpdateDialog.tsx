@@ -216,20 +216,21 @@ export function LlmPromptUpdateDialog({ prompt, open, onOpenChange, onUpdate, on
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-1 pb-4">
-            <Label className="text-base font-semibold">Notes</Label>
+
+        </div>
+
+        <div className="flex justify-center items-center p-4 border-gray-300 bg-white sticky bottom-0 z-10">
+        
+            <Label className="text-base font-semibold mr-2">Notes</Label>
             <Input 
               value={notes} 
               onChange={(e) => setNotes(e.target.value)} 
               className="bg-muted" 
               placeholder="Enter notes (required)"
             />
-          </div>
-        </div>
-
-        <div className="sticky bottom-0 bg-white pt-4 p-2 flex justify-center gap-4 border-gray-200 z-10">
+        
           <Button
-            className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800"
+            className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800 ml-4"
             disabled={!isChanged || !notes.trim() || isSubmitting}
             onClick={handleSubmit}
           >

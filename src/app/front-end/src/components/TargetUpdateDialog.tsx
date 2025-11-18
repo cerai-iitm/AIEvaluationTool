@@ -305,7 +305,7 @@ export default function TargetUpdateDialog({ target, open, onOpenChange, onUpdat
           </div>
           <div className="space-y-1 pb-4">
             <Label className="text-base font-semibold">Languages</Label>
-            <div className="bg-muted p-4 rounded-md max-h-[200px] overflow-y-auto">
+            <div className="bg-muted p-4 rounded-md max-h-[110px] overflow-y-auto">
               {isFetchingOptions ? (
                 <div className="text-sm text-muted-foreground">Loading languages...</div>
               ) : languageOptions.length === 0 ? (
