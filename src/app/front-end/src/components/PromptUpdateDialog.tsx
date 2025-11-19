@@ -232,7 +232,7 @@ export function PromptUpdateDialog({ prompt, open, onOpenChange, onUpdate, onSuc
           </div>
           <div className="space-y-1">
             <Label className="text-base font-semibold">System Prompt</Label>
-            <Textarea value={systemPrompt} onChange={(e) => setSystemPrompt(e.target.value)} className="bg-muted min-h-[80px]" />
+            <Textarea value={systemPrompt} onChange={(e) => setSystemPrompt(e.target.value)} className="bg-muted min-h-[80px]" readOnly />
           </div>
           <div className="space-y-1">
             <Label className="text-base font-semibold">language Name</Label>

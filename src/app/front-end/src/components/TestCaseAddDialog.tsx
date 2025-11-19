@@ -432,6 +432,7 @@ export const TestCaseAddDialog = ({
                   value={systemPrompts}
                   onChange={(e) => setSystemPrompts(e.target.value)}
                   className="bg-muted min-h-[80px]"
+                  readOnly
                 />
               </div>
             </div>

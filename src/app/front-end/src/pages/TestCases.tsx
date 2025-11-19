@@ -264,7 +264,7 @@ const TestCases = () => {
     tc.domainName.toLowerCase().includes(searchQuery.toLowerCase())
   );
   const totalItems = filteredCases.length;
-  const itemsPerPage = 100;
+  const itemsPerPage = 15;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   // Pagination logic: get items for current page
@@ -421,7 +421,7 @@ const TestCases = () => {
             </div> */}
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto">
-          <div className="bg-white rounded-lg shadow overflow-hidden max-h-[69vh] overflow-y-auto">
+          <div className="bg-white rounded-lg shadow overflow-hidden max-h-[70vh] overflow-y-auto">
             <table className="w-full table-fixed">
               <thead className="border-b-2">
                 <tr>
