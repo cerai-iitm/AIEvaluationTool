@@ -745,6 +745,13 @@ class DB:
                 self.add_or_get_response(response, prompt_id) if response else None
             )
 
+            # If a judge prompt is provided, create a LLMJudgePrompts object
+            judge_prompt_id = (
+                self.add_or_get_judge_prompt(judge_prompt, prompt_id)
+                if judge_prompt
+                else None
+            )
+
             with self.Session() as session:
                 self.logger.debug(f"Creating test case (name:{testcase_name}) ..")
 
@@ -753,6 +760,7 @@ class DB:
                     prompt_id=prompt_id,  # Use the ID of the added prompt
                     response_id=response_id,  # Use the ID of the added response
                     strategy_id=strategy_id,
+                    judge_prompt_id=judge_prompt_id,
                 )
                 # Add the new test case to the session
                 session.add(new_testcase)
