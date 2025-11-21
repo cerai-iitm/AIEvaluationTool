@@ -79,7 +79,8 @@ const TestCases = () => {
         headers["Authorization"] = `Bearer ${token}`;
       }
 
-      const apiUrl = API_ENDPOINTS.TEST_CASES;
+      //const apiUrl = API_ENDPOINTS.TEST_CASES;
+      const apiUrl = API_ENDPOINTS.TESTCASES_V2;
       console.log("Fetching test cases from:", apiUrl);
       console.log("Headers:", { ...headers, Authorization: token ? "Bearer ***" : "None" });
       
@@ -220,7 +221,8 @@ const TestCases = () => {
       }
 
       const response = await fetch(
-        API_ENDPOINTS.TESTCASE_DELETE(testCaseToDelete.id),
+        //API_ENDPOINTS.TESTCASE_DELETE(testCaseToDelete.id),
+        API_ENDPOINTS.TESTCASE_DELETE_V2(testCaseToDelete.id),
         {
           method: "DELETE",
           headers,

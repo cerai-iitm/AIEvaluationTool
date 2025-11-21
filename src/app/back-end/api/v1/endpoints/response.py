@@ -398,9 +398,17 @@ async def create_response(
                 status_code=400, 
                 detail="A response with this text and type already exists"
             )
+        # Find next available response_id
+        existing_ids =[row[0] for row in session.query(ResponsesTable.response_id).order_by(ResponsesTable.response_id).all()]
+        next_response_id = max(existing_ids) + 1 if existing_ids else 1
+        for id in existing_ids:
+            if id != next_response_id:
+                break
+            next_response_id += 1
 
         # Create new response
         new_response = ResponsesTable(
+            response_id = next_response_id,
             response_text=response_create.response_text,
             response_type=response_create.response_type,
             prompt_id=prompt_id,

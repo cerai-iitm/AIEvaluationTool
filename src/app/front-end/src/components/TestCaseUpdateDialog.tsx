@@ -248,7 +248,8 @@ export const TestCaseUpdateDialog = ({
       }
 
       const response = await fetch(
-        API_ENDPOINTS.TEST_CASES_UPDATE_BY_ID(testCase.id),
+        //API_ENDPOINTS.TEST_CASES_UPDATE_BY_ID(testCase.id),
+        API_ENDPOINTS.TESTCASE_UPDATE_V2(testCase.id),
         {
           method: "PUT",
           headers,

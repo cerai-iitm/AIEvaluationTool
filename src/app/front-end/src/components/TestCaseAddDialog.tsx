@@ -128,7 +128,8 @@ export const TestCaseAddDialog = ({
           headers["Authorization"] = `Bearer ${token}`;
         }
 
-        const response = await fetch(API_ENDPOINTS.TEST_CASES, { headers });
+        //const response = await fetch(API_ENDPOINTS.TEST_CASES, { headers });
+        const response = await fetch(API_ENDPOINTS.TESTCASES_V2, { headers });
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -290,8 +291,8 @@ export const TestCaseAddDialog = ({
       };
 
       console.log("Creating test case:", payload);
-
-      const response = await fetch(API_ENDPOINTS.TEST_CASE_CREATE, {
+      //const response = await fetch(API_ENDPOINTS.TEST_CASE_CREATE, {
+      const response = await fetch(API_ENDPOINTS.TESTCASE_CREATE_V2, {
         method: "POST",
         headers,
         body: JSON.stringify(payload),

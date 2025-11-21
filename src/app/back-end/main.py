@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from database.database import init_db, seed_users
 from api.v1.endpoints import auth, dashboard, testCase, response, strategy, prompt, llmPrompt, target, language, domain, users
+from api.v2.endpoints import testCase as testCase_v2
 from middleware.middleware import AuthMiddleware
 
 
@@ -65,6 +66,7 @@ app.include_router(target.target_router, tags=["Targets"])
 app.include_router(language.language_router, tags=["Languages"])
 app.include_router(domain.domain_router, tags=["Domains"])
 app.include_router(users.users_router, tags=["Users"])
+app.include_router(testCase_v2.testcase_router, tags=["Testcase"])
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

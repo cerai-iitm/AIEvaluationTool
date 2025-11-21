@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine, select
-from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.orm import sessionmaker, scoped_session, joinedload
 from sqlalchemy.exc import IntegrityError
 from typing import List, Optional, Union
 from sqlalchemy.sql.expression import func
@@ -633,6 +633,111 @@ class DB:
             self.logger.error(f"Test case '{testcase}' does not exist.")
             return None
 
+    def update_testcase_record(self, testcase_id: int, updates: dict) -> Optional[dict]:
+        """
+        Updates a test case with the provided field values and returns the refreshed record.
+        """
+        with self.Session() as session:
+            testcase: Optional[TestCases] = (
+                session.query(TestCases)
+                .options(
+                    joinedload(TestCases.prompt),
+                    joinedload(TestCases.response),
+                    joinedload(TestCases.strategy),
+                    joinedload(TestCases.judge_prompt),
+                )
+                .filter(TestCases.testcase_id == testcase_id)
+                .first()
+            )
+            if testcase is None:
+                return None
+
+            updated = False
+
+            if "testcase_name" in updates and updates["testcase_name"]:
+                testcase.testcase_name = updates["testcase_name"]
+                updated = True
+
+            if "strategy_name" in updates and updates["strategy_name"]:
+                strategy_id = self.add_or_get_strategy_id(updates["strategy_name"])
+                if strategy_id in (None, -1):
+                    raise ValueError(f"Unable to resolve strategy '{updates['strategy_name']}'")
+                testcase.strategy_id = strategy_id
+                updated = True
+
+            if "user_prompt" in updates or "system_prompt" in updates:
+                current_prompt = getattr(testcase, "prompt", None)
+                new_user_prompt = updates.get(
+                    "user_prompt", getattr(current_prompt, "user_prompt", None)
+                )
+                new_system_prompt = updates.get(
+                    "system_prompt", getattr(current_prompt, "system_prompt", None)
+                )
+                lang_id = getattr(current_prompt, "lang_id", Language.autodetect) if current_prompt else Language.autodetect
+                domain_id = getattr(current_prompt, "domain_id", Domain.general) if current_prompt else Domain.general
+                prompt_obj = Prompt(
+                    user_prompt=new_user_prompt,
+                    system_prompt=new_system_prompt,
+                    lang_id=lang_id,
+                    domain_id=domain_id,
+                )
+                prompt_id = self.add_or_get_prompt(prompt_obj)
+                if prompt_id == -1:
+                    raise ValueError("Failed to update prompt")
+                testcase.prompt_id = prompt_id
+                updated = True
+
+            if "response_text" in updates:
+                response_text = updates["response_text"]
+                if response_text:
+                    current_response = getattr(testcase, "response", None)
+                    response_type = getattr(current_response, "response_type", "GT") if current_response else "GT"
+                    lang_id = getattr(current_response, "lang_id", Language.autodetect) if current_response else Language.autodetect
+                    response_obj = Response(
+                        response_text=response_text,
+                        response_type=response_type,
+                        lang_id=lang_id,
+                    )
+                    response_id = self.add_or_get_response(response_obj, testcase.prompt_id)
+                    if response_id == -1:
+                        raise ValueError("Failed to update response")
+                    testcase.response_id = response_id
+                    updated = True
+
+            if "llm_judge_prompt" in updates:
+                judge_prompt_text = updates["llm_judge_prompt"]
+                if judge_prompt_text:
+                    current_judge_prompt = getattr(testcase, "judge_prompt", None)
+                    lang_id = getattr(current_judge_prompt, "lang_id", Language.autodetect) if current_judge_prompt else Language.autodetect
+                    judge_prompt = LLMJudgePrompt(prompt=judge_prompt_text, lang_id=lang_id)
+                    judge_prompt_id = self.add_or_get_llm_judge_prompt(judge_prompt)
+                    if judge_prompt_id == -1:
+                        raise ValueError("Failed to update judge prompt")
+                    testcase.judge_prompt_id = judge_prompt_id
+                else:
+                    testcase.judge_prompt_id = None
+                updated = True
+
+            if updated:
+                session.commit()
+                session.refresh(testcase)
+            else:
+                session.refresh(testcase)
+
+            return self._serialize_testcase(testcase)
+
+    def delete_testcase_record(self, testcase_id: int) -> bool:
+        """
+        Deletes a test case by ID.
+        """
+        with self.Session() as session:
+            testcase = session.query(TestCases).filter(TestCases.testcase_id == testcase_id).first()
+            if testcase is None:
+                return False
+            session.delete(testcase)
+            session.commit()
+            return True
+
     def add_testcase(self, testcase: TestCase) -> int:
         """
         Creates a new test case in the database.
@@ -1173,6 +1278,68 @@ class DB:
                 f"Fetched {len(testcases)} test cases for metric '{metric_name}'."
             )
             return testcases
+
+    def _serialize_testcase(self, testcase: TestCases) -> dict:
+        """
+        Convert a TestCases ORM instance into a dictionary that can be returned by APIs.
+        """
+        prompt = getattr(testcase, "prompt", None)
+        response = getattr(testcase, "response", None)
+        strategy = getattr(testcase, "strategy", None)
+        judge_prompt = getattr(testcase, "judge_prompt", None)
+        domain = getattr(prompt, "domain", None) if prompt else None
+
+        return {
+            "testcase_id": getattr(testcase, "testcase_id"),
+            "testcase_name": getattr(testcase, "testcase_name"),
+            "strategy_id": getattr(strategy, "strategy_id", None) if strategy else None,
+            "strategy_name": getattr(strategy, "strategy_name", None) if strategy else None,
+            "prompt_id": getattr(prompt, "prompt_id", None) if prompt else None,
+            "user_prompt": getattr(prompt, "user_prompt", None) if prompt else None,
+            "system_prompt": getattr(prompt, "system_prompt", None) if prompt else None,
+            "domain_name": getattr(domain, "domain_name", None) if domain else None,
+            "response_id": getattr(response, "response_id", None) if response else None,
+            "response_text": getattr(response, "response_text", None) if response else None,
+            "llm_judge_prompt_id": getattr(judge_prompt, "prompt_id", None) if judge_prompt else None,
+            "llm_judge_prompt": getattr(judge_prompt, "prompt", None) if judge_prompt else None,
+        }
+
+    def list_testcases_with_metadata(self) -> List[dict]:
+        """
+        Returns all test cases along with their related metadata for API responses.
+        """
+        with self.Session() as session:
+            testcases = (
+                session.query(TestCases)
+                .options(
+                    joinedload(TestCases.prompt).joinedload(Prompts.domain),
+                    joinedload(TestCases.response),
+                    joinedload(TestCases.strategy),
+                    joinedload(TestCases.judge_prompt),
+                )
+                .all()
+            )
+            return [self._serialize_testcase(tc) for tc in testcases]
+
+    def get_testcase_with_metadata(self, testcase_id: int) -> Optional[dict]:
+        """
+        Returns a single test case with related metadata by ID.
+        """
+        with self.Session() as session:
+            testcase = (
+                session.query(TestCases)
+                .options(
+                    joinedload(TestCases.prompt).joinedload(Prompts.domain),
+                    joinedload(TestCases.response),
+                    joinedload(TestCases.strategy),
+                    joinedload(TestCases.judge_prompt),
+                )
+                .filter(TestCases.testcase_id == testcase_id)
+                .first()
+            )
+            if testcase is None:
+                return None
+            return self._serialize_testcase(testcase)
 
     def sample_prompts(
         self,
