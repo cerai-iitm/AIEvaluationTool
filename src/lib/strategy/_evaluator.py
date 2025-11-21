@@ -6,9 +6,11 @@ import random
 import os
 from .logger import get_logger
 import numpy as np
+import json
 
 logger = get_logger("evaluator")
 FileLoader._load_env_vars(__file__)
+dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), simple=True, strat_name="_evaluator")
 
 class Evaluator:
     """
@@ -21,6 +23,7 @@ class Evaluator:
     def set_strategy(self, strategy_name:str, metric_name:str):
         self.strat_name = strategy_name
         self.metric_name = metric_name
+        self.data_dir = os.getenv("DATA_PATH")
     
     def get_testcase_obj(self, example:dict) -> Tuple[TestCase, Conversation]:
         """
@@ -63,8 +66,16 @@ class Evaluator:
                 else:
                     combined[name] = v
         return combined
+
+    def save_scores(self, strat_name:str, score:dict):
+        if(not FileLoader._check_if_present(__file__, self.data_dir, f"{dflt_vals.score_file}.json")):
+            score_data = {}
+        else:
+            score_data =  FileLoader._load_file_content(__file__, self.data_dir, file_name=f"{dflt_vals.score_file}.json")
+        score_data[strat_name] = score
+        FileLoader._save_values(__file__, score_data, self.data_dir, f"{dflt_vals.score_file}.json")
     
-    def main(self, strategy_name:str = "", metric_name:str = "") -> dict:
+    def main(self, strategy_name:str = "", metric_name:str = ""):
         """
         use this function to parse the examples file using the strategy_name, and
         for each example in the file, use the runner to run the example and get the score,
@@ -92,17 +103,18 @@ class Evaluator:
         combined = self.combine_examples(examples)
         assigned_scores, human_scores = [], []
         for ex_list in combined.values():
-            for example in ex_list[:20]: # later do for all the examples, just for now we are taking some examples
+            for example in ex_list[:]: # later do for all the examples, just for now we are taking some examples
                 self.runner.set_metric_strategy(strategy_name, metric_name)
                 try:
                     human_scores.append(example["response_score"])
                     assigned_scores.append(self.runner.execute(*self.get_testcase_obj(example)))
                 except Exception as e:
                     logger.error(f"Could not find the specified strategy name or the metric name. Additional info : {e}")
-        avg_score = np.mean(assigned_scores)
+        avg_score = round(np.mean(assigned_scores), 3)
+        human_score = round(np.mean(human_scores), 3)
         logger.info(f"The average score for {strategy_name} based on the evaluation of examples is : {avg_score}")
-        logger.info(f"The average human score for {strategy_name} is : {np.mean(human_scores)}")
-        return avg_score
+        logger.info(f"The average human score for {strategy_name} is : {human_score}")
+        self.save_scores(strategy_name, {"evaluated_score" : avg_score, "human_score" : human_score})
                 
 ev = Evaluator()
-ev.main(strategy_name="llm_judge_positive", metric_name="Inclusivity")
+ev.main(strategy_name="entity_recognition", metric_name="")

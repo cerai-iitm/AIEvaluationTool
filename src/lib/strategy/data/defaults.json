@@ -90,5 +90,8 @@
         "dist_file" : "fluency_score_dist",
         "epsilon" : 0.5,
         "type" : "perplexity"
+    },
+    "_evaluator" : {
+        "score_file" : "scores"
     }
 }

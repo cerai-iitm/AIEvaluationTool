@@ -8,8 +8,6 @@ from itertools import combinations
 
 logger = get_logger("strategy_implementor")
 
-#only works with strategies that have "changed" in their name for now, which has been set in the lazyloader (changes should be made there)
-
 class StrategyImplementor:
 
     def __init__(self, **kwargs):

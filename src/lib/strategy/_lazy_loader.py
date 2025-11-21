@@ -20,7 +20,6 @@ class LazyLoader:
         
     def create_mapp(self):
         for filename in os.listdir(self.package_path):
-            # remove the last condition later
             if filename.startswith("__") or not filename.endswith(".py"): #or not filename.startswith("changed"):
                 continue
             full_path = os.path.join(self.package_path, filename)

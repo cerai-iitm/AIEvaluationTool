@@ -19,26 +19,6 @@ class FileLoader:
         env_path = os.path.join(os.path.dirname(run_file_path), '.env')
         load_dotenv(env_path)
     
-
-    ### need to change the function so that it works with strategy instead of the running file's name
-    # @staticmethod
-    # def _load_file_content(run_file_path:str, req_folder_path:str = '', file_name:str = ''):
-    #     data_dir = os.path.join(os.path.dirname(run_file_path), req_folder_path) if req_folder_path != '' else os.path.dirname(run_file_path)
-    #     try:
-    #         file_names = os.listdir(data_dir)
-    #     except:
-    #         file_names = list()
-    #         logger.error(f"The path {data_dir} does not exist. You might want to pass in data/{req_folder_path}.")
-    #     running_file_name = run_file_path.split('/')[-1].removesuffix('.py') # .split("_")[-1] # the last split should be removed later after removing changed from filenames
-    #     file_content = {}
-    #     if file_name != "":
-    #         file_content = FileLoader._fill_values(file_content, data_dir, file_name, multiple=False)
-    #     else:
-    #         for f in file_names:
-    #             if running_file_name in f:
-    #                 file_content = FileLoader._fill_values(file_content, data_dir, f)
-    #     return file_content
-    
     @staticmethod
     def _load_file_content(run_file_path:str, req_folder_path:str = "", file_name:str = "", **kwargs):
         data_dir = os.path.join(os.path.dirname(run_file_path), req_folder_path) if req_folder_path != '' else os.path.dirname(run_file_path)

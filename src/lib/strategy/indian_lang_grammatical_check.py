@@ -3,6 +3,7 @@ import nltk
 import difflib
 import os 
 import warnings
+from typing import Optional
 from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
 from .logger import get_logger
@@ -29,16 +30,17 @@ class IndianLangGrammaticalCheck(Strategy):
             logger.info("GPU_URL is loaded from environment.")
 
     def check_grammar(self, text: str, lang: str) -> str:
-        prompt = f'''<|user|>
-Correct any grammatical, spelling, or meaning errors in the following sentence and return only the corrected sentence strictly in {lang} and in {lang} script after "Corrected Sentence:".
+#         prompt = f'''<|user|>
+# Correct any grammatical, spelling, or meaning errors in the following sentence and return only the corrected sentence strictly in {lang} and in {lang} script after "Corrected Sentence:".
 
-Sentence: {text}
+# Sentence: {text}
 
-Respond below only with the corrected sentence in {lang}:
+# Respond below only with the corrected sentence in {lang}:
 
-<|assistant|>
-Corrected Sentence:
-'''
+# <|assistant|>
+# Corrected Sentence:
+# '''    
+        prompt = text
         output = requests.post(f"{self.gpu_url}/generate",params={"prompt": prompt})
         data = output.json()
         corrected = data.get("generated")
@@ -51,14 +53,14 @@ Corrected Sentence:
         changes = sum(1 for tag, *_ in diff.get_opcodes() if tag != 'equal')
         return changes, len(original_words)
 
-    def evaluate(self, testcase:TestCase, conversation:Conversation):#agent_response: str, expected_response: Optional[str]=None) -> float:
-        corrected = self.check_grammar(conversation.agent_response, lang="Hindi")
-        corrections, total_words = self.count_corrections(conversation.agent_response, corrected)
+    def evaluate(self, agent_response: str, expected_response: Optional[str]=None) -> float:#testcase:TestCase, conversation:Conversation):#agent_response: str, expected_response: Optional[str]=None) -> float:
+        corrected = self.check_grammar(agent_response, lang="Hindi")#conversation.agent_response, lang="Hindi")
+        corrections, total_words = self.count_corrections(agent_response)#conversation.agent_response, corrected)
         grammar_score = round(1.0 - (corrections / total_words), 2) if total_words > 0 else 0.0
         return grammar_score
 
-# if __name__ == "__main__":
-#     checker = IndianLangGrammaticalCheck()
-#     test_sentence = "यह एक गलत वाक्य है।"
-#     score = checker.evaluate(test_sentence)
-#     print(f"Grammar score for test sentence: {score}")
+if __name__ == "__main__":
+    checker = IndianLangGrammaticalCheck()
+    test_sentence = "यह एक गलत वाक्य है।"
+    score = checker.evaluate(test_sentence)
+    print(f"Grammar score for test sentence: {score}")

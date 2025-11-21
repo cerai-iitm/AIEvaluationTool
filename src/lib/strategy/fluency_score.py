@@ -60,6 +60,7 @@ class IndianLanguageFluencyScorer(Strategy):
         plt.ylabel('Density')
         plt.legend()
         plt.savefig(path)
+        plt.clf()
     
     def evaluate(self, testcase:TestCase, conversation:Conversation): #agent_response:str): #testcase:TestCase, conversation:Conversation):
         score = self.get_score(conversation.agent_response, dflt_vals.type) #agent_response)#conversation.agent_response)
