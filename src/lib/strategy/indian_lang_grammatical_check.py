@@ -4,6 +4,7 @@ import difflib
 import os 
 import warnings
 from typing import Optional
+import json
 from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
 from .logger import get_logger
@@ -49,18 +50,29 @@ class IndianLangGrammaticalCheck(Strategy):
     def count_corrections(self, original, corrected):
         original_words = original
         corrected_words = corrected
+        print(corrected_words)
+        def translate(agent_response:str):
+            return json.loads(requests.post(f"{self.gpu_url}/translate", params={"input_text" : agent_response, "target_language" : "English"}).content.decode('utf-8'))
+        print(translate("என் வயிறு ரொம்ப வலிக்குது, அதனால இன்னிக்கு ஸ்கூலுக்கு போறேன்."))
         diff = difflib.SequenceMatcher(None, original_words, corrected_words)
         changes = sum(1 for tag, *_ in diff.get_opcodes() if tag != 'equal')
         return changes, len(original_words)
 
     def evaluate(self, agent_response: str, expected_response: Optional[str]=None) -> float:#testcase:TestCase, conversation:Conversation):#agent_response: str, expected_response: Optional[str]=None) -> float:
         corrected = self.check_grammar(agent_response, lang="Hindi")#conversation.agent_response, lang="Hindi")
-        corrections, total_words = self.count_corrections(agent_response)#conversation.agent_response, corrected)
+        corrections, total_words = self.count_corrections(agent_response, corrected)#conversation.agent_response, corrected)
         grammar_score = round(1.0 - (corrections / total_words), 2) if total_words > 0 else 0.0
         return grammar_score
 
 if __name__ == "__main__":
     checker = IndianLangGrammaticalCheck()
-    test_sentence = "यह एक गलत वाक्य है।"
+    test_sentence = '''### Instruction : 
+    Give me the grammatically correct sentence for the input below in the same language as the input.   
+    
+    ### Input:
+    वो लोग कल मेरे घर आने वाला थे लेकिन मैं नहीं जानता हूँ कि क्यों वो सब नहीं आया था और मैं पूरा टाइम इंतज़ार करता रहा था हूँ.
+    
+    ### Response:'''
+
     score = checker.evaluate(test_sentence)
     print(f"Grammar score for test sentence: {score}")
