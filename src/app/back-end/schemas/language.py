@@ -1,17 +1,38 @@
-from pydantic import BaseModel
 from typing import Optional
 
-
-class Language(BaseModel):
-    lang_id: Optional[int]
-    lang_name: Optional[str]
+from pydantic import BaseModel, Field
 
 
-class LanguageCreate(BaseModel):
+class LanguageBase(BaseModel):
+    lang_name: str = Field(..., description="The name of the language.")
+
+
+class LanguageCreateV2(LanguageBase):
+    pass
+
+
+class LanguageUpdateV2(BaseModel):
+    lang_name: Optional[str] = Field(None, description="The new name of the language.")
+
+
+class LanguageListResponse(BaseModel):
+    lang_id: int
     lang_name: str
 
-class LanguageUpdate(BaseModel):
-    lang_name: Optional[str]
 
-class LanguageDelete(BaseModel):
+class LanguageDetailResponse(BaseModel):
     lang_id: int
+    lang_name: str
+
+    class Config:
+        from_attributes = True
+
+#-----------------------------------------
+class ResponseModel(BaseModel):
+    text: str
+    type: str
+
+
+class Language_v2(BaseModel):
+    lang_name: str
+    response: ResponseModel

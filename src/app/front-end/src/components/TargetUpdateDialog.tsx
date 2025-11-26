@@ -1,22 +1,33 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { API_ENDPOINTS } from '@/config/api';
-import { useToast } from '@/hooks/use-toast';
+import { useState, useEffect, useCallback } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { API_ENDPOINTS } from "@/config/api";
+import { useToast } from "@/hooks/use-toast";
 
 interface Target {
-  id: number;
-  name: string;
-  type: string;
-  description: string;
-  url: string;
-  domain: string;
-  languages: string[];
+  target_id: number;
+  target_name: string;
+  target_type: string;
+  target_description: string;
+  target_url: string;
+  domain_name: string;
+  lang_list: string[];
   notes?: string;
 }
 
@@ -27,14 +38,19 @@ interface TargetUpdateDialogProps {
   onUpdateSuccess?: () => void;
 }
 
-export default function TargetUpdateDialog({ target, open, onOpenChange, onUpdateSuccess }: TargetUpdateDialogProps) {
+export default function TargetUpdateDialog({
+  target,
+  open,
+  onOpenChange,
+  onUpdateSuccess,
+}: TargetUpdateDialogProps) {
   const { toast } = useToast();
-  const [type, setType] = useState('');
-  const [description, setDescription] = useState('');
-  const [url, setUrl] = useState('');
-  const [domain, setDomain] = useState('');
+  const [type, setType] = useState("");
+  const [description, setDescription] = useState("");
+  const [url, setUrl] = useState("");
+  const [domain, setDomain] = useState("");
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
-  const [notes, setNotes] = useState('');
+  const [notes, setNotes] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [targetTypes, setTargetTypes] = useState<string[]>([]);
   const [domainOptions, setDomainOptions] = useState<string[]>([]);
@@ -45,19 +61,20 @@ export default function TargetUpdateDialog({ target, open, onOpenChange, onUpdat
   const fetchOptions = useCallback(async () => {
     setIsFetchingOptions(true);
     try {
-      const token = localStorage.getItem('access_token');
+      const token = localStorage.getItem("access_token");
       const headers: HeadersInit = {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       };
       if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+        headers["Authorization"] = `Bearer ${token}`;
       }
 
-      const [typesResponse, domainsResponse, languagesResponse] = await Promise.all([
-        fetch(API_ENDPOINTS.TARGET_TYPES, { headers }),
-        fetch(API_ENDPOINTS.DOMAINS, { headers }),
-        fetch(API_ENDPOINTS.LANGUAGES, { headers }),
-      ]);
+      const [typesResponse, domainsResponse, languagesResponse] =
+        await Promise.all([
+          fetch(API_ENDPOINTS.TARGET_TYPES, { headers }),
+          fetch(API_ENDPOINTS.DOMAINS_V2, { headers }),
+          fetch(API_ENDPOINTS.LANGUAGES_V2, { headers }),
+        ]);
 
       if (typesResponse.ok) {
         const typesData = await typesResponse.json();
@@ -80,7 +97,7 @@ export default function TargetUpdateDialog({ target, open, onOpenChange, onUpdat
         setLanguageOptions(langNames);
       }
     } catch (error) {
-      console.error('Error fetching options:', error);
+      console.error("Error fetching options:", error);
     } finally {
       setIsFetchingOptions(false);
     }
@@ -94,88 +111,93 @@ export default function TargetUpdateDialog({ target, open, onOpenChange, onUpdat
 
   useEffect(() => {
     if (target) {
-      setType(target.type);
-      setDescription(target.description);
-      setUrl(target.url);
-      setDomain(target.domain);
-      setSelectedLanguages(target.languages || []);
-      setNotes(target.notes || '');
+      setType(target.target_type);
+      setDescription(target.target_description);
+      setUrl(target.target_url);
+      setDomain(target.domain_name);
+      setSelectedLanguages(target.lang_list || []);
+      setNotes(target.notes || "");
     }
   }, [target]);
 
   const targetInitial: Target = target || {
-    id: 0,
-    name: '',
-    type: '',
-    description: '',
-    url: '',
-    domain: '',
-    languages: [],
-    notes: '',
+    target_id: 0,
+    target_name: "",
+    target_type: "",
+    target_description: "",
+    target_url: "",
+    domain_name: "",
+    lang_list: [],
+    notes: "",
   };
 
-  const isChanged = (
-    type !== (targetInitial.type || '') ||
-    description !== (targetInitial.description || '') ||
-    url !== (targetInitial.url || '') ||
-    domain !== (targetInitial.domain || '') ||
-    selectedLanguages.join(',') !== (targetInitial.languages || []).join(',') ||
-    notes !== (targetInitial.notes || '')
-  );
+  const isChanged =
+    type !== (targetInitial.target_type || "") ||
+    description !== (targetInitial.target_description || "") ||
+    url !== (targetInitial.target_url || "") ||
+    domain !== (targetInitial.domain_name || "") ||
+    selectedLanguages.join(",") !== (targetInitial.lang_list || []).join(",") ||
+    notes !== (targetInitial.notes || "");
 
   const handleLanguageToggle = (lang: string) => {
     setSelectedLanguages((prev) =>
-      prev.includes(lang) ? prev.filter((l) => l !== lang) : [...prev, lang]
+      prev.includes(lang) ? prev.filter((l) => l !== lang) : [...prev, lang],
     );
   };
 
   const handleSubmit = async () => {
-    if (!target?.id) {
+    if (!target?.target_id) {
       toast({
-        title: 'Error',
-        description: 'Target ID is missing',
-        variant: 'destructive',
+        title: "Error",
+        description: "Target ID is missing",
+        variant: "destructive",
       });
       return;
     }
 
     if (!notes || !notes.trim()) {
       toast({
-        title: 'Validation Error',
-        description: 'Notes field is required',
-        variant: 'destructive',
+        title: "Validation Error",
+        description: "Notes field is required",
+        variant: "destructive",
       });
       return;
     }
 
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('access_token');
+      const token = localStorage.getItem("access_token");
       const headers: HeadersInit = {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       };
       if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+        headers["Authorization"] = `Bearer ${token}`;
       }
 
       // Send all fields to match backend expectations
       const updatePayload: any = {
-        target_name: target.name,
-        target_type: type || targetInitial.type,
+        target_name: target.target_name,
+        target_type: type || targetInitial.target_type,
         target_description: description || null,
-        target_url: url || targetInitial.url,
-        domain_name: domain || targetInitial.domain,
-        lang_list: selectedLanguages.length > 0 ? selectedLanguages : (targetInitial.languages || []),
+        target_url: url || targetInitial.target_url,
+        domain_name: domain || targetInitial.domain_name,
+        lang_list:
+          selectedLanguages.length > 0
+            ? selectedLanguages
+            : targetInitial.lang_list || [],
       };
 
-      console.log('Updating target with payload:', updatePayload);
-      console.log('Target ID:', target.id);
+      console.log("Updating target with payload:", updatePayload);
+      console.log("Target ID:", target.target_id);
 
-      const response = await fetch(API_ENDPOINTS.TARGET_UPDATE(target.id), {
-        method: 'PUT',
-        headers,
-        body: JSON.stringify(updatePayload),
-      });
+      const response = await fetch(
+        API_ENDPOINTS.TARGET_UPDATE_V2(target.target_id),
+        {
+          method: "PUT",
+          headers,
+          body: JSON.stringify(updatePayload),
+        },
+      );
 
       if (!response.ok) {
         let errorMessage = `HTTP error! status: ${response.status}`;
@@ -185,12 +207,15 @@ export default function TargetUpdateDialog({ target, open, onOpenChange, onUpdat
           if (errorData.detail) {
             if (Array.isArray(errorData.detail)) {
               // Pydantic validation errors
-              errorMessage = errorData.detail.map((err: any) => {
-                if (typeof err === 'string') return err;
-                if (err.msg) return `${err.loc?.join('.') || 'field'}: ${err.msg}`;
-                return JSON.stringify(err);
-              }).join(', ');
-            } else if (typeof errorData.detail === 'string') {
+              errorMessage = errorData.detail
+                .map((err: any) => {
+                  if (typeof err === "string") return err;
+                  if (err.msg)
+                    return `${err.loc?.join(".") || "field"}: ${err.msg}`;
+                  return JSON.stringify(err);
+                })
+                .join(", ");
+            } else if (typeof errorData.detail === "string") {
               errorMessage = errorData.detail;
             } else {
               errorMessage = JSON.stringify(errorData.detail);
@@ -211,8 +236,8 @@ export default function TargetUpdateDialog({ target, open, onOpenChange, onUpdat
       }
 
       toast({
-        title: 'Success',
-        description: 'Target updated successfully',
+        title: "Success",
+        description: "Target updated successfully",
       });
 
       if (onUpdateSuccess) {
@@ -221,11 +246,12 @@ export default function TargetUpdateDialog({ target, open, onOpenChange, onUpdat
 
       onOpenChange(false);
     } catch (error) {
-      console.error('Error updating target:', error);
+      console.error("Error updating target:", error);
       toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to update target',
-        variant: 'destructive',
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Failed to update target",
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
@@ -246,13 +272,19 @@ export default function TargetUpdateDialog({ target, open, onOpenChange, onUpdat
         <div className="overflow-y-auto flex-1 pr-1 pl-1">
           <div className="space-y-4 pb-4">
             <Label className="text-base font-semibold">Target Name</Label>
-            <Input value={target.name} className="bg-muted" />
+            <Input value={target.target_name} className="bg-muted" />
           </div>
           <div className="space-y-4 pb-4">
             <Label className="text-base font-semibold">Target Type</Label>
-            <Select value={type} onValueChange={setType} disabled={isFetchingOptions}>
+            <Select
+              value={type}
+              onValueChange={setType}
+              disabled={isFetchingOptions}
+            >
               <SelectTrigger>
-                <SelectValue placeholder={isFetchingOptions ? 'Loading...' : 'Select type'} />
+                <SelectValue
+                  placeholder={isFetchingOptions ? "Loading..." : "Select type"}
+                />
               </SelectTrigger>
               <SelectContent className="bg-popover max-h-[300px]">
                 {targetTypes.length === 0 && !isFetchingOptions ? (
@@ -280,13 +312,25 @@ export default function TargetUpdateDialog({ target, open, onOpenChange, onUpdat
           </div>
           <div className="space-y-1 pb-4">
             <Label className="text-base font-semibold">URL</Label>
-            <Input value={url} onChange={(e) => setUrl(e.target.value)} className="bg-muted" />
+            <Input
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              className="bg-muted"
+            />
           </div>
           <div className="space-y-1 pb-4">
             <Label className="text-base font-semibold">Domain</Label>
-            <Select value={domain} onValueChange={setDomain} disabled={isFetchingOptions}>
+            <Select
+              value={domain}
+              onValueChange={setDomain}
+              disabled={isFetchingOptions}
+            >
               <SelectTrigger>
-                <SelectValue placeholder={isFetchingOptions ? 'Loading...' : 'Select domain'} />
+                <SelectValue
+                  placeholder={
+                    isFetchingOptions ? "Loading..." : "Select domain"
+                  }
+                />
               </SelectTrigger>
               <SelectContent className="bg-popover max-h-[300px]">
                 {domainOptions.length === 0 && !isFetchingOptions ? (
@@ -307,9 +351,13 @@ export default function TargetUpdateDialog({ target, open, onOpenChange, onUpdat
             <Label className="text-base font-semibold">Languages</Label>
             <div className="bg-muted p-4 rounded-md max-h-[110px] overflow-y-auto">
               {isFetchingOptions ? (
-                <div className="text-sm text-muted-foreground">Loading languages...</div>
+                <div className="text-sm text-muted-foreground">
+                  Loading languages...
+                </div>
               ) : languageOptions.length === 0 ? (
-                <div className="text-sm text-muted-foreground">No languages available</div>
+                <div className="text-sm text-muted-foreground">
+                  No languages available
+                </div>
               ) : (
                 <div className="space-y-2">
                   {languageOptions.map((lang) => (
@@ -346,7 +394,7 @@ export default function TargetUpdateDialog({ target, open, onOpenChange, onUpdat
             className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={!isChanged || !notes || isLoading}
           >
-            {isLoading ? 'Updating...' : 'Submit'}
+            {isLoading ? "Updating..." : "Submit"}
           </Button>
         </div>
       </DialogContent>

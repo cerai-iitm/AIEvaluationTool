@@ -52,7 +52,7 @@ const Prompts = () => {
       if (token) {
         headers["Authorization"] = `Bearer ${token}`;
       }
-      const response = await fetch(API_ENDPOINTS.PROMPTS_ALL, {
+      const response = await fetch(API_ENDPOINTS.PROMPTS_V2, {
         method: "GET",
         headers,
       });
@@ -61,14 +61,7 @@ const Prompts = () => {
         throw new Error(errorData.detail || "Unable to fetch prompts");
       }
       const data = await response.json();
-      const mapped: PromptItem[] = data.map((prompt: any) => ({
-        prompt_id: prompt.prompt_id,
-        user_prompt: prompt.user_prompt ?? "",
-        system_prompt: prompt.system_prompt ?? "",
-        language: prompt.language ?? null,
-        domain: prompt.domain ?? null,
-      }));
-      setPrompts(mapped);
+      setPrompts(data);
     } catch (error: any) {
       console.error("Failed to load prompts:", error);
       toast({
@@ -95,7 +88,7 @@ const Prompts = () => {
           (p.domain?.toLowerCase() ?? "").includes(query)
         );
       }),
-    [prompts, searchQuery]
+    [prompts, searchQuery],
   );
 
   const totalItems = filteredPrompts.length;
@@ -104,7 +97,7 @@ const Prompts = () => {
 
   const paginatedPrompts = filteredPrompts.slice(
     (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+    currentPage * itemsPerPage,
   );
 
   const handleDeletePrompt = async () => {
@@ -116,10 +109,13 @@ const Prompts = () => {
       if (token) {
         headers["Authorization"] = `Bearer ${token}`;
       }
-      const response = await fetch(API_ENDPOINTS.PROMPT_DELETE(promptToDelete.prompt_id), {
-        method: "DELETE",
-        headers,
-      });
+      const response = await fetch(
+        API_ENDPOINTS.PROMPT_DELETE_V2(promptToDelete.prompt_id),
+        {
+          method: "DELETE",
+          headers,
+        },
+      );
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.detail || "Failed to delete prompt");
@@ -183,7 +179,7 @@ const Prompts = () => {
                   ? "0"
                   : `${(currentPage - 1) * itemsPerPage + 1} - ${Math.min(
                       currentPage * itemsPerPage,
-                      totalItems
+                      totalItems,
                     )} of ${totalItems}`}
               </span>
               <div className="flex gap-1">
@@ -213,22 +209,35 @@ const Prompts = () => {
               {isLoading ? (
                 <div className="flex items-center justify-center py-16">
                   <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                  <span className="ml-2 text-sm text-muted-foreground">Loading prompts...</span>
+                  <span className="ml-2 text-sm text-muted-foreground">
+                    Loading prompts...
+                  </span>
                 </div>
               ) : (
                 <table className="w-full">
                   <thead className="border-b-2">
                     <tr>
-                      <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-center">Prompt ID</th>
-                      <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-center">User Prompt</th>
-                      <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">Language</th>
-                      <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">Domain</th>
+                      <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-center">
+                        Prompt ID
+                      </th>
+                      <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-center">
+                        User Prompt
+                      </th>
+                      <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">
+                        Language
+                      </th>
+                      <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">
+                        Domain
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {paginatedPrompts.length === 0 ? (
                       <tr>
-                        <td colSpan={4} className="p-6 text-center text-muted-foreground">
+                        <td
+                          colSpan={4}
+                          className="p-6 text-center text-muted-foreground"
+                        >
                           No prompts found
                         </td>
                       </tr>
@@ -240,7 +249,9 @@ const Prompts = () => {
                           onClick={() => setSelectedPrompt(row)}
                         >
                           <td className="p-2 text-center">{row.prompt_id}</td>
-                          <td className="p-2 truncate max-w-[650px] pr-8 mr-2">{row.user_prompt}</td>
+                          <td className="p-2 truncate max-w-[650px] pr-8 mr-2">
+                            {row.user_prompt}
+                          </td>
                           <td className="p-2 ">{row.language ?? "—"}</td>
                           <td className="p-2 ">{row.domain ?? "—"}</td>
                         </tr>
@@ -263,7 +274,10 @@ const Prompts = () => {
         </div>
       </main>
 
-      <Dialog open={!!selectedPrompt} onOpenChange={() => setSelectedPrompt(null)}>
+      <Dialog
+        open={!!selectedPrompt}
+        onOpenChange={() => setSelectedPrompt(null)}
+      >
         <DialogContent
           className="max-w-3xl max-h-[90vh] overflow-y-auto"
           onOpenAutoFocus={(e) => e.preventDefault()}
@@ -276,19 +290,35 @@ const Prompts = () => {
             <div className="flex-1 p-1 overflow-y-auto space-y-6 pb-5">
               <div className="space-y-1">
                 <Label className="text-base font-semibold">User Prompt</Label>
-                <Textarea value={selectedPrompt.user_prompt} readOnly className="bg-muted min-h-[80px]" />
+                <Textarea
+                  value={selectedPrompt.user_prompt}
+                  readOnly
+                  className="bg-muted min-h-[80px]"
+                />
               </div>
               <div className="space-y-1">
                 <Label className="text-base font-semibold">System Prompt</Label>
-                <Textarea value={selectedPrompt.system_prompt} readOnly className="bg-muted min-h-[80px]" />
+                <Textarea
+                  value={selectedPrompt.system_prompt}
+                  readOnly
+                  className="bg-muted min-h-[80px]"
+                />
               </div>
               <div className="space-y-1">
                 <Label className="text-base font-semibold">language Name</Label>
-                <Input value={selectedPrompt.language ?? ""} readOnly className="bg-muted" />
+                <Input
+                  value={selectedPrompt.language ?? ""}
+                  readOnly
+                  className="bg-muted"
+                />
               </div>
               <div className="space-y-1">
                 <Label className="text-base font-semibold">Domain Name</Label>
-                <Input value={selectedPrompt.domain ?? ""} readOnly className="bg-muted" />
+                <Input
+                  value={selectedPrompt.domain ?? ""}
+                  readOnly
+                  className="bg-muted"
+                />
               </div>
             </div>
           )}
@@ -351,15 +381,18 @@ const Prompts = () => {
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Are you sure you want to delete the following Prompt? This action cannot be undone.
+              Are you sure you want to delete the following Prompt? This action
+              cannot be undone.
             </p>
             {promptToDelete && (
               <div className="rounded-md bg-muted p-3 text-sm">
                 <p>
-                  <span className="font-semibold">Prompt ID:</span> {promptToDelete.prompt_id}
+                  <span className="font-semibold">Prompt ID:</span>{" "}
+                  {promptToDelete.prompt_id}
                 </p>
                 <p className="mt-2 line-clamp-3">
-                  <span className="font-semibold">User Prompt:</span> {promptToDelete.user_prompt}
+                  <span className="font-semibold">User Prompt:</span>{" "}
+                  {promptToDelete.user_prompt}
                 </p>
               </div>
             )}
@@ -397,5 +430,3 @@ const Prompts = () => {
 };
 
 export default Prompts;
-
-

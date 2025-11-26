@@ -1,31 +1,46 @@
-from pydantic import BaseModel
 from typing import Optional
 
-class PromptIds(BaseModel):
-    prompt_id: Optional[int]
-    user_prompt: Optional[str]
-    system_prompt: Optional[str]
+from pydantic import BaseModel, Field
 
-class Prompts(BaseModel):
-    prompt_id: Optional[int]
-    user_prompt: Optional[str]
-    system_prompt: Optional[str]
-    language: Optional[str]
-    domain: Optional[str]
 
-class PromptUpdate(BaseModel):
-    prompt_id: Optional[int]
-    user_prompt: Optional[str]
-    system_prompt: Optional[str]
-    language: Optional[str]
-    domain: Optional[str]
+class PromptBase(BaseModel):
+    user_prompt: str = Field(..., description="The user prompt.")
+    system_prompt: Optional[str] = Field(None, description="The system prompt.")
+    language: str = Field(..., description="The language of the prompt.")
+    domain: str = Field(..., description="The domain of the prompt.")
 
-class PromptCreate(BaseModel):
+# class Prompt(BaseModel):
+#     user_prompt: str
+#     system_prompt: Optional[str]
+
+class PromptCreateV2(BaseModel):
     user_prompt: str
-    system_prompt: str
+    system_prompt: Optional[str]
     language: str
     domain: str
 
-class PromptDelete(BaseModel):
+
+
+
+class PromptUpdateV2(BaseModel):
+    user_prompt: Optional[str] = Field(None, description="The new user prompt.")
+    system_prompt: Optional[str] = Field(None, description="The new system prompt.")
+    language: Optional[str] = Field(None, description="The new language of the prompt.")
+    domain: Optional[str] = Field(None, description="The new domain of the prompt.")
+
+
+class PromptListResponse(BaseModel):
     prompt_id: int
-    message: str
+    user_prompt: str
+    system_prompt: Optional[str]
+
+
+class PromptDetailResponse(BaseModel):
+    prompt_id: int
+    user_prompt: str
+    system_prompt: Optional[str]
+    language: Optional[str]
+    domain: Optional[str]
+
+    class Config:
+        from_attributes = True

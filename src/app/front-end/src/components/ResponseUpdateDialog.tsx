@@ -26,14 +26,12 @@ import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
 
 interface Response {
-  id: number;
   response_id: number;
-  name?: string;
-  responseText: string;
-  responseType: string;
+  response_text: string;
+  response_type: string;
   language: string;
-  userPrompts: string;
-  systemPrompts: string;
+  user_prompt: string;
+  system_prompt: string;
   notes?: string;
 }
 
@@ -57,41 +55,28 @@ export const ResponseUpdateDialog = ({
   onUpdateSuccess,
 }: ResponseUpdateDialogProps) => {
   const { toast } = useToast();
-  const [responseText, setResponseText] = useState(response?.responseText || "");
-  const [responseType, setResponseType] = useState(response?.responseType || "");
+  const [responseText, setResponseText] = useState(
+    response?.response_text || "",
+  );
+  const [responseType, setResponseType] = useState(
+    response?.response_type || "",
+  );
   const [language, setLanguage] = useState(response?.language || "");
-  const [userPrompts, setUserPrompts] = useState(response?.userPrompts || "");
-  const [systemPrompts, setSystemPrompts] = useState(response?.systemPrompts || "");
+  const [userPrompts, setUserPrompts] = useState(response?.user_prompt || "");
+  const [systemPrompts, setSystemPrompts] = useState(
+    response?.system_prompt || "",
+  );
   const [notes, setNotes] = useState(response?.notes || "");
   const [isLoading, setIsLoading] = useState(false);
   const [languageOptions, setLanguageOptions] = useState<string[]>([]);
   const [isFetchingLanguages, setIsFetchingLanguages] = useState(false);
-  
+
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
   const [searchType, setSearchType] = useState<PromptSearchType>("userPrompt");
-  const [focusedField, setFocusedField] = useState<null | "userPrompt" | "systemPrompt">(null);
+  const [focusedField, setFocusedField] = useState<
+    null | "userPrompt" | "systemPrompt"
+  >(null);
 
-  // Map display name to backend response type
-  const mapDisplayToResponseType = (display: string): string => {
-    const mapping: Record<string, string> = {
-      'Ground Truth': 'GT',
-      'Ground Truth Description': 'GTDesc',
-      'Not Applicable': 'NA',
-    };
-    return mapping[display] || display;
-  };
-
-  // Map backend response type to display name
-  const mapResponseTypeToDisplay = (type: string): string => {
-    const mapping: Record<string, string> = {
-      'GT': 'Ground Truth',
-      'GTDesc': 'Ground Truth Description',
-      'NA': 'Not Applicable',
-    };
-    return mapping[type] || type;
-  };
-
-  // Fetch languages from API
   const fetchLanguages = useCallback(async () => {
     setIsFetchingLanguages(true);
     try {
@@ -104,7 +89,7 @@ export const ResponseUpdateDialog = ({
         headers["Authorization"] = `Bearer ${token}`;
       }
 
-      const response = await fetch(API_ENDPOINTS.LANGUAGES, { headers });
+      const response = await fetch(API_ENDPOINTS.LANGUAGES_V2, { headers });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -115,8 +100,10 @@ export const ResponseUpdateDialog = ({
         new Set(
           (Array.isArray(data) ? data : [])
             .map((lang: any) => lang?.lang_name)
-            .filter((name: string | null | undefined): name is string => Boolean(name))
-        )
+            .filter((name: string | null | undefined): name is string =>
+              Boolean(name),
+            ),
+        ),
       );
 
       setLanguageOptions(languageNames);
@@ -140,11 +127,11 @@ export const ResponseUpdateDialog = ({
 
   useEffect(() => {
     if (response) {
-      setResponseText(response.responseText || "");
-      setResponseType(response.responseType || "");
+      setResponseText(response.response_text || "");
+      setResponseType(response.response_type || "");
       setLanguage(response.language || "");
-      setUserPrompts(response.userPrompts || "");
-      setSystemPrompts(response.systemPrompts || "");
+      setUserPrompts(response.user_prompt || "");
+      setSystemPrompts(response.system_prompt || "");
       setNotes(response.notes || "");
     }
   }, [response]);
@@ -155,45 +142,29 @@ export const ResponseUpdateDialog = ({
   };
 
   const handleSelectPrompt = (selection: PromptSearchSelection) => {
-    switch (selection.type) {
-      case "userPrompt":
-        setUserPrompts(selection.userPrompt);
-        if (selection.systemPrompt !== undefined) {
-          setSystemPrompts(selection.systemPrompt ?? "");
-        }
-        break;
-      case "systemPrompt":
-        setSystemPrompts(selection.systemPrompt);
-        if (selection.userPrompt) {
-          setUserPrompts(selection.userPrompt);
-        }
-        break;
-      default:
-        break;
-    }
+    setUserPrompts(selection.userPrompt);
+    setSystemPrompts(selection.systemPrompt ?? "");
     setFocusedField(null);
     setSearchDialogOpen(false);
   };
 
   const responseInitial = response || {
-    id: 0,
     response_id: 0,
-    responseText: "",
-    responseType: "",
+    response_text: "",
+    response_type: "",
     language: "",
-    userPrompts: "",
-    systemPrompts: "",
+    user_prompt: "",
+    system_prompt: "",
     notes: "",
   };
 
-  const isChanged = (
-    responseText !== (responseInitial.responseText || "") ||
-    responseType !== (responseInitial.responseType || "") ||
+  const isChanged =
+    responseText !== (responseInitial.response_text || "") ||
+    responseType !== (responseInitial.response_type || "") ||
     language !== (responseInitial.language || "") ||
-    userPrompts !== (responseInitial.userPrompts || "") ||
-    systemPrompts !== (responseInitial.systemPrompts || "") ||
-    notes !== (responseInitial.notes || "")
-  );
+    userPrompts !== (responseInitial.user_prompt || "") ||
+    systemPrompts !== (responseInitial.system_prompt || "") ||
+    notes !== (responseInitial.notes || "");
 
   const handleSubmit = async () => {
     if (!response?.response_id) {
@@ -225,38 +196,31 @@ export const ResponseUpdateDialog = ({
         headers["Authorization"] = `Bearer ${token}`;
       }
 
-      // Prepare update payload - only include fields that have changed
       const updatePayload: any = {};
-      
-      if (responseText !== (responseInitial.responseText || "")) {
+
+      if (responseText !== (responseInitial.response_text || "")) {
         updatePayload.response_text = responseText;
       }
-      if (responseType !== (responseInitial.responseType || "")) {
-        updatePayload.response_type = mapDisplayToResponseType(responseType);
+      if (responseType !== (responseInitial.response_type || "")) {
+        updatePayload.response_type = responseType;
       }
       if (language !== (responseInitial.language || "")) {
-        updatePayload.lang_name = language;
-      }
-      if (userPrompts !== (responseInitial.userPrompts || "")) {
-        updatePayload.user_prompt = userPrompts;
-      }
-      if (systemPrompts !== (responseInitial.systemPrompts || "")) {
-        updatePayload.system_prompt = systemPrompts;
+        updatePayload.language = language;
       }
 
       const response_api = await fetch(
-        API_ENDPOINTS.RESPONSE_UPDATE(response.response_id),
+        API_ENDPOINTS.RESPONSE_UPDATE_V2(response.response_id),
         {
           method: "PUT",
           headers,
           body: JSON.stringify(updatePayload),
-        }
+        },
       );
 
       if (!response_api.ok) {
         const errorData = await response_api.json().catch(() => ({}));
         throw new Error(
-          errorData.detail || `HTTP error! status: ${response_api.status}`
+          errorData.detail || `HTTP error! status: ${response_api.status}`,
         );
       }
 
@@ -275,9 +239,7 @@ export const ResponseUpdateDialog = ({
       toast({
         title: "Error",
         description:
-          error instanceof Error
-            ? error.message
-            : "Failed to update response",
+          error instanceof Error ? error.message : "Failed to update response",
         variant: "destructive",
       });
     } finally {
@@ -314,7 +276,7 @@ export const ResponseUpdateDialog = ({
                   </SelectTrigger>
                   <SelectContent className="bg-popover max-h-[300px]">
                     {responseTypes.map((type) => (
-                      <SelectItem key={type.value} value={type.label}>
+                      <SelectItem key={type.value} value={type.value}>
                         {type.label}
                       </SelectItem>
                     ))}
@@ -332,7 +294,9 @@ export const ResponseUpdateDialog = ({
                   <SelectTrigger>
                     <SelectValue
                       placeholder={
-                        isFetchingLanguages ? "Loading languages..." : "Select language"
+                        isFetchingLanguages
+                          ? "Loading languages..."
+                          : "Select language"
                       }
                     />
                   </SelectTrigger>
@@ -360,22 +324,9 @@ export const ResponseUpdateDialog = ({
                 <div className="relative">
                   <Textarea
                     value={userPrompts}
-                    onChange={(e) => setUserPrompts(e.target.value)}
-                    onFocus={() => setFocusedField("userPrompt")}
-                    onBlur={() => setTimeout(() => setFocusedField(null), 100)}
+                    readOnly
                     className="bg-muted min-h-[100px] pr-10"
                   />
-                  {focusedField === "userPrompt" && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-2 top-2"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => handleSearchClick("userPrompt")}
-                    >
-                      <Search className="w-4 h-4" />
-                    </Button>
-                  )}
                 </div>
               </div>
 
@@ -384,22 +335,9 @@ export const ResponseUpdateDialog = ({
                 <div className="relative">
                   <Textarea
                     value={systemPrompts}
-                    onChange={(e) => setSystemPrompts(e.target.value)}
-                    onFocus={() => setFocusedField("systemPrompt")}
-                    onBlur={() => setTimeout(() => setFocusedField(null), 100)}
+                    readOnly
                     className="bg-muted min-h-[80px] pr-10"
                   />
-                  {focusedField === "systemPrompt" && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-2 top-2"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => handleSearchClick("systemPrompt")}
-                    >
-                      <Search className="w-4 h-4" />
-                    </Button>
-                  )}
                 </div>
               </div>
             </div>
@@ -412,7 +350,7 @@ export const ResponseUpdateDialog = ({
                 placeholder="Enter notes..."
                 required
               />
-         
+
               <Button
                 className="bg-accent hover:bg-accent/90 ml-4 text-accent-foreground px-8"
                 onClick={handleSubmit}

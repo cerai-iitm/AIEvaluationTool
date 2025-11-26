@@ -1,10 +1,21 @@
 import { useCallback, useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { API_ENDPOINTS } from "@/config/api";
@@ -24,7 +35,13 @@ interface LlmPromptUpdateDialogProps {
   onSuccess?: () => void;
 }
 
-export function LlmPromptUpdateDialog({ prompt, open, onOpenChange, onUpdate, onSuccess }: LlmPromptUpdateDialogProps) {
+export function LlmPromptUpdateDialog({
+  prompt,
+  open,
+  onOpenChange,
+  onUpdate,
+  onSuccess,
+}: LlmPromptUpdateDialogProps) {
   const { toast } = useToast();
   const [promptText, setPromptText] = useState("");
   const [language, setLanguage] = useState("");
@@ -60,7 +77,10 @@ export function LlmPromptUpdateDialog({ prompt, open, onOpenChange, onUpdate, on
         headers["Authorization"] = `Bearer ${token}`;
       }
 
-      const response = await fetch(API_ENDPOINTS.LANGUAGES, { method: "GET", headers });
+      const response = await fetch(API_ENDPOINTS.LANGUAGES_V2, {
+        method: "GET",
+        headers,
+      });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -69,14 +89,14 @@ export function LlmPromptUpdateDialog({ prompt, open, onOpenChange, onUpdate, on
 
       const languageData = await response.json();
       const languageNames = Array.from(
-        new Set(
-          [
-            ...(Array.isArray(languageData) ? languageData : [])
-              .map((lang: any) => lang?.lang_name)
-              .filter((name: string | null | undefined): name is string => Boolean(name)),
-            ...(promptLanguage ? [promptLanguage] : []),
-          ]
-        )
+        new Set([
+          ...(Array.isArray(languageData) ? languageData : [])
+            .map((lang: any) => lang?.lang_name)
+            .filter((name: string | null | undefined): name is string =>
+              Boolean(name),
+            ),
+          ...(promptLanguage ? [promptLanguage] : []),
+        ]),
       );
 
       setLanguageOptions(languageNames);
@@ -113,14 +133,14 @@ export function LlmPromptUpdateDialog({ prompt, open, onOpenChange, onUpdate, on
   const originalLanguage = prompt.language ?? "";
 
   const isChanged =
-    promptText !== prompt.prompt ||
-    language !== originalLanguage;
+    promptText !== prompt.prompt || language !== originalLanguage;
 
   const handleSubmit = async () => {
     if (!isChanged || !notes.trim() || !language) {
       toast({
         title: "Validation error",
-        description: "Please modify the prompt, select language, and provide notes before submitting.",
+        description:
+          "Please modify the prompt, select language, and provide notes before submitting.",
         variant: "destructive",
       });
       return;
@@ -134,15 +154,18 @@ export function LlmPromptUpdateDialog({ prompt, open, onOpenChange, onUpdate, on
         headers["Authorization"] = `Bearer ${token}`;
       }
 
-      const response = await fetch(API_ENDPOINTS.LLM_PROMPT_UPDATE(prompt.llmPromptId), {
-        method: "PUT",
-        headers,
-        body: JSON.stringify({
-          llmPromptId: prompt.llmPromptId,
-          prompt: promptText.trim(),
-          language,
-        }),
-      });
+      const response = await fetch(
+        API_ENDPOINTS.LLMPROMPT_UPDATE_V2(prompt.llmPromptId),
+        {
+          method: "PUT",
+          headers,
+          body: JSON.stringify({
+            llmPromptId: prompt.llmPromptId,
+            prompt: promptText.trim(),
+            language,
+          }),
+        },
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -178,17 +201,20 @@ export function LlmPromptUpdateDialog({ prompt, open, onOpenChange, onUpdate, on
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" onOpenAutoFocus={(e) => e.preventDefault()}>
+      <DialogContent
+        className="max-w-3xl max-h-[90vh] overflow-y-auto"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle className="sr-only">LLM Prompts</DialogTitle>
         </DialogHeader>
         <div className="flex-1 p-1 overflow-y-auto space-y-6 pb-5">
           <div className="space-y-1">
             <Label className="text-base font-semibold">LLM Prompt</Label>
-            <Textarea 
-              value={promptText} 
-              onChange={(e) => setPromptText(e.target.value)} 
-              className="bg-muted min-h-[80px]" 
+            <Textarea
+              value={promptText}
+              onChange={(e) => setPromptText(e.target.value)}
+              className="bg-muted min-h-[80px]"
             />
           </div>
           <div className="space-y-1">
@@ -199,7 +225,13 @@ export function LlmPromptUpdateDialog({ prompt, open, onOpenChange, onUpdate, on
               disabled={isOptionsLoading || !languageOptions.length}
             >
               <SelectTrigger>
-                <SelectValue placeholder={isOptionsLoading ? "Loading languages..." : "Select a language"} />
+                <SelectValue
+                  placeholder={
+                    isOptionsLoading
+                      ? "Loading languages..."
+                      : "Select a language"
+                  }
+                />
               </SelectTrigger>
               <SelectContent className="bg-popover max-h-[300px]">
                 {languageOptions.length ? (
@@ -216,19 +248,17 @@ export function LlmPromptUpdateDialog({ prompt, open, onOpenChange, onUpdate, on
               </SelectContent>
             </Select>
           </div>
-
         </div>
 
         <div className="flex justify-center items-center p-4 border-gray-300 bg-white sticky bottom-0 z-10">
-        
-            <Label className="text-base font-semibold mr-2">Notes</Label>
-            <Input 
-              value={notes} 
-              onChange={(e) => setNotes(e.target.value)} 
-              className="bg-muted" 
-              placeholder="Enter notes (required)"
-            />
-        
+          <Label className="text-base font-semibold mr-2">Notes</Label>
+          <Input
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            className="bg-muted"
+            placeholder="Enter notes (required)"
+          />
+
           <Button
             className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800 ml-4"
             disabled={!isChanged || !notes.trim() || isSubmitting}

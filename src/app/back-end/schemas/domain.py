@@ -1,13 +1,28 @@
-from pydantic import BaseModel
 from typing import Optional
 
-class Domain(BaseModel):
-    domain_id: Optional[int]
-    domain_name: Optional[str]
+from pydantic import BaseModel, Field
 
 
-class DomainCreate(BaseModel):
+class DomainBase(BaseModel):
+    domain_name: str = Field(..., description="The name of the domain.")
+
+
+class DomainCreateV2(DomainBase):
+    pass
+
+
+class DomainUpdateV2(BaseModel):
+    domain_name: Optional[str] = Field(None, description="The new name of the domain.")
+
+
+class DomainListResponse(BaseModel):
+    domain_id: int
     domain_name: str
 
-class DomainUpdate(BaseModel):
-    domain_name: Optional[str] 
+
+class DomainDetailResponse(BaseModel):
+    domain_id: int
+    domain_name: str
+
+    class Config:
+        from_attributes = True

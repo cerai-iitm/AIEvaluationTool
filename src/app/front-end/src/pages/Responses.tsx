@@ -34,24 +34,26 @@ import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
 
 interface Response {
-  id: number;
   response_id: number;
-  name?: string;
-  responseText: string;
-  responseType: string;
+  response_text: string;
+  response_type: string;
   language: string;
-  userPrompts: string;
-  systemPrompts: string;
+  user_prompt: string;
+  system_prompt: string;
 }
 
 const Responses = () => {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedResponse, setSelectedResponse] = useState<Response | null>(null);
+  const [selectedResponse, setSelectedResponse] = useState<Response | null>(
+    null,
+  );
   const [updateResponse, setUpdateResponse] = useState<Response | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [responseToDelete, setResponseToDelete] = useState<Response | null>(null);
+  const [responseToDelete, setResponseToDelete] = useState<Response | null>(
+    null,
+  );
   const [currentPage, setCurrentPage] = useState(1);
   const [responses, setResponses] = useState<Response[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -59,27 +61,6 @@ const Responses = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   const itemsPerPage = 100;
 
-  // Map backend response type to display name
-  const mapResponseTypeToDisplay = (type: string): string => {
-    const mapping: Record<string, string> = {
-      'GT': 'Ground Truth',
-      'GTDesc': 'Ground Truth Description',
-      'NA': 'Not Applicable',
-    };
-    return mapping[type] || type;
-  };
-
-  // Map display name to backend response type
-  const mapDisplayToResponseType = (display: string): string => {
-    const mapping: Record<string, string> = {
-      'Ground Truth': 'GT',
-      'Ground Truth Description': 'GTDesc',
-      'Not Applicable': 'NA',
-    };
-    return mapping[display] || display;
-  };
-
-  // Fetch responses from API
   const fetchResponses = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -92,26 +73,16 @@ const Responses = () => {
         headers["Authorization"] = `Bearer ${token}`;
       }
 
-      const response = await fetch(API_ENDPOINTS.RESPONSES_ALL, { headers });
+      const response = await fetch(API_ENDPOINTS.RESPONSES_V2, { headers });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
-      
+
       if (Array.isArray(data)) {
-        const mappedResponses: Response[] = data.map((item: any) => ({
-          id: item.response_id ?? 0,
-          response_id: item.response_id ?? 0,
-          responseText: item.response_text ?? "",
-          responseType: mapResponseTypeToDisplay(item.response_type ?? ""),
-          language: item.lang_name ?? "",
-          userPrompts: item.user_prompt ?? "",
-          systemPrompts: item.system_prompt ?? "",
-          notes: "", // Notes field is not in API response, will be handled separately
-        }));
-        setResponses(mappedResponses);
+        setResponses(data);
       } else {
         console.error("Unexpected responses data format:", data);
         toast({
@@ -125,7 +96,10 @@ const Responses = () => {
       console.error("Error fetching responses:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to load responses from server",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to load responses from server",
         variant: "destructive",
       });
       setResponses([]);
@@ -162,17 +136,17 @@ const Responses = () => {
       }
 
       const response = await fetch(
-        API_ENDPOINTS.RESPONSE_DELETE(responseToDelete.response_id),
+        API_ENDPOINTS.RESPONSE_DELETE_V2(responseToDelete.response_id),
         {
           method: "DELETE",
           headers,
-        }
+        },
       );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
-          errorData.detail || `HTTP error! status: ${response.status}`
+          errorData.detail || `HTTP error! status: ${response.status}`,
         );
       }
 
@@ -190,9 +164,7 @@ const Responses = () => {
       toast({
         title: "Error",
         description:
-          error instanceof Error
-            ? error.message
-            : "Failed to delete response",
+          error instanceof Error ? error.message : "Failed to delete response",
         variant: "destructive",
       });
     } finally {
@@ -200,18 +172,23 @@ const Responses = () => {
     }
   };
 
-  const filteredResponses = responses.filter((response) =>
-    response.responseText.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    response.language.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    response.responseType.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    response.response_id.toString().includes(searchQuery.toLowerCase())
+  const filteredResponses = responses.filter(
+    (response) =>
+      response.response_text
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      response.language.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      response.response_type
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      response.response_id.toString().includes(searchQuery.toLowerCase()),
   );
 
   const totalItems = filteredResponses.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
   const paginatedResponses = filteredResponses.slice(
     (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+    currentPage * itemsPerPage,
   );
 
   return (
@@ -246,16 +223,14 @@ const Responses = () => {
 
             <div className="ml-auto flex items-center gap-4">
               <span className="text-sm text-muted-foreground">
-                {isLoading ? (
-                  "Loading..."
-                ) : totalItems === 0 ? (
-                  "0"
-                ) : (
-                  `${(currentPage - 1) * itemsPerPage + 1} - ${Math.min(
-                    currentPage * itemsPerPage,
-                    totalItems
-                  )} of ${totalItems}`
-                )}
+                {isLoading
+                  ? "Loading..."
+                  : totalItems === 0
+                    ? "0"
+                    : `${(currentPage - 1) * itemsPerPage + 1} - ${Math.min(
+                        currentPage * itemsPerPage,
+                        totalItems,
+                      )} of ${totalItems}`}
               </span>
               <div className="flex gap-1">
                 <Button
@@ -304,7 +279,10 @@ const Responses = () => {
                   </tr>
                 ) : paginatedResponses.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="p-8 text-center text-muted-foreground">
+                    <td
+                      colSpan={4}
+                      className="p-8 text-center text-muted-foreground"
+                    >
                       No responses found
                     </td>
                   </tr>
@@ -317,14 +295,10 @@ const Responses = () => {
                     >
                       <td className="p-2">{response.response_id}</td>
                       <td className="p-2 max-w-md truncate">
-                        {response.responseText}
+                        {response.response_text}
                       </td>
                       <td className="p-2">{response.language}</td>
-                      <td className="p-2">
-                        {response.responseType === "Ground Truth"
-                          ? "GT"
-                          : response.responseType}
-                      </td>
+                      <td className="p-2">{response.response_type}</td>
                     </tr>
                   ))
                 )}
@@ -357,7 +331,7 @@ const Responses = () => {
               <div className="space-y-2">
                 <Label>Response Text</Label>
                 <Textarea
-                  value={selectedResponse.responseText}
+                  value={selectedResponse.response_text}
                   readOnly
                   className="bg-muted min-h-[100px]"
                 />
@@ -366,7 +340,7 @@ const Responses = () => {
               <div className="space-y-2">
                 <Label>Response Type</Label>
                 <Input
-                  value={selectedResponse.responseType}
+                  value={selectedResponse.response_type}
                   readOnly
                   className="bg-muted"
                 />
@@ -384,7 +358,7 @@ const Responses = () => {
               <div className="space-y-2">
                 <Label>User Prompts</Label>
                 <Textarea
-                  value={selectedResponse.userPrompts}
+                  value={selectedResponse.user_prompt}
                   readOnly
                   className="bg-muted min-h-[80px]"
                 />
@@ -393,20 +367,11 @@ const Responses = () => {
               <div className="space-y-2">
                 <Label>System Prompts</Label>
                 <Textarea
-                  value={selectedResponse.systemPrompts}
+                  value={selectedResponse.system_prompt}
                   readOnly
                   className="bg-muted min-h-[80px]"
                 />
               </div>
-
-              {/* <div className="space-y-2">
-                <Label>Notes</Label>
-                <Input
-                  value={selectedResponse.notes || ""}
-                  readOnly
-                  className="bg-muted"
-                />
-              </div> */}
 
               <div className="flex justify-center gap-4 pt-4">
                 <Button
@@ -439,9 +404,11 @@ const Responses = () => {
               action cannot be undone.
               {responseToDelete && (
                 <div className="mt-4 p-4 bg-muted rounded-md">
-                  <p className="font-semibold">Response ID: {responseToDelete.response_id}</p>
+                  <p className="font-semibold">
+                    Response ID: {responseToDelete.response_id}
+                  </p>
                   <p className="text-sm mt-2 line-clamp-3">
-                    {responseToDelete.responseText}
+                    {responseToDelete.response_text}
                   </p>
                 </div>
               )}

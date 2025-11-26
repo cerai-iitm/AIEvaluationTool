@@ -1,49 +1,57 @@
-from sqlalchemy import create_engine, select
-from sqlalchemy.orm import sessionmaker, scoped_session, joinedload
-from sqlalchemy.exc import IntegrityError
-from typing import List, Optional, Union
-from sqlalchemy.sql.expression import func
-import sys
-import os
 import logging
+import os
 import random
+import sys
 from datetime import datetime
+from typing import List, Optional, Union
+
+from sqlalchemy import create_engine, select
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import joinedload, scoped_session, sessionmaker
+from sqlalchemy.sql.expression import func
 
 # setup the relative import path for data module.
 sys.path.append(os.path.dirname(__file__) + "/..")
 
 from data import (
-    Prompt,
-    Language,
+    Conversation,
     Domain,
+    Language,
+    LLMJudgePrompt,
+    Metric,
+    Prompt,
     Response,
+    Run,
+    RunDetail,
+    Strategy,
+    Target,
     TestCase,
     TestPlan,
-    Strategy,
-    Metric,
-    LLMJudgePrompt,
-    Target,
-    Conversation,
-    Run,
-    RunDetail
-)
-from .tables import (
-    Base,
-    Languages,
-    Domains,
-    Metrics,
-    Responses,
-    TestCases,
-    TestPlans,
-    Prompts,
-    Strategies,
-    LLMJudgePrompts,
-    Targets,
-    Conversations,
-    TestRuns,
-    TestRunDetails
 )
 from lib.utils import get_logger
+
+from .tables import (
+    Base,
+    Conversations,
+    Domains,
+    Languages,
+    LLMJudgePrompts,
+    Metrics,
+    Prompts,
+    Responses,
+    Strategies,
+    Targets,
+    TestCases,
+    TestPlans,
+    TestRunDetails,
+    TestRuns,
+)
+
+from jose import jwt, JWTError
+from fastapi import Depends, Header
+
+sys.path.append(os.path.dirname(__file__) + "/../../app/back-end")
+from config import settings
 
 
 class DB:
@@ -83,7 +91,6 @@ class DB:
 
         # Set up logging
         self.logger = get_logger(__name__, loglevel=loglevel)
-
 
     @property
     def languages(self) -> List[Language]:
@@ -141,6 +148,64 @@ class DB:
                 for strategy in session.query(Strategies).all()
             ]
         return None
+
+    @property 
+    def llmjudgeprompts(self) -> List[LLMJudgePrompt]:
+        """
+        Fetches all LLMJudgePrompts from the database.
+
+        Returns:
+            List[LLMJudgePrompt]: A list of LLMJudgePrompt objects or None if no LLMJudgePrompts are found.
+        """
+        with self.Session() as session:
+            self.logger.debug("Fetching all LLMJudgePrompts ..")
+            return [
+                LLMJudgePrompt(
+                    prompt = getattr(llm, "prompt"),
+                    prompt_id = getattr(llm, "prompt_id"),
+                    lang_id = getattr(llm, "lang_id")
+                )
+                for llm in session.query(LLMJudgePrompts).all()
+            ]
+
+    @property
+    def prompts(self) -> List[Prompt]:
+        """
+        Fetches all prompts from the database.
+
+        Returns:
+            List[Prompt]: A list of Prompt objects or None if no prompts are found.
+        """
+        with self.Session() as session:
+            self.logger.debug("Feching all prompts ..")
+            return [
+                Prompt(
+                    prompt_id=getattr(prompt, "prompt_id"),
+                    user_prompt=getattr(prompt, "user_prompt"),
+                    system_prompt=getattr(prompt, "system_prompt"),
+                )
+                for prompt in session.query(Prompts).all()
+            ]
+
+    @property
+    def responses(self) -> List[Response]:
+        """
+        Fetches all responses from the database.
+
+        Returns:
+            List[Response]: A list of Response objects or None if no responses are found.
+        """
+        with self.Session() as session:
+            self.logger.debug("Fetching all responses ..")
+            return [
+                Response(
+                    response_id=getattr(response, "response_id"),
+                    response_text=getattr(response, "response_text"),
+                    response_type=getattr(response, "response_type"),
+                )
+                for response in session.query(Responses).all()
+            ]
+
 
     @property
     def plans(self) -> List[TestPlan]:
@@ -357,6 +422,28 @@ class DB:
             result = session.execute(sql).scalar_one_or_none()
             return getattr(result, "strategy_name", None) if result else None
 
+    def get_strategy_id(self, strategy_id: int) -> Optional[Strategy]:
+        """
+        Fetches a strategy by its ID.
+
+        Args:
+            strategy_id (int): The ID of the strategy to fetch.
+
+        Returns:
+            Optional[Strategies]: The Strategys object if found, otherwise None
+        """
+        with self.Session() as session:
+            sql = select(Strategies).where(Strategies.strategy_id == strategy_id)
+            result = session.execute(sql).scalar_one_or_none()
+            if result is None:
+                self.logger.error(f"Strategy with ID {strategy_id} does not exist.")
+                return None
+            return Strategy(
+                name=getattr(result, "strategy_name"),
+                description=getattr(result, "strategy_description"),
+                strategy_id=getattr(result, "strategy_id"),
+            )
+
     def __add_or_get_language(self, language_name: str) -> Optional[Languages]:
         """
         Adds a new language to the database or fetches it if it already exists.
@@ -411,6 +498,36 @@ class DB:
         self.logger.error(f"Failed to add or get language '{language_name}'.")
         return None
 
+    def __add_or_get_language_custom_Id(self, language_name: str, lang_id: int) -> Optional[Languages]:
+        """
+        Adds a new language to the database or fetches it if it already exists.
+        
+        Args:
+            language_name (str): The name of the language to be added or fetched.
+            lang_id (int): The ID of the language to be added or fetched.
+        
+        Returns:
+            Optional[Languages]: The Languages object if found or added, otherwise None.
+        """
+        try:
+            with self.Session() as session:
+                existing_language = session.query(Languages).filter_by(lang_name=language_name).first()
+                if existing_language:
+                    self.logger.debug(f"Returning the existing language: {existing_language.lang_name}")
+                    return existing_language
+                
+                self.logger.debug(f"Adding new language with custom lang_id {lang_id}: {language_name}")
+                new_language = Languages(lang_id=lang_id, lang_name=language_name)
+                session.add(new_language)
+                session.commit()
+                session.refresh(new_language)
+                self.logger.debug(f"Language added successfully: {new_language.lang_id}")
+                return new_language
+        except IntegrityError as e:
+            self.logger.error(f"Language '{language_name}' already exists or lang_id conflict. Error: {e}")
+            return None
+
+
     def get_language_name(self, lang_id: int) -> Optional[str]:
         """
         Fetches the name of a language by its ID.
@@ -463,6 +580,35 @@ class DB:
         except IntegrityError as e:
             self.logger.error(f"Domain '{domain_name}' already exists. Error: {e}")
             return -1
+
+    def __add_or_get_domain_custom_Id(self, domain_name: str, domain_id: int) -> Optional[Domains]:
+        """
+        Adds a new domain to the database or fetches it if it already exists.
+        
+        Args:
+            domain_name (str): The name of the domain to be added or fetched.
+            domain_id (int): The ID of the domain to be added or fetched.
+        
+        Returns:
+            Optional[Domains]: The Domains object if found or added, otherwise None.
+        """
+        try:
+            with self.Session() as session:
+                existing_domain = session.query(Domains).filter_by(domain_name=domain_name).first()
+                if existing_domain:
+                    self.logger.debug(f"Returning the existing domain: {existing_domain.domain_name}")
+                    return existing_domain
+                
+                self.logger.debug(f"Adding new domain with custom domain_id {domain_id}: {domain_name}")
+                new_domain = Domains(domain_id=domain_id, domain_name=domain_name)
+                session.add(new_domain)
+                session.commit()
+                session.refresh(new_domain)
+                self.logger.debug(f"Domain added successfully: {new_domain.domain_id}")
+                return new_domain
+        except IntegrityError as e:
+            self.logger.error(f"Domain '{domain_name}' already exists or domain_id conflict. Error: {e}")
+            return None
 
     def get_domain_name(self, domain_id: int) -> Optional[str]:
         """
@@ -661,7 +807,9 @@ class DB:
             if "strategy_name" in updates and updates["strategy_name"]:
                 strategy_id = self.add_or_get_strategy_id(updates["strategy_name"])
                 if strategy_id in (None, -1):
-                    raise ValueError(f"Unable to resolve strategy '{updates['strategy_name']}'")
+                    raise ValueError(
+                        f"Unable to resolve strategy '{updates['strategy_name']}'"
+                    )
                 testcase.strategy_id = strategy_id
                 updated = True
 
@@ -673,8 +821,16 @@ class DB:
                 new_system_prompt = updates.get(
                     "system_prompt", getattr(current_prompt, "system_prompt", None)
                 )
-                lang_id = getattr(current_prompt, "lang_id", Language.autodetect) if current_prompt else Language.autodetect
-                domain_id = getattr(current_prompt, "domain_id", Domain.general) if current_prompt else Domain.general
+                lang_id = (
+                    getattr(current_prompt, "lang_id", Language.autodetect)
+                    if current_prompt
+                    else Language.autodetect
+                )
+                domain_id = (
+                    getattr(current_prompt, "domain_id", Domain.general)
+                    if current_prompt
+                    else Domain.general
+                )
                 prompt_obj = Prompt(
                     user_prompt=new_user_prompt,
                     system_prompt=new_system_prompt,
@@ -691,14 +847,24 @@ class DB:
                 response_text = updates["response_text"]
                 if response_text:
                     current_response = getattr(testcase, "response", None)
-                    response_type = getattr(current_response, "response_type", "GT") if current_response else "GT"
-                    lang_id = getattr(current_response, "lang_id", Language.autodetect) if current_response else Language.autodetect
+                    response_type = (
+                        getattr(current_response, "response_type", "GT")
+                        if current_response
+                        else "GT"
+                    )
+                    lang_id = (
+                        getattr(current_response, "lang_id", Language.autodetect)
+                        if current_response
+                        else Language.autodetect
+                    )
                     response_obj = Response(
                         response_text=response_text,
                         response_type=response_type,
                         lang_id=lang_id,
                     )
-                    response_id = self.add_or_get_response(response_obj, testcase.prompt_id)
+                    response_id = self.add_or_get_response(
+                        response_obj, testcase.prompt_id
+                    )
                     if response_id == -1:
                         raise ValueError("Failed to update response")
                     testcase.response_id = response_id
@@ -708,8 +874,14 @@ class DB:
                 judge_prompt_text = updates["llm_judge_prompt"]
                 if judge_prompt_text:
                     current_judge_prompt = getattr(testcase, "judge_prompt", None)
-                    lang_id = getattr(current_judge_prompt, "lang_id", Language.autodetect) if current_judge_prompt else Language.autodetect
-                    judge_prompt = LLMJudgePrompt(prompt=judge_prompt_text, lang_id=lang_id)
+                    lang_id = (
+                        getattr(current_judge_prompt, "lang_id", Language.autodetect)
+                        if current_judge_prompt
+                        else Language.autodetect
+                    )
+                    judge_prompt = LLMJudgePrompt(
+                        prompt=judge_prompt_text, lang_id=lang_id
+                    )
                     judge_prompt_id = self.add_or_get_llm_judge_prompt(judge_prompt)
                     if judge_prompt_id == -1:
                         raise ValueError("Failed to update judge prompt")
@@ -731,7 +903,11 @@ class DB:
         Deletes a test case by ID.
         """
         with self.Session() as session:
-            testcase = session.query(TestCases).filter(TestCases.testcase_id == testcase_id).first()
+            testcase = (
+                session.query(TestCases)
+                .filter(TestCases.testcase_id == testcase_id)
+                .first()
+            )
             if testcase is None:
                 return False
             session.delete(testcase)
@@ -1128,6 +1304,60 @@ class DB:
             self.logger.error(f"Prompt already exists: {prompt} Error: {e}")
             return -1
 
+    def __add_or_get_prompt_custom_Id(self, prompt: Prompt, prompt_id: int, domain_id: int, lang_id: int) -> Optional[Prompts]:
+        """
+        Adds a new prompt to the database.
+
+        Args:
+            prompt (Prompt): The Prompt object to be added.
+            prompt_id (int): The ID to assign to the prompt.
+            domain_id (int): The domain ID.
+            lang_id (int): The language ID.
+
+        Returns:
+            Optional[Prompts]: The Prompts object if found or created, otherwise None.
+        """
+        try:
+            with self.Session() as session:
+                # check of the prompt already exists in the database.
+                existing_prompt = (
+                    session.query(Prompts).filter_by(hash_value=prompt.digest).first()
+                )
+                if existing_prompt:
+                    self.logger.debug(
+                        f"Returning the existing prompt ID: {existing_prompt.prompt_id}"
+                    )
+                    # Return the existing prompt object
+                    return existing_prompt
+
+                self.logger.debug(f"Adding new prompt: {prompt.user_prompt}")
+
+                # create the orm object for the prompt to insert into the database table.
+                new_prompt = Prompts(
+                    prompt_id=prompt_id,
+                    user_prompt=prompt.user_prompt,
+                    system_prompt=prompt.system_prompt,
+                    lang_id=lang_id,
+                    domain_id=domain_id,
+                    hash_value=prompt.digest,
+                )
+
+                # Add the new prompt to the session
+                session.add(new_prompt)
+                # Commit the session to save the new prompt
+                session.commit()
+                # Ensure prompt_id is populated
+                session.refresh(new_prompt)
+
+                self.logger.debug(f"Prompt added successfully: {new_prompt.prompt_id}")
+
+                # Return the newly added prompt
+                return new_prompt
+        except IntegrityError as e:
+            # Handle the case where the prompt already exists
+            self.logger.error(f"Prompt already exists: {prompt} Error: {e}")
+            return None
+
     def get_testcases_by_testplan(
         self,
         plan_name: str,
@@ -1293,15 +1523,23 @@ class DB:
             "testcase_id": getattr(testcase, "testcase_id"),
             "testcase_name": getattr(testcase, "testcase_name"),
             "strategy_id": getattr(strategy, "strategy_id", None) if strategy else None,
-            "strategy_name": getattr(strategy, "strategy_name", None) if strategy else None,
+            "strategy_name": getattr(strategy, "strategy_name", None)
+            if strategy
+            else None,
             "prompt_id": getattr(prompt, "prompt_id", None) if prompt else None,
             "user_prompt": getattr(prompt, "user_prompt", None) if prompt else None,
             "system_prompt": getattr(prompt, "system_prompt", None) if prompt else None,
             "domain_name": getattr(domain, "domain_name", None) if domain else None,
             "response_id": getattr(response, "response_id", None) if response else None,
-            "response_text": getattr(response, "response_text", None) if response else None,
-            "llm_judge_prompt_id": getattr(judge_prompt, "prompt_id", None) if judge_prompt else None,
-            "llm_judge_prompt": getattr(judge_prompt, "prompt", None) if judge_prompt else None,
+            "response_text": getattr(response, "response_text", None)
+            if response
+            else None,
+            "llm_judge_prompt_id": getattr(judge_prompt, "prompt_id", None)
+            if judge_prompt
+            else None,
+            "llm_judge_prompt": getattr(judge_prompt, "prompt", None)
+            if judge_prompt
+            else None,
         }
 
     def list_testcases_with_metadata(self) -> List[dict]:
@@ -1649,6 +1887,70 @@ class DB:
                 f"Judge prompt already exists: {judge_prompt}. Error: {e}"
             )
             return -1
+    
+
+    def __add_or_get_llm_judge_prompt_custom_id(self, llm_prompt: str, llm_prompt_id: int, lang_id: int) -> Optional[LLMJudgePrompts]:
+        """
+        Adds a new LLM judge prompt to the database or fetches its ID if it already exists.
+
+        Args:
+            llm_prompt (str): The LLM prompt to be added.
+            llm_prompt_id (int): The ID of the LLM prompt.
+            lang_id (int): The ID of the language.
+
+        Returns:
+            int: The ID of the newly added judge prompt, or -1 if it already exists.
+        """
+        try:
+            with self.Session() as session:
+                existing_llm_prompt = session.query(LLMJudgePrompts).filter_by(prompt=llm_prompt).first()
+                if existing_llm_prompt:
+                    self.logger.debug(f"Returning the existing judge prompt: {existing_llm_prompt.prompt}")
+                    return existing_llm_prompt
+
+                # Create an LLMJudgePrompt instance from the string to get the digest
+                judge_prompt_obj = LLMJudgePrompt(prompt=llm_prompt)
+
+                # Create the LLMJudgePrompts object
+                new_llm_prompt = LLMJudgePrompts(
+                    prompt=llm_prompt, 
+                    prompt_id=llm_prompt_id,
+                    lang_id=lang_id,
+                    hash_value=judge_prompt_obj.digest
+                    )
+
+                session.add(new_llm_prompt)
+                session.commit()
+                session.refresh(new_llm_prompt)
+                self.logger.debug(f"Judge prompt added successfully: {new_llm_prompt.prompt}")
+                return new_llm_prompt
+        except IntegrityError as e:
+            self.logger.error(f"Judge prompt already exists: {llm_prompt}. Error: {e}")
+            return None
+
+    def get_llm_prompt_by_id(self, prompt_id: int) -> Optional[LLMJudgePrompt]:
+        """
+        Fetches an LLM prompt by its ID.
+
+        Args:
+            prompt_id (int): The ID of the LLM prompt to fetch.
+
+        Returns:
+            Optional[LLMPrompt]: The LLM prompt object if found, otherwise None.
+        """
+        with self.Session() as session:
+            sql = select(LLMJudgePrompts).where(LLMJudgePrompts.prompt_id == prompt_id)
+            result = session.execute(sql).scalar_one_or_none()
+            if result is None:
+                self.logger.error(f"LLM prompt with ID '{prompt_id}' does not exit")
+                return None
+            # Return an LLM prompt object with the fetched data
+            return LLMJudgePrompt(
+                prompt_id=getattr(result, "prompt_id"),
+                prompt=str(result.prompt),
+                lang_id=getattr(result, "lang_id"),
+            )
+
 
     def get_target_by_id(self, target_id: int) -> Optional[Target]:
         """
@@ -1998,6 +2300,729 @@ class DB:
     def get_testcase_by_name(self, testcase_name: str) -> Optional[TestCase]:
         """
         Fetches a test case by its name.
+        """
+
+    def _serialize_domain(self, domain: Domains) -> dict:
+        return {"domain_id": domain.domain_id, "domain_name": domain.domain_name}
+
+    def list_domains_with_metadata(self) -> List[dict]:
+        with self.Session() as session:
+            domains = session.query(Domains).all()
+            return [self._serialize_domain(d) for d in domains]
+
+    def get_domain_with_metadata(self, domain_id: int) -> Optional[dict]:
+        with self.Session() as session:
+            domain = (
+                session.query(Domains).filter(Domains.domain_id == domain_id).first()
+            )
+            return self._serialize_domain(domain) if domain else None
+
+    def create_domain_v2(self, payload: dict) -> int:
+        with self.Session() as session:
+            if (
+                session.query(Domains)
+                .filter_by(domain_name=payload["domain_name"])
+                .first()
+            ):
+                raise IntegrityError(
+                    "Domain name already exists", params=None, orig=None
+                )
+            new_domain = Domains(domain_name=payload["domain_name"])
+            session.add(new_domain)
+            session.commit()
+            session.refresh(new_domain)
+            return new_domain.domain_id
+
+    def update_domain_v2(self, domain_id: int, updates: dict) -> Optional[dict]:
+        with self.Session() as session:
+            domain = (
+                session.query(Domains).filter(Domains.domain_id == domain_id).first()
+            )
+            if not domain:
+                return None
+            if "domain_name" in updates:
+                domain.domain_name = updates["domain_name"]
+            session.commit()
+            session.refresh(domain)
+            return self._serialize_domain(domain)
+
+    def delete_domain_record(self, domain_id: int) -> bool:
+        with self.Session() as session:
+            domain = (
+                session.query(Domains).filter(Domains.domain_id == domain_id).first()
+            )
+            if not domain:
+                return False
+            session.delete(domain)
+            session.commit()
+            return True
+
+    def _serialize_language(self, language: Languages) -> dict:
+        return {"lang_id": language.lang_id, "lang_name": language.lang_name}
+
+    def list_languages_with_metadata(self) -> List[dict]:
+        with self.Session() as session:
+            languages = session.query(Languages).all()
+            return [self._serialize_language(l) for l in languages]
+
+    def get_language_with_metadata(self, lang_id: int) -> Optional[dict]:
+        with self.Session() as session:
+            language = (
+                session.query(Languages).filter(Languages.lang_id == lang_id).first()
+            )
+            return self._serialize_language(language) if language else None
+
+    def create_language_v2(self, payload: dict) -> int:
+        with self.Session() as session:
+            if (
+                session.query(Languages)
+                .filter_by(lang_name=payload["lang_name"])
+                .first()
+            ):
+                raise IntegrityError(
+                    "Language name already exists", params=None, orig=None
+                )
+            new_language = Languages(lang_name=payload["lang_name"])
+            session.add(new_language)
+            session.commit()
+            session.refresh(new_language)
+            return new_language.lang_id
+
+    def update_language_v2(self, lang_id: int, updates: dict) -> Optional[dict]:
+        with self.Session() as session:
+            language = (
+                session.query(Languages).filter(Languages.lang_id == lang_id).first()
+            )
+            if not language:
+                return None
+            if "lang_name" in updates:
+                language.lang_name = updates["lang_name"]
+            session.commit()
+            session.refresh(language)
+            return self._serialize_language(language)
+
+    def delete_language_record(self, lang_id: int) -> bool:
+        with self.Session() as session:
+            language = (
+                session.query(Languages).filter(Languages.lang_id == lang_id).first()
+            )
+            if not language:
+                return False
+            session.delete(language)
+            session.commit()
+            return True
+
+    def _serialize_llm_prompt(self, llm_prompt: LLMJudgePrompts) -> dict:
+        lang = getattr(llm_prompt, "lang", None)
+        return {
+            "llmPromptId": llm_prompt.prompt_id,
+            "prompt": llm_prompt.prompt,
+            "language": getattr(lang, "lang_name", None) if lang else None,
+        }
+
+    def list_llm_prompts_with_metadata(self) -> List[dict]:
+        with self.Session() as session:
+            llm_prompts = (
+                session.query(LLMJudgePrompts)
+                .options(joinedload(LLMJudgePrompts.lang))
+                .all()
+            )
+            return [self._serialize_llm_prompt(lp) for lp in llm_prompts]
+
+    def get_llm_prompt_with_metadata(self, llm_prompt_id: int) -> Optional[dict]:
+        with self.Session() as session:
+            llm_prompt = (
+                session.query(LLMJudgePrompts)
+                .options(joinedload(LLMJudgePrompts.lang))
+                .filter(LLMJudgePrompts.prompt_id == llm_prompt_id)
+                .first()
+            )
+            return self._serialize_llm_prompt(llm_prompt) if llm_prompt else None
+
+    def create_llm_prompt_v2(self, payload: dict) -> int:
+        with self.Session() as session:
+            lang_id = self.add_or_get_language_id(payload["language"])
+            if lang_id == -1:
+                raise ValueError("Failed to create or get language")
+
+            new_llm_prompt = LLMJudgePrompts(
+                prompt=payload["prompt"],
+                lang_id=lang_id,
+                hash_value=LLMJudgePrompt(
+                    prompt=payload["prompt"], lang_id=lang_id
+                ).digest,
+            )
+            session.add(new_llm_prompt)
+            session.commit()
+            session.refresh(new_llm_prompt)
+            return new_llm_prompt.prompt_id
+
+    def update_llm_prompt_v2(self, llm_prompt_id: int, updates: dict) -> Optional[dict]:
+        with self.Session() as session:
+            llm_prompt = (
+                session.query(LLMJudgePrompts)
+                .filter(LLMJudgePrompts.prompt_id == llm_prompt_id)
+                .first()
+            )
+            if not llm_prompt:
+                return None
+            if "prompt" in updates:
+                llm_prompt.prompt = updates["prompt"]
+                llm_prompt.hash_value = LLMJudgePrompt(
+                    prompt=updates["prompt"], lang_id=llm_prompt.lang_id
+                ).digest
+            if "language" in updates:
+                lang_id = self.add_or_get_language_id(updates["language"])
+                if lang_id != -1:
+                    llm_prompt.lang_id = lang_id
+            session.commit()
+            session.refresh(llm_prompt)
+            return self._serialize_llm_prompt(llm_prompt)
+
+    def delete_llm_prompt_record(self, llm_prompt_id: int) -> bool:
+        with self.Session() as session:
+            llm_prompt = (
+                session.query(LLMJudgePrompts)
+                .filter(LLMJudgePrompts.prompt_id == llm_prompt_id)
+                .first()
+            )
+            if not llm_prompt:
+                return False
+            session.delete(llm_prompt)
+            session.commit()
+            return True
+
+    def _serialize_prompt(self, prompt: Prompts) -> dict:
+        lang = getattr(prompt, "lang", None)
+        domain = getattr(prompt, "domain", None)
+        return {
+            "prompt_id": prompt.prompt_id,
+            "user_prompt": prompt.user_prompt,
+            "system_prompt": prompt.system_prompt,
+            "language": getattr(lang, "lang_name", None) if lang else None,
+            "domain": getattr(domain, "domain_name", None) if domain else None,
+        }
+
+    def list_prompts_with_metadata(self) -> List[dict]:
+        with self.Session() as session:
+            prompts = (
+                session.query(Prompts)
+                .options(joinedload(Prompts.lang), joinedload(Prompts.domain))
+                .all()
+            )
+            return [self._serialize_prompt(p) for p in prompts]
+
+    def get_prompt_with_metadata(self, prompt_id: int) -> Optional[dict]:
+        with self.Session() as session:
+            prompt = (
+                session.query(Prompts)
+                .options(joinedload(Prompts.lang), joinedload(Prompts.domain))
+                .filter(Prompts.prompt_id == prompt_id)
+                .first()
+            )
+            return self._serialize_prompt(prompt) if prompt else None
+
+    def create_prompt_v2(self, payload: dict) -> int:
+        with self.Session() as session:
+            lang_id = self.add_or_get_language_id(payload["language"])
+            domain_id = self.add_or_get_domain_id(payload["domain"])
+            if lang_id == -1 or domain_id == -1:
+                raise ValueError("Failed to create or get language or domain")
+
+            new_prompt = Prompts(
+                user_prompt=payload["user_prompt"],
+                system_prompt=payload.get("system_prompt"),
+                lang_id=lang_id,
+                domain_id=domain_id,
+                hash_value=Prompt(
+                    user_prompt=payload["user_prompt"],
+                    system_prompt=payload.get("system_prompt"),
+                    lang_id=lang_id,
+                    domain_id=domain_id,
+                ).digest,
+            )
+            session.add(new_prompt)
+            session.commit()
+            session.refresh(new_prompt)
+            return new_prompt.prompt_id
+
+    def update_prompt_v2(self, prompt_id: int, updates: dict) -> Optional[dict]:
+        with self.Session() as session:
+            prompt = (
+                session.query(Prompts).filter(Prompts.prompt_id == prompt_id).first()
+            )
+            if not prompt:
+                return None
+
+            if "user_prompt" in updates:
+                prompt.user_prompt = updates["user_prompt"]
+            if "system_prompt" in updates:
+                prompt.system_prompt = updates["system_prompt"]
+            if "language" in updates:
+                lang_id = self.add_or_get_language_id(updates["language"])
+                if lang_id != -1:
+                    prompt.lang_id = lang_id
+            if "domain" in updates:
+                domain_id = self.add_or_get_domain_id(updates["domain"])
+                if domain_id != -1:
+                    prompt.domain_id = domain_id
+
+            prompt.hash_value = Prompt(
+                user_prompt=prompt.user_prompt,
+                system_prompt=prompt.system_prompt,
+                lang_id=prompt.lang_id,
+                domain_id=prompt.domain_id,
+            ).digest
+            session.commit()
+            session.refresh(prompt)
+            return self._serialize_prompt(prompt)
+
+    def delete_prompt_record(self, prompt_id: int) -> bool:
+        with self.Session() as session:
+            prompt = (
+                session.query(Prompts).filter(Prompts.prompt_id == prompt_id).first()
+            )
+            if not prompt:
+                return False
+            session.delete(prompt)
+            session.commit()
+            return True
+
+    def _serialize_response(self, response: Responses) -> dict:
+        lang = getattr(response, "lang", None)
+        return {
+            "response_id": response.response_id,
+            "response_text": response.response_text,
+            "response_type": response.response_type,
+            "language": getattr(lang, "lang_name", None) if lang else None,
+            "prompt_id": response.prompt_id,
+        }
+
+    def list_responses_with_metadata(self) -> List[dict]:
+        with self.Session() as session:
+            responses = (
+                session.query(Responses).options(joinedload(Responses.lang)).all()
+            )
+            return [self._serialize_response(r) for r in responses]
+
+    def get_response_with_metadata(self, response_id: int) -> Optional[dict]:
+        with self.Session() as session:
+            response = (
+                session.query(Responses)
+                .options(joinedload(Responses.lang))
+                .filter(Responses.response_id == response_id)
+                .first()
+            )
+            return self._serialize_response(response) if response else None
+
+    def create_response_v2(self, payload: dict) -> int:
+        with self.Session() as session:
+            lang_id = self.add_or_get_language_id(payload["language"])
+            if lang_id == -1:
+                raise ValueError("Failed to create or get language")
+
+            new_response = Responses(
+                response_text=payload["response_text"],
+                response_type=payload["response_type"],
+                lang_id=lang_id,
+                prompt_id=payload["prompt_id"],
+                hash_value=Response(
+                    response_text=payload["response_text"],
+                    response_type=payload["response_type"],
+                    lang_id=lang_id,
+                ).digest,
+            )
+            session.add(new_response)
+            session.commit()
+            session.refresh(new_response)
+            return new_response.response_id
+
+    def update_response_v2(self, response_id: int, updates: dict) -> Optional[dict]:
+        with self.Session() as session:
+            response = (
+                session.query(Responses)
+                .filter(Responses.response_id == response_id)
+                .first()
+            )
+            if not response:
+                return None
+
+            if "response_text" in updates:
+                response.response_text = updates["response_text"]
+            if "response_type" in updates:
+                response.response_type = updates["response_type"]
+            if "language" in updates:
+                lang_id = self.add_or_get_language_id(updates["language"])
+                if lang_id != -1:
+                    response.lang_id = lang_id
+
+            response.hash_value = Response(
+                response_text=response.response_text,
+                response_type=response.response_type,
+                lang_id=response.lang_id,
+            ).digest
+            session.commit()
+            session.refresh(response)
+            return self._serialize_response(response)
+
+    def delete_response_record(self, response_id: int) -> bool:
+        with self.Session() as session:
+            response = (
+                session.query(Responses)
+                .filter(Responses.response_id == response_id)
+                .first()
+            )
+            if not response:
+                return False
+            session.delete(response)
+            session.commit()
+            return True
+
+    def _serialize_strategy(self, strategy: Strategies) -> dict:
+        return {
+            "strategy_id": strategy.strategy_id,
+            "strategy_name": strategy.strategy_name,
+            "strategy_description": strategy.strategy_description,
+        }
+
+    def list_strategies_with_metadata(self) -> List[dict]:
+        with self.Session() as session:
+            strategies = session.query(Strategies).all()
+            return [self._serialize_strategy(s) for s in strategies]
+
+    def get_strategy_with_metadata(self, strategy_id: int) -> Optional[dict]:
+        with self.Session() as session:
+            strategy = (
+                session.query(Strategies)
+                .filter(Strategies.strategy_id == strategy_id)
+                .first()
+            )
+            return self._serialize_strategy(strategy) if strategy else None
+
+    def create_strategy_v2(self, payload: dict) -> int:
+        with self.Session() as session:
+            if (
+                session.query(Strategies)
+                .filter_by(strategy_name=payload["strategy_name"])
+                .first()
+            ):
+                raise IntegrityError(
+                    "Strategy name already exists", params=None, orig=None
+                )
+
+            new_strategy = Strategies(
+                strategy_name=payload["strategy_name"],
+                strategy_description=payload.get("strategy_description"),
+            )
+            session.add(new_strategy)
+            session.commit()
+            session.refresh(new_strategy)
+            return new_strategy.strategy_id
+
+    def update_strategy_v2(self, strategy_id: int, updates: dict) -> Optional[dict]:
+        with self.Session() as session:
+            strategy = (
+                session.query(Strategies)
+                .filter(Strategies.strategy_id == strategy_id)
+                .first()
+            )
+            if not strategy:
+                return None
+
+            if "strategy_name" in updates:
+                strategy.strategy_name = updates["strategy_name"]
+            if "strategy_description" in updates:
+                strategy.strategy_description = updates["strategy_description"]
+
+            session.commit()
+            session.refresh(strategy)
+            return self._serialize_strategy(strategy)
+
+    def delete_strategy_record(self, strategy_id: int) -> bool:
+        with self.Session() as session:
+            strategy = (
+                session.query(Strategies)
+                .filter(Strategies.strategy_id == strategy_id)
+                .first()
+            )
+            if not strategy:
+                return False
+            session.delete(strategy)
+            session.commit()
+            return True
+
+    def _serialize_target(self, target: Targets) -> dict:
+        """
+        Convert a Targets ORM instance into a dictionary that can be returned by APIs.
+        """
+        domain = getattr(target, "domain", None)
+        langs = getattr(target, "langs", [])
+        return {
+            "target_id": getattr(target, "target_id"),
+            "target_name": getattr(target, "target_name"),
+            "target_type": getattr(target, "target_type"),
+            "target_description": getattr(target, "target_description"),
+            "target_url": getattr(target, "target_url"),
+            "domain_name": getattr(domain, "domain_name", None) if domain else None,
+            "lang_list": [lang.lang_name for lang in langs],
+        }
+
+    def list_targets_with_metadata(self) -> List[dict]:
+        """
+        Returns all targets along with their related metadata for API responses.
+        """
+        with self.Session() as session:
+            targets = (
+                session.query(Targets)
+                .options(
+                    joinedload(Targets.domain),
+                    joinedload(Targets.langs),
+                )
+                .all()
+            )
+            return [self._serialize_target(t) for t in targets]
+
+    def get_target_with_metadata(self, target_id: int) -> Optional[dict]:
+        """
+        Returns a single target with related metadata by ID.
+        """
+        with self.Session() as session:
+            target = (
+                session.query(Targets)
+                .options(
+                    joinedload(Targets.domain),
+                    joinedload(Targets.langs),
+                )
+                .filter(Targets.target_id == target_id)
+                .first()
+            )
+            if target is None:
+                return None
+            return self._serialize_target(target)
+
+    def create_target_v2(self, payload: dict) -> int:
+        """
+        Creates a new target in the database.
+        """
+        with self.Session() as session:
+            if (
+                session.query(Targets)
+                .filter_by(target_name=payload["target_name"])
+                .first()
+            ):
+                raise IntegrityError(
+                    "Target name already exists", params=None, orig=None
+                )
+
+            domain_id = self.add_or_get_domain_id(payload["domain_name"])
+            if domain_id == -1:
+                raise ValueError("Failed to create or get domain")
+
+            new_target = Targets(
+                target_name=payload["target_name"],
+                target_type=payload["target_type"],
+                target_description=payload.get("target_description"),
+                target_url=payload.get("target_url"),
+                domain_id=domain_id,
+            )
+
+            if "lang_list" in payload:
+                languages = (
+                    session.query(Languages)
+                    .filter(Languages.lang_name.in_(payload["lang_list"]))
+                    .all()
+                )
+                new_target.langs = languages
+
+            session.add(new_target)
+            session.commit()
+            session.refresh(new_target)
+            return new_target.target_id
+
+    def update_target_v2(self, target_id: int, updates: dict) -> Optional[dict]:
+        """
+        Updates a target with the provided field values and returns the refreshed record.
+        """
+        with self.Session() as session:
+            target = (
+                session.query(Targets).filter(Targets.target_id == target_id).first()
+            )
+            if target is None:
+                return None
+
+            for key, value in updates.items():
+                if key == "lang_list":
+                    languages = (
+                        session.query(Languages)
+                        .filter(Languages.lang_name.in_(value))
+                        .all()
+                    )
+                    target.langs = languages
+                elif key == "domain_name":
+                    domain_id = self.add_or_get_domain_id(value)
+                    if domain_id != -1:
+                        target.domain_id = domain_id
+                elif hasattr(target, key):
+                    setattr(target, key, value)
+
+            session.commit()
+            session.refresh(target)
+            return self._serialize_target(target)
+
+    def delete_target_record(self, target_id: int) -> bool:
+        """
+        Deletes a target by ID.
+        """
+        with self.Session() as session:
+            target = (
+                session.query(Targets).filter(Targets.target_id == target_id).first()
+            )
+            if target is None:
+                return False
+            session.delete(target)
+            session.commit()
+            return True
+
+    def get_testcase_by_name(self, testcase_name: str) -> Optional[TestCase]:
+        """
+        Fetches a test case by its name.
+
+
+
+        Convert a Targets ORM instance into a dictionary that can be returned by APIs.
+        """
+        domain = getattr(target, "domain", None)
+        langs = getattr(target, "langs", [])
+        return {
+            "target_id": getattr(target, "target_id"),
+            "target_name": getattr(target, "target_name"),
+            "target_type": getattr(target, "target_type"),
+            "target_description": getattr(target, "target_description"),
+            "target_url": getattr(target, "target_url"),
+            "domain_name": getattr(domain, "domain_name", None) if domain else None,
+            "lang_list": [lang.lang_name for lang in langs],
+        }
+
+    def list_targets_with_metadata(self) -> List[dict]:
+        """
+        Returns all targets along with their related metadata for API responses.
+        """
+        with self.Session() as session:
+            targets = (
+                session.query(Targets)
+                .options(
+                    joinedload(Targets.domain),
+                    joinedload(Targets.langs),
+                )
+                .all()
+            )
+            return [self._serialize_target(t) for t in targets]
+
+    def get_target_with_metadata(self, target_id: int) -> Optional[dict]:
+        """
+        Returns a single target with related metadata by ID.
+        """
+        with self.Session() as session:
+            target = (
+                session.query(Targets)
+                .options(
+                    joinedload(Targets.domain),
+                    joinedload(Targets.langs),
+                )
+                .filter(Targets.target_id == target_id)
+                .first()
+            )
+            if target is None:
+                return None
+            return self._serialize_target(target)
+
+    def create_target_v2(self, payload: dict) -> int:
+        """
+        Creates a new target in the database.
+        """
+        with self.Session() as session:
+            if (
+                session.query(Targets)
+                .filter_by(target_name=payload["target_name"])
+                .first()
+            ):
+                raise IntegrityError(
+                    "Target name already exists", params=None, orig=None
+                )
+
+            domain_id = self.add_or_get_domain_id(payload["domain_name"])
+            if domain_id == -1:
+                raise ValueError("Failed to create or get domain")
+
+            new_target = Targets(
+                target_name=payload["target_name"],
+                target_type=payload["target_type"],
+                target_description=payload.get("target_description"),
+                target_url=payload.get("target_url"),
+                domain_id=domain_id,
+            )
+
+            if "lang_list" in payload:
+                languages = (
+                    session.query(Languages)
+                    .filter(Languages.lang_name.in_(payload["lang_list"]))
+                    .all()
+                )
+                new_target.langs = languages
+
+            session.add(new_target)
+            session.commit()
+            session.refresh(new_target)
+            return new_target.target_id
+
+    def update_target_v2(self, target_id: int, updates: dict) -> Optional[dict]:
+        """
+        Updates a target with the provided field values and returns the refreshed record.
+        """
+        with self.Session() as session:
+            target = (
+                session.query(Targets).filter(Targets.target_id == target_id).first()
+            )
+            if target is None:
+                return None
+
+            for key, value in updates.items():
+                if key == "lang_list":
+                    languages = (
+                        session.query(Languages)
+                        .filter(Languages.lang_name.in_(value))
+                        .all()
+                    )
+                    target.langs = languages
+                elif key == "domain_name":
+                    domain_id = self.add_or_get_domain_id(value)
+                    if domain_id != -1:
+                        target.domain_id = domain_id
+                elif hasattr(target, key):
+                    setattr(target, key, value)
+
+            session.commit()
+            session.refresh(target)
+            return self._serialize_target(target)
+
+    def delete_target_record(self, target_id: int) -> bool:
+        """
+        Deletes a target by ID.
+        """
+        with self.Session() as session:
+            target = (
+                session.query(Targets).filter(Targets.target_id == target_id).first()
+            )
+            if target is None:
+                return False
+            session.delete(target)
+            session.commit()
+            return True
+
+    def get_testcase_by_name(self, testcase_name: str) -> Optional[TestCase]:
+        """
+        Fetches a test case by its name.
+
 
         Args:
             testcase_name (str): The name of the test case to fetch.
@@ -2741,5 +3766,73 @@ class DB:
                 )
                 for result in results
             ]
+
+    # Back-end router functions
+    def get_username_from_token(authorization: Optional[str]) -> Optional[str]:
+        """Extract username from JWT token."""
+        if not authorization:
+            return None
+        
+        try:
+            scheme, token = authorization.split()
+            if scheme.lower() != "bearer":
+                return None
+        except ValueError:
+            return None
+        
+        try:
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+            return payload.get("user_name")
+        except JWTError:
+            return None
+
+
+    # Language
+
+    async def create_language(
+            language: Language,  
+            authorization: Optional[str] = Header(None)
+        ):
+        # session = db.Session()
+         
+        try:
+            with self.Session() as session:
+                    existing_language = session.query(Languages).filter(Languages.lang_name == language.lang_name).first()
+                    if existing_language:
+                        raise HTTPException(status_code=400, detail="Language already exists")
+
+                    # Find the lowest unused lang_id
+                    existing_ids = [row[0] for row in session.query(Languages.lang_id).order_by(Languages.lang_id).all()]
+                    next_id = 1
+                    for id in existing_ids:
+                        if id != next_id:
+                            break
+                        next_id += 1
+
+                    new_language = Languages(
+                        lang_id=next_id,
+                        lang_name=language.lang_name
+                    )
+                    
+                    session.add(new_language)
+                    session.commit()
+                    session.refresh(new_language)
+
+                    username = get_username_from_token(authorization)
+                    if username:
+                        log_activity(
+                            username=username,
+                            entity_type="Language",
+                            entity_id=new_language.lang_id,
+                            operation="create",
+                            note=f"Language '{new_language.lang_name}' created"
+                        )
+
+                    return Language(
+                        lang_id=new_language.lang_id,
+                        lang_name=new_language.lang_name
+                    )
+        finally:
+            session.close()
 
 

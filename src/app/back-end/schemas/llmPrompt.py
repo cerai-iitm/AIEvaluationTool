@@ -1,29 +1,31 @@
-from pydantic import BaseModel
 from typing import Optional
 
-
-class LlmPromptIds(BaseModel):
-    llmPromptId: Optional[int]
-    prompt: Optional[str]
+from pydantic import BaseModel, Field
 
 
-class LlmPrompts(BaseModel):
-    llmPromptId: Optional[int]
-    prompt: Optional[str]
-    language: Optional[str]
+class LlmPromptBase(BaseModel):
+    prompt: str = Field(..., description="The LLM prompt.")
+    language: str = Field(..., description="The language of the prompt.")
 
 
-class LlmPromptCreate(BaseModel):
-    prompt: str
-    language: str
+class LlmPromptCreateV2(LlmPromptBase):
+    pass
 
 
-class LlmPromptUpdate(BaseModel):
-    llmPromptId: Optional[int]
-    prompt: Optional[str]
-    language: Optional[str]
+class LlmPromptUpdateV2(BaseModel):
+    prompt: Optional[str] = Field(None, description="The new LLM prompt.")
+    language: Optional[str] = Field(None, description="The new language of the prompt.")
 
 
-class LlmPromptDelete(BaseModel):
+class LlmPromptListResponse(BaseModel):
+    llmjudgeprompt_id: int
+    llmjudgeprompt_name: str
+
+
+class LlmPromptDetailResponse(BaseModel):
     llmPromptId: int
-    message: str
+    prompt: str
+    language: Optional[str]
+
+    class Config:
+        from_attributes = True

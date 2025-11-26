@@ -52,10 +52,13 @@ export const ResponseAddDialog = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [languageOptions, setLanguageOptions] = useState<string[]>([]);
   const [isFetchingLanguages, setIsFetchingLanguages] = useState(false);
-  
+
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
   const [searchType, setSearchType] = useState<PromptSearchType>("userPrompt");
-  const [focusedField, setFocusedField] = useState<null | "userPrompt" | "systemPrompt">(null);
+  const [focusedField, setFocusedField] = useState<
+    null | "userPrompt" | "systemPrompt"
+  >(null);
+  const [promptId, setPromptId] = useState<number | null>(null);
 
   // Fetch languages from API
   const fetchLanguages = useCallback(async () => {
@@ -70,7 +73,7 @@ export const ResponseAddDialog = ({
         headers["Authorization"] = `Bearer ${token}`;
       }
 
-      const response = await fetch(API_ENDPOINTS.LANGUAGES, { headers });
+      const response = await fetch(API_ENDPOINTS.LANGUAGES_V2, { headers });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -81,8 +84,10 @@ export const ResponseAddDialog = ({
         new Set(
           (Array.isArray(data) ? data : [])
             .map((lang: any) => lang?.lang_name)
-            .filter((name: string | null | undefined): name is string => Boolean(name))
-        )
+            .filter((name: string | null | undefined): name is string =>
+              Boolean(name),
+            ),
+        ),
       );
 
       setLanguageOptions(languageNames);
@@ -117,6 +122,7 @@ export const ResponseAddDialog = ({
       setLanguage("");
       setNotes("");
       setIsSubmitting(false);
+      setPromptId(null);
     }
   }, [open]);
 
@@ -126,76 +132,21 @@ export const ResponseAddDialog = ({
   };
 
   const handleSelectPrompt = (selection: PromptSearchSelection) => {
-    switch (selection.type) {
-      case "userPrompt":
-        setUserPrompts(selection.userPrompt);
-        if (selection.systemPrompt !== undefined) {
-          setSystemPrompts(selection.systemPrompt ?? "");
-        }
-        break;
-      case "systemPrompt":
-        setSystemPrompts(selection.systemPrompt);
-        if (selection.userPrompt) {
-          setUserPrompts(selection.userPrompt);
-        }
-        break;
-      default:
-        break;
-    }
+    setPromptId(selection.prompt_id);
+    setUserPrompts(selection.userPrompt);
+    setSystemPrompts(selection.systemPrompt ?? "");
     setFocusedField(null);
     setSearchDialogOpen(false);
   };
 
-  const isFormValid = (
-    userPrompts.trim() &&
-    responseText.trim() &&
-    responseType &&
-    language &&
-    notes.trim()
-  );
+  const isFormValid =
+    promptId && responseText.trim() && responseType && language && notes.trim();
 
   const handleSubmit = async () => {
-    // Validate required fields
-    if (!responseText.trim()) {
+    if (!isFormValid) {
       toast({
         title: "Validation Error",
-        description: "Response text is required",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!userPrompts.trim()) {
-      toast({
-        title: "Validation Error",
-        description: "User prompt is required",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!responseType) {
-      toast({
-        title: "Validation Error",
-        description: "Response type is required",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!language) {
-      toast({
-        title: "Validation Error",
-        description: "Language is required",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!notes.trim()) {
-      toast({
-        title: "Validation Error",
-        description: "Notes field is required",
+        description: "Please fill all required fields.",
         variant: "destructive",
       });
       return;
@@ -213,20 +164,14 @@ export const ResponseAddDialog = ({
         headers["Authorization"] = `Bearer ${token}`;
       }
 
-      // Find the backend response type value
-      const backendResponseType = responseTypes.find(
-        (rt) => rt.label === responseType
-      )?.value || responseType;
-
       const payload = {
         response_text: responseText.trim(),
-        response_type: backendResponseType,
-        lang_name: language,
-        user_prompt: userPrompts.trim(),
-        system_prompt: systemPrompts.trim() || null,
+        response_type: responseType,
+        language: language,
+        prompt_id: promptId,
       };
 
-      const response = await fetch(API_ENDPOINTS.RESPONSE_CREATE, {
+      const response = await fetch(API_ENDPOINTS.RESPONSE_CREATE_V2, {
         method: "POST",
         headers,
         body: JSON.stringify(payload),
@@ -244,26 +189,12 @@ export const ResponseAddDialog = ({
         throw new Error(errorMessage);
       }
 
-      const data = await response.json();
-      console.log("Response created successfully:", data);
-
       toast({
         title: "Success",
         description: "Response created successfully",
       });
 
-      // Reset form
-      setUserPrompts("");
-      setSystemPrompts("");
-      setResponseText("");
-      setResponseType("");
-      setLanguage("");
-      setNotes("");
-
-      // Close dialog
       onOpenChange(false);
-
-      // Trigger refresh in parent component
       if (onSuccess) {
         onSuccess();
       }
@@ -309,7 +240,7 @@ export const ResponseAddDialog = ({
                   </SelectTrigger>
                   <SelectContent className="bg-popover max-h-[300px]">
                     {responseTypes.map((type) => (
-                      <SelectItem key={type.value} value={type.label}>
+                      <SelectItem key={type.value} value={type.value}>
                         {type.label}
                       </SelectItem>
                     ))}
@@ -357,25 +288,18 @@ export const ResponseAddDialog = ({
                 <div className="relative">
                   <Textarea
                     value={userPrompts}
-                    onChange={(e) => setUserPrompts(e.target.value)}
-                    onFocus={() => setFocusedField("userPrompt")}
-                    onBlur={() => setTimeout(() => setFocusedField(null), 100)}
+                    readOnly
                     className="bg-muted min-h-[100px] pr-10"
-                    placeholder="Enter user prompt..."
-                    required
+                    placeholder="Search for a prompt"
                   />
-                  {focusedField === "userPrompt" && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-2 top-2"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => handleSearchClick("userPrompt")}
-                      tabIndex={-1}
-                    >
-                      <Search className="w-4 h-4" />
-                    </Button>
-                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-2 top-2"
+                    onClick={() => handleSearchClick("userPrompt")}
+                  >
+                    <Search className="w-4 h-4" />
+                  </Button>
                 </div>
               </div>
 
@@ -384,24 +308,10 @@ export const ResponseAddDialog = ({
                 <div className="relative">
                   <Textarea
                     value={systemPrompts}
-                    onChange={(e) => setSystemPrompts(e.target.value)}
-                    onFocus={() => setFocusedField("systemPrompt")}
-                    onBlur={() => setTimeout(() => setFocusedField(null), 100)}
+                    readOnly
                     className="bg-muted min-h-[80px] pr-10"
-                    placeholder="Enter system prompt..."
+                    placeholder="System prompt will be populated from search"
                   />
-                  {focusedField === "systemPrompt" && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-2 top-2"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => handleSearchClick("systemPrompt")}
-                      tabIndex={-1}
-                    >
-                      <Search className="w-4 h-4" />
-                    </Button>
-                  )}
                 </div>
               </div>
             </div>

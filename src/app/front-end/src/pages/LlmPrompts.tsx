@@ -18,7 +18,10 @@ import {
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { LlmPromptUpdateDialog, LlmPromptItem } from "@/components/LlmPromptUpdateDialog";
+import {
+  LlmPromptUpdateDialog,
+  LlmPromptItem,
+} from "@/components/LlmPromptUpdateDialog";
 import { LlmPromptAddDialog } from "@/components/LlmPromptAddDialog";
 import { useToast } from "@/hooks/use-toast";
 import { API_ENDPOINTS } from "@/config/api";
@@ -26,14 +29,18 @@ import { API_ENDPOINTS } from "@/config/api";
 const LlmPrompts = () => {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedPrompt, setSelectedPrompt] = useState<LlmPromptItem | null>(null);
+  const [selectedPrompt, setSelectedPrompt] = useState<LlmPromptItem | null>(
+    null,
+  );
   const [updatePrompt, setUpdatePrompt] = useState<LlmPromptItem | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [llmPrompts, setLlmPrompts] = useState<LlmPromptItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [promptToDelete, setPromptToDelete] = useState<LlmPromptItem | null>(null);
+  const [promptToDelete, setPromptToDelete] = useState<LlmPromptItem | null>(
+    null,
+  );
   const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchLlmPrompts = useCallback(async () => {
@@ -44,7 +51,7 @@ const LlmPrompts = () => {
       if (token) {
         headers["Authorization"] = `Bearer ${token}`;
       }
-      const response = await fetch(API_ENDPOINTS.LLM_PROMPTS_ALL, {
+      const response = await fetch(API_ENDPOINTS.LLMPROMPTS_V2, {
         method: "GET",
         headers,
       });
@@ -53,12 +60,7 @@ const LlmPrompts = () => {
         throw new Error(errorData.detail || "Unable to fetch LLM prompts");
       }
       const data = await response.json();
-      const mapped: LlmPromptItem[] = data.map((llmPrompt: any) => ({
-        llmPromptId: llmPrompt.llmPromptId,
-        prompt: llmPrompt.prompt ?? "",
-        language: llmPrompt.language ?? null,
-      }));
-      setLlmPrompts(mapped);
+      setLlmPrompts(data);
     } catch (error: any) {
       console.error("Failed to load LLM prompts:", error);
       toast({
@@ -84,7 +86,7 @@ const LlmPrompts = () => {
           (p.language?.toLowerCase() ?? "").includes(query)
         );
       }),
-    [llmPrompts, searchQuery]
+    [llmPrompts, searchQuery],
   );
 
   const totalItems = filteredPrompts.length;
@@ -93,7 +95,7 @@ const LlmPrompts = () => {
 
   const paginatedPrompts = filteredPrompts.slice(
     (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+    currentPage * itemsPerPage,
   );
 
   const handleDeletePrompt = async () => {
@@ -105,10 +107,13 @@ const LlmPrompts = () => {
       if (token) {
         headers["Authorization"] = `Bearer ${token}`;
       }
-      const response = await fetch(API_ENDPOINTS.LLM_PROMPT_DELETE(promptToDelete.llmPromptId), {
-        method: "DELETE",
-        headers,
-      });
+      const response = await fetch(
+        API_ENDPOINTS.LLMPROMPT_DELETE_V2(promptToDelete.llmPromptId),
+        {
+          method: "DELETE",
+          headers,
+        },
+      );
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.detail || "Failed to delete LLM prompt");
@@ -171,7 +176,7 @@ const LlmPrompts = () => {
                   ? "0"
                   : `${(currentPage - 1) * itemsPerPage + 1} - ${Math.min(
                       currentPage * itemsPerPage,
-                      totalItems
+                      totalItems,
                     )} of ${totalItems}`}
               </span>
               <div className="flex gap-1">
@@ -201,21 +206,32 @@ const LlmPrompts = () => {
               {isLoading ? (
                 <div className="flex items-center justify-center py-16">
                   <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                  <span className="ml-2 text-sm text-muted-foreground">Loading LLM prompts...</span>
+                  <span className="ml-2 text-sm text-muted-foreground">
+                    Loading LLM prompts...
+                  </span>
                 </div>
               ) : (
                 <table className="w-full">
                   <thead className="border-b-2">
                     <tr>
-                      <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-center">Prompt ID</th>
-                      <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">LLM Prompts</th>
-                      <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">Language</th>
+                      <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-center">
+                        Prompt ID
+                      </th>
+                      <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">
+                        LLM Prompts
+                      </th>
+                      <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">
+                        Language
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {paginatedPrompts.length === 0 ? (
                       <tr>
-                        <td colSpan={3} className="p-6 text-center text-muted-foreground">
+                        <td
+                          colSpan={3}
+                          className="p-6 text-center text-muted-foreground"
+                        >
                           No LLM prompts found
                         </td>
                       </tr>
@@ -227,7 +243,9 @@ const LlmPrompts = () => {
                           onClick={() => setSelectedPrompt(row)}
                         >
                           <td className="p-2 text-center">{row.llmPromptId}</td>
-                          <td className="p-2 truncate max-w-[650px] pr-8 mr-2">{row.prompt}</td>
+                          <td className="p-2 truncate max-w-[650px] pr-8 mr-2">
+                            {row.prompt}
+                          </td>
                           <td className="p-2">{row.language ?? "—"}</td>
                         </tr>
                       ))
@@ -249,7 +267,10 @@ const LlmPrompts = () => {
         </div>
       </main>
 
-      <Dialog open={!!selectedPrompt} onOpenChange={() => setSelectedPrompt(null)}>
+      <Dialog
+        open={!!selectedPrompt}
+        onOpenChange={() => setSelectedPrompt(null)}
+      >
         <DialogContent
           className="max-w-3xl max-h-[90vh] overflow-y-auto"
           onOpenAutoFocus={(e) => e.preventDefault()}
@@ -262,17 +283,28 @@ const LlmPrompts = () => {
             <div className="flex-1 p-1 overflow-y-auto space-y-6 pb-5">
               <div className="space-y-1">
                 <Label className="text-base font-semibold">LLM Prompt</Label>
-                <Textarea value={selectedPrompt.prompt} readOnly className="bg-muted min-h-[80px]" />
+                <Textarea
+                  value={selectedPrompt.prompt}
+                  readOnly
+                  className="bg-muted min-h-[80px]"
+                />
               </div>
               <div className="space-y-1">
                 <Label className="text-base font-semibold">Language</Label>
-                <Input value={selectedPrompt.language ?? "—"} readOnly className="bg-muted" />
+                <Input
+                  value={selectedPrompt.language ?? "—"}
+                  readOnly
+                  className="bg-muted"
+                />
               </div>
             </div>
           )}
 
           <div className="sticky bottom-0 bg-white pt-4 p-2 flex justify-center gap-4 border-gray-200 z-10">
-            <Button variant="destructive" onClick={() => openDeleteDialog(selectedPrompt!)}>
+            <Button
+              variant="destructive"
+              onClick={() => openDeleteDialog(selectedPrompt!)}
+            >
               Delete
             </Button>
             <Button
@@ -326,15 +358,18 @@ const LlmPrompts = () => {
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Are you sure you want to delete the following LLM Prompt? This action cannot be undone.
+              Are you sure you want to delete the following LLM Prompt? This
+              action cannot be undone.
             </p>
             {promptToDelete && (
               <div className="rounded-md bg-muted p-3 text-sm">
                 <p>
-                  <span className="font-semibold">Prompt ID:</span> {promptToDelete.llmPromptId}
+                  <span className="font-semibold">Prompt ID:</span>{" "}
+                  {promptToDelete.llmPromptId}
                 </p>
                 <p className="mt-2 line-clamp-3">
-                  <span className="font-semibold">Prompt:</span> {promptToDelete.prompt}
+                  <span className="font-semibold">Prompt:</span>{" "}
+                  {promptToDelete.prompt}
                 </p>
               </div>
             )}

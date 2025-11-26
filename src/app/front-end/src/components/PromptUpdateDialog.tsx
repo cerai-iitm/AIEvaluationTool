@@ -1,10 +1,21 @@
 import { useCallback, useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { API_ENDPOINTS } from "@/config/api";
@@ -19,14 +30,20 @@ export interface PromptItem {
 }
 
 interface PromptUpdateDialogProps {
-  prompt: PromptItem ;
+  prompt: PromptItem;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdate?: (prompt: PromptItem) => void;
   onSuccess?: () => void;
 }
 
-export function PromptUpdateDialog({ prompt, open, onOpenChange, onUpdate, onSuccess }: PromptUpdateDialogProps) {
+export function PromptUpdateDialog({
+  prompt,
+  open,
+  onOpenChange,
+  onUpdate,
+  onSuccess,
+}: PromptUpdateDialogProps) {
   const { toast } = useToast();
   const [userPrompt, setUserPrompt] = useState("");
   const [systemPrompt, setSystemPrompt] = useState("");
@@ -70,38 +87,42 @@ export function PromptUpdateDialog({ prompt, open, onOpenChange, onUpdate, onSuc
       }
 
       const [languagesResponse, domainsResponse] = await Promise.all([
-        fetch(API_ENDPOINTS.LANGUAGES, { method: "GET", headers }),
-        fetch(API_ENDPOINTS.DOMAINS, { method: "GET", headers }),
+        fetch(API_ENDPOINTS.LANGUAGES_V2, { method: "GET", headers }),
+        fetch(API_ENDPOINTS.DOMAINS_V2, { method: "GET", headers }),
       ]);
 
       if (!languagesResponse.ok || !domainsResponse.ok) {
         const langError = await languagesResponse.json().catch(() => ({}));
         const domainError = await domainsResponse.json().catch(() => ({}));
-        throw new Error(langError.detail || domainError.detail || "Failed to load reference data");
+        throw new Error(
+          langError.detail ||
+            domainError.detail ||
+            "Failed to load reference data",
+        );
       }
 
       const languageData = await languagesResponse.json();
       const domainData = await domainsResponse.json();
 
       const languageNames = Array.from(
-        new Set(
-          [
-            ...(Array.isArray(languageData) ? languageData : [])
-              .map((lang: any) => lang?.lang_name)
-              .filter((name: string | null | undefined): name is string => Boolean(name)),
-            ...(promptLanguage ? [promptLanguage] : []),
-          ]
-        )
+        new Set([
+          ...(Array.isArray(languageData) ? languageData : [])
+            .map((lang: any) => lang?.lang_name)
+            .filter((name: string | null | undefined): name is string =>
+              Boolean(name),
+            ),
+          ...(promptLanguage ? [promptLanguage] : []),
+        ]),
       );
       const domainNames = Array.from(
-        new Set(
-          [
-            ...(Array.isArray(domainData) ? domainData : [])
-              .map((dom: any) => dom?.domain_name)
-              .filter((name: string | null | undefined): name is string => Boolean(name)),
-            ...(promptDomain ? [promptDomain] : []),
-          ]
-        )
+        new Set([
+          ...(Array.isArray(domainData) ? domainData : [])
+            .map((dom: any) => dom?.domain_name)
+            .filter((name: string | null | undefined): name is string =>
+              Boolean(name),
+            ),
+          ...(promptDomain ? [promptDomain] : []),
+        ]),
       );
 
       setLanguageOptions(languageNames);
@@ -158,7 +179,8 @@ export function PromptUpdateDialog({ prompt, open, onOpenChange, onUpdate, onSuc
     if (!isChanged || !notes.trim() || !language || !domain) {
       toast({
         title: "Validation error",
-        description: "Please modify the prompt, select language and domain, and add notes.",
+        description:
+          "Please modify the prompt, select language and domain, and add notes.",
         variant: "destructive",
       });
       return;
@@ -172,17 +194,20 @@ export function PromptUpdateDialog({ prompt, open, onOpenChange, onUpdate, onSuc
         headers["Authorization"] = `Bearer ${token}`;
       }
 
-      const response = await fetch(API_ENDPOINTS.PROMPT_UPDATE(prompt.prompt_id), {
-        method: "PUT",
-        headers,
-        body: JSON.stringify({
-          prompt_id: prompt.prompt_id,
-          user_prompt: userPrompt.trim(),
-          system_prompt: systemPrompt.trim(),
-          language,
-          domain,
-        }),
-      });
+      const response = await fetch(
+        API_ENDPOINTS.PROMPT_UPDATE_V2(prompt.prompt_id),
+        {
+          method: "PUT",
+          headers,
+          body: JSON.stringify({
+            prompt_id: prompt.prompt_id,
+            user_prompt: userPrompt.trim(),
+            system_prompt: systemPrompt.trim(),
+            language,
+            domain,
+          }),
+        },
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -217,22 +242,33 @@ export function PromptUpdateDialog({ prompt, open, onOpenChange, onUpdate, onSuc
       setIsSubmitting(false);
     }
   };
-    
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" onOpenAutoFocus={(e) => e.preventDefault()}>
+      <DialogContent
+        className="max-w-3xl max-h-[90vh] overflow-y-auto"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle className="sr-only">Prompts</DialogTitle>
         </DialogHeader>
         <div className="flex-1 p-1 overflow-y-auto space-y-6 pb-5">
           <div className="space-y-1">
             <Label className="text-base font-semibold">User Prompt</Label>
-            <Textarea value={userPrompt} onChange={(e) => setUserPrompt(e.target.value)} className="bg-muted min-h-[80px]" />
+            <Textarea
+              value={userPrompt}
+              onChange={(e) => setUserPrompt(e.target.value)}
+              className="bg-muted min-h-[80px]"
+            />
           </div>
           <div className="space-y-1">
             <Label className="text-base font-semibold">System Prompt</Label>
-            <Textarea value={systemPrompt} onChange={(e) => setSystemPrompt(e.target.value)} className="bg-muted min-h-[80px]" readOnly />
+            <Textarea
+              value={systemPrompt}
+              onChange={(e) => setSystemPrompt(e.target.value)}
+              className="bg-muted min-h-[80px]"
+              readOnly
+            />
           </div>
           <div className="space-y-1">
             <Label className="text-base font-semibold">language Name</Label>
@@ -242,7 +278,13 @@ export function PromptUpdateDialog({ prompt, open, onOpenChange, onUpdate, onSuc
               disabled={isOptionsLoading || !languageOptions.length}
             >
               <SelectTrigger>
-                <SelectValue placeholder={isOptionsLoading ? "Loading languages..." : "Select a language"} />
+                <SelectValue
+                  placeholder={
+                    isOptionsLoading
+                      ? "Loading languages..."
+                      : "Select a language"
+                  }
+                />
               </SelectTrigger>
               <SelectContent className="bg-popover max-h-[300px]">
                 {languageOptions.length ? (
@@ -267,7 +309,11 @@ export function PromptUpdateDialog({ prompt, open, onOpenChange, onUpdate, onSuc
               disabled={isOptionsLoading || !domainOptions.length}
             >
               <SelectTrigger>
-                <SelectValue placeholder={isOptionsLoading ? "Loading domains..." : "Select a domain"} />
+                <SelectValue
+                  placeholder={
+                    isOptionsLoading ? "Loading domains..." : "Select a domain"
+                  }
+                />
               </SelectTrigger>
               <SelectContent className="bg-popover max-h-[300px]">
                 {domainOptions.length ? (
@@ -287,12 +333,23 @@ export function PromptUpdateDialog({ prompt, open, onOpenChange, onUpdate, onSuc
         </div>
 
         <div className="sticky bottom-0 bg-white pt-4 p-2 flex justify-center items-center gap-4 border-gray-200 z-10">
-
           <Label className="text-base font-bold mr-2">Notes</Label>
-          <Input value={notes} onChange={(e) => setNotes(e.target.value)} className="bg-gray-200 rounded px-4 py-1 mr-4 w-96" placeholder="Enter notes" required />
+          <Input
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            className="bg-gray-200 rounded px-4 py-1 mr-4 w-96"
+            placeholder="Enter notes"
+            required
+          />
           <Button
             className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800 "
-            disabled={!isChanged || !notes.trim() || !language || !domain || isSubmitting}
+            disabled={
+              !isChanged ||
+              !notes.trim() ||
+              !language ||
+              !domain ||
+              isSubmitting
+            }
             onClick={handleSubmit}
           >
             {isSubmitting ? (
@@ -311,5 +368,3 @@ export function PromptUpdateDialog({ prompt, open, onOpenChange, onUpdate, onSuc
 }
 
 export default PromptUpdateDialog;
-
-

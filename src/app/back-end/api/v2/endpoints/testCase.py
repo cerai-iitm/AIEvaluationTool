@@ -71,19 +71,81 @@ def _get_default_language_and_domain(db: DB) -> tuple[int, int]:
     summary="List all test cases (v2)",
 )
 def list_testcases(db: DB = Depends(_get_db)):
-    return db.list_testcases_with_metadata() or []
+    testcases = db.testcases
 
+    results = []
+    for testcase in testcases:
+        domain_name = db.get_domain_name(testcase.prompt.domain_id)
+        response_str = (
+            testcase.response.response_text
+            if hasattr(testcase.response, "response_text")
+            else str(testcase.response)
+        )
+        judge_prompt_str = (
+            testcase.judge_prompt.prompt
+            if hasattr(testcase.judge_prompt, "prompt")
+            else str(testcase.judge_prompt)
+        )
+        results.append(
+            TestCaseListResponse(
+                testcase_id=testcase.testcase_id,
+                testcase_name=testcase.name,
+                user_prompt=testcase.prompt.user_prompt,
+                system_prompt=testcase.prompt.system_prompt,
+                response_text=response_str,
+                strategy_name=testcase.strategy,
+                llm_judge_prompt=judge_prompt_str,
+                domain_name=domain_name,
+            )
+        )
+    return results
+
+
+
+# @testcase_router.get(
+#     "",
+#     response_model=List[TestCaseListResponse],
+#     summary="List all test cases (v2)",
+# )
+# def list_testcases(db: DB = Depends(_get_db)):
+    # return db.list_testcases_with_metadata() or []
+    # return db.testcases
 
 @testcase_router.get(
     "/{testcase_id}",
-    response_model=TestCaseDetailResponse,
+    response_model=TestCaseListResponse,
     summary="Get a test case by ID (v2)",
 )
 def get_testcase(testcase_id: int, db: DB = Depends(_get_db)):
-    testcase = db.get_testcase_with_metadata(testcase_id)
+    testcase = db.get_testcase_by_id(testcase_id)
     if testcase is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Test case not found")
-    return testcase
+
+    judge_prompt = testcase.judge_prompt
+    llm_judge_prompt = judge_prompt.prompt if judge_prompt else None
+
+
+    return TestCaseListResponse(
+        testcase_id=testcase.testcase_id,
+        testcase_name=testcase.name,
+        user_prompt=testcase.prompt.user_prompt,
+        system_prompt=testcase.prompt.system_prompt,
+        response_text=testcase.response.response_text,
+        strategy_name=testcase.strategy,
+        llm_judge_prompt=llm_judge_prompt,
+    )
+
+
+# @testcase_router.get(
+#     "/{testcase_id}",
+#     response_model=TestCaseDetailResponse,
+#     summary="Get a test case by ID (v2)",
+# )
+# def get_testcase(testcase_id: int, db: DB = Depends(_get_db)):
+#     testcase = db.get_testcase_with_metadata(testcase_id)
+#     if testcase is None:
+#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Test case not found")
+#     return testcase
 
 
 @testcase_router.post(

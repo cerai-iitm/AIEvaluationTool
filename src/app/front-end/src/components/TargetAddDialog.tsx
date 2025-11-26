@@ -1,13 +1,24 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { API_ENDPOINTS } from '@/config/api';
-import { useToast } from '@/hooks/use-toast';
+import { useState, useEffect, useCallback } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { API_ENDPOINTS } from "@/config/api";
+import { useToast } from "@/hooks/use-toast";
 
 interface TargetAddDialogProps {
   open: boolean;
@@ -15,15 +26,19 @@ interface TargetAddDialogProps {
   onSuccess?: () => void;
 }
 
-export default function TargetAddDialog({ open, onOpenChange, onSuccess }: TargetAddDialogProps) {
+export default function TargetAddDialog({
+  open,
+  onOpenChange,
+  onSuccess,
+}: TargetAddDialogProps) {
   const { toast } = useToast();
-  const [name, setName] = useState('');
-  const [type, setType] = useState('');
-  const [description, setDescription] = useState('');
-  const [url, setUrl] = useState('');
-  const [domain, setDomain] = useState('');
+  const [name, setName] = useState("");
+  const [type, setType] = useState("");
+  const [description, setDescription] = useState("");
+  const [url, setUrl] = useState("");
+  const [domain, setDomain] = useState("");
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
-  const [notes, setNotes] = useState('');
+  const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [targetTypes, setTargetTypes] = useState<string[]>([]);
   const [domainOptions, setDomainOptions] = useState<string[]>([]);
@@ -34,19 +49,20 @@ export default function TargetAddDialog({ open, onOpenChange, onSuccess }: Targe
   const fetchOptions = useCallback(async () => {
     setIsFetchingOptions(true);
     try {
-      const token = localStorage.getItem('access_token');
+      const token = localStorage.getItem("access_token");
       const headers: HeadersInit = {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       };
       if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+        headers["Authorization"] = `Bearer ${token}`;
       }
 
-      const [typesResponse, domainsResponse, languagesResponse] = await Promise.all([
-        fetch(API_ENDPOINTS.TARGET_TYPES, { headers }),
-        fetch(API_ENDPOINTS.DOMAINS, { headers }),
-        fetch(API_ENDPOINTS.LANGUAGES, { headers }),
-      ]);
+      const [typesResponse, domainsResponse, languagesResponse] =
+        await Promise.all([
+          fetch(API_ENDPOINTS.TARGET_TYPES, { headers }),
+          fetch(API_ENDPOINTS.DOMAINS_V2, { headers }),
+          fetch(API_ENDPOINTS.LANGUAGES_V2, { headers }),
+        ]);
 
       if (typesResponse.ok) {
         const typesData = await typesResponse.json();
@@ -75,11 +91,11 @@ export default function TargetAddDialog({ open, onOpenChange, onSuccess }: Targe
         setLanguageOptions(langNames);
       }
     } catch (error) {
-      console.error('Error fetching options:', error);
+      console.error("Error fetching options:", error);
       toast({
-        title: 'Error',
-        description: 'Failed to load options',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to load options",
+        variant: "destructive",
       });
     } finally {
       setIsFetchingOptions(false);
@@ -91,78 +107,79 @@ export default function TargetAddDialog({ open, onOpenChange, onSuccess }: Targe
       fetchOptions();
     } else {
       // Reset form when dialog closes
-      setName('');
-      setType('');
-      setDescription('');
-      setUrl('');
-      setDomain('');
+      setName("");
+      setType("");
+      setDescription("");
+      setUrl("");
+      setDomain("");
       setSelectedLanguages([]);
-      setNotes('');
+      setNotes("");
     }
   }, [open, fetchOptions]);
 
   const handleLanguageToggle = (lang: string) => {
     setSelectedLanguages((prev) =>
-      prev.includes(lang) ? prev.filter((l) => l !== lang) : [...prev, lang]
+      prev.includes(lang) ? prev.filter((l) => l !== lang) : [...prev, lang],
     );
   };
 
-  const isFormValid = name.trim() && type && url.trim() && domain && notes.trim();
+  const isFormValid =
+    name.trim() && type && url.trim() && domain && notes.trim();
 
   const handleSubmit = async () => {
     if (!name.trim()) {
       toast({
-        title: 'Validation Error',
-        description: 'Target name is required',
-        variant: 'destructive',
+        title: "Validation Error",
+        description: "Target name is required",
+        variant: "destructive",
       });
       return;
     }
 
     if (!type) {
       toast({
-        title: 'Validation Error',
-        description: 'Target type is required',
-        variant: 'destructive',
+        title: "Validation Error",
+        description: "Target type is required",
+        variant: "destructive",
       });
       return;
     }
 
     if (!url.trim()) {
       toast({
-        title: 'Validation Error',
-        description: 'URL is required',
-        variant: 'destructive',
+        title: "Validation Error",
+        description: "URL is required",
+        variant: "destructive",
       });
       return;
     }
 
     if (!domain) {
       toast({
-        title: 'Validation Error',
-        description: 'Domain is required',
-        variant: 'destructive',
+        title: "Validation Error",
+        description: "Domain is required",
+        variant: "destructive",
       });
       return;
     }
 
     if (!notes.trim()) {
       toast({
-        title: 'Validation Error',
-        description: 'Notes field is required',
-        variant: 'destructive',
+        title: "Validation Error",
+        description: "Notes field is required",
+        variant: "destructive",
       });
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const token = localStorage.getItem('access_token');
+      const token = localStorage.getItem("access_token");
       const headers: HeadersInit = {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       };
       if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+        headers["Authorization"] = `Bearer ${token}`;
       }
 
       const payload = {
@@ -174,8 +191,8 @@ export default function TargetAddDialog({ open, onOpenChange, onSuccess }: Targe
         lang_list: selectedLanguages,
       };
 
-      const response = await fetch(API_ENDPOINTS.TARGET_CREATE, {
-        method: 'POST',
+      const response = await fetch(API_ENDPOINTS.TARGET_CREATE_V2, {
+        method: "POST",
         headers,
         body: JSON.stringify(payload),
       });
@@ -193,21 +210,21 @@ export default function TargetAddDialog({ open, onOpenChange, onSuccess }: Targe
       }
 
       const data = await response.json();
-      console.log('Target created successfully:', data);
+      console.log("Target created successfully:", data);
 
       toast({
-        title: 'Success',
-        description: 'Target created successfully',
+        title: "Success",
+        description: "Target created successfully",
       });
 
       // Reset form
-      setName('');
-      setType('');
-      setDescription('');
-      setUrl('');
-      setDomain('');
+      setName("");
+      setType("");
+      setDescription("");
+      setUrl("");
+      setDomain("");
       setSelectedLanguages([]);
-      setNotes('');
+      setNotes("");
 
       // Close dialog
       onOpenChange(false);
@@ -217,11 +234,12 @@ export default function TargetAddDialog({ open, onOpenChange, onSuccess }: Targe
         onSuccess();
       }
     } catch (error) {
-      console.error('Error creating target:', error);
+      console.error("Error creating target:", error);
       toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to create target',
-        variant: 'destructive',
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Failed to create target",
+        variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
@@ -247,9 +265,15 @@ export default function TargetAddDialog({ open, onOpenChange, onSuccess }: Targe
 
           <div className="space-y-2">
             <Label className="text-base font-semibold">Target Type</Label>
-            <Select value={type} onValueChange={setType} disabled={isFetchingOptions}>
+            <Select
+              value={type}
+              onValueChange={setType}
+              disabled={isFetchingOptions}
+            >
               <SelectTrigger>
-                <SelectValue placeholder={isFetchingOptions ? 'Loading...' : 'Select type'} />
+                <SelectValue
+                  placeholder={isFetchingOptions ? "Loading..." : "Select type"}
+                />
               </SelectTrigger>
               <SelectContent className="bg-popover max-h-[300px]">
                 {targetTypes.length === 0 && !isFetchingOptions ? (
@@ -289,9 +313,17 @@ export default function TargetAddDialog({ open, onOpenChange, onSuccess }: Targe
 
           <div className="space-y-2">
             <Label className="text-base font-semibold">Domain Name</Label>
-            <Select value={domain} onValueChange={setDomain} disabled={isFetchingOptions}>
+            <Select
+              value={domain}
+              onValueChange={setDomain}
+              disabled={isFetchingOptions}
+            >
               <SelectTrigger>
-                <SelectValue placeholder={isFetchingOptions ? 'Loading...' : 'Select domain'} />
+                <SelectValue
+                  placeholder={
+                    isFetchingOptions ? "Loading..." : "Select domain"
+                  }
+                />
               </SelectTrigger>
               <SelectContent className="bg-popover max-h-[300px]">
                 {domainOptions.length === 0 && !isFetchingOptions ? (
@@ -313,9 +345,13 @@ export default function TargetAddDialog({ open, onOpenChange, onSuccess }: Targe
             <Label className="text-base font-semibold">Languages</Label>
             <div className="bg-muted p-4 rounded-md max-h-[100px] overflow-y-auto">
               {isFetchingOptions ? (
-                <div className="text-sm text-muted-foreground">Loading languages...</div>
+                <div className="text-sm text-muted-foreground">
+                  Loading languages...
+                </div>
               ) : languageOptions.length === 0 ? (
-                <div className="text-sm text-muted-foreground">No languages available</div>
+                <div className="text-sm text-muted-foreground">
+                  No languages available
+                </div>
               ) : (
                 <div className="space-y-2">
                   {languageOptions.map((lang) => (
@@ -347,15 +383,13 @@ export default function TargetAddDialog({ open, onOpenChange, onSuccess }: Targe
               className="bg-gray-200 rounded px-4 py-1 mr-4 "
               required
             />
-          
 
-          
             <Button
               className="bg-accent hover:bg-accent/90 text-accent-foreground px-8"
               onClick={handleSubmit}
               disabled={!isFormValid || isSubmitting}
             >
-              {isSubmitting ? 'Submitting...' : 'Submit'}
+              {isSubmitting ? "Submitting..." : "Submit"}
             </Button>
           </div>
         </div>

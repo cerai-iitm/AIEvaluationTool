@@ -1,10 +1,21 @@
 import { useCallback, useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { API_ENDPOINTS } from "@/config/api";
@@ -12,11 +23,20 @@ import { API_ENDPOINTS } from "@/config/api";
 interface LlmPromptAddDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAdd?: (prompt: { prompt: string; language: string; notes?: string }) => void;
+  onAdd?: (prompt: {
+    prompt: string;
+    language: string;
+    notes?: string;
+  }) => void;
   onSuccess?: () => void;
 }
 
-export function LlmPromptAddDialog({ open, onOpenChange, onAdd, onSuccess }: LlmPromptAddDialogProps) {
+export function LlmPromptAddDialog({
+  open,
+  onOpenChange,
+  onAdd,
+  onSuccess,
+}: LlmPromptAddDialogProps) {
   const { toast } = useToast();
   const [prompt, setPrompt] = useState("");
   const [language, setLanguage] = useState("");
@@ -43,7 +63,10 @@ export function LlmPromptAddDialog({ open, onOpenChange, onAdd, onSuccess }: Llm
         headers["Authorization"] = `Bearer ${token}`;
       }
 
-      const response = await fetch(API_ENDPOINTS.LANGUAGES, { method: "GET", headers });
+      const response = await fetch(API_ENDPOINTS.LANGUAGES_V2, {
+        method: "GET",
+        headers,
+      });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -55,8 +78,10 @@ export function LlmPromptAddDialog({ open, onOpenChange, onAdd, onSuccess }: Llm
         new Set(
           (Array.isArray(languageData) ? languageData : [])
             .map((lang: any) => lang?.lang_name)
-            .filter((name: string | null | undefined): name is string => Boolean(name))
-        )
+            .filter((name: string | null | undefined): name is string =>
+              Boolean(name),
+            ),
+        ),
       );
 
       setLanguageOptions(languageNames);
@@ -90,7 +115,8 @@ export function LlmPromptAddDialog({ open, onOpenChange, onAdd, onSuccess }: Llm
     if (!isValid || !notes.trim()) {
       toast({
         title: "Validation error",
-        description: "Please fill all fields including notes before submitting.",
+        description:
+          "Please fill all fields including notes before submitting.",
         variant: "destructive",
       });
       return;
@@ -106,7 +132,7 @@ export function LlmPromptAddDialog({ open, onOpenChange, onAdd, onSuccess }: Llm
         headers["Authorization"] = `Bearer ${token}`;
       }
 
-      const response = await fetch(API_ENDPOINTS.LLM_PROMPT_CREATE, {
+      const response = await fetch(API_ENDPOINTS.LLMPROMPT_CREATE_V2, {
         method: "POST",
         headers,
         body: JSON.stringify({
@@ -142,7 +168,10 @@ export function LlmPromptAddDialog({ open, onOpenChange, onAdd, onSuccess }: Llm
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" onOpenAutoFocus={(e) => e.preventDefault()}>
+      <DialogContent
+        className="max-w-3xl max-h-[90vh] overflow-y-auto"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle className="sr-only">LLM Prompts</DialogTitle>
         </DialogHeader>
@@ -150,10 +179,10 @@ export function LlmPromptAddDialog({ open, onOpenChange, onAdd, onSuccess }: Llm
         <div className="flex-1 p-1 overflow-y-auto space-y-6 pb-5">
           <div className="space-y-1">
             <Label className="text-base font-semibold">LLM Prompt</Label>
-            <Textarea 
-              value={prompt} 
-              onChange={(e) => setPrompt(e.target.value)} 
-              className="bg-muted min-h-[80px]" 
+            <Textarea
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              className="bg-muted min-h-[80px]"
               placeholder="Enter your LLM prompt here..."
             />
           </div>
@@ -165,7 +194,13 @@ export function LlmPromptAddDialog({ open, onOpenChange, onAdd, onSuccess }: Llm
               disabled={isOptionsLoading || !languageOptions.length}
             >
               <SelectTrigger>
-                <SelectValue placeholder={isOptionsLoading ? "Loading languages..." : "Select a language"} />
+                <SelectValue
+                  placeholder={
+                    isOptionsLoading
+                      ? "Loading languages..."
+                      : "Select a language"
+                  }
+                />
               </SelectTrigger>
               <SelectContent className="bg-popover max-h-[300px]">
                 {languageOptions.length ? (
@@ -184,10 +219,10 @@ export function LlmPromptAddDialog({ open, onOpenChange, onAdd, onSuccess }: Llm
           </div>
           <div className="space-y-1">
             <Label className="text-base font-semibold">Notes</Label>
-            <Input 
-              value={notes} 
-              onChange={(e) => setNotes(e.target.value)} 
-              className="bg-muted" 
+            <Input
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="bg-muted"
               placeholder="Enter notes (required)"
             />
           </div>
