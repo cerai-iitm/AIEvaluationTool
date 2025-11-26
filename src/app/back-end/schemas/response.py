@@ -10,9 +10,8 @@ class ResponseBase(BaseModel):
 
 
 class ResponseCreateV2(ResponseBase):
-    prompt_id: int = Field(
-        ..., description="The ID of the prompt this response is for."
-    )
+    user_prompt: str = Field(..., description="The user prompt.")
+    system_prompt: Optional[str] = Field(None, description="The system prompt.")
 
 
 class ResponseUpdateV2(BaseModel):

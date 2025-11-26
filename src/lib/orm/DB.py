@@ -1117,6 +1117,68 @@ class DB:
             self.logger.error(f"Response already exists: {response}. Error: {e}")
             return -1
 
+    def __add_or_get_response_by_custom_id(
+        self, response: Response, prompt_id: Optional[int], response_id:int
+    ) -> Optional[Responses]:
+        """
+        Adds a new response to the database or fetches its ID if it already exists.
+
+        Args:
+            response (Response): The Response object to be added.
+            response_id (int): The ID of the response to fetch.
+
+        Returns:
+            Optional[Responses]: The Responses object if found, otherwise None.
+
+        """
+        try:
+            with self.Session() as session:
+                existing_response = (
+                    session.query(Responses)
+                    .filter_by(hash_value=response.digest)
+                    .first()
+                )
+                if existing_response:
+                    self.logger.debug(
+                        f"Returning the existing response ID: {existing_response.response_id}"
+                    )
+
+                    return existing_response
+
+                self.logger.debug(f"Adding new response: {response.response_text}")
+                # create the orm object for the response to insert into the database table.
+                new_response = Responses(
+                    response_text=response.response_text,
+                    response_type=response.response_type,
+                    prompt_id=prompt_id
+                    if prompt_id
+                    else getattr(response, "prompt_id"),  # Get the prompt ID
+                    # Get the language ID from kwargs if provided
+                    lang_id=getattr(response, "lang_id", Language.autodetect),
+                    hash_value=response.digest,
+                    response_id=response_id
+                )
+
+                # Add the new response to the session
+                session.add(new_response)
+                # Commit the session to save the new response
+                session.commit()
+                # Ensure response_id is populated
+                session.refresh(new_response)
+
+                self.logger.debug(
+                    f"Response added successfully: {new_response.response_id}"
+                )
+
+                # Return the ID of the newly added response
+                return new_response
+        except IntegrityError as e:
+            # Handle the case where the response already exists
+            self.logger.error(f"Response already exists: {response}. Error: {e}")
+            return None
+
+
+
     def get_response(self, response_id: int) -> Optional[Response]:
         """
         Fetches a response by its ID.

@@ -14,6 +14,7 @@ from sqlalchemy.exc import IntegrityError
 from utils.activity_logger import log_activity
 
 from lib.orm.DB import DB
+from lib.orm.tables import Responses
 
 response_router = APIRouter(prefix="/api/v2/responses")
 
@@ -115,13 +116,6 @@ def get_response(response_id: int, db: DB = Depends(_get_db)):
 #         )
 #     return response
 
-
-
-
-
-
-
-
 @response_router.post(
     "/create",
     response_model=ResponseDetailResponse,
@@ -134,33 +128,85 @@ def create_response(
     authorization: Optional[str] = Header(None),
 ):
     try:
-        response_id = db.create_response_v2(payload.model_dump())
-    except IntegrityError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="A response with the same content already exists.",
+        with db.Session() as session:
+            existing_ids = [row[0] for row in session.query(Responses.response_id).order_by(Responses.response_id).all()]
+            next_id = 1
+            for id in existing_ids:
+                if id != next_id:
+                    break
+                next_id += 1
+
+        lang_id = db.add_or_get_language_id(payload.language)
+
+        response_obj = db._DB__add_or_get_response_by_custom_id(payload.response_text, lang_id, next_id)
+        if response_obj is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="A response with the same content already exists.",
+            )
+
+        username = _get_username_from_token(authorization)
+        if username:
+            log_activity(
+                username=username,
+                entity_type="Response",
+                entity_id=str(response_obj.response_id),
+                operation="create",
+                note=f"Created prompt with ID:{response_obj.response_id}",
+            )
+
+        return ResponseDetailResponse(
+            response_id=response_obj.response_id,
+            response_text=response_obj.response_text,
+            response_type=response_obj.response_type,
+            language = payload.language,
+            user_prompt = payload.user_prompt,
+            system_prompt = payload.system_prompt
         )
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
-    created = db.get_response_with_metadata(response_id)
-    if created is None:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Response created but could not be loaded.",
-        )
 
-    username = _get_username_from_token(authorization)
-    if username:
-        log_activity(
-            username=username,
-            entity_type="Response",
-            entity_id=str(created["response_id"]),
-            operation="create",
-            note=f"Response '{created['response_id']}' created (v2)",
-        )
 
-    return created
+# @response_router.post(
+#     "/create",
+#     response_model=ResponseDetailResponse,
+#     status_code=status.HTTP_201_CREATED,
+#     summary="Create a new response (v2)",
+# )
+# def create_response(
+#     payload: ResponseCreateV2,
+#     db: DB = Depends(_get_db),
+#     authorization: Optional[str] = Header(None),
+# ):
+#     try:
+#         response_id = db.create_response_v2(payload.model_dump())
+#     except IntegrityError:
+#         raise HTTPException(
+#             status_code=status.HTTP_400_BAD_REQUEST,
+#             detail="A response with the same content already exists.",
+#         )
+#     except ValueError as e:
+#         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+#     created = db.get_response_with_metadata(response_id)
+#     if created is None:
+#         raise HTTPException(
+#             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#             detail="Response created but could not be loaded.",
+#         )
+
+#     username = _get_username_from_token(authorization)
+#     if username:
+#         log_activity(
+#             username=username,
+#             entity_type="Response",
+#             entity_id=str(created["response_id"]),
+#             operation="create",
+#             note=f"Response '{created['response_id']}' created (v2)",
+#         )
+
+#     return created
 
 
 @response_router.put(
