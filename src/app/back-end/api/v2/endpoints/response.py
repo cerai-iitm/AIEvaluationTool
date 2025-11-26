@@ -15,6 +15,7 @@ from utils.activity_logger import log_activity
 
 from lib.orm.DB import DB
 from lib.orm.tables import Responses
+from lib.data import Response, Prompt
 
 response_router = APIRouter(prefix="/api/v2/responses")
 
@@ -138,7 +139,14 @@ def create_response(
 
         lang_id = db.add_or_get_language_id(payload.language)
 
-        response_obj = db._DB__add_or_get_response_by_custom_id(payload.response_text, lang_id, next_id)
+        prompt_obj = Prompt(user_prompt=payload.user_prompt, system_prompt=payload.system_prompt, lang_id=lang_id)
+        prompt_id = db.add_or_get_prompt(prompt_obj)
+        
+        if prompt_id == -1:
+             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to process prompt.")
+
+        response_data = Response(response_text=payload.response_text, response_type=payload.response_type, lang_id=lang_id)
+        response_obj = db._DB__add_or_get_response_by_custom_id(response_data, prompt_id, next_id)
         if response_obj is None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
