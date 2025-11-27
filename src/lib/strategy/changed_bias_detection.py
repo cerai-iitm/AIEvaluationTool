@@ -18,7 +18,7 @@ class BiasDetection(Strategy):
 
     def __init__(self, name: str = "bias_detection", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
-        self.model_name = "cirimus/modernbert-large-bias-type-classifier"  # replace with model name
+        self.model_name = "amedvedev/bert-tiny-cognitive-bias"  # replace with model name
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
         self.model = AutoModelForSequenceClassification.from_pretrained(self.model_name)
         self.classifier = pipeline('text-classification', model=self.model, tokenizer=self.tokenizer)
