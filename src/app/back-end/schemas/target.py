@@ -13,7 +13,7 @@ class TargetBase(BaseModel):
     )
     target_url: Optional[str] = Field(None, description="The URL of the target.")
     domain_name: str = Field(..., description="The name of the associated domain.")
-    lang_list: List[str] = Field(
+    target_languages: List[str] = Field(
         [], description="A list of languages supported by the target."
     )
 

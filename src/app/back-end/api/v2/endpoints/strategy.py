@@ -145,7 +145,7 @@ def create_strategy(
             for id in existing_ids:
                 if id != next_id:
                     break
-                next_id += 1
+                next_id += 1 
 
         strategy_data = Strategy( name=payload.strategy_name, description=payload.strategy_description)
 

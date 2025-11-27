@@ -1895,7 +1895,6 @@ class DB:
                 session.add(new_plan)
                 # Commit the session to save all changes
                 session.commit()
-
                 # Ensure plan_id is populated
                 session.refresh(new_plan)
 
@@ -2152,7 +2151,7 @@ class DB:
             self.logger.error(f"Target already exists: {target}. Error: {e}")
             return -1
         
-    def __add_or_get_target_custom_id(self, target: Target, target_id:int) -> Optional[Targets]:
+    def __add_or_get_target_custom_id(self, target: Target, target_id:int, domain_id:int) -> Optional[Targets]:
         
         """
         Adds a target with a custom ID or returns the existing target.
@@ -2169,9 +2168,10 @@ class DB:
                 
                 #check if the target already exists in the database
                 existing_target = session.query(Targets)\
+                    .options(joinedload(Targets.domain), joinedload(Targets.langs))\
                     .filter(
                         (Targets.target_name == target.target_name) |
-                        (Targets.target_type == target.target_type)
+                        (Targets.target_url == target.target_url)
                     )\
                     .first()
                 if existing_target:
@@ -2183,21 +2183,22 @@ class DB:
                 self.logger.debug(f"Adding new Target with custom target_id {target_id}: {target.target_name}")
                 
                 # get the domain ID if provided, otherwise use None
-                domain_id = (
-                    self.add_or_get_domain_id(target.target_domain)
-                    if target.target_domain
-                    else None
-                )
+                # domain_id = (
+                #     self.add_or_get_domain_id(target.target_domain)
+                #     if target.target_domain
+                #     else None
+                # )
                 
-                # get the language object for the target languages, if provided
-                langs = (
-                    [
-                        self.__add_or_get_language(lang)
-                        for lang in target.target_language
-                    ]
-                    if target.target_language
-                    else []
-                )
+                # Get the language list from either target_languages or lang_list attribute
+                # if hasattr(target, 'target_languages') and target.target_languages is not None:
+                #     lang_list = target.target_languages
+                # elif hasattr(target, 'lang_list') and target.lang_list is not None:
+                #     lang_list = target.lang_list
+                # else:
+                #     lang_list = []
+                
+                # Get language objects for the target languages
+                langs = [self.__add_or_get_language(lang) for lang in target.target_languages] if target.target_languages else []
                 
                 new_target = Targets(
                     target_id = target_id,
@@ -2213,6 +2214,12 @@ class DB:
                 session.add(new_target)
                 session.commit()
                 session.refresh(new_target)
+                
+                # Ensure relationships are loaded
+                if new_target.domain:
+                    _ = new_target.domain.domain_name
+                if new_target.langs:
+                    _ = [lang.lang_name for lang in new_target.langs]
                 
                 self.logger.debug(f"Target added successfully: {new_target.target_name} (ID: {new_target.target_id})")
                 
@@ -2269,6 +2276,89 @@ class DB:
                 domain_id=getattr(result, "domain_id"),
                 langs=result.langs,
             )
+            
+    def __add_or_get_test_case_custom_id(self, testcase: TestCase, testcase_id: int = None) -> Optional[TestCases]:
+        """
+        Adds a new test case with a custom ID or returns an existing one.
+        
+        Args:
+            testcase: The TestCase object to add
+            testcase_id: Optional custom ID for the test case
+            
+        Returns:
+            The created or existing TestCases ORM object, or None if there was an error
+        """
+        with self.Session() as session:
+            try:
+                # Check if test case with this name already exists
+                existing_testcase = (
+                    session.query(TestCases)
+                    .filter(TestCases.testcase_name == testcase.name)
+                    .first()
+                )
+                
+                if existing_testcase:
+                    self.logger.warning(f"Test case '{testcase.name}' already exists")
+                    return existing_testcase
+                    
+                # Get or create prompt
+                prompt_id = self.add_or_get_prompt(testcase.prompt)
+                if prompt_id == -1:
+                    self.logger.error("Failed to get or create prompt")
+                    return None
+                    
+                # Get or create response if provided
+                response_id = None
+                if testcase.response:
+                    response_id = self.add_or_get_response(testcase.response, prompt_id)
+                    if response_id == -1:
+                        self.logger.error("Failed to get or create response")
+                        return None
+                        
+                # Get or create judge prompt if provided
+                judge_prompt_id = None
+                if testcase.judge_prompt:
+                    judge_prompt_id = self.add_or_get_llm_judge_prompt(testcase.judge_prompt)
+                    if judge_prompt_id == -1:
+                        self.logger.error("Failed to get or create judge prompt")
+                        return None
+                        
+                # Get strategy ID
+                strategy_id = self.add_or_get_strategy_id(testcase.strategy)
+                if strategy_id == -1:
+                    self.logger.error(f"Strategy '{testcase.strategy}' not found")
+                    return None
+                    
+                # Create new test case
+                new_testcase = TestCases(
+                    testcase_id=testcase_id,  # Will be None for auto-increment
+                    testcase_name=testcase.name,
+                    prompt_id=prompt_id,
+                    response_id=response_id,
+                    judge_prompt_id=judge_prompt_id,
+                    strategy_id=strategy_id
+                )
+                
+                session.add(new_testcase)
+                session.commit()
+                session.refresh(new_testcase)
+                
+                # Add default metric if none exists
+                if not new_testcase.metrics:
+                    default_metric = session.query(Metrics).first()
+                    if default_metric:
+                        new_testcase.metrics.append(default_metric)
+                        session.commit()
+                        session.refresh(new_testcase)
+                
+                self.logger.info(f"Test case '{testcase.name}' created with ID: {new_testcase.testcase_id}")
+                return new_testcase
+                
+            except Exception as e:
+                session.rollback()
+                self.logger.error(f"Error creating test case: {str(e)}")
+                return None
+    
 
     def __status_compare(self, status1: str, status2: str) -> int:
         """

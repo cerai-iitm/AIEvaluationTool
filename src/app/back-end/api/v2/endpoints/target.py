@@ -14,6 +14,8 @@ from sqlalchemy.exc import IntegrityError
 from utils.activity_logger import log_activity
 
 from lib.orm.DB import DB
+from lib.orm.tables import Targets
+from sqlalchemy.orm import joinedload
 
 target_router = APIRouter(prefix="/api/v2/targets")
 
@@ -121,54 +123,60 @@ def create_target(
 ):
     try: 
         with db.Session() as session:
-            existing_ids = [row[0] for row in session.query(Target.target_id).order_by(Target.target_id).all()]
+            # Get next available ID
+            existing_ids = [row[0] for row in session.query(Targets.target_id).order_by(Targets.target_id).all()]
             next_id = 1
             for id in existing_ids:
                 if id != next_id:
                     break
-                next_id += 1  
+                next_id += 1
                 
-                
-        target_obj = db._DB__add_or_get_target_custom_id(payload, next_id)
-        if target_obj is None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="A target with the same name already exists.",
-            )
-                
-        username = _get_username_from_token(authorization)
-        
-        if username:
-            log_activity(
-                username=username,
-                entity_type="target",
-                entity_id=str(payload.target_name),
-                operation="create",
-                note=f"Created target with ID: {payload.target_id}",
-            )      
+            # Get or create domain
+            domain_id = db.add_or_get_domain_id(payload.domain_name)
             
-        return TargetDetailResponse(
-            target_id=target_obj.target_id,
-            target_name=target_obj.target_name,
-            target_type=target_obj.target_type,
-            target_description=target_obj.target_description,
-            target_url=target_obj.target_url,
-            domain_name=target_obj.domain_name,
-            lang_list=target_obj.lang,
-        )
+            # Create target
+            target_obj = db._DB__add_or_get_target_custom_id(payload, next_id, domain_id)
+            if target_obj is None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="A target with the same name already exists.",
+                )
+            
+            # Log activity
+            username = _get_username_from_token(authorization)
+            if username:
+                log_activity(
+                    username=username,
+                    entity_type="target",
+                    entity_id=str(payload.target_name),
+                    operation="create",
+                    note=f"Created target: {payload.target_name}",
+                )
+            
+            # Create response
+            response = TargetDetailResponse(
+                target_id=target_obj.target_id,
+                target_name=target_obj.target_name,
+                target_type=target_obj.target_type,
+                target_description=target_obj.target_description,
+                target_url=target_obj.target_url,
+                domain_name=target_obj.domain.domain_name if target_obj.domain else None,
+                lang_list=[lang.lang_name for lang in target_obj.langs] if target_obj.langs else [],
+            )
+            
+            return response
+            
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
+        
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An unexpected error occurred: {str(e)}",
         )
-    finally:
-       
-        session.close()
 
 
 
