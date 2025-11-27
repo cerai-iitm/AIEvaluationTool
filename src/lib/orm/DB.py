@@ -407,6 +407,48 @@ class DB:
             # Return the ID of the newly added strategy
             return getattr(new_strategy, "strategy_id")
 
+    def __add_or_get_strategy_custom_id(self, strategy:Strategy, strategy_id: int) -> Optional[Strategies]:
+        """
+        Fetches the ID of a strategy by its name.
+
+        Args:
+            strategy_id (int): The ID of the strategy to fetch.
+
+
+        Returns:
+            Optional[Strategies]: The Strategy object if found, otherwise None.
+        """
+        with self.Session() as session:
+            # Check if the strategy already exists in the database
+            existing_strategy = (
+                session.query(Strategies).filter_by(strategy_name=strategy.name).first()
+            )
+            if existing_strategy:
+                self.logger.debug(
+                    f"Returning the existing strategy ID: {existing_strategy.strategy_id}"
+                )
+                # Return the existing strategy object
+                return existing_strategy
+            
+            self.logger.debug(f"Adding new strategy with custom strategy_id {strategy_id}: {strategy.strategy_name}")
+
+            new_strategy = Strategies(
+                strategy_id=strategy_id, 
+                strategy_name=strategy.name,
+                strategy_description=strategy.description
+                )
+            session.add(new_strategy)
+            session.commit()
+            # Ensure strategy_id is populated
+            session.refresh(new_strategy)
+            self.logger.debug(
+                f"Strategy added successfully: {new_strategy.strategy_id}"
+            )
+            # Return the newly added strategy object
+            return new_strategy
+
+
+
     def get_strategy_name(self, strategy_id: int) -> Optional[str]:
         """
         Fetches the name of a strategy by its ID.

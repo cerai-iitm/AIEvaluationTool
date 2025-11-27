@@ -15,7 +15,8 @@ from sqlalchemy.orm import Session
 from utils.activity_logger import log_activity
 
 from lib.orm.DB import DB
-from lib.orm.tables import TestCases
+from lib.orm.tables import TestCases, Strategies as StrategiesTable
+from lib.data import Strategy
 
 strategy_router = APIRouter(prefix="/api/v2/strategies")
 
@@ -122,6 +123,8 @@ def get_strategy(strategy_id: int, db: DB = Depends(_get_db)):
 #             status_code=status.HTTP_404_NOT_FOUND, detail="Strategy not found"
 #         )
 #     return strategy
+# __add_or_get_strategy_custom_id
+
 
 
 @strategy_router.post(
@@ -136,33 +139,72 @@ def create_strategy(
     authorization: Optional[str] = Header(None),
 ):
     try:
-        strategy_id = db.create_strategy_v2(payload.model_dump())
-    except IntegrityError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="A strategy with the same name already exists.",
+        with db.Session() as session:
+            existing_ids = [row[0] for row in session.query(StrategiesTable.strategy_id).order_by(StrategiesTable.strategy_id).all()]
+            next_id = 1
+            for id in existing_ids:
+                if id != next_id:
+                    break
+                next_id += 1
+
+        strategy_data = Strategy( name=payload.strategy_name, description=payload.strategy_description)
+
+        strategy_obj = db._DB__add_or_get_strategy_custom_id(strategy_data, next_id)
+        if strategy_obj is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="A strategy with the same name already exists.",
+            )
+
+        username = _get_username_from_token(authorization)
+        if username:
+            log_activity(
+                username=username,
+                entity_type="Strategy",
+                entity_id=str(payload.strategy_name),
+                operation="create",
+                note=f"Created prompt with ID: {payload.strategy_name}",
+            )
+
+        return StrategyDetailResponse(
+            strategy_id=strategy_obj.strategy_id,
+            strategy_name=strategy_obj.strategy_name,
+            strategy_description=strategy_obj.strategy_description
         )
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    finally:
+        db.Session.remove()
 
-    created = db.get_strategy_with_metadata(strategy_id)
-    if created is None:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Strategy created but could not be loaded.",
-        )
 
-    username = _get_username_from_token(authorization)
-    if username:
-        log_activity(
-            username=username,
-            entity_type="Strategy",
-            entity_id=str(created["strategy_name"]),
-            operation="create",
-            note=f"Strategy '{created['strategy_name']}' created (v2)",
-        )
+    # try:
+    #     strategy_id = db.create_strategy_v2(payload.model_dump())
+    # except IntegrityError:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_400_BAD_REQUEST,
+    #         detail="A strategy with the same name already exists.",
+    #     )
+    # except ValueError as e:
+    #     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
-    return created
+    # created = db.get_strategy_with_metadata(strategy_id)
+    # if created is None:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+    #         detail="Strategy created but could not be loaded.",
+    #     )
+
+    # username = _get_username_from_token(authorization)
+    # if username:
+    #     log_activity(
+    #         username=username,
+    #         entity_type="Strategy",
+    #         entity_id=str(created["strategy_name"]),
+    #         operation="create",
+    #         note=f"Strategy '{created['strategy_name']}' created (v2)",
+    #     )
+
+    # return created
 
 
 @strategy_router.put(

@@ -33,7 +33,7 @@ class StrategyDetailResponse(BaseModel):
     strategy_id: int
     strategy_name: str
     strategy_description: Optional[str]
-    requires_llm_prompt: bool = Field(
+    requires_llm_prompt: Optional[bool] = Field(
         False, description="Whether the strategy requires an LLM prompt."
     )
 
