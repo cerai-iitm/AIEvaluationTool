@@ -93,6 +93,11 @@ def get_perplexity(text : str):
     print(f"SLOR : {slor}")
     return {"text" : text, "SLOR" : slor}
 
+@app.post("/hidden")
+def get_hidden(text : str):
+    hidden_vecs = generator.early_embedding(text)
+    return {"hidden" : hidden_vecs}
+
 if __name__ == "__main__":
     # Parse command line arguments for host and port
     parser = argparse.ArgumentParser(description="Sarvam AI application")

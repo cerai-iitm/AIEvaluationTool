@@ -1,1 +1,1 @@
-{"llm_judge_positive": {"evaluated_score": 0.26, "human_score": 0.392}, "fluency_score": {"evaluated_score": 0.537, "human_score": 0.551}, "efficacy_of_content_filtering": {"evaluated_score": 0.773, "human_score": 0.78}, "entity_recognition": {"evaluated_score": 0.737, "human_score": 0.0}}
+{"llm_judge_positive": {"evaluated_score": 0.54, "human_score": 0.44}, "fluency_score": {"evaluated_score": 0.537, "human_score": 0.551}, "efficacy_of_content_filtering": {"evaluated_score": 0.773, "human_score": 0.78}, "entity_recognition": {"evaluated_score": 0.737, "human_score": 0.0}}

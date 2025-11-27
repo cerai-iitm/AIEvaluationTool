@@ -13,6 +13,7 @@ from .utils_new import FileLoader
 import regex
 from ollama import Client
 import Levenshtein
+from .llm_judge import LLMJudgeStrategy
 
 warnings.filterwarnings("ignore")
 
@@ -32,47 +33,81 @@ class IndianLangGrammaticalCheck(Strategy):
 
         
     def make_prompt(self, sent:str):
-        text = f'''
-        <|system|>
-        Correct the grammar of the input sentences. 
-        Return the corrected sentences in the same language as the input.
+        text = f"""
+            <|system|>
+            You are a grammar-correction assistant.  
+            If the input paragraph is already grammatically correct, return it unchanged.  
+            Otherwise, correct the grammar while keeping the original language.  
+            Do not translate the text into any other language.
+            Return no additional information — only a dictionary of the form:
+            {{"correct": "<corrected paragraph>"}}
 
-        <|user|>
-        {sent}
+            <|user|>
+            {sent}
 
-        <|assistant|>      
-        '''
+            <|assistant|>
+            """
         return text
     
-    def ollama_connect(self, text:str):
+    def ollama_connect(self, model_name:str, text:str):
         ollama_client = Client(host=self.ollama_url)
-        response = ollama_client.chat(
-            model = "qwen2.5:14b",
-            messages = [
-                {
-                    "role" : "user",
-                    "content" : f"{text} /nothink",
-                }
-            ],
-            format="json"
-        )
-        return response.message.content
-
+        try:
+            response = ollama_client.chat(
+                model = model_name,
+                messages = [
+                    {
+                        "role" : "user",
+                        "content" : f"{text} /nothink",
+                    }
+                ],
+                format="json"
+            )
+        except Exception as e:
+            return {}
+        try:
+            final = response.message.content
+            return json.loads(final)
+        except:
+            return {} 
+    
     def embed(self, text:str):
-        return json.loads(requests.post(f"{self.gpu_url}/embedding", params={"input_text" : text}).content.decode('utf-8'))
-        
+        response = np.array(requests.post(f"{self.gpu_url}/hidden", params={"text" : text}).json()["hidden"], dtype=np.float32)
+        return response
+    
+    def cosine(self, a, b):
+        return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b) + 1e-12))
+    
+    def has_correct_format(self, obj):
+        return (isinstance(obj, dict) and "correct" in obj and isinstance(obj.get("correct"), str))
+
     def evaluate(self, agent_response:str, expected:Optional[str]=None):
         prompting = self.make_prompt(agent_response)
-        full_correct = list(json.loads(self.ollama_connect(prompting)).values())
-        final_op = full_correct[0] if len(full_correct) < 2 else full_correct[1]
-        a , b = self.embed(agent_response), self.embed(final_op)
-        sim = np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
-        dist = Levenshtein.distance(agent_response, full_correct)
-        max_dist = max(len(final_op), len(agent_response))
-        score = 0.5 * (1 - (dist / max_dist)) + 0.5 * sim
-        print(score)
+        model_names = ["qwen3:32b"]
+        corrections = []
+        while(corrections == []):
+            for model_name in model_names:
+                corr_dict = self.ollama_connect(model_name, prompting)
+                if(self.has_correct_format(corr_dict)):
+                    corrections.append(corr_dict)
+        final_ops = [corr["correct"] for corr in corrections]
+        print(final_ops)
+        print(agent_response)
+        scores = []
+        for final in final_ops:
+            a1, b1 = self.embed(agent_response), self.embed(final)
+            sim = self.cosine(a1, b1)
+            dist = Levenshtein.distance(agent_response, final)
+            max_dist = max(len(final), len(agent_response))
+            lev_sim = 1 - (dist / max_dist)
+            print(sim)
+            print(lev_sim)
+            # harmonic mean between the lev distance and the semantic similarity score
+            score =  2 * sim * lev_sim / (sim + lev_sim + 1e-12)
+            scores.append(score)
+        return np.mean(scores)
 
 if __name__ == "__main__":
     checker = IndianLangGrammaticalCheck()
-    sent = "मैं कल स्कूल जाता हूँ था लेकिन दोस्त नहीं आया थे।"
+    sent = "నేను రేపు ఇంటికి వెళ్తుంది కానీ నువ్వు వచ్చాను అని అన్నావు."
     score = checker.evaluate(sent)
+    print(score)
