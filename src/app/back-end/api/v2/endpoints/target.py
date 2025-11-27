@@ -119,34 +119,99 @@ def create_target(
     db: DB = Depends(_get_db),
     authorization: Optional[str] = Header(None),
 ):
-    try:
-        target_id = db.create_target_v2(payload.model_dump())
-    except IntegrityError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="A target with the same name already exists.",
+    try: 
+        with db.Session() as session:
+            existing_ids = [row[0] for row in session.query(Target.target_id).order_by(Target.target_id).all()]
+            next_id = 1
+            for id in existing_ids:
+                if id != next_id:
+                    break
+                next_id += 1  
+                
+                
+        target_obj = db._DB__add_or_get_target_custom_id(payload, next_id)
+        if target_obj is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="A target with the same name already exists.",
+            )
+                
+        username = _get_username_from_token(authorization)
+        
+        if username:
+            log_activity(
+                username=username,
+                entity_type="target",
+                entity_id=str(payload.target_name),
+                operation="create",
+                note=f"Created target with ID: {payload.target_id}",
+            )      
+            
+        return TargetDetailResponse(
+            target_id=target_obj.target_id,
+            target_name=target_obj.target_name,
+            target_type=target_obj.target_type,
+            target_description=target_obj.target_description,
+            target_url=target_obj.target_url,
+            domain_name=target_obj.domain_name,
+            lang_list=target_obj.lang,
         )
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-
-    created = db.get_target_with_metadata(target_id)
-    if created is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+    except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Target created but could not be loaded.",
+            detail=f"An unexpected error occurred: {str(e)}",
         )
+    finally:
+       
+        session.close()
 
-    username = _get_username_from_token(authorization)
-    if username:
-        log_activity(
-            username=username,
-            entity_type="Target",
-            entity_id=str(created["target_name"]),
-            operation="create",
-            note=f"Target '{created['target_name']}' created (v2)",
-        )
 
-    return created
+
+
+# @target_router.post(
+#     "/create",
+#     response_model=TargetDetailResponse,
+#     status_code=status.HTTP_201_CREATED,
+#     summary="Create a new target (v2)",
+# )
+# def create_target(
+#     payload: TargetCreateV2,
+#     db: DB = Depends(_get_db),
+#     authorization: Optional[str] = Header(None),
+# ):
+#     try:
+#         target_id = db.create_target_v2(payload.model_dump())
+#     except IntegrityError:
+#         raise HTTPException(
+#             status_code=status.HTTP_400_BAD_REQUEST,
+#             detail="A target with the same name already exists.",
+#         )
+#     except ValueError as e:
+#         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+#     created = db.get_target_with_metadata(target_id)
+#     if created is None:
+#         raise HTTPException(
+#             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#             detail="Target created but could not be loaded.",
+#         )
+
+#     username = _get_username_from_token(authorization)
+#     if username:
+#         log_activity(
+#             username=username,
+#             entity_type="Target",
+#             entity_id=str(created["target_name"]),
+#             operation="create",
+#             note=f"Target '{created['target_name']}' created (v2)",
+#         )
+
+#     return created
 
 
 @target_router.put(

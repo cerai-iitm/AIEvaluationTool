@@ -174,7 +174,7 @@ def create_strategy(
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     finally:
-        db.Session.remove()
+        db.Session.close()
 
 
     # try:

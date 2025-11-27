@@ -270,13 +270,13 @@ async def create_target(
     session = db.Session()
     try:
         # Ensure target name is unique
-        # existing_target = (
-        #     session.query(Targets)
-        #     .filter(Targets.target_name == target_create.target_name)
-        #     .first()
-        # )
-        # if existing_target:
-        #     raise HTTPException(status_code=400, detail="Target name already exists")
+        existing_target = (
+            session.query(Targets)
+            .filter(Targets.target_name == target_create.target_name)
+            .first()
+        )
+        if existing_target:
+            raise HTTPException(status_code=400, detail="Target name already exists")
 
         # Ensure target URL is unique
         existing_url = (

@@ -430,7 +430,7 @@ class DB:
                 # Return the existing strategy object
                 return existing_strategy
             
-            self.logger.debug(f"Adding new strategy with custom strategy_id {strategy_id}: {strategy.strategy_name}")
+            self.logger.debug(f"Adding new strategy with custom strategy_id {strategy_id}: {strategy.name}")
 
             new_strategy = Strategies(
                 strategy_id=strategy_id, 
@@ -2151,6 +2151,82 @@ class DB:
             # Handle the case where the target already exists
             self.logger.error(f"Target already exists: {target}. Error: {e}")
             return -1
+        
+    def __add_or_get_target_custom_id(self, target: Target, target_id:int) -> Optional[Targets]:
+        
+        """
+        Adds a target with a custom ID or returns the existing target.
+
+        Args:
+            target (Target): The target object to add.
+            target_id (int): The custom ID to use for the target.
+
+        Returns:
+            Optional[Targets]: The target object if successful, otherwise None.
+        """
+        try:
+            with self.Session() as session:
+                
+                #check if the target already exists in the database
+                existing_target = session.query(Targets)\
+                    .filter(
+                        (Targets.target_name == target.target_name) |
+                        (Targets.target_type == target.target_type)
+                    )\
+                    .first()
+                if existing_target:
+                    self.logger.debug(
+                        f"Returning the existing target ID: {existing_target.target_id}"
+                    )
+                    return existing_target
+                
+                self.logger.debug(f"Adding new Target with custom target_id {target_id}: {target.target_name}")
+                
+                # get the domain ID if provided, otherwise use None
+                domain_id = (
+                    self.add_or_get_domain_id(target.target_domain)
+                    if target.target_domain
+                    else None
+                )
+                
+                # get the language object for the target languages, if provided
+                langs = (
+                    [
+                        self.__add_or_get_language(lang)
+                        for lang in target.target_language
+                    ]
+                    if target.target_language
+                    else []
+                )
+                
+                new_target = Targets(
+                    target_id = target_id,
+                    target_name = target.target_name,
+                    target_type = target.target_type,
+                    target_description = target.target_description,
+                    target_url = target.target_url,
+                    domain_id = domain_id,
+                    langs = langs
+                )
+                
+                
+                session.add(new_target)
+                session.commit()
+                session.refresh(new_target)
+                
+                self.logger.debug(f"Target added successfully: {new_target.target_name} (ID: {new_target.target_id})")
+                
+                return new_target
+        except IntegrityError as e:
+            session.rollback()
+            self.logger.error(f"Error adding target: {e}")
+            raise
+        except Exception as e:
+            session.rollback()
+            self.logger.error(f"Unexpected error adding target: {e}")
+            raise
+        finally:
+            session.close()
 
     def get_target_id(self, target_name: str) -> Optional[int]:
         """
