@@ -1,52 +1,87 @@
 import requests
-import difflib
 import os 
-import re
 import warnings
 from typing import Optional
 import numpy as np
 import json
+from ollama import Client
+import Levenshtein
+import stanza
+from langdetect import detect
+from zss import Node, simple_distance
 from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
 from .logger import get_logger
 from .utils_new import FileLoader
-import regex
-from ollama import Client
-import Levenshtein
-from .llm_judge import LLMJudgeStrategy
 
 warnings.filterwarnings("ignore")
 
 FileLoader._load_env_vars(__file__)
 logger = get_logger("indian_lang_grammatical_check")
+dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), simple=True, strat_name="indian_lang_grammatical_check")
 
 class IndianLangGrammaticalCheck(Strategy):
     def __init__(self, model=None, tokenizer=None, name="indian_lang_grammatical_check", **kwargs):
         super().__init__(name, **kwargs)
         self.gpu_url=os.getenv("GPU_URL")
         self.ollama_url = os.getenv("OLLAMA_URL")
+        self.nlp = None
 
         if not self.gpu_url:
             logger.warning("GPU_URL is not set in environment.")
         else:
             logger.info("GPU_URL is loaded from environment.")
+    
+    def detect_lang(self, original:str, corrected:str):
+        lang1, lang2 = detect(original), detect(corrected)
+        try:
+            assert(lang1 == lang2)
+        except:
+            logger.debug("The corrected language is not the same as the original. Scores might get affected.")
+        try:
+            self.nlp = stanza.Pipeline(lang1, processors="tokenize, pos, lemma, depparse")
+        except:
+            try:
+                stanza.download(lang1)
+                self.nlp = stanza.Pipeline(lang1, processors="tokenize, pos, lemma, depparse")
+            except:
+                logger.debug(f"Language parser not available for {lang1}. Defaulting to Levenshtein distance for score calculation.")
+    
 
-        
+    def build_tree(self, sent):
+        nodes = {word.id : Node(f"{word.text}/{word.upos}") for word in sent.words}
+        root = None
+        for word in sent.words:
+            if word.head == 0:
+                root = nodes[word.id]
+            else:
+                parent = nodes[word.head]
+                parent.addkid(nodes[word.id])
+        return root
+
+    def get_parse_tree(self, text:str):
+        if(isinstance(self.nlp, stanza.Pipeline)):
+            doc = self.nlp(text)
+            sentence = doc.sentences[0]
+            print("sentence type :", type(sentence))
+            return self.build_tree(sentence)
+        else:
+            logger.debug("Using Levenshtein distance.")
+            return None
+
+    def tree_similarity(self, original:str, corrected:str, use_ted=True):
+        self.detect_lang(original, corrected)
+        ori_tree, corr_tree = self.get_parse_tree(original), self.get_parse_tree(corrected)
+        if(ori_tree is not None and corr_tree is not None and use_ted):
+            ted = simple_distance(ori_tree, corr_tree)
+        else:
+            ted = Levenshtein.distance(original, corrected)
+        max_dist = max(len(original), len(corrected))
+        sim = 1 - (ted / max_dist)
+        return sim
+
     def make_prompt(self, sent:str):
-        text = f"""
-            <|system|>
-            You are a grammar-correction assistant.  
-            If the input paragraph is already grammatically correct, return it unchanged.  
-            Otherwise, correct the grammar while keeping the original language.  
-            Do not translate the text into any other language.
-            Return no additional information — only a dictionary of the form:
-            {{"correct": "<corrected paragraph>"}}
-
-            <|user|>
-            {sent}
-
-            <|assistant|>
-            """
+        text = dflt_vals.prompt.format(sent=sent)
         return text
     
     def ollama_connect(self, model_name:str, text:str):
@@ -63,6 +98,7 @@ class IndianLangGrammaticalCheck(Strategy):
                 format="json"
             )
         except Exception as e:
+            logger.error(f"Could not communicate with the {model_name}. Make sure the model is downloaded and running.")
             return {}
         try:
             final = response.message.content
@@ -79,35 +115,49 @@ class IndianLangGrammaticalCheck(Strategy):
     
     def has_correct_format(self, obj):
         return (isinstance(obj, dict) and "correct" in obj and isinstance(obj.get("correct"), str))
-
-    def evaluate(self, agent_response:str, expected:Optional[str]=None):
-        prompting = self.make_prompt(agent_response)
-        model_names = ["qwen3:32b"]
+    
+    def make_corrections(self, prompt:str):
+        model_names = dflt_vals.model_names
         corrections = []
-        while(corrections == []):
+        tries = dflt_vals.n_tries
+        while(corrections == [] and tries > 0):
             for model_name in model_names:
-                corr_dict = self.ollama_connect(model_name, prompting)
+                corr_dict = self.ollama_connect(model_name, prompt)
                 if(self.has_correct_format(corr_dict)):
                     corrections.append(corr_dict)
-        final_ops = [corr["correct"] for corr in corrections]
-        print(final_ops)
-        print(agent_response)
-        scores = []
-        for final in final_ops:
-            a1, b1 = self.embed(agent_response), self.embed(final)
-            sim = self.cosine(a1, b1)
-            dist = Levenshtein.distance(agent_response, final)
-            max_dist = max(len(final), len(agent_response))
-            lev_sim = 1 - (dist / max_dist)
-            print(sim)
-            print(lev_sim)
-            # harmonic mean between the lev distance and the semantic similarity score
-            score =  2 * sim * lev_sim / (sim + lev_sim + 1e-12)
-            scores.append(score)
-        return np.mean(scores)
+            tries -= 1
+        if len(corrections) > 0: 
+            return [corr["correct"] for corr in corrections]
+        else:
+            return []
 
-if __name__ == "__main__":
-    checker = IndianLangGrammaticalCheck()
-    sent = "నేను రేపు ఇంటికి వెళ్తుంది కానీ నువ్వు వచ్చాను అని అన్నావు."
-    score = checker.evaluate(sent)
-    print(score)
+    def evaluate(self, testcase:TestCase, conversation:Conversation): #testcase:TestCase, conversation:Conversation):#agent_response:str, expected:Optional[str]=None):
+        prompt = self.make_prompt(conversation.agent_response)
+        corr_sents = self.make_corrections(prompt)
+        # print(corr_sents)
+        # print(agent_response)
+        scores = []
+        if len(corr_sents) > 0:
+            for final in corr_sents:
+                # we are taking the embedding for both the sentences using the very initial layer of the LLM which captures morpheme and 
+                # strctural information
+                a1, b1 = self.embed(conversation.agent_response), self.embed(final)
+                sim = self.cosine(a1, b1)
+                ted_sim = self.tree_similarity(conversation.agent_response, final, use_ted=dflt_vals.use_ted)
+                print(sim)
+                print(ted_sim)
+                # harmonic mean between the lev distance and the structural vector similarity score
+                score =  2 * sim * ted_sim / (sim + ted_sim + 1e-12)
+                scores.append(score)
+            final_score = float(np.mean(scores))
+            logger.info(f"Grammatical consistency score for the input is : {final_score}")
+            return final_score
+        else:
+            logger.error("Could not receive corrections for the sentence using the user provided models. Returning 0 score.")
+            return 0
+
+# if __name__ == "__main__":
+#     checker = IndianLangGrammaticalCheck()
+#     sent = "நான் இன்று ரொம்ப மகிழ்ச்சி இருக்கு ஆனா என் மனசுல ஏதோ சில ஒத்துக்காத மாதிரி எண்ணம் வருது அது எப்படி சரியா சொல்லுவது நான் ஒண்ணும் நன்றா நினைக்க முடியலே, அதனால கொஞ்சம் எல்லாம் குழப்பம் போல இருக்கு."
+#     score = checker.evaluate(sent)
+#     print(score)
