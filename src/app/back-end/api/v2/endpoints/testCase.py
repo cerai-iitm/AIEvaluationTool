@@ -1,24 +1,24 @@
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, Header, HTTPException, status
-from jose import JWTError, jwt
-
 from config.settings import settings
 from database.fastapi_deps import _get_db
-from lib.data.llm_judge_prompt import LLMJudgePrompt
-from lib.data.prompt import Prompt
-from lib.data.response import Response as ResponseData
-from lib.data.test_case import TestCase as TestCaseModel
-from lib.orm.DB import DB
-from lib.orm.tables import TestCases, Prompts
+from fastapi import APIRouter, Depends, Header, HTTPException, status
+from jose import JWTError, jwt
 from schemas import (
     TestCaseCreateV2,
     TestCaseDetailResponse,
     TestCaseListResponse,
     TestCaseUpdateV2,
 )
-from utils.activity_logger import log_activity
 from sqlalchemy.orm import joinedload
+from utils.activity_logger import log_activity
+
+from lib.data.llm_judge_prompt import LLMJudgePrompt
+from lib.data.prompt import Prompt
+from lib.data.response import Response as ResponseData
+from lib.data.test_case import TestCase as TestCaseModel
+from lib.orm.DB import DB
+from lib.orm.tables import Prompts, TestCases
 
 testcase_router = APIRouter(prefix="/api/v2/testcases")
 
@@ -26,8 +26,7 @@ testcase_router = APIRouter(prefix="/api/v2/testcases")
 def _normalize_optional(value: Optional[str]) -> Optional[str]:
     if value is None:
         return None
-    normalized = value.strip()
-    return normalized or None
+    return value
 
 
 def _get_username_from_token(authorization: Optional[str]) -> Optional[str]:
@@ -103,15 +102,15 @@ def list_testcases(db: DB = Depends(_get_db)):
     return results
 
 
-
 # @testcase_router.get(
 #     "",
 #     response_model=List[TestCaseListResponse],
 #     summary="List all test cases (v2)",
 # )
 # def list_testcases(db: DB = Depends(_get_db)):
-    # return db.list_testcases_with_metadata() or []
-    # return db.testcases
+# return db.list_testcases_with_metadata() or []
+# return db.testcases
+
 
 @testcase_router.get(
     "/{testcase_id}",
@@ -121,11 +120,12 @@ def list_testcases(db: DB = Depends(_get_db)):
 def get_testcase(testcase_id: int, db: DB = Depends(_get_db)):
     testcase = db.get_testcase_by_id(testcase_id)
     if testcase is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Test case not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Test case not found"
+        )
 
     judge_prompt = testcase.judge_prompt
     llm_judge_prompt = judge_prompt.prompt if judge_prompt else None
-
 
     return TestCaseListResponse(
         testcase_id=testcase.testcase_id,
@@ -149,6 +149,7 @@ def get_testcase(testcase_id: int, db: DB = Depends(_get_db)):
 #         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Test case not found")
 #     return testcase
 
+
 @testcase_router.post(
     "/create",
     response_model=TestCaseDetailResponse,
@@ -163,7 +164,12 @@ def create_testcase(
     try:
         # Get next available ID
         with db.Session() as session:
-            existing_ids = [row[0] for row in session.query(TestCases.testcase_id).order_by(TestCases.testcase_id).all()]
+            existing_ids = [
+                row[0]
+                for row in session.query(TestCases.testcase_id)
+                .order_by(TestCases.testcase_id)
+                .all()
+            ]
             next_id = 1
             for id in existing_ids:
                 if id != next_id:
@@ -172,36 +178,36 @@ def create_testcase(
 
         # Convert payload to TestCase model
         prompt = Prompt(
-            user_prompt=payload.user_prompt.strip(),
-            system_prompt=payload.system_prompt.strip() if payload.system_prompt else None,
+            user_prompt=payload.user_prompt,
+            system_prompt=payload.system_prompt if payload.system_prompt else None,
             lang_id=1,  # Default language ID
             domain_id=1,  # Default domain ID
         )
-        
+
         response = None
         if payload.response_text:
-            response = Response(
-                response_text=payload.response_text.strip(),
+            response = ResponseData(
+                response_text=payload.response_text,
                 response_type="GT",  # Ground Truth
                 lang_id=1,  # Default language ID
             )
-            
+
         judge_prompt = None
         if payload.llm_judge_prompt:
             judge_prompt = LLMJudgePrompt(
-                prompt=payload.llm_judge_prompt.strip(),
+                prompt=payload.llm_judge_prompt,
                 lang_id=1,  # Default language ID
             )
-            
-        testcase = TestCase(
-            name=payload.testcase_name.strip(),
+
+        testcase = TestCaseModel(
+            name=payload.testcase_name,
             prompt=prompt,
             response=response,
             judge_prompt=judge_prompt,
-            strategy=payload.strategy_name.strip(),
-            metric="exact_match"  # Default metric
+            strategy=payload.strategy_name,
+            metric="exact_match",  # Default metric
         )
-        
+
         # Add test case with custom ID
         testcase_obj = db._DB__add_or_get_test_case_custom_id(testcase, next_id)
         if not testcase_obj:
@@ -209,7 +215,7 @@ def create_testcase(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Failed to create test case. It may already exist.",
             )
-            
+
         # Log activity
         username = _get_username_from_token(authorization)
         if username:
@@ -220,7 +226,7 @@ def create_testcase(
                 operation="create",
                 note=f"Created test case: {testcase_obj.testcase_name}",
             )
-            
+
         # Get the created test case with all relationships loaded
         with db.Session() as session:
             testcase_full = (
@@ -234,24 +240,36 @@ def create_testcase(
                 .filter(TestCases.testcase_id == testcase_obj.testcase_id)
                 .first()
             )
-            
+
             if not testcase_full:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Test case not found after creation",
                 )
-                
+
             return TestCaseDetailResponse(
                 testcase_id=testcase_full.testcase_id,
                 testcase_name=testcase_full.testcase_name,
-                user_prompt=testcase_full.prompt.user_prompt if testcase_full.prompt else None,
-                system_prompt=testcase_full.prompt.system_prompt if testcase_full.prompt else None,
-                response_text=testcase_full.response.response_text if testcase_full.response else None,
-                strategy_name=testcase_full.strategy.strategy_name if testcase_full.strategy else None,
-                llm_judge_prompt=testcase_full.judge_prompt.prompt if testcase_full.judge_prompt else None,
-                domain_name=testcase_full.prompt.domain.domain_name if testcase_full.prompt and testcase_full.prompt.domain else None,
+                user_prompt=testcase_full.prompt.user_prompt
+                if testcase_full.prompt
+                else None,
+                system_prompt=testcase_full.prompt.system_prompt
+                if testcase_full.prompt
+                else None,
+                response_text=testcase_full.response.response_text
+                if testcase_full.response
+                else None,
+                strategy_name=testcase_full.strategy.strategy_name
+                if testcase_full.strategy
+                else None,
+                llm_judge_prompt=testcase_full.judge_prompt.prompt
+                if testcase_full.judge_prompt
+                else None,
+                domain_name=testcase_full.prompt.domain.domain_name
+                if testcase_full.prompt and testcase_full.prompt.domain
+                else None,
             )
-            
+
     except HTTPException:
         raise
     except Exception as e:
@@ -259,7 +277,8 @@ def create_testcase(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An error occurred while creating the test case: {str(e)}",
         )
-    
+
+
 # @testcase_router.post(
 #     "/create",
 #     response_model=TestCaseDetailResponse,
@@ -273,7 +292,7 @@ def create_testcase(
 # ):
 #     lang_id, domain_id = _get_default_language_and_domain(db)
 #     prompt = Prompt(
-#         user_prompt=payload.user_prompt.strip(),
+#         user_prompt=payload.user_prompt,
 #         system_prompt=_normalize_optional(payload.system_prompt),
 #         lang_id=lang_id,
 #         domain_id=domain_id,
@@ -294,11 +313,11 @@ def create_testcase(
 #         judge_prompt_obj = LLMJudgePrompt(prompt=normalized_judge_prompt, lang_id=lang_id)
 
 #     testcase_model = TestCaseModel(
-#         name=payload.testcase_name.strip(),
+#         name=payload.testcase_name,
 #         metric="Unknown",
 #         prompt=prompt,
 #         response=response_obj,
-#         strategy=payload.strategy_name.strip(),
+#         strategy=payload.strategy_name,
 #         judge_prompt=judge_prompt_obj,
 #     )
 
@@ -345,14 +364,16 @@ def update_testcase(
     normalized_updates: dict = {}
     for key, value in update_data.items():
         if isinstance(value, str):
-            normalized_updates[key] = value.strip()
+            normalized_updates[key] = value
         else:
             normalized_updates[key] = value
 
     # Normalize optional fields
     for optional_field in ("system_prompt", "response_text", "llm_judge_prompt"):
         if optional_field in normalized_updates:
-            normalized_updates[optional_field] = _normalize_optional(normalized_updates[optional_field])
+            normalized_updates[optional_field] = _normalize_optional(
+                normalized_updates[optional_field]
+            )
 
     if not normalized_updates:
         # existing = db.get_testcase_with_metadata(testcase_id)
@@ -362,80 +383,92 @@ def update_testcase(
 
         existing_testcase = db.get_testcase_by_id(testcase_id)
         if existing_testcase is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Test case not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Test case not found"
+            )
         return existing_testcase
 
     try:
         updated = db.update_testcase_record(testcase_id, normalized_updates)
     except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
+        ) from exc
 
     if updated is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Test case not found")
-
-    # Get the updated testcase with all relationships loaded
-    with db.Session() as session:
-        testcase = (
-            session.query(TestCases)
-            .options(
-                joinedload(TestCases.prompt)
-                .joinedload(Prompts.domain),
-                joinedload(TestCases.strategy),
-                joinedload(TestCases.response),
-                joinedload(TestCases.judge_prompt),
-            )
-            .filter(TestCases.testcase_id == testcase_id)
-            .first()
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Test case not found"
         )
 
-        if testcase is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Test case not found after update")
+    # Get the updated testcase with all relationships loaded
+    # with db.Session() as session:
+    #     testcase = (
+    #         session.query(TestCases)
+    #         .options(
+    #             joinedload(TestCases.prompt).joinedload(Prompts.domain),
+    #             joinedload(TestCases.strategy),
+    #             joinedload(TestCases.response),
+    #             joinedload(TestCases.judge_prompt),
+    #         )
+    #         .filter(TestCases.testcase_id == testcase_id)
+    #         .first()
+    #     )
 
-        # Log activity if user is authenticated
-        username = _get_username_from_token(authorization)
-        if username:
-            changes = []
-            if "testcase_name" in normalized_updates:
-                changes.append(f"name changed to '{testcase.testcase_name}'")
-            if "user_prompt" in normalized_updates or "system_prompt" in normalized_updates:
-                changes.append("prompt updated")
-            if "response_text" in normalized_updates:
-                changes.append("response updated")
-            if "strategy_name" in normalized_updates:
-                changes.append("strategy updated")
-            if "llm_judge_prompt" in normalized_updates:
-                changes.append("judge prompt updated")
-            
-            note = f"Test case '{testcase.testcase_name}' updated"
-            if changes:
-                note += f": {', '.join(changes)}"
-            else:
-                note += " (no changes detected)"
-                
-            log_activity(
-                username=username,
-                entity_type="Test Case",
-                entity_id=str(testcase.testcase_id),
-                operation="update",
-                note=note,
-            )
+    #     if testcase is None:
+    #         raise HTTPException(
+    #             status_code=status.HTTP_404_NOT_FOUND,
+    #             detail="Test case not found after update",
+    #         )
 
-        # Build the response
-        return {
-            "testcase_id": testcase.testcase_id,
-            "testcase_name": testcase.testcase_name,
-            "strategy_id": testcase.strategy_id,
-            "strategy_name": testcase.strategy.strategy_name if testcase.strategy else None,
-            "llm_judge_prompt_id": testcase.judge_prompt_id,
-            "llm_judge_prompt": testcase.judge_prompt.prompt if testcase.judge_prompt else None,
-            "domain_id": testcase.prompt.domain_id if testcase.prompt else None,
-            "domain_name": testcase.prompt.domain.domain_name if testcase.prompt and testcase.prompt.domain else None,
-            "prompt_id": testcase.prompt_id,
-            "user_prompt": testcase.prompt.user_prompt if testcase.prompt else None,
-            "system_prompt": testcase.prompt.system_prompt if testcase.prompt else None,
-            "response_id": testcase.response_id,
-            "response_text": testcase.response.response_text if testcase.response else None,
-        }
+    # Log activity if user is authenticated
+    username = _get_username_from_token(authorization)
+    if username:
+        changes = []
+        if "testcase_name" in normalized_updates:
+            changes.append(f"name changed to '{updated.testcase_name}'")
+        if "user_prompt" in normalized_updates or "system_prompt" in normalized_updates:
+            changes.append("prompt updated")
+        if "response_text" in normalized_updates:
+            changes.append("response updated")
+        if "strategy_name" in normalized_updates:
+            changes.append("strategy updated")
+        if "llm_judge_prompt" in normalized_updates:
+            changes.append("judge prompt updated")
+
+        note = f"Test case '{updated.testcase_name}' updated"
+        if changes:
+            note += f": {', '.join(changes)}"
+        else:
+            note += " (no changes detected)"
+
+        log_activity(
+            username=username,
+            entity_type="Test Case",
+            entity_id=str(updated.testcase_id),
+            operation="update",
+            note=note,
+        )
+
+    # Build the response
+    return {
+        "testcase_id": updated.testcase_id,
+        "testcase_name": updated.testcase_name,
+        "strategy_id": updated.strategy_id,
+        "strategy_name": updated.strategy.strategy_name if updated.strategy else None,
+        "llm_judge_prompt_id": updated.judge_prompt_id,
+        "llm_judge_prompt": updated.judge_prompt.prompt
+        if updated.judge_prompt
+        else None,
+        "domain_id": updated.prompt.domain_id if updated.prompt else None,
+        "domain_name": updated.prompt.domain.domain_name
+        if updated.prompt and updated.prompt.domain
+        else None,
+        "prompt_id": updated.prompt_id,
+        "user_prompt": updated.prompt.user_prompt if updated.prompt else None,
+        "system_prompt": updated.prompt.system_prompt if updated.prompt else None,
+        "response_id": updated.response_id,
+        "response_text": updated.response.response_text if updated.response else None,
+    }
 
 
 @testcase_router.delete(
@@ -450,14 +483,17 @@ def delete_testcase(
     # existing = db.get_testcase_with_metadata(testcase_id)
     # if existing is None:
     #     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Test case not found")
-        
+
     existing = db.get_testcase_by_id(testcase_id)
     if existing is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Test case not found")
-    
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Test case not found"
+        )
 
     if not db.delete_testcase_record(testcase_id):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Test case not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Test case not found"
+        )
 
     username = _get_username_from_token(authorization)
     if username:
@@ -470,5 +506,3 @@ def delete_testcase(
         )
 
     return {"message": "Test case deleted successfully"}
-
-
