@@ -353,10 +353,15 @@ def update_testcase(
             normalized_updates[optional_field] = _normalize_optional(normalized_updates[optional_field])
 
     if not normalized_updates:
-        existing = db.get_testcase_with_metadata(testcase_id)
-        if existing is None:
+        # existing = db.get_testcase_with_metadata(testcase_id)
+        # if existing is None:
+        #     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Test case not found")
+        # return existing
+
+        existing_testcase = db.get_testcase_by_id(testcase_id)
+        if existing_testcase is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Test case not found")
-        return existing
+        return existing_testcase
 
     try:
         updated = db.update_testcase_record(testcase_id, normalized_updates)
@@ -368,6 +373,24 @@ def update_testcase(
 
     username = _get_username_from_token(authorization)
     if username:
+        # Determine what changed for the note
+        changes = []
+        if payload.testcase_name is not None and payload.testcase_name != original_name:
+            changes.append(f"name changed to '{existing_testcase.testcase_name}'")
+        if payload.user_prompt is not None or payload.system_prompt is not None:
+            changes.append("prompt updated")
+        if payload.response_text is not None:
+            changes.append("response updated")
+        if payload.strategy_name is not None:
+            changes.append("strategy updated")
+        if payload.llm_judge_prompt is not None:
+            changes.append("judge prompt updated")
+        
+        note = f"Test case '{tc.testcase_name}' updated"
+        if changes:
+            note += f": {', '.join(changes)}"
+        else:
+            note += " (no changes detected)"
         log_activity(
             username=username,
             entity_type="Test Case",
@@ -376,7 +399,21 @@ def update_testcase(
             note="Test case updated via v2 endpoint",
         )
 
-    return updated
+    return TestCaseDetailResponse(
+        testcase_id=updated.testcase_id,
+        testcase_name=updated.testcase_name,
+        strategy_id=updated.strategy_id,
+        strategy_name=updated.strategy_name,
+        llm_judge_prompt_id=updated.llm_judge_prompt_id,
+        llm_judge_prompt=updated.llm_judge_prompt,
+        domain_id=updated.domain_id,
+        domain_name=updated.domain_name,
+        prompt_id=updated.prompt_id,
+        user_prompt=updated.user_prompt,
+        system_prompt=updated.system_prompt,
+        response_id=updated.response_id,
+        response_text=updated.response_text,
+    )
 
 
 @testcase_router.delete(
@@ -388,9 +425,14 @@ def delete_testcase(
     db: DB = Depends(_get_db),
     authorization: Optional[str] = Header(None),
 ):
-    existing = db.get_testcase_with_metadata(testcase_id)
+    # existing = db.get_testcase_with_metadata(testcase_id)
+    # if existing is None:
+    #     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Test case not found")
+        
+    existing = db.get_testcase_by_id(testcase_id)
     if existing is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Test case not found")
+    
 
     if not db.delete_testcase_record(testcase_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Test case not found")

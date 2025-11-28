@@ -59,6 +59,9 @@ class TestCaseDetailResponse(TestCaseListResponse):
     prompt_id: Optional[int] = None
     response_id: Optional[int] = None
     llm_judge_prompt_id: Optional[int] = None
+    domain_id: Optional[int] = None
+    domain_name: Optional[str] = None
+    
 
 
 class TestCaseCreateV2(BaseModel):

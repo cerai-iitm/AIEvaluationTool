@@ -938,7 +938,7 @@ class DB:
             else:
                 session.refresh(testcase)
 
-            return self._serialize_testcase(testcase)
+            return testcase
 
     def delete_testcase_record(self, testcase_id: int) -> bool:
         """
