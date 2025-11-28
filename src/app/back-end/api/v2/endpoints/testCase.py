@@ -10,6 +10,7 @@ from lib.data.prompt import Prompt
 from lib.data.response import Response as ResponseData
 from lib.data.test_case import TestCase as TestCaseModel
 from lib.orm.DB import DB
+from lib.orm.tables import TestCases, Prompts
 from schemas import (
     TestCaseCreateV2,
     TestCaseDetailResponse,
@@ -17,6 +18,7 @@ from schemas import (
     TestCaseUpdateV2,
 )
 from utils.activity_logger import log_activity
+from sqlalchemy.orm import joinedload
 
 testcase_router = APIRouter(prefix="/api/v2/testcases")
 
@@ -371,49 +373,69 @@ def update_testcase(
     if updated is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Test case not found")
 
-    username = _get_username_from_token(authorization)
-    if username:
-        # Determine what changed for the note
-        changes = []
-        if payload.testcase_name is not None and payload.testcase_name != original_name:
-            changes.append(f"name changed to '{existing_testcase.testcase_name}'")
-        if payload.user_prompt is not None or payload.system_prompt is not None:
-            changes.append("prompt updated")
-        if payload.response_text is not None:
-            changes.append("response updated")
-        if payload.strategy_name is not None:
-            changes.append("strategy updated")
-        if payload.llm_judge_prompt is not None:
-            changes.append("judge prompt updated")
-        
-        note = f"Test case '{tc.testcase_name}' updated"
-        if changes:
-            note += f": {', '.join(changes)}"
-        else:
-            note += " (no changes detected)"
-        log_activity(
-            username=username,
-            entity_type="Test Case",
-            entity_id=str(updated["testcase_name"]),
-            operation="update",
-            note="Test case updated via v2 endpoint",
+    # Get the updated testcase with all relationships loaded
+    with db.Session() as session:
+        testcase = (
+            session.query(TestCases)
+            .options(
+                joinedload(TestCases.prompt)
+                .joinedload(Prompts.domain),
+                joinedload(TestCases.strategy),
+                joinedload(TestCases.response),
+                joinedload(TestCases.judge_prompt),
+            )
+            .filter(TestCases.testcase_id == testcase_id)
+            .first()
         )
 
-    return TestCaseDetailResponse(
-        testcase_id=updated.testcase_id,
-        testcase_name=updated.testcase_name,
-        strategy_id=updated.strategy_id,
-        strategy_name=updated.strategy_name,
-        llm_judge_prompt_id=updated.llm_judge_prompt_id,
-        llm_judge_prompt=updated.llm_judge_prompt,
-        domain_id=updated.domain_id,
-        domain_name=updated.domain_name,
-        prompt_id=updated.prompt_id,
-        user_prompt=updated.user_prompt,
-        system_prompt=updated.system_prompt,
-        response_id=updated.response_id,
-        response_text=updated.response_text,
-    )
+        if testcase is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Test case not found after update")
+
+        # Log activity if user is authenticated
+        username = _get_username_from_token(authorization)
+        if username:
+            changes = []
+            if "testcase_name" in normalized_updates:
+                changes.append(f"name changed to '{testcase.testcase_name}'")
+            if "user_prompt" in normalized_updates or "system_prompt" in normalized_updates:
+                changes.append("prompt updated")
+            if "response_text" in normalized_updates:
+                changes.append("response updated")
+            if "strategy_name" in normalized_updates:
+                changes.append("strategy updated")
+            if "llm_judge_prompt" in normalized_updates:
+                changes.append("judge prompt updated")
+            
+            note = f"Test case '{testcase.testcase_name}' updated"
+            if changes:
+                note += f": {', '.join(changes)}"
+            else:
+                note += " (no changes detected)"
+                
+            log_activity(
+                username=username,
+                entity_type="Test Case",
+                entity_id=str(testcase.testcase_id),
+                operation="update",
+                note=note,
+            )
+
+        # Build the response
+        return {
+            "testcase_id": testcase.testcase_id,
+            "testcase_name": testcase.testcase_name,
+            "strategy_id": testcase.strategy_id,
+            "strategy_name": testcase.strategy.strategy_name if testcase.strategy else None,
+            "llm_judge_prompt_id": testcase.judge_prompt_id,
+            "llm_judge_prompt": testcase.judge_prompt.prompt if testcase.judge_prompt else None,
+            "domain_id": testcase.prompt.domain_id if testcase.prompt else None,
+            "domain_name": testcase.prompt.domain.domain_name if testcase.prompt and testcase.prompt.domain else None,
+            "prompt_id": testcase.prompt_id,
+            "user_prompt": testcase.prompt.user_prompt if testcase.prompt else None,
+            "system_prompt": testcase.prompt.system_prompt if testcase.prompt else None,
+            "response_id": testcase.response_id,
+            "response_text": testcase.response.response_text if testcase.response else None,
+        }
 
 
 @testcase_router.delete(

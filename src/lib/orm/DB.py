@@ -829,7 +829,7 @@ class DB:
             testcase: Optional[TestCases] = (
                 session.query(TestCases)
                 .options(
-                    joinedload(TestCases.prompt),
+                    joinedload(TestCases.prompt).joinedload(Prompts.domain),
                     joinedload(TestCases.response),
                     joinedload(TestCases.strategy),
                     joinedload(TestCases.judge_prompt),
@@ -934,11 +934,17 @@ class DB:
 
             if updated:
                 session.commit()
+                # session.refresh(testcase)
+                # _ = testcase.prompt.domain if testcase.prompt else None
+                # _ = testcase.strategy.strategy_name if testcase.strategy else None
+                # _ = testcase.response.response_text if testcase.response else None
+                # _ = testcase.judge_prompt.prompt if testcase.judge_prompt else None
+                # No need to refresh after commit, just return the object
+                return testcase
+            else:                                                                                                           
+                # Only refresh if we didn't commit
                 session.refresh(testcase)
-            else:
-                session.refresh(testcase)
-
-            return testcase
+                return testcase
 
     def delete_testcase_record(self, testcase_id: int) -> bool:
         """
