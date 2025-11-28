@@ -131,19 +131,18 @@ class IndianLangGrammaticalCheck(Strategy):
         else:
             return []
 
-    def evaluate(self, testcase:TestCase, conversation:Conversation): #testcase:TestCase, conversation:Conversation):#agent_response:str, expected:Optional[str]=None):
-        prompt = self.make_prompt(conversation.agent_response)
+    def evaluate(self, agent_response:str, expected:Optional[str]=None): #testcase:TestCase, conversation:Conversation):#agent_response:str, expected:Optional[str]=None):
+        prompt = self.make_prompt(agent_response)
         corr_sents = self.make_corrections(prompt)
         # print(corr_sents)
         # print(agent_response)
         scores = []
         if len(corr_sents) > 0:
             for final in corr_sents:
-                # we are taking the embedding for both the sentences using the very initial layer of the LLM which captures morpheme and 
-                # strctural information
-                a1, b1 = self.embed(conversation.agent_response), self.embed(final)
+                # we are taking the embedding for both the sentences using the initial layer of the LLM which captures morpheme and strctural information
+                a1, b1 = self.embed(agent_response), self.embed(final)
                 sim = self.cosine(a1, b1)
-                ted_sim = self.tree_similarity(conversation.agent_response, final, use_ted=dflt_vals.use_ted)
+                ted_sim = self.tree_similarity(agent_response, final, use_ted=dflt_vals.use_ted)
                 print(sim)
                 print(ted_sim)
                 # harmonic mean between the lev distance and the structural vector similarity score
@@ -153,11 +152,12 @@ class IndianLangGrammaticalCheck(Strategy):
             logger.info(f"Grammatical consistency score for the input is : {final_score}")
             return final_score
         else:
+            final_score = 0.0
             logger.error("Could not receive corrections for the sentence using the user provided models. Returning 0 score.")
-            return 0
+        return final_score
 
-# if __name__ == "__main__":
-#     checker = IndianLangGrammaticalCheck()
-#     sent = "நான் இன்று ரொம்ப மகிழ்ச்சி இருக்கு ஆனா என் மனசுல ஏதோ சில ஒத்துக்காத மாதிரி எண்ணம் வருது அது எப்படி சரியா சொல்லுவது நான் ஒண்ணும் நன்றா நினைக்க முடியலே, அதனால கொஞ்சம் எல்லாம் குழப்பம் போல இருக்கு."
-#     score = checker.evaluate(sent)
-#     print(score)
+if __name__ == "__main__":
+    checker = IndianLangGrammaticalCheck()
+    sent = "நான் இன்று ரொம்ப மகிழ்ச்சி இருக்கு ஆனா என் மனசுல ஏதோ சில ஒத்துக்காத மாதிரி எண்ணம் வருது அது எப்படி சரியா சொல்லுவது நான் ஒண்ணும் நன்றா நினைக்க முடியலே, அதனால கொஞ்சம் எல்லாம் குழப்பம் போல இருக்கு."
+    score = checker.evaluate(sent)
+    print(score)
