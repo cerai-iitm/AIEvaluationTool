@@ -271,7 +271,7 @@ def delete_response(
     db: DB = Depends(_get_db),
     authorization: Optional[str] = Header(None),
 ):
-    existing = db.get_response_with_metadata(response_id)
+    existing = db.get_response(response_id)
     if existing is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Response not found"
@@ -289,7 +289,7 @@ def delete_response(
             entity_type="Response",
             entity_id=str(existing["response_id"]),
             operation="delete",
-            note=f"Response '{existing['response_id']}' deleted (v2)",
+            note=f"Response '{existing['response_id']}' deleted",
         )
 
     return {"message": "Response deleted successfully"}

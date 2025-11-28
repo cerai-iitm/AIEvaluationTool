@@ -220,7 +220,7 @@ def update_strategy(
 ):
     update_data = payload.model_dump(exclude_unset=True)
     if not update_data:
-        existing = db.get_strategy_with_metadata(strategy_id)
+        existing = db.get_strategy_id(strategy_id)
         if existing is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Strategy not found"
@@ -261,7 +261,7 @@ def delete_strategy(
     db: DB = Depends(_get_db),
     authorization: Optional[str] = Header(None),
 ):
-    existing = db.get_strategy_with_metadata(strategy_id)
+    existing = db.get_strategy_id(strategy_id)
     if existing is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Strategy not found"
@@ -279,7 +279,7 @@ def delete_strategy(
             entity_type="Strategy",
             entity_id=str(existing["strategy_name"]),
             operation="delete",
-            note=f"Strategy '{existing['strategy_name']}' deleted (v2)",
+            note=f"Strategy '{existing['strategy_name']}' deleted",
         )
 
     return {"message": "Strategy deleted successfully"}

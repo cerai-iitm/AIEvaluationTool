@@ -260,7 +260,7 @@ def delete_language(
     db: DB = Depends(_get_db),
     authorization: Optional[str] = Header(None),
 ):
-    existing = db.get_language_with_metadata(lang_id)
+    existing = db.get_language_name(lang_id)
     if existing is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Language not found"

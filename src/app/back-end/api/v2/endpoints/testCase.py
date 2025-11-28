@@ -1,5 +1,4 @@
 from typing import List, Optional
-
 from config.settings import settings
 from database.fastapi_deps import _get_db
 from fastapi import APIRouter, Depends, Header, HTTPException, status
@@ -360,67 +359,29 @@ def update_testcase(
     authorization: Optional[str] = Header(None),
 ):
     update_data = payload.model_dump(exclude_unset=True)
-
     normalized_updates: dict = {}
     for key, value in update_data.items():
-        if isinstance(value, str):
-            normalized_updates[key] = value
-        else:
-            normalized_updates[key] = value
+        normalized_updates[key] = value
 
     # Normalize optional fields
     for optional_field in ("system_prompt", "response_text", "llm_judge_prompt"):
         if optional_field in normalized_updates:
-            normalized_updates[optional_field] = _normalize_optional(
-                normalized_updates[optional_field]
-            )
+            normalized_updates[optional_field] = _normalize_optional(normalized_updates[optional_field])
 
     if not normalized_updates:
-        # existing = db.get_testcase_with_metadata(testcase_id)
-        # if existing is None:
-        #     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Test case not found")
-        # return existing
-
         existing_testcase = db.get_testcase_by_id(testcase_id)
         if existing_testcase is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Test case not found"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Test case not found")
         return existing_testcase
 
     try:
         updated = db.update_testcase_record(testcase_id, normalized_updates)
     except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
-        ) from exc
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
     if updated is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Test case not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Test case not found")
 
-    # Get the updated testcase with all relationships loaded
-    # with db.Session() as session:
-    #     testcase = (
-    #         session.query(TestCases)
-    #         .options(
-    #             joinedload(TestCases.prompt).joinedload(Prompts.domain),
-    #             joinedload(TestCases.strategy),
-    #             joinedload(TestCases.response),
-    #             joinedload(TestCases.judge_prompt),
-    #         )
-    #         .filter(TestCases.testcase_id == testcase_id)
-    #         .first()
-    #     )
-
-    #     if testcase is None:
-    #         raise HTTPException(
-    #             status_code=status.HTTP_404_NOT_FOUND,
-    #             detail="Test case not found after update",
-    #         )
-
-    # Log activity if user is authenticated
     username = _get_username_from_token(authorization)
     if username:
         changes = []
@@ -449,26 +410,22 @@ def update_testcase(
             note=note,
         )
 
-    # Build the response
     return {
         "testcase_id": updated.testcase_id,
         "testcase_name": updated.testcase_name,
         "strategy_id": updated.strategy_id,
         "strategy_name": updated.strategy.strategy_name if updated.strategy else None,
         "llm_judge_prompt_id": updated.judge_prompt_id,
-        "llm_judge_prompt": updated.judge_prompt.prompt
-        if updated.judge_prompt
-        else None,
+        "llm_judge_prompt": updated.judge_prompt.prompt if updated.judge_prompt else None,
         "domain_id": updated.prompt.domain_id if updated.prompt else None,
-        "domain_name": updated.prompt.domain.domain_name
-        if updated.prompt and updated.prompt.domain
-        else None,
+        "domain_name": updated.prompt.domain.domain_name if updated.prompt and updated.prompt.domain else None,
         "prompt_id": updated.prompt_id,
         "user_prompt": updated.prompt.user_prompt if updated.prompt else None,
         "system_prompt": updated.prompt.system_prompt if updated.prompt else None,
         "response_id": updated.response_id,
         "response_text": updated.response.response_text if updated.response else None,
     }
+
 
 
 @testcase_router.delete(
@@ -502,7 +459,7 @@ def delete_testcase(
             entity_type="Test Case",
             entity_id=str(existing["testcase_name"]),
             operation="delete",
-            note=f"Test case '{existing['testcase_name']}' deleted (v2)",
+            note=f"Test case '{existing['testcase_name']}' deleted",
         )
 
     return {"message": "Test case deleted successfully"}

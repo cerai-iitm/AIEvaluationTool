@@ -235,7 +235,7 @@ def update_target(
 ):
     update_data = payload.model_dump(exclude_unset=True)
     if not update_data:
-        existing = db.get_target_with_metadata(target_id)
+        existing = db.get_target_by_id(target_id)
         if existing is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Target not found"
@@ -243,7 +243,7 @@ def update_target(
         return existing
 
     try:
-        updated = db.update_target_v2(target_id, update_data)
+        updated = db.update_target_by_id(target_id, update_data)
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
@@ -264,7 +264,15 @@ def update_target(
             note="Target updated via v2 endpoint",
         )
 
-    return updated
+    return TargetDetailResponse(
+        target_id=updated.target_id,
+        target_name=updated.target_name,
+        target_type=updated.target_type,
+        target_description=updated.target_description,
+        target_url=updated.target_url,
+        domain_name=updated.domain.domain_name if updated.domain else None,
+        lang_list=[lang.lang_name for lang in updated.langs] if updated.langs else [],
+    )
 
 
 @target_router.delete(
@@ -276,7 +284,7 @@ def delete_target(
     db: DB = Depends(_get_db),
     authorization: Optional[str] = Header(None),
 ):
-    existing = db.get_target_with_metadata(target_id)
+    existing = db.get_target_by_id(target_id)
     if existing is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Target not found"
@@ -294,7 +302,7 @@ def delete_target(
             entity_type="Target",
             entity_id=str(existing["target_name"]),
             operation="delete",
-            note=f"Target '{existing['target_name']}' deleted (v2)",
+            note=f"Target '{existing['target_name']}' deleted",
         )
 
     return {"message": "Target deleted successfully"}

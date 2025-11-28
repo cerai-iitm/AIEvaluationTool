@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends, Header, Response
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session, joinedload
-from schemas import StrategyIds, Strategies, StrategyCreate, StrategyUpdate
+from schemas import StrategyIds, Strategies, StrategyCreate, StrategyUpdateV2, StrategyDetailResponse
 from database.fastapi_deps import _get_db
 from database.database import get_current_user
 from models import user as user_model
@@ -163,10 +163,10 @@ async def create_strategy(
         session.close()
 
 
-@strategy_router.put("/update/{strategy_id}", response_model=Strategies, summary="Update a strategy by ID")
+@strategy_router.put("/update/{strategy_id}", response_model=StrategyDetailResponse, summary="Update a strategy by ID")
 async def update_strategy(
         strategy_id: int, 
-        strategy: StrategyUpdate, 
+        strategy: StrategyUpdateV2, 
         db: DB = Depends(_get_db),
         authorization: Optional[str] = Header(None)
     ):
@@ -222,7 +222,7 @@ async def update_strategy(
 
         strategy_ids_with_llm_prompt = _get_strategy_ids_requiring_llm_prompt(session)
         
-        return Strategies(
+        return StrategyDetailResponse(
             strategy_id=strategy_to_update.strategy_id,
             strategy_name=strategy_to_update.strategy_name,
             strategy_description=strategy_to_update.strategy_description,

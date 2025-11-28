@@ -248,7 +248,7 @@ def delete_llm_prompt(
     db: DB = Depends(_get_db),
     authorization: Optional[str] = Header(None),
 ):
-    existing = db.get_llm_prompt_with_metadata(llm_prompt_id)
+    existing = db.get_llm_prompt_by_id(llm_prompt_id)
     if existing is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="LLM prompt not found"

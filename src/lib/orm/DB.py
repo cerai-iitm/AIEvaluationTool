@@ -1,6 +1,8 @@
 import logging
 import os
 import random
+import hashlib
+
 import sys
 from datetime import datetime
 from typing import List, Optional, Union
@@ -821,9 +823,9 @@ class DB:
             self.logger.error(f"Test case '{testcase}' does not exist.")
             return None
 
-    def update_testcase_record(self, testcase_id: int, updates: dict) -> Optional[dict]:
+    def update_testcase_record(self, testcase_id: int, updates: dict) -> Optional[TestCases]:
         """
-        Updates a test case with the provided field values and returns the refreshed record.
+        Updates a test case similar to v1 method but using v2 style.
         """
         with self.Session() as session:
             testcase: Optional[TestCases] = (
@@ -847,104 +849,136 @@ class DB:
                 updated = True
 
             if "strategy_name" in updates and updates["strategy_name"]:
-                strategy_id = self.add_or_get_strategy_id(updates["strategy_name"])
-                if strategy_id in (None, -1):
-                    raise ValueError(
-                        f"Unable to resolve strategy '{updates['strategy_name']}'"
-                    )
-                testcase.strategy_id = strategy_id
+                strategy = session.query(Strategies).filter(Strategies.strategy_name == updates["strategy_name"]).first()
+                if not strategy:
+                    raise ValueError(f"Strategy '{updates['strategy_name']}' not found")
+                testcase.strategy_id = strategy.strategy_id
                 updated = True
 
+            # Update prompt with hash and reuse logic
             if "user_prompt" in updates or "system_prompt" in updates:
                 current_prompt = getattr(testcase, "prompt", None)
-                new_user_prompt = updates.get(
-                    "user_prompt", getattr(current_prompt, "user_prompt", None)
+                new_user_prompt = updates.get("user_prompt", getattr(current_prompt, "user_prompt", None))
+                new_system_prompt = updates.get("system_prompt", getattr(current_prompt, "system_prompt", None))
+
+                # Compute prompt hash same as v1
+                prompt_str = f"System: '{new_system_prompt or ''}'\tUser: '{new_user_prompt}'"
+                hashing = hashlib.sha1()
+                hashing.update(prompt_str.encode("utf-8"))
+                new_hash = hashing.hexdigest()
+
+                # Check if prompt with new_hash exists excluding current prompt
+                existing_prompt = (
+                    session.query(Prompts)
+                    .filter(Prompts.hash_value == new_hash)
+                    .filter(Prompts.prompt_id != (current_prompt.prompt_id if current_prompt else None))
+                    .first()
                 )
-                new_system_prompt = updates.get(
-                    "system_prompt", getattr(current_prompt, "system_prompt", None)
-                )
-                lang_id = (
-                    getattr(current_prompt, "lang_id", Language.autodetect)
-                    if current_prompt
-                    else Language.autodetect
-                )
-                domain_id = (
-                    getattr(current_prompt, "domain_id", Domain.general)
-                    if current_prompt
-                    else Domain.general
-                )
-                prompt_obj = Prompt(
-                    user_prompt=new_user_prompt,
-                    system_prompt=new_system_prompt,
-                    lang_id=lang_id,
-                    domain_id=domain_id,
-                )
-                prompt_id = self.add_or_get_prompt(prompt_obj)
-                if prompt_id == -1:
-                    raise ValueError("Failed to update prompt")
-                testcase.prompt_id = prompt_id
+
+                if existing_prompt:
+                    testcase.prompt_id = existing_prompt.prompt_id
+                else:
+                    if current_prompt:
+                        current_prompt.user_prompt = new_user_prompt
+                        current_prompt.system_prompt = new_system_prompt
+                        current_prompt.hash_value = new_hash
+                    else:
+                        # Create new prompt object if none exists
+                        prompt_obj = Prompt(
+                            user_prompt=new_user_prompt,
+                            system_prompt=new_system_prompt,
+                            lang_id=Language.autodetect,  # or other fallback
+                            domain_id=Domain.general,     # or other fallback
+                            hash_value=new_hash
+                        )
+                        session.add(prompt_obj)
+                        session.flush()
+                        testcase.prompt_id = prompt_obj.prompt_id
                 updated = True
 
+            # Update response text with hash and reuse
             if "response_text" in updates:
                 response_text = updates["response_text"]
                 if response_text:
                     current_response = getattr(testcase, "response", None)
                     response_type = (
-                        getattr(current_response, "response_type", "GT")
-                        if current_response
-                        else "GT"
+                        getattr(current_response, "response_type", "GT") if current_response else "GT"
                     )
-                    lang_id = (
-                        getattr(current_response, "lang_id", Language.autodetect)
-                        if current_response
-                        else Language.autodetect
+                    response_str = f"Response Text: '{response_text}'\tResponse Type: '{response_type}'"
+                    hashing = hashlib.sha1()
+                    hashing.update(response_str.encode("utf-8"))
+                    new_hash = hashing.hexdigest()
+
+                    existing_response = (
+                        session.query(Responses)
+                        .filter(Responses.hash_value == new_hash)
+                        .filter(Responses.response_id != (current_response.response_id if current_response else None))
+                        .first()
                     )
-                    response_obj = Response(
-                        response_text=response_text,
-                        response_type=response_type,
-                        lang_id=lang_id,
-                    )
-                    response_id = self.add_or_get_response(
-                        response_obj, testcase.prompt_id
-                    )
-                    if response_id == -1:
-                        raise ValueError("Failed to update response")
-                    testcase.response_id = response_id
+
+                    if existing_response:
+                        testcase.response_id = existing_response.response_id
+                    else:
+                        if current_response:
+                            current_response.response_text = response_text
+                            current_response.hash_value = new_hash
+                        else:
+                            response_obj = Response(
+                                response_text=response_text,
+                                response_type=response_type,
+                                lang_id=Language.autodetect,
+                                hash_value=new_hash,
+                            )
+                            session.add(response_obj)
+                            session.flush()
+                            testcase.response_id = response_obj.response_id
                     updated = True
 
+            # Update judge prompt with hash and reuse
             if "llm_judge_prompt" in updates:
                 judge_prompt_text = updates["llm_judge_prompt"]
+                current_judge_prompt = getattr(testcase, "judge_prompt", None)
                 if judge_prompt_text:
-                    current_judge_prompt = getattr(testcase, "judge_prompt", None)
-                    lang_id = (
-                        getattr(current_judge_prompt, "lang_id", Language.autodetect)
-                        if current_judge_prompt
-                        else Language.autodetect
+                    hashing = hashlib.sha1()
+                    hashing.update(judge_prompt_text.encode("utf-8"))
+                    new_hash = hashing.hexdigest()
+
+                    existing_judge_prompt = (
+                        session.query(LLMJudgePrompts)
+                        .filter(LLMJudgePrompts.hash_value == new_hash)
+                        .filter(LLMJudgePrompts.prompt_id != (current_judge_prompt.prompt_id if current_judge_prompt else None))
+                        .first()
                     )
-                    judge_prompt = LLMJudgePrompt(
-                        prompt=judge_prompt_text, lang_id=lang_id
-                    )
-                    judge_prompt_id = self.add_or_get_llm_judge_prompt(judge_prompt)
-                    if judge_prompt_id == -1:
-                        raise ValueError("Failed to update judge prompt")
-                    testcase.judge_prompt_id = judge_prompt_id
+
+                    if existing_judge_prompt:
+                        testcase.judge_prompt_id = existing_judge_prompt.prompt_id
+                    else:
+                        if current_judge_prompt:
+                            current_judge_prompt.prompt = judge_prompt_text
+                            current_judge_prompt.hash_value = new_hash
+                        else:
+                            judge_prompt_obj = LLMJudgePrompt(
+                                prompt=judge_prompt_text,
+                                lang_id=Language.autodetect,
+                                hash_value=new_hash,
+                            )
+                            session.add(judge_prompt_obj)
+                            session.flush()
+                            testcase.judge_prompt_id = judge_prompt_obj.prompt_id
+                    updated = True
                 else:
+                    # Clear judge_prompt if blank
                     testcase.judge_prompt_id = None
-                updated = True
+                    updated = True
 
             if updated:
                 session.commit()
-                # session.refresh(testcase)
-                # _ = testcase.prompt.domain if testcase.prompt else None
-                # _ = testcase.strategy.strategy_name if testcase.strategy else None
-                # _ = testcase.response.response_text if testcase.response else None
-                # _ = testcase.judge_prompt.prompt if testcase.judge_prompt else None
-                # No need to refresh after commit, just return the object
-                return testcase
-            else:                                                                                                           
-                # Only refresh if we didn't commit
                 session.refresh(testcase)
                 return testcase
+            else:
+                session.refresh(testcase)
+                return testcase
+
 
     def delete_testcase_record(self, testcase_id: int) -> bool:
         """
@@ -959,6 +993,118 @@ class DB:
             if testcase is None:
                 return False
             session.delete(testcase)
+            session.commit()
+            return True
+        
+    def update_target_record(self, target_id:int, updates:dict) -> Optional[Target]:
+        pass
+    
+    def delete_target_record(self, target_id:int) -> bool:
+        with self.Session() as session:
+            target = (
+                session.query(Target)
+                .filter(Target.target_id == target_id)
+                .first()
+            )
+            if target is None:
+                return False
+            session.delete(target)
+            session.commit()
+            return True
+    
+    def update_strategy_record(self, strategy_id:int, updates:dict) -> Optional[Strategy]:
+        pass
+    
+    def delete_strategy_record(self, strategy_id:int) -> bool:
+        with self.Session() as session:
+            strategy = (
+                session.query(Strategy)
+                .filter(Strategy.strategy_id == strategy_id)
+                .first()
+            )
+            if strategy is None:
+                return False
+            session.delete(strategy)
+            session.commit()
+            return True
+    
+    def update_prompt_record(self, prompt_id:int, updates:dict) -> Optional[Prompt]:
+        pass
+    
+    def delete_prompt_record(self, prompt_id:int) -> bool:
+        with self.Session() as session:
+            prompt = (
+                session.query(Prompt)
+                .filter(Prompt.prompt_id == prompt_id)
+                .first()
+            )
+            if prompt is None:
+                return False
+            session.delete(prompt)
+            session.commit()
+            return True
+    
+    def update_response_record(self, response_id:int, updates:dict) -> Optional[Response]:
+        pass
+    
+    def delete_response_record(self, response_id:int) -> bool:
+        with self.Session() as session:
+            response = (
+                session.query(Response)
+                .filter(Response.response_id == response_id)
+                .first()
+            )
+            if response is None:
+                return False
+            session.delete(response)
+            session.commit()
+            return True
+    
+    def update_llm_judge_prompt_record(self, llm_judge_prompt_id:int, updates:dict) -> Optional[LLMJudgePrompt]:
+        pass
+    
+    def delete_llm_judge_prompt_record(self, llm_judge_prompt_id:int) -> bool:
+        with self.Session() as session:
+            llm_judge_prompt = (
+                session.query(LLMJudgePrompt)
+                .filter(LLMJudgePrompt.prompt_id == llm_judge_prompt_id)
+                .first()
+            )
+            if llm_judge_prompt is None:
+                return False
+            session.delete(llm_judge_prompt)
+            session.commit()
+            return True
+    
+    def update_language_record(self, language_id:int, updates:dict) -> Optional[Language]:
+        pass
+    
+    def delete_language_record(self, language_id:int) -> bool:
+        with self.Session() as session:
+            language = (
+                session.query(Language)
+                .filter(Language.language_id == language_id)
+                .first()
+            )
+            if language is None:
+                return False
+            session.delete(language)
+            session.commit()
+            return True
+    
+    def update_domain_record(self, domain_id:int, updates:dict) -> Optional[Domain]:
+        pass
+    
+    def delete_domain_record(self, domain_id:int) -> bool:
+        with self.Session() as session:
+            domain = (
+                session.query(Domain)
+                .filter(Domain.domain_id == domain_id)
+                .first()
+            )
+            if domain is None:
+                return False
+            session.delete(domain)
             session.commit()
             return True
 
@@ -1251,6 +1397,8 @@ class DB:
                 lang_id=result.lang_id,
                 digest=result.hash_value,
             )
+            
+    
 
     def get_judge_prompt(self, judge_prompt_id: int) -> Optional[LLMJudgePrompt]:
         """
@@ -2996,23 +3144,88 @@ class DB:
             return new_strategy.strategy_id
 
     def update_strategy_v2(self, strategy_id: int, updates: dict) -> Optional[dict]:
+        """Updates a strategy similar to the v1 logic but returns a v2-style dict.
+
+        This method is intentionally self-contained and does not depend on the
+        FastAPI endpoints module to avoid circular imports.
+        """
+
         with self.Session() as session:
             strategy = (
                 session.query(Strategies)
                 .filter(Strategies.strategy_id == strategy_id)
                 .first()
             )
-            if not strategy:
+            if strategy is None:
                 return None
 
+            original_name = strategy.strategy_name
+
+            # Name uniqueness validation (like v1)
+            if (
+                "strategy_name" in updates
+                and updates["strategy_name"]
+                and updates["strategy_name"] != original_name
+            ):
+                existing_strategy = (
+                    session.query(Strategies)
+                    .filter(Strategies.strategy_name == updates["strategy_name"])
+                    .first()
+                )
+                if existing_strategy:
+                    raise ValueError("Strategy name already exists")
+
+            # Update fields if provided (like v1)
+            updated = False
             if "strategy_name" in updates:
                 strategy.strategy_name = updates["strategy_name"]
+                updated = True
             if "strategy_description" in updates:
                 strategy.strategy_description = updates["strategy_description"]
+                updated = True
+
+            # If nothing actually changed, mirror v1 early-return behaviour
+            if not updated:
+                strategy_ids_with_llm_prompt = self._get_strategy_ids_requiring_llm_prompt(session)
+                return {
+                    "strategy_id": strategy.strategy_id,
+                    "strategy_name": strategy.strategy_name,
+                    "strategy_description": strategy.strategy_description,
+                    "requires_llm_prompt": strategy.strategy_id
+                    in strategy_ids_with_llm_prompt,
+                }
 
             session.commit()
             session.refresh(strategy)
-            return self._serialize_strategy(strategy)
+
+            # Compute requires_llm_prompt after refresh (like v1)
+            strategy_ids_with_llm_prompt = self._get_strategy_ids_requiring_llm_prompt(session)
+
+            return {
+                "strategy_id": strategy.strategy_id,
+                "strategy_name": strategy.strategy_name,
+                "strategy_description": strategy.strategy_description,
+                "requires_llm_prompt": strategy.strategy_id
+                in strategy_ids_with_llm_prompt,
+            }
+
+    def _get_strategy_ids_requiring_llm_prompt(self, session) -> set[int]:
+        """Return IDs of strategies that have at least one testcase with a judge_prompt.
+
+        This mirrors the helper used in the v2 strategy endpoint but keeps the
+        logic local to the ORM layer to avoid depending on the API module.
+        """
+
+        return {
+            strategy_id
+            for (strategy_id,) in (
+                session.query(TestCases.strategy_id)
+                .filter(TestCases.judge_prompt_id.isnot(None))
+                .distinct()
+            )
+            if strategy_id is not None
+        }
+
 
     def delete_strategy_record(self, strategy_id: int) -> bool:
         with self.Session() as session:
@@ -3115,35 +3328,101 @@ class DB:
             session.refresh(new_target)
             return new_target.target_id
 
-    def update_target_v2(self, target_id: int, updates: dict) -> Optional[dict]:
+    def update_target_by_id(self, target_id: int, updates: dict) -> Optional[dict]:
         """
-        Updates a target with the provided field values and returns the refreshed record.
+        Updates a target similar to v1 method but using v2 style.
         """
         with self.Session() as session:
             target = (
-                session.query(Targets).filter(Targets.target_id == target_id).first()
+                session.query(Targets)
+                .options(
+                    joinedload(Targets.domain),
+                    joinedload(Targets.langs)
+                )
+                .filter(Targets.target_id == target_id)
+                .first()
             )
             if target is None:
                 return None
 
-            for key, value in updates.items():
-                if key == "lang_list":
-                    languages = (
-                        session.query(Languages)
-                        .filter(Languages.lang_name.in_(value))
-                        .all()
-                    )
-                    target.langs = languages
-                elif key == "domain_name":
-                    domain_id = self.add_or_get_domain_id(value)
-                    if domain_id != -1:
-                        target.domain_id = domain_id
-                elif hasattr(target, key):
-                    setattr(target, key, value)
+            # Store original values for change detection (like v1)
+            # original_name = target.target_name
+            # original_type = target.target_type
+            # original_description = target.target_description
+            # original_url = target.target_url
+            # original_domain_name = target.domain.domain_name if target.domain else None
+            # original_lang_names = sorted([lang.lang_name for lang in target.langs]) if target.langs else []
 
-            session.commit()
-            session.refresh(target)
-            return self._serialize_target(target)
+            updated = False
+
+            # URL uniqueness validation (like v1)
+            if "target_url" in updates and updates["target_url"]:
+                existing_url = (
+                    session.query(Targets)
+                    .filter(
+                        Targets.target_url == updates["target_url"],
+                        Targets.target_id != target_id
+                    )
+                    .first()
+                )
+                if existing_url:
+                    raise ValueError("Target URL already exists")
+                target.target_url = updates["target_url"]
+                updated = True
+
+            # Target name update (like v1)
+            if "target_name" in updates and updates["target_name"]:
+                existing_name =(
+                    session.query(Targets)
+                    .filter(
+                        Targets.target_name == updates["target_name"],
+                        Targets.target_id != target_id
+                    )
+                    .first()
+                )
+                if existing_name:
+                    raise ValueError("Target name already exists")
+                target.target_name = updates["target_name"]
+                updated = True
+
+            # Target type update (like v1)
+            if "target_type" in updates and updates["target_type"]:
+                target.target_type = updates["target_type"]
+                updated = True
+
+            # Target description update (like v1)
+            if "target_description" in updates:
+                target.target_description = updates["target_description"]
+                updated = True
+
+            # Domain update with create-if-not-exists (like v1)
+            if "domain_name" in updates and updates["domain_name"]:
+                domain = session.query(Domains).filter(Domains.domain_name == updates["domain_name"]).first()
+                if domain is None:
+                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Domain not found")
+                target.domain_id = domain.domain_id
+                updated = True
+
+            # Language list update with create-if-not-exists (like v1)
+            if "lang_list" in updates and updates["lang_list"] is not None:
+                updated_langs = []
+                for lang_name in updates["lang_list"]:
+                    lang = session.query(Languages).filter(Languages.lang_name == lang_name).first()
+                    if lang is None:
+                        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Language not found")
+                    updated_langs.append(lang)
+                target.langs = updated_langs
+                updated = True
+
+            if updated:
+                session.commit()
+                session.refresh(target)
+            else:
+                # Refresh even if no changes (like v1 behavior)
+                session.refresh(target)
+
+            return target
+
 
     def delete_target_record(self, target_id: int) -> bool:
         """
@@ -3251,35 +3530,35 @@ class DB:
             session.refresh(new_target)
             return new_target.target_id
 
-    def update_target_v2(self, target_id: int, updates: dict) -> Optional[dict]:
-        """
-        Updates a target with the provided field values and returns the refreshed record.
-        """
-        with self.Session() as session:
-            target = (
-                session.query(Targets).filter(Targets.target_id == target_id).first()
-            )
-            if target is None:
-                return None
+    # def update_target_v2(self, target_id: int, updates: dict) -> Optional[dict]:
+    #     """
+    #     Updates a target with the provided field values and returns the refreshed record.
+    #     """
+    #     with self.Session() as session:
+    #         target = (
+    #             session.query(Targets).filter(Targets.target_id == target_id).first()
+    #         )
+    #         if target is None:
+    #             return None
 
-            for key, value in updates.items():
-                if key == "lang_list":
-                    languages = (
-                        session.query(Languages)
-                        .filter(Languages.lang_name.in_(value))
-                        .all()
-                    )
-                    target.langs = languages
-                elif key == "domain_name":
-                    domain_id = self.add_or_get_domain_id(value)
-                    if domain_id != -1:
-                        target.domain_id = domain_id
-                elif hasattr(target, key):
-                    setattr(target, key, value)
+    #         for key, value in updates.items():
+    #             if key == "lang_list":
+    #                 languages = (
+    #                     session.query(Languages)
+    #                     .filter(Languages.lang_name.in_(value))
+    #                     .all()
+    #                 )
+    #                 target.langs = languages
+    #             elif key == "domain_name":
+    #                 domain_id = self.add_or_get_domain_id(value)
+    #                 if domain_id != -1:
+    #                     target.domain_id = domain_id
+    #             elif hasattr(target, key):
+    #                 setattr(target, key, value)
 
-            session.commit()
-            session.refresh(target)
-            return self._serialize_target(target)
+    #         session.commit()
+    #         session.refresh(target)
+    #         return self._serialize_target(target)
 
     def delete_target_record(self, target_id: int) -> bool:
         """

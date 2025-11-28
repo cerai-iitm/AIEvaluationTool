@@ -273,7 +273,7 @@ def delete_prompt(
     db: DB = Depends(_get_db),
     authorization: Optional[str] = Header(None),
 ):
-    existing = db.get_prompt_with_metadata(prompt_id)
+    existing = db.get_prompt(prompt_id)
     if existing is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Prompt not found"
@@ -291,7 +291,7 @@ def delete_prompt(
             entity_type="Prompt",
             entity_id=str(existing["prompt_id"]),
             operation="delete",
-            note=f"Prompt '{existing['prompt_id']}' deleted (v2)",
+            note=f"Prompt '{existing['prompt_id']}' deleted",
         )
 
     return {"message": "Prompt deleted successfully"}
