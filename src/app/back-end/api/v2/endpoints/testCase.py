@@ -457,9 +457,9 @@ def delete_testcase(
         log_activity(
             username=username,
             entity_type="Test Case",
-            entity_id=str(existing["testcase_name"]),
+            entity_id=str(existing.name),
             operation="delete",
-            note=f"Test case '{existing['testcase_name']}' deleted",
+            note=f"Test case '{existing.name}' deleted",
         )
 
     return {"message": "Test case deleted successfully"}

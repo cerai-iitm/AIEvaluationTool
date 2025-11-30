@@ -341,7 +341,7 @@ export const TestCaseUpdateDialog = ({
                     onFocus={() => setFocusedField("userPrompt")}
                     onBlur={() => setTimeout(() => setFocusedField(null))}
                     onChange={(e) => setUserPrompts(e.target.value)}
-                    className="bg-muted min-h-[100px] pr-10"
+                    className="bg-muted min-h-[73px] pr-10"
                   />
                   { focusedField === "userPrompt" && (
                     <Button
@@ -369,7 +369,7 @@ export const TestCaseUpdateDialog = ({
                       overflowY: "auto"
                   }}
                   onChange={(e) => setSystemPrompts(e.target.value)}
-                  className="bg-muted min-h-[80px]"
+                  className="bg-muted min-h-[73px]"
                   readOnly
                 />
               </div>
@@ -389,7 +389,7 @@ export const TestCaseUpdateDialog = ({
                   onFocus = { () => setFocusedField("response")}
                   onBlur={() => setTimeout(() => setFocusedField(null))}
                   onChange={(e) => setResponseText(e.target.value)}
-                  className="bg-muted min-h-[80px] pr-10"
+                  className="bg-muted min-h-[73px] pr-10"
                 />
                 { focusedField === "response" && (
                   
@@ -429,7 +429,7 @@ export const TestCaseUpdateDialog = ({
               </Select>
             </div>
 
-            {showLLMPrompt && (
+            {selectedStrategyRequiresLLM ? (
               <div className="space-y-1 pb-4">
                 <Label className="text-base font-semibold">LLM Prompt</Label>
                 <div className="relative">
@@ -444,7 +444,7 @@ export const TestCaseUpdateDialog = ({
                     onFocus={() => setFocusedField("llm")}
                     onBlur = {() => setTimeout(() => setFocusedField(null), 100)}
                     onChange={(e) => setLlmPrompt(e.target.value)}
-                    className="bg-muted min-h-[80px] pr-10"
+                    className="bg-muted min-h-[73px] pr-10"
                   />
                   { focusedField === "llm" && (
                     <Button
@@ -459,7 +459,21 @@ export const TestCaseUpdateDialog = ({
                   )}
                 </div>
               </div>
-            )}
+            ):(
+                <div className="space-y-1 pb-4">
+                  <Label className="text-base font-semibold">LLM Prompt</Label>
+                  <Textarea
+                    value="none"
+                    readOnly
+                    className="bg-muted min-h-[40px]"
+                    style={{
+                      height: "20px",
+                      maxHeight: "20px"
+                    }}
+                  />
+                </div>
+            )
+            }
 
 
 

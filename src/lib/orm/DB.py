@@ -3596,9 +3596,9 @@ class DB:
             # Return a TestCase object with the fetched data
             return TestCase(
                 name=getattr(result, "testcase_name"),
-                metric=result.metrics[
-                    0
-                ].metric_name,  # use the first metric associated with the test case
+                metric=result.metrics[0].metric_name 
+                if result.metrics 
+                else "Unknown",  # use the first metric associated with the test case
                 testcase_id=getattr(result, "testcase_id"),
                 prompt=Prompt(
                     prompt_id=getattr(result.prompt, "prompt_id"),
@@ -3642,11 +3642,15 @@ class DB:
                 self.logger.error(f"TestCase with ID '{testcase_id}' does not exist.")
                 return None
             # Return a TestCase object with the fetched data
+            # Handle case where metrics list might be empty
+            metric_name = (
+                result.metrics[0].metric_name
+                if result.metrics and len(result.metrics) > 0
+                else "N/A"
+            )
             return TestCase(
                 name=getattr(result, "testcase_name"),
-                metric=result.metrics[
-                    0
-                ].metric_name,  # use the first metric associated with the test case
+                metric=metric_name,  # use the first metric associated with the test case, or "N/A" if none
                 testcase_id=getattr(result, "testcase_id"),
                 prompt=Prompt(
                     prompt_id=getattr(result.prompt, "prompt_id"),
