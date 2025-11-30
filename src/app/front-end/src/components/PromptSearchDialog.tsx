@@ -100,16 +100,16 @@ export const PromptSearchDialog = ({
         switch (searchType) {
           case "userPrompt":
           case "systemPrompt":
-            endpoint = API_ENDPOINTS.PROMPTS;
+            endpoint = API_ENDPOINTS.PROMPTS_V2;
             break;
           case "response":
-            endpoint = API_ENDPOINTS.RESPONSES;
+            endpoint = API_ENDPOINTS.RESPONSES_V2;
             break;
           case "llm":
-            endpoint = API_ENDPOINTS.LLM_PROMPTS;
+            endpoint = API_ENDPOINTS.LLMPROMPTS_V2;
             break;
           default:
-            endpoint = API_ENDPOINTS.PROMPTS;
+            endpoint = API_ENDPOINTS.PROMPTS_V2;
         }
 
         const token = localStorage.getItem("access_token");
@@ -305,42 +305,53 @@ export const PromptSearchDialog = ({
             }
 
             // searchType === "llm"
-            const llmPrompt =
-              normalizeString(rawItem?.prompt) ||
-              normalizeString(rawItem?.llm_prompt) ||
-              normalizeString(rawItem?.text);
+            if ( searchType === "llm") {
+              
+            
+              const llmPrompt =
+                normalizeString(rawItem?.llmjudgeprompt_name) ||
+                normalizeString(rawItem?.prompt) ||
+                normalizeString(rawItem?.llm_prompt) ||
+                normalizeString(rawItem?.text);
 
-            if (!llmPrompt.trim()) {
-              return null;
+              const promptId =
+                rawItem?.llmjudgeprompt_id ??
+                rawItem?.llmPromptId ??
+                rawItem?.id ??
+                null;
+
+              if (!llmPrompt.trim()) {
+                return null;
+              }
+
+              const language =
+                rawItem?.language ??
+                rawItem?.lang_name ??
+                rawItem?.lang ??
+                rawItem?.langName ??
+                null;
+
+              const searchIndex = [llmPrompt, promptId]
+                .filter(Boolean)
+                .map((value) => value.toString().toLowerCase())
+                .join(" ");
+
+              return {
+                id: `llm-${promptId ?? index}`,
+                displayPrimary: llmPrompt,
+                displaySecondary: language
+                  ? `Language: ${language}`
+                  : undefined,
+                searchIndex,
+                selection: {
+                  type: "llm",
+                  promptId: typeof promptId === "number" ? promptId : null,
+                  llmPrompt,
+                  language,
+                  raw: rawItem,
+                },
+              };
             }
-
-            const language =
-              rawItem?.language ??
-              rawItem?.lang_name ??
-              rawItem?.lang ??
-              rawItem?.langName ??
-              null;
-
-            const searchIndex = [llmPrompt, language]
-              .filter(Boolean)
-              .map((value) => value.toString().toLowerCase())
-              .join(" ");
-
-            return {
-              id: `llm-${promptId ?? index}`,
-              displayPrimary: llmPrompt,
-              displaySecondary: language
-                ? `Language: ${language}`
-                : undefined,
-              searchIndex,
-              selection: {
-                type: "llm",
-                promptId: typeof promptId === "number" ? promptId : null,
-                llmPrompt,
-                language,
-                raw: rawItem,
-              },
-            };
           })
           .filter(Boolean) as PromptSearchItem[];
 

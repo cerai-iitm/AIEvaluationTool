@@ -508,7 +508,8 @@ const TestCases = () => {
                   value={selectedCase.userPrompts}
                   readOnly
                   style={{
-                    height: `${getTextareaHeight(getLineCount(selectedCase.userPrompts))}px`,
+                    height: '${height}px',
+                    //height: `${getTextareaHeight(getLineCount(selectedCase.userPrompts))}px`,
                     maxHeight: "160px",
                     minHeight: "40px",
                     overflowY: "auto"
@@ -524,7 +525,8 @@ const TestCases = () => {
                   value={selectedCase.systemPrompts}
                   readOnly
                   style={{
-                    height: `${getTextareaHeight(getLineCount(selectedCase.systemPrompts))}px`,
+                    height: '${height}px',
+                    //height: `${getTextareaHeight(getLineCount(selectedCase.systemPrompts))}px`,
                     maxHeight: "160px",
                     minHeight: "40px",
                     overflowY: "auto"
@@ -541,7 +543,8 @@ const TestCases = () => {
                   value={selectedCase.responseText}
                   readOnly
                   style={{
-                    height: `${getTextareaHeight(getLineCount(selectedCase.responseText))}px`,
+                    height: '${height}px',
+                    //height: `${getTextareaHeight(getLineCount(selectedCase.responseText))}px`,
                     maxHeight: "160px",
                     minHeight: "40px",
                     overflowY: "auto"
@@ -558,7 +561,7 @@ const TestCases = () => {
               
 
               {/* Only show LLM Prompt if not empty */}
-              {selectedCase.llmPrompt && selectedCase.llmPrompt.trim() !== "" && (
+              {selectedCase.llmPrompt && selectedCase.llmPrompt.trim() !== "None" && (
               <div className="space-y-1">
                 <Label className="text-base font-semibold">LLM Prompt</Label>
                 <Textarea
@@ -566,12 +569,13 @@ const TestCases = () => {
                   value={selectedCase.llmPrompt}
                   readOnly
                   style={{
-                    height: `${getTextareaHeight(getLineCount(selectedCase.llmPrompt))}px`,
-                    maxHeight: "160px",
-                    minHeight: "40px",
-                    overflowY: "auto"
+                    height: '${height}px',
+                    //height: `${getTextareaHeight(getLineCount(selectedCase.llmPrompt))}px`,
+                    // maxHeight: "160px",
+                    // minHeight: "40px",
+                    // overflowY: "auto",
                   }}
-                  className="bg-muted"
+                  className="bg-muted min-h-[80px]"
                 />
               </div>
               )}

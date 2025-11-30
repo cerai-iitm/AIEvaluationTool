@@ -51,7 +51,7 @@ class TestCaseListResponse(BaseModel):
     response_text: Optional[str] = None
     strategy_name: Optional[str] = None
     llm_judge_prompt: Optional[str] = None
-    # domain_name: Optional[str] = None
+    domain_name: Optional[str] = None
 
 
 class TestCaseDetailResponse(TestCaseListResponse):
@@ -60,7 +60,7 @@ class TestCaseDetailResponse(TestCaseListResponse):
     response_id: Optional[int] = None
     llm_judge_prompt_id: Optional[int] = None
     domain_id: Optional[int] = None
-    domain_name: Optional[str] = None
+    #domain_name: Optional[str] = None
     
 
 

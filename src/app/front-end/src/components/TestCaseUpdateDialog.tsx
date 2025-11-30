@@ -131,7 +131,7 @@ export const TestCaseUpdateDialog = ({
           headers["Authorization"] = `Bearer ${token}`;
         }
 
-        const response = await fetch(API_ENDPOINTS.STRATEGIES, { headers });
+        const response = await fetch(API_ENDPOINTS.STRATEGIES_V2, { headers });
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -437,8 +437,8 @@ export const TestCaseUpdateDialog = ({
                     value={llmPrompt}
                     style = {{
                         height: '${height}px',
-                        maxHeight: "160px",
-                        minHeight: "40px",
+                        // maxHeight: "160px",
+                        // minHeight: "40px",
                         overflowY: "auto"
                     }}
                     onFocus={() => setFocusedField("llm")}
