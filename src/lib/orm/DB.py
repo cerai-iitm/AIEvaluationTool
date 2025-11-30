@@ -2758,6 +2758,7 @@ class DB:
             return new_domain.domain_id
 
     def update_domain_v2(self, domain_id: int, updates: dict) -> Optional[dict]:
+        """Updates a domain similar to the v1 logic but returns a v2-style dict."""
         with self.Session() as session:
             domain = (
                 session.query(Domains).filter(Domains.domain_id == domain_id).first()
@@ -2765,6 +2766,17 @@ class DB:
             if not domain:
                 return None
             if "domain_name" in updates:
+                # Check if name already exists (excluding current domain)
+                existing = (
+                    session.query(Domains)
+                    .filter(
+                        Domains.domain_name == updates["domain_name"],
+                        Domains.domain_id != domain_id
+                    )
+                    .first()
+                )
+                if existing:
+                    raise ValueError("Domain name already exists")
                 domain.domain_name = updates["domain_name"]
             session.commit()
             session.refresh(domain)
@@ -2813,6 +2825,7 @@ class DB:
             return new_language.lang_id
 
     def update_language_v2(self, lang_id: int, updates: dict) -> Optional[dict]:
+        """Updates a language similar to the v1 logic but returns a v2-style dict."""
         with self.Session() as session:
             language = (
                 session.query(Languages).filter(Languages.lang_id == lang_id).first()
@@ -2820,6 +2833,17 @@ class DB:
             if not language:
                 return None
             if "lang_name" in updates:
+                # Check if name already exists (excluding current language)
+                existing = (
+                    session.query(Languages)
+                    .filter(
+                        Languages.lang_name == updates["lang_name"],
+                        Languages.lang_id != lang_id
+                    )
+                    .first()
+                )
+                if existing:
+                    raise ValueError("Language name already exists")
                 language.lang_name = updates["lang_name"]
             session.commit()
             session.refresh(language)
@@ -2882,9 +2906,11 @@ class DB:
             return new_llm_prompt.prompt_id
 
     def update_llm_prompt_v2(self, llm_prompt_id: int, updates: dict) -> Optional[dict]:
+        """Updates an LLM prompt similar to the v1 logic but returns a v2-style dict."""
         with self.Session() as session:
             llm_prompt = (
                 session.query(LLMJudgePrompts)
+                .options(joinedload(LLMJudgePrompts.lang))
                 .filter(LLMJudgePrompts.prompt_id == llm_prompt_id)
                 .first()
             )
@@ -2897,10 +2923,24 @@ class DB:
                 ).digest
             if "language" in updates:
                 lang_id = self.add_or_get_language_id(updates["language"])
-                if lang_id != -1:
-                    llm_prompt.lang_id = lang_id
+                if lang_id == -1:
+                    raise ValueError(f"Language '{updates['language']}' not found")
+                llm_prompt.lang_id = lang_id
+                # Recompute hash if language changed
+                if "prompt" not in updates:
+                    llm_prompt.hash_value = LLMJudgePrompt(
+                        prompt=llm_prompt.prompt, lang_id=lang_id
+                    ).digest
             session.commit()
             session.refresh(llm_prompt)
+            
+            # Reload with relationships for serialization
+            llm_prompt = (
+                session.query(LLMJudgePrompts)
+                .options(joinedload(LLMJudgePrompts.lang))
+                .filter(LLMJudgePrompts.prompt_id == llm_prompt_id)
+                .first()
+            )
             return self._serialize_llm_prompt(llm_prompt)
 
     def delete_llm_prompt_record(self, llm_prompt_id: int) -> bool:
@@ -2971,9 +3011,13 @@ class DB:
             return new_prompt.prompt_id
 
     def update_prompt_v2(self, prompt_id: int, updates: dict) -> Optional[dict]:
+        """Updates a prompt similar to the v1 logic but returns a v2-style dict."""
         with self.Session() as session:
             prompt = (
-                session.query(Prompts).filter(Prompts.prompt_id == prompt_id).first()
+                session.query(Prompts)
+                .options(joinedload(Prompts.lang), joinedload(Prompts.domain))
+                .filter(Prompts.prompt_id == prompt_id)
+                .first()
             )
             if not prompt:
                 return None
@@ -2984,13 +3028,16 @@ class DB:
                 prompt.system_prompt = updates["system_prompt"]
             if "language" in updates:
                 lang_id = self.add_or_get_language_id(updates["language"])
-                if lang_id != -1:
-                    prompt.lang_id = lang_id
+                if lang_id == -1:
+                    raise ValueError(f"Language '{updates['language']}' not found")
+                prompt.lang_id = lang_id
             if "domain" in updates:
                 domain_id = self.add_or_get_domain_id(updates["domain"])
-                if domain_id != -1:
-                    prompt.domain_id = domain_id
+                if domain_id == -1:
+                    raise ValueError(f"Domain '{updates['domain']}' not found")
+                prompt.domain_id = domain_id
 
+            # Update hash value when prompt content changes
             prompt.hash_value = Prompt(
                 user_prompt=prompt.user_prompt,
                 system_prompt=prompt.system_prompt,
@@ -2999,6 +3046,14 @@ class DB:
             ).digest
             session.commit()
             session.refresh(prompt)
+            
+            # Reload with relationships for serialization
+            prompt = (
+                session.query(Prompts)
+                .options(joinedload(Prompts.lang), joinedload(Prompts.domain))
+                .filter(Prompts.prompt_id == prompt_id)
+                .first()
+            )
             return self._serialize_prompt(prompt)
 
     def delete_prompt_record(self, prompt_id: int) -> bool:
@@ -3014,11 +3069,14 @@ class DB:
 
     def _serialize_response(self, response: Responses) -> dict:
         lang = getattr(response, "lang", None)
+        prompt = getattr(response, "prompt", None)
         return {
             "response_id": response.response_id,
             "response_text": response.response_text,
             "response_type": response.response_type,
             "language": getattr(lang, "lang_name", None) if lang else None,
+            "user_prompt": getattr(prompt, "user_prompt", None) if prompt else None,
+            "system_prompt": getattr(prompt, "system_prompt", None) if prompt else None,
             "prompt_id": response.prompt_id,
         }
 
@@ -3062,31 +3120,154 @@ class DB:
             return new_response.response_id
 
     def update_response_v2(self, response_id: int, updates: dict) -> Optional[dict]:
+        """
+        Updates a response similar to the v1 logic but returns a v2-style dict.
+        Handles response_text, response_type, language, and prompt updates.
+        """
         with self.Session() as session:
+            # Load response with relationships
             response = (
                 session.query(Responses)
+                .options(joinedload(Responses.prompt), joinedload(Responses.lang))
                 .filter(Responses.response_id == response_id)
                 .first()
             )
             if not response:
                 return None
 
-            if "response_text" in updates:
-                response.response_text = updates["response_text"]
-            if "response_type" in updates:
-                response.response_type = updates["response_type"]
-            if "language" in updates:
+            # Update response text if provided
+            if "response_text" in updates and updates["response_text"] is not None:
+                new_text = updates["response_text"].strip()
+                if new_text and response.response_text != new_text:
+                    # Compute hash for response
+                    response_str = f"Response Text: '{new_text}'\tResponse Type: '{response.response_type}'"
+                    hashing = hashlib.sha1()
+                    hashing.update(response_str.encode('utf-8'))
+                    new_hash = hashing.hexdigest()
+
+                    # Check if a response with this hash already exists (excluding current response)
+                    existing_response = (
+                        session.query(Responses)
+                        .filter(
+                            Responses.hash_value == new_hash,
+                            Responses.response_id != response_id
+                        )
+                        .first()
+                    )
+
+                    if existing_response:
+                        raise ValueError("A response with this text already exists")
+                    
+                    response.response_text = new_text
+                    response.hash_value = new_hash
+
+            # Update response type if provided
+            if "response_type" in updates and updates["response_type"] is not None:
+                if response.response_type != updates["response_type"]:
+                    response.response_type = updates["response_type"]
+                    # Recompute hash with new response type
+                    response_str = f"Response Text: '{response.response_text}'\tResponse Type: '{response.response_type}'"
+                    hashing = hashlib.sha1()
+                    hashing.update(response_str.encode('utf-8'))
+                    response.hash_value = hashing.hexdigest()
+
+            # Update language if provided
+            if "language" in updates and updates["language"] is not None:
                 lang_id = self.add_or_get_language_id(updates["language"])
-                if lang_id != -1:
+                if lang_id == -1:
+                    raise ValueError(f"Language '{updates['language']}' not found")
+                if response.lang_id != lang_id:
                     response.lang_id = lang_id
 
-            response.hash_value = Response(
-                response_text=response.response_text,
-                response_type=response.response_type,
-                lang_id=response.lang_id,
-            ).digest
+            # Update prompt fields if provided
+            if "user_prompt" in updates or "system_prompt" in updates:
+                user_prompt_changed = (
+                    "user_prompt" in updates 
+                    and updates["user_prompt"] is not None
+                    and (
+                        not response.prompt 
+                        or updates["user_prompt"] != response.prompt.user_prompt
+                    )
+                )
+                system_prompt_changed = (
+                    "system_prompt" in updates 
+                    and updates["system_prompt"] is not None
+                    and (
+                        not response.prompt 
+                        or updates["system_prompt"] != (response.prompt.system_prompt or "")
+                    )
+                )
+                
+                if user_prompt_changed or system_prompt_changed:
+                    new_user_prompt = (
+                        updates["user_prompt"] 
+                        if "user_prompt" in updates and updates["user_prompt"] is not None
+                        else (response.prompt.user_prompt if response.prompt else "")
+                    )
+                    new_system_prompt = (
+                        updates["system_prompt"] 
+                        if "system_prompt" in updates and updates["system_prompt"] is not None
+                        else (response.prompt.system_prompt if response.prompt else "")
+                    )
+
+                    # Compute hash the same way as in Prompt.digest
+                    system_prompt_value = new_system_prompt.strip() if new_system_prompt else ""
+                    prompt_str = f"System: '{system_prompt_value}'\tUser: '{new_user_prompt}'"
+                    hashing = hashlib.sha1()
+                    hashing.update(prompt_str.encode('utf-8'))
+                    new_prompt_hash = hashing.hexdigest()
+
+                    # Check if a prompt with this hash already exists
+                    existing_prompt = (
+                        session.query(Prompts)
+                        .filter(Prompts.hash_value == new_prompt_hash)
+                        .first()
+                    )
+
+                    if existing_prompt:
+                        # If a prompt with this hash exists, point response to that prompt
+                        response.prompt_id = existing_prompt.prompt_id
+                    else:
+                        # Create or update prompt
+                        if response.prompt:
+                            # Update existing prompt
+                            if user_prompt_changed:
+                                response.prompt.user_prompt = new_user_prompt
+                            if system_prompt_changed:
+                                response.prompt.system_prompt = system_prompt_value if system_prompt_value else None
+                            response.prompt.hash_value = new_prompt_hash
+                        else:
+                            # Create new prompt - need lang_id and domain_id
+                            default_lang = session.query(Languages).first()
+                            if not default_lang:
+                                raise ValueError("No languages found in database. Please add a language first.")
+                            
+                            default_domain = session.query(Domains).first()
+                            if not default_domain:
+                                raise ValueError("No domains found in database. Please add a domain first.")
+
+                            new_prompt = Prompts(
+                                user_prompt=new_user_prompt,
+                                system_prompt=system_prompt_value if system_prompt_value else None,
+                                lang_id=default_lang.lang_id,
+                                domain_id=default_domain.domain_id,
+                                hash_value=new_prompt_hash
+                            )
+                            session.add(new_prompt)
+                            session.flush()
+                            response.prompt_id = new_prompt.prompt_id
+
             session.commit()
             session.refresh(response)
+            
+            # Reload with relationships for serialization
+            response = (
+                session.query(Responses)
+                .options(joinedload(Responses.prompt), joinedload(Responses.lang))
+                .filter(Responses.response_id == response_id)
+                .first()
+            )
+            
             return self._serialize_response(response)
 
     def delete_response_record(self, response_id: int) -> bool:

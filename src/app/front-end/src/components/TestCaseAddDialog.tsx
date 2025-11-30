@@ -24,6 +24,7 @@ import {
 } from "./PromptSearchDialog";
 import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
+import { hasPermission } from "@/utils/permissions";
 
 interface TestCaseAddDialogProps {
   open: boolean;
@@ -55,12 +56,34 @@ export const TestCaseAddDialog = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [strategies, setStrategies] = useState<Strategy[]>([]);
   const [isFetchingStrategies, setIsFetchingStrategies] = useState(false);
+  const [currentUserRole, setCurrentUserRole] = useState<string>("");
   
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
   const [searchType, setSearchType] = useState<PromptSearchType>("userPrompt");
 
-  // Fetch strategies from API
+  // Fetch current user role and strategies from API
   useEffect(() => {
+    const fetchUserRole = async () => {
+      try {
+        const token = localStorage.getItem("access_token");
+        if (!token) return;
+
+        const response = await fetch(API_ENDPOINTS.CURRENT_USER, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (response.ok) {
+          const userData = await response.json();
+          setCurrentUserRole(userData.role || "");
+        }
+      } catch (error) {
+        console.error("Error fetching user role:", error);
+      }
+    };
+
     const fetchStrategies = async () => {
       setIsFetchingStrategies(true);
       try {
@@ -104,6 +127,7 @@ export const TestCaseAddDialog = ({
     };
 
     if (open) {
+      fetchUserRole();
       fetchStrategies();
     }
   }, [open, toast]);
@@ -214,6 +238,17 @@ export const TestCaseAddDialog = ({
   );
 
   const handleSubmit = async () => {
+    // Check if user has permission to create
+    if (!hasPermission(currentUserRole, "canCreateTables") && 
+        !hasPermission(currentUserRole, "canCreateRecords")) {
+      toast({
+        title: "Access Denied",
+        description: "You don't have permission to create test cases",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Validate required fields
     if (!testCaseName.trim()) {
       toast({
@@ -409,7 +444,7 @@ export const TestCaseAddDialog = ({
                   onChange={(e) => setUserPrompts(e.target.value)}
                   onFocus = {() => setFocusedField("userPrompt")}
                   onBlur = {() => setFocusedField(null)}
-                  className="bg-muted min-h-[100px] pr-10"
+                  className="bg-muted min-h-[73px] pr-10"
                   required
                 />
                 { focusedField === "userPrompt" && (
@@ -432,7 +467,7 @@ export const TestCaseAddDialog = ({
                 <Textarea
                   value={systemPrompts}
                   onChange={(e) => setSystemPrompts(e.target.value)}
-                  className="bg-muted min-h-[80px]"
+                  className="bg-muted min-h-[73px]"
                   readOnly
                 />
               </div>
@@ -444,7 +479,7 @@ export const TestCaseAddDialog = ({
                 <Textarea
                   value={responseText}
                   readOnly
-                  className="bg-muted min-h-[80px] pr-10"
+                  className="bg-muted min-h-[73px] pr-10"
                   required
                   onChange ={(e) => setResponseText(e.target.value)}
                   onFocus = {() => setFocusedField("response")}
@@ -494,7 +529,7 @@ export const TestCaseAddDialog = ({
                   <Textarea
                     value={llmPrompt}
                     readOnly
-                    className="bg-muted min-h-[80px] pr-10"
+                    className="bg-muted min-h-[73px] pr-10"
                     required
                     onFocus = {() => setFocusedField("llm")}
                     onBlur = {() => setFocusedField(null)}
@@ -527,7 +562,15 @@ export const TestCaseAddDialog = ({
               <button
                 className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleSubmit}
-                disabled={isSubmitting || isCheckingName || isNameAvailable === false || !isAdded || !notes}
+                disabled={
+                  isSubmitting || 
+                  isCheckingName || 
+                  isNameAvailable === false || 
+                  !isAdded || 
+                  !notes ||
+                  (!hasPermission(currentUserRole, "canCreateTables") && 
+                   !hasPermission(currentUserRole, "canCreateRecords"))
+                }
               >
                 {isSubmitting ? "Submitting..." : "Submit"}
               </button>

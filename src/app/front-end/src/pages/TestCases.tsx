@@ -32,6 +32,7 @@ import { TestCaseUpdateDialog } from "@/components/TestCaseUpdateDialog";
 import { TestCaseAddDialog } from "@/components/TestCaseAddDialog";
 import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
+import { hasPermission } from "@/utils/permissions";
 
 interface TestCase {
   id: number;
@@ -57,6 +58,7 @@ const TestCases = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [testCaseToDelete, setTestCaseToDelete] = useState<TestCase | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [currentUserRole, setCurrentUserRole] = useState<string>("");
   
   // Refs for textareas to enable auto-scroll
   const userPromptsRef = useRef<HTMLTextAreaElement>(null);
@@ -193,6 +195,29 @@ const TestCases = () => {
   };
 
   useEffect(() => {
+    // Fetch current user role
+    const fetchUserRole = async () => {
+      try {
+        const token = localStorage.getItem("access_token");
+        if (!token) return;
+
+        const response = await fetch(API_ENDPOINTS.CURRENT_USER, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (response.ok) {
+          const userData = await response.json();
+          setCurrentUserRole(userData.role || "");
+        }
+      } catch (error) {
+        console.error("Error fetching user role:", error);
+      }
+    };
+
+    fetchUserRole();
     fetchTestCases();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshKey]);
@@ -465,14 +490,17 @@ const TestCases = () => {
           </div>
           </div>
 
-          <div className="mt-6 sticky bottom-5">
-            <Button 
-              className="bg-primary hover:bg-primary/90"
-              onClick={() => setAddDialogOpen(true)}
-            >
-              + Add Test Case
-            </Button>
-          </div>
+          {(hasPermission(currentUserRole, "canCreateTables") || 
+            hasPermission(currentUserRole, "canCreateRecords")) && (
+            <div className="mt-6 sticky bottom-5">
+              <Button 
+                className="bg-primary hover:bg-primary/90"
+                onClick={() => setAddDialogOpen(true)}
+              >
+                + Add Test Case
+              </Button>
+            </div>
+          )}
         </div>
       </main>
 
@@ -584,21 +612,26 @@ const TestCases = () => {
           )}
           <div className="sticky bottom-0 bg-white pt-4 p-2 flex justify-center gap-4 border-gray-200 z-10">
           {/* <div className="flex justify-center gap-4 pt-4"> */}
-            <Button 
-              variant="destructive"
-              onClick={() => handleDeleteClick(selectedCase)}
-            >
-              Delete
-            </Button>
-            <Button 
-              className="bg-primary hover:bg-primary/90"
-              onClick={() => {
-                setUpdateCase(selectedCase);
-                setSelectedCase(null);
-              }}
-            >
-              Update
-            </Button>
+            {hasPermission(currentUserRole, "canDeleteTables") && (
+              <Button 
+                variant="destructive"
+                onClick={() => handleDeleteClick(selectedCase)}
+              >
+                Delete
+              </Button>
+            )}
+            {(hasPermission(currentUserRole, "canUpdateTables") || 
+              hasPermission(currentUserRole, "canUpdateRecords")) && (
+              <Button 
+                className="bg-primary hover:bg-primary/90"
+                onClick={() => {
+                  setUpdateCase(selectedCase);
+                  setSelectedCase(null);
+                }}
+              >
+                Update
+              </Button>
+            )}
           </div>
         </DialogContent>
       </Dialog>

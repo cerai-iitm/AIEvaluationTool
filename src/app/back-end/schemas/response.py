@@ -24,6 +24,12 @@ class ResponseUpdateV2(BaseModel):
     language: Optional[str] = Field(
         None, description="The new language of the response."
     )
+    user_prompt: Optional[str] = Field(
+        None, description="The new user prompt."
+    )
+    system_prompt: Optional[str] = Field(
+        None, description="The new system prompt."
+    )
 
 
 class ResponseListResponse(BaseModel):

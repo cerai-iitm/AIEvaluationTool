@@ -24,6 +24,7 @@ import {
 } from "./PromptSearchDialog";
 import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
+import { hasPermission } from "@/utils/permissions";
 
 
 interface TestCase {
@@ -69,6 +70,7 @@ export const TestCaseUpdateDialog = ({
   const [strategies, setStrategies] = useState<Strategy[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingStrategies, setIsFetchingStrategies] = useState(false);
+  const [currentUserRole, setCurrentUserRole] = useState<string>("");
   
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
   const [searchType, setSearchType] = useState<PromptSearchType>("userPrompt");
@@ -117,8 +119,29 @@ export const TestCaseUpdateDialog = ({
     setSearchDialogOpen(false);
   };
 
-  // Fetch strategies from API
+  // Fetch current user role and strategies from API
   useEffect(() => {
+    const fetchUserRole = async () => {
+      try {
+        const token = localStorage.getItem("access_token");
+        if (!token) return;
+
+        const response = await fetch(API_ENDPOINTS.CURRENT_USER, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (response.ok) {
+          const userData = await response.json();
+          setCurrentUserRole(userData.role || "");
+        }
+      } catch (error) {
+        console.error("Error fetching user role:", error);
+      }
+    };
+
     const fetchStrategies = async () => {
       setIsFetchingStrategies(true);
       try {
@@ -162,6 +185,7 @@ export const TestCaseUpdateDialog = ({
     };
 
     if (open) {
+      fetchUserRole();
       fetchStrategies();
     }
   }, [open, toast]);
@@ -208,6 +232,17 @@ export const TestCaseUpdateDialog = ({
 
 
   const handleSubmit = async () => {
+    // Check if user has permission to update
+    if (!hasPermission(currentUserRole, "canUpdateTables") && 
+        !hasPermission(currentUserRole, "canUpdateRecords")) {
+      toast({
+        title: "Access Denied",
+        description: "You don't have permission to update test cases",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!testCase?.id) {
       toast({
         title: "Error",
@@ -506,11 +541,19 @@ export const TestCaseUpdateDialog = ({
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 className="bg-gray-200 rounded px-4 py-1 mr-4 w-96"
+                disabled={!hasPermission(currentUserRole, "canUpdateTables") && 
+                         !hasPermission(currentUserRole, "canUpdateRecords")}
               />
               <button
                 className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleSubmit}
-                disabled={!isChanged || !notes ||isLoading}
+                disabled={
+                  !isChanged || 
+                  !notes || 
+                  isLoading ||
+                  (!hasPermission(currentUserRole, "canUpdateTables") && 
+                   !hasPermission(currentUserRole, "canUpdateRecords"))
+                }
               >
                 {isLoading ? "Updating..." : "Submit"}
               </button>

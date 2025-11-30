@@ -224,20 +224,28 @@ def create_prompt(
     response_model=PromptDetailResponse,
     summary="Update a prompt (v2)",
 )
-def update_prompt(
+def update_prompt_v2(
     prompt_id: int,
-    prompt: PromptUpdateV2,
+    payload: PromptUpdateV2,
     db: DB = Depends(_get_db),
     authorization: Optional[str] = Header(None),
 ):
-    update_data = prompt.model_dump(exclude_unset=True)
+    update_data = payload.model_dump(exclude_unset=True)
     if not update_data:
-        existing = db.get_prompt_with_metadata(prompt_id)
+        existing = db.get_prompt(prompt_id)
         if existing is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Prompt not found"
             )
-        return existing
+        language_name = db.get_language_name(existing.lang_id)
+        domain_name = db.get_domain_name(existing.domain_id)
+        return PromptDetailResponse(
+            prompt_id=existing.prompt_id,
+            user_prompt=existing.user_prompt,
+            system_prompt=existing.system_prompt,
+            language=language_name,
+            domain=domain_name,
+        )
 
     try:
         updated = db.update_prompt_v2(prompt_id, update_data)
@@ -261,7 +269,13 @@ def update_prompt(
             note="Prompt updated via v2 endpoint",
         )
 
-    return updated
+    return PromptDetailResponse(
+        prompt_id=updated["prompt_id"],
+        user_prompt=updated["user_prompt"],
+        system_prompt=updated.get("system_prompt"),
+        language=updated.get("language"),
+        domain=updated.get("domain"),
+    )
 
 
 @prompt_router.delete(

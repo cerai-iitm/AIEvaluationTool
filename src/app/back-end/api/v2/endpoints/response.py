@@ -222,7 +222,7 @@ def create_response(
     response_model=ResponseDetailResponse,
     summary="Update a response (v2)",
 )
-def update_response(
+def update_response_v2(
     response_id: int,
     payload: ResponseUpdateV2,
     db: DB = Depends(_get_db),
@@ -230,12 +230,22 @@ def update_response(
 ):
     update_data = payload.model_dump(exclude_unset=True)
     if not update_data:
-        existing = db.get_response_with_metadata(response_id)
+        existing = db.get_response(response_id)
         if existing is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Response not found"
             )
-        return existing
+        # Return existing response as ResponseDetailResponse
+        language_name = db.get_language_name(existing.lang_id)
+        prompt = db.get_prompt(existing.prompt_id)
+        return ResponseDetailResponse(
+            response_id=existing.response_id,
+            response_text=existing.response_text,
+            response_type=existing.response_type,
+            language=language_name,
+            user_prompt=prompt.user_prompt if prompt else "",
+            system_prompt=prompt.system_prompt if prompt else None,
+        )
 
     try:
         updated = db.update_response_v2(response_id, update_data)
@@ -259,7 +269,14 @@ def update_response(
             note="Response updated via v2 endpoint",
         )
 
-    return updated
+    return ResponseDetailResponse(
+        response_id=updated["response_id"],
+        response_text=updated["response_text"],
+        response_type=updated["response_type"],
+        language=updated.get("language"),
+        user_prompt=updated.get("user_prompt", ""),
+        system_prompt=updated.get("system_prompt"),
+    )
 
 
 @response_router.delete(

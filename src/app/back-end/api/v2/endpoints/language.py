@@ -211,7 +211,7 @@ def create_language(
     response_model=LanguageDetailResponse,
     summary="Update a language (v2)",
 )
-def update_language(
+def update_language_v2(
     lang_id: int,
     payload: LanguageUpdateV2,
     db: DB = Depends(_get_db),
@@ -219,12 +219,15 @@ def update_language(
 ):
     update_data = payload.model_dump(exclude_unset=True)
     if not update_data:
-        existing = db.get_language_with_metadata(lang_id)
-        if existing is None:
+        existing_name = db.get_language_name(lang_id)
+        if existing_name is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Language not found"
             )
-        return existing
+        return LanguageDetailResponse(
+            lang_id=lang_id,
+            lang_name=existing_name,
+        )
 
     try:
         updated = db.update_language_v2(lang_id, update_data)
@@ -243,12 +246,15 @@ def update_language(
         log_activity(
             username=username,
             entity_type="Language",
-            entity_id=str(updated["lang_name"]),
+            entity_id=str(updated["lang_id"]),
             operation="update",
             note="Language updated via v2 endpoint",
         )
 
-    return updated
+    return LanguageDetailResponse(
+        lang_id=updated["lang_id"],
+        lang_name=updated["lang_name"],
+    )
 
 
 @language_router.delete(

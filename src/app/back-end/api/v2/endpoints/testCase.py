@@ -160,59 +160,81 @@ def create_testcase(
     db: DB = Depends(_get_db),
     authorization: Optional[str] = Header(None),
 ):
-    try:
-        # Get next available ID
-        with db.Session() as session:
-            existing_ids = [
-                row[0]
-                for row in session.query(TestCases.testcase_id)
-                .order_by(TestCases.testcase_id)
-                .all()
-            ]
-            next_id = 1
-            for id in existing_ids:
-                if id != next_id:
-                    break
-                next_id += 1
+    #try:
+    # Get next available ID
+    with db.Session() as session:
+        existing_ids = [
+            row[0]
+            for row in session.query(TestCases.testcase_id)
+            .order_by(TestCases.testcase_id)
+            .all()
+        ]
+        next_id = 1
+        for id in existing_ids:
+            if id != next_id:
+                break
+            next_id += 1
 
-        # Convert payload to TestCase model
-        prompt = Prompt(
-            user_prompt=payload.user_prompt,
-            system_prompt=payload.system_prompt if payload.system_prompt else None,
+    # Convert payload to TestCase model
+    prompt = Prompt(
+        user_prompt=payload.user_prompt,
+        system_prompt=payload.system_prompt if payload.system_prompt else None,
+        lang_id=1,  # Default language ID
+        domain_id=1,  # Default domain ID
+    )
+
+    response = None
+    if payload.response_text:
+        response = ResponseData(
+            response_text=payload.response_text,
+            response_type="GT",  # Ground Truth
             lang_id=1,  # Default language ID
-            domain_id=1,  # Default domain ID
         )
 
-        response = None
-        if payload.response_text:
-            response = ResponseData(
-                response_text=payload.response_text,
-                response_type="GT",  # Ground Truth
-                lang_id=1,  # Default language ID
-            )
-
-        judge_prompt = None
-        if payload.llm_judge_prompt:
-            judge_prompt = LLMJudgePrompt(
-                prompt=payload.llm_judge_prompt,
-                lang_id=1,  # Default language ID
-            )
-
-        testcase = TestCaseModel(
-            name=payload.testcase_name,
-            prompt=prompt,
-            response=response,
-            judge_prompt=judge_prompt,
-            strategy=payload.strategy_name,
-            metric="exact_match",  # Default metric
+    judge_prompt = None
+    if payload.llm_judge_prompt:
+        judge_prompt = LLMJudgePrompt(
+            prompt=payload.llm_judge_prompt,
+            lang_id=1,  # Default language ID
         )
 
-        # Add test case with custom ID
-        testcase_obj = db._DB__add_or_get_test_case_custom_id(testcase, next_id)
-        if not testcase_obj:
+    testcase = TestCaseModel(
+        name=payload.testcase_name,
+        prompt=prompt,
+        response=response,
+        judge_prompt=judge_prompt,
+        strategy=payload.strategy_name,
+        metric="exact_match",  # Default metric
+    )
+
+    # Add test case with custom ID
+    testcase_obj = db._DB__add_or_get_test_case_custom_id(testcase, next_id)
+    if not testcase_obj:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Failed to create test case. It may already exist.",
+        )
+
+    # Get the created test case with all relationships loaded
+    # This is necessary because the object returned from __add_or_get_test_case_custom_id
+    # is detached from the session, so we need to re-query with eager loading
+    with db.Session() as session:
+        testcase_full = (
+            session.query(TestCases)
+            .options(
+                joinedload(TestCases.prompt),
+                joinedload(TestCases.response),
+                joinedload(TestCases.strategy),
+                joinedload(TestCases.judge_prompt),
+            )
+            .filter(TestCases.testcase_id == testcase_obj.testcase_id)
+            .first()
+        )
+
+        if not testcase_full:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Failed to create test case. It may already exist.",
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Test case not found after creation",
             )
 
         # Log activity
@@ -221,61 +243,41 @@ def create_testcase(
             log_activity(
                 username=username,
                 entity_type="test_case",
-                entity_id=str(testcase_obj.testcase_id),
+                entity_id=str(testcase_full.testcase_id),
                 operation="create",
-                note=f"Created test case: {testcase_obj.testcase_name}",
+                note=f"Created test case: {testcase_full.testcase_name}",
             )
 
-        # Get the created test case with all relationships loaded
-        with db.Session() as session:
-            testcase_full = (
-                session.query(TestCases)
-                .options(
-                    joinedload(TestCases.prompt),
-                    joinedload(TestCases.response),
-                    joinedload(TestCases.strategy),
-                    joinedload(TestCases.judge_prompt),
-                )
-                .filter(TestCases.testcase_id == testcase_obj.testcase_id)
-                .first()
-            )
-
-            if not testcase_full:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Test case not found after creation",
-                )
-
-            return TestCaseDetailResponse(
-                testcase_id=testcase_full.testcase_id,
-                testcase_name=testcase_full.testcase_name,
-                user_prompt=testcase_full.prompt.user_prompt
-                if testcase_full.prompt
-                else None,
-                system_prompt=testcase_full.prompt.system_prompt
-                if testcase_full.prompt
-                else None,
-                response_text=testcase_full.response.response_text
-                if testcase_full.response
-                else None,
-                strategy_name=testcase_full.strategy.strategy_name
-                if testcase_full.strategy
-                else None,
-                llm_judge_prompt=testcase_full.judge_prompt.prompt
-                if testcase_full.judge_prompt
-                else None,
-                domain_name=testcase_full.prompt.domain.domain_name
-                if testcase_full.prompt and testcase_full.prompt.domain
-                else None,
-            )
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An error occurred while creating the test case: {str(e)}",
+        return TestCaseDetailResponse(
+            testcase_id=testcase_full.testcase_id,
+            testcase_name=testcase_full.testcase_name,
+            user_prompt=testcase_full.prompt.user_prompt
+            if testcase_full.prompt
+            else None,
+            system_prompt=testcase_full.prompt.system_prompt
+            if testcase_full.prompt
+            else None,
+            response_text=testcase_full.response.response_text
+            if testcase_full.response
+            else None,
+            strategy_name=testcase_full.strategy.strategy_name
+            if testcase_full.strategy
+            else None,
+            llm_judge_prompt=testcase_full.judge_prompt.prompt
+            if testcase_full.judge_prompt
+            else None,
+            domain_name=testcase_full.prompt.domain.domain_name
+            if testcase_full.prompt and testcase_full.prompt.domain
+            else None,
         )
+
+    # except HTTPException:
+    #     raise
+    # except Exception as e:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+    #         detail=f"An error occurred while creating the test case: {str(e)}",
+    #     )
 
 
 # @testcase_router.post(
@@ -405,7 +407,7 @@ def update_testcase(
         log_activity(
             username=username,
             entity_type="Test Case",
-            entity_id=str(updated.testcase_id),
+            entity_id=str(updated.testcase_name),
             operation="update",
             note=note,
         )

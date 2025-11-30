@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
+import { hasPermission } from "@/utils/permissions";
 
 interface User {
   user_name: string;
@@ -33,6 +34,7 @@ const Users = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentUserRole, setCurrentUserRole] = useState<string>("");
   
   // Form state
   const [formData, setFormData] = useState({
@@ -44,8 +46,56 @@ const Users = () => {
   });
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    // Check current user role and permissions
+    const checkUserPermissions = async () => {
+      try {
+        const token = localStorage.getItem("access_token");
+        if (!token) {
+          navigate("/");
+          return;
+        }
+
+        const response = await fetch(API_ENDPOINTS.CURRENT_USER, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (response.ok) {
+          const userData = await response.json();
+          setCurrentUserRole(userData.role || "");
+          
+          // Check if user has permission to manage users
+          if (!hasPermission(userData.role, "canManageUsers")) {
+            toast({
+              title: "Access Denied",
+              description: "You don't have permission to access this page",
+              variant: "destructive",
+            });
+            navigate("/dashboard");
+            return;
+          }
+          
+          // If user has permission, fetch users list
+          fetchUsers();
+        } else if (response.status === 401) {
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("user_name");
+          navigate("/");
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to verify permissions",
+          variant: "destructive",
+        });
+        navigate("/dashboard");
+      }
+    };
+
+    checkUserPermissions();
+  }, [navigate, toast]);
 
   const fetchUsers = async () => {
     try {
@@ -215,14 +265,16 @@ const Users = () => {
             </div>
           )}
 
-          <div className="mt-8 max-w-5xl mx-auto">
-            <Button
-              className="bg-primary hover:bg-primary/90"
-              onClick={() => setShowCreateUser(true)}
-            >
-              + Add User
-            </Button>
-          </div>
+          {hasPermission(currentUserRole, "canCreateUser") && (
+            <div className="mt-8 max-w-5xl mx-auto">
+              <Button
+                className="bg-primary hover:bg-primary/90"
+                onClick={() => setShowCreateUser(true)}
+              >
+                + Add User
+              </Button>
+            </div>
+          )}
         </div>
       </main>
 

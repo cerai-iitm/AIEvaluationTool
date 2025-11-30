@@ -199,7 +199,7 @@ def create_llm_prompt(
     response_model=LlmPromptDetailResponse,
     summary="Update an LLM prompt (v2)",
 )
-def update_llm_prompt(
+def update_llm_prompt_v2(
     llm_prompt_id: int,
     payload: LlmPromptUpdateV2,
     db: DB = Depends(_get_db),
@@ -207,12 +207,17 @@ def update_llm_prompt(
 ):
     update_data = payload.model_dump(exclude_unset=True)
     if not update_data:
-        existing = db.get_llm_prompt_with_metadata(llm_prompt_id)
+        existing = db.get_llm_prompt_by_id(llm_prompt_id)
         if existing is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="LLM prompt not found"
             )
-        return existing
+        language_name = db.get_language_name(existing.lang_id)
+        return LlmPromptDetailResponse(
+            llmPromptId=existing.prompt_id,
+            prompt=existing.prompt,
+            language=language_name,
+        )
 
     try:
         updated = db.update_llm_prompt_v2(llm_prompt_id, update_data)
@@ -236,7 +241,11 @@ def update_llm_prompt(
             note="LLM prompt updated via v2 endpoint",
         )
 
-    return updated
+    return LlmPromptDetailResponse(
+        llmPromptId=updated["llmPromptId"],
+        prompt=updated["prompt"],
+        language=updated.get("language"),
+    )
 
 
 @llm_prompt_router.delete(

@@ -4,11 +4,19 @@ import { useEffect, useState } from "react";
 import ceraiLogo from "@/assets/cerai-logo.png";
 import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
+import { hasPermission } from "@/utils/permissions";
 
 interface UserInfo {
   user_name: string;
   email: string;
   role: string;
+}
+
+interface NavItem {
+  icon: typeof Home;
+  label: string;
+  path: string;
+  requiredPermission?: keyof import("@/utils/permissions").RolePermissions;
 }
 
 const Sidebar = () => {
@@ -68,9 +76,14 @@ const Sidebar = () => {
     fetchUserInfo();
   }, [navigate, toast]);
 
-  const navItems = [
+  const navItems: NavItem[] = [
     { icon: Home, label: "Home", path: "/dashboard" },
-    { icon: Users, label: "User's List", path: "/users" },
+    { 
+      icon: Users, 
+      label: "User's List", 
+      path: "/users",
+      requiredPermission: "canManageUsers" // Only visible to Admin role
+    },
   ];
 
   return (
@@ -83,25 +96,34 @@ const Sidebar = () => {
       </div>
 
       <nav className="flex-1 px-3 mt-8">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = location.pathname === item.path;
-          
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg mb-2 transition-colors ${
-                isActive
-                  ? "bg-white text-primary font-medium"
-                  : "text-primary-foreground/80 hover:bg-white/10"
-              }`}
-            >
-              <Icon className="w-5 h-5" />
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
+        {navItems
+          .filter((item) => {
+            // If no permission required, show to all users
+            if (!item.requiredPermission) {
+              return true;
+            }
+            // Check if user has the required permission
+            return hasPermission(userInfo.role, item.requiredPermission);
+          })
+          .map((item) => {
+            const Icon = item.icon;
+            const isActive = location.pathname === item.path;
+            
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg mb-2 transition-colors ${
+                  isActive
+                    ? "bg-white text-primary font-medium"
+                    : "text-primary-foreground/80 hover:bg-white/10"
+                }`}
+              >
+                <Icon className="w-5 h-5" />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
       </nav>
 
       <div className="p-4 border-t border-white/10">

@@ -122,7 +122,7 @@ def create_domain(
             username=username,
             entity_type="Domain",
             entity_id=domain_obj.domain_id,
-            operation="Created",
+            operation="create",
             note=f"Domain {domain_obj.domain_name} created",
         )
     
@@ -205,7 +205,7 @@ def get_domain(domain_id: int, db: DB = Depends(_get_db)):
     response_model=DomainDetailResponse,
     summary="Update a domain (v2)",
 )
-def update_domain(
+def update_domain_v2(
     domain_id: int,
     payload: DomainUpdateV2,
     db: DB = Depends(_get_db),
@@ -213,12 +213,15 @@ def update_domain(
 ):
     update_data = payload.model_dump(exclude_unset=True)
     if not update_data:
-        existing = db.get_domain_with_metadata(domain_id)
-        if existing is None:
+        existing_name = db.get_domain_name(domain_id)
+        if existing_name is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Domain not found"
             )
-        return existing
+        return DomainDetailResponse(
+            domain_id=domain_id,
+            domain_name=existing_name,
+        )
 
     try:
         updated = db.update_domain_v2(domain_id, update_data)
@@ -237,12 +240,15 @@ def update_domain(
         log_activity(
             username=username,
             entity_type="Domain",
-            entity_id=str(updated["domain_name"]),
+            entity_id=str(updated["domain_id"]),
             operation="update",
             note="Domain updated via v2 endpoint",
         )
 
-    return updated
+    return DomainDetailResponse(
+        domain_id=updated["domain_id"],
+        domain_name=updated["domain_name"],
+    )
 
 
 @domain_router.delete(
@@ -270,9 +276,9 @@ def delete_domain(
         log_activity(
             username=username,
             entity_type="Domain",
-            entity_id=str(existing["domain_name"]),
+            entity_id=str(existing),
             operation="delete",
-            note=f"Domain '{existing['domain_name']}' deleted (v2)",
+            note=f"Domain '{existing}' deleted (v2)",
         )
 
     return {"message": "Domain deleted successfully"}
