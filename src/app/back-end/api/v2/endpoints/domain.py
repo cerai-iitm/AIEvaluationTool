@@ -103,46 +103,47 @@ def create_domain(
 ):
     # try:
     with db.Session() as session:
-        existing_ids = [row[0] for row in session.query(Domains.domain_id).order_by(Domains.domain_id).all()]
-        next_id = 1
-        for id in existing_ids:
-            if id != next_id:
-                break
-            next_id += 1
+        try:
+            existing_ids = [row[0] for row in session.query(Domains.domain_id).order_by(Domains.domain_id).all()]
+            next_id = 1
+            for id in existing_ids:
+                if id != next_id:
+                    break
+                next_id += 1
 
-    domain_obj = db._DB__add_or_get_domain_custom_Id(payload.domain_name, next_id)
-    if domain_obj is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="A domain with the same name already exists.",
-        )
-    username = _get_username_from_token(authorization)
-    if username:
-        log_activity(
-            username=username,
-            entity_type="Domain",
-            entity_id=domain_obj.domain_id,
-            operation="create",
-            note=f"Domain {domain_obj.domain_name} created",
-        )
-    
-    return DomainDetailResponse(
-        domain_id=domain_obj.domain_id,
-        domain_name=domain_obj.domain_name,
-    )
-    # except IntegrityError:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_400_BAD_REQUEST,
-    #         detail="A domain with the same name already exists.",
-    #     )
-    # except ValueError as e:
-    #     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    # except Exception as e:
-    #     db.logger.error(f"Failed to create domain: {e}")
-    #     raise HTTPException(
-    #         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-    #         detail="Internal Server Error creating domain"
-    #     )
+            domain_obj = db._DB__add_or_get_domain_custom_Id(payload.domain_name, next_id)
+            if domain_obj is None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="A domain with the same name already exists.",
+                )
+            username = _get_username_from_token(authorization)
+            if username:
+                log_activity(
+                    username=username,
+                    entity_type="Domain",
+                    entity_id=domain_obj.domain_id,
+                    operation="create",
+                    note=f"Domain {domain_obj.domain_name} created",
+                )
+            
+            return DomainDetailResponse(
+                domain_id=domain_obj.domain_id,
+                domain_name=domain_obj.domain_name,
+            )
+        except IntegrityError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="A domain with the same name already exists.",
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        except Exception as e:
+            db.logger.error(f"Failed to create domain: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal Server Error creating domain"
+            )
 
 
 @domain_router.get(
@@ -240,14 +241,14 @@ def update_domain_v2(
         log_activity(
             username=username,
             entity_type="Domain",
-            entity_id=str(updated["domain_id"]),
+            entity_id=str(updated.domain_id),
             operation="update",
             note="Domain updated via v2 endpoint",
         )
 
     return DomainDetailResponse(
-        domain_id=updated["domain_id"],
-        domain_name=updated["domain_name"],
+        domain_id=updated.domain_id,
+        domain_name=updated.domain_name,
     )
 
 

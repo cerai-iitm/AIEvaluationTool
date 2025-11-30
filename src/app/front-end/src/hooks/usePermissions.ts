@@ -15,3 +15,4 @@ export function useHasPermission(role: string, permission: keyof RolePermissions
   return useMemo(() => hasPermission(role, permission), [role, permission]);
 }
 
+

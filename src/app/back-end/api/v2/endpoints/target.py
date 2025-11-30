@@ -16,8 +16,18 @@ from utils.activity_logger import log_activity
 from lib.orm.DB import DB
 from lib.orm.tables import Targets
 from sqlalchemy.orm import joinedload
+from enum import Enum
 
 target_router = APIRouter(prefix="/api/v2/targets")
+
+class TargetTypeEnum(str, Enum):
+    WhatsApp = "WhatsApp"
+    WebApp = "WebApp"
+    API = "API"
+
+@target_router.get("/target/types", response_model=list[TargetTypeEnum], summary="Get all target types")
+def get_target_types(db: DB = Depends(_get_db)):
+    return list(TargetTypeEnum) 
 
 
 def _get_username_from_token(authorization: Optional[str]) -> Optional[str]:
@@ -121,9 +131,10 @@ def create_target(
     db: DB = Depends(_get_db),
     authorization: Optional[str] = Header(None),
 ):
-    try: 
-        with db.Session() as session:
-            # Get next available ID
+    #try: 
+    with db.Session() as session:
+        try:
+        # Get next available ID
             existing_ids = [row[0] for row in session.query(Targets.target_id).order_by(Targets.target_id).all()]
             next_id = 1
             for id in existing_ids:
@@ -148,35 +159,39 @@ def create_target(
                 log_activity(
                     username=username,
                     entity_type="target",
-                    entity_id=str(payload.target_name),
+                    entity_id=str(target_obj.target_id),
                     operation="create",
-                    note=f"Created target: {payload.target_name}",
+                    note=f"Created target: {target_obj.target_name}",
                 )
             
             # Create response
-            response = TargetDetailResponse(
+            return TargetDetailResponse(
                 target_id=target_obj.target_id,
                 target_name=target_obj.target_name,
                 target_type=target_obj.target_type,
                 target_description=target_obj.target_description,
                 target_url=target_obj.target_url,
-                domain_name=target_obj.domain.domain_name if target_obj.domain else None,
-                lang_list=[lang.lang_name for lang in target_obj.langs] if target_obj.langs else [],
+                domain_name=payload.domain_name,
+                lang_list=payload.target_languages,
             )
             
-            return response
-            
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
-        )
+        except IntegrityError as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="A target with the same name already exists.",
+            )
         
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An unexpected error occurred: {str(e)}",
-        )
+        except ValueError as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e),
+            )
+            
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"An unexpected error occurred: {str(e)}",
+            )
 
 
 
@@ -259,7 +274,7 @@ def update_target(
         log_activity(
             username=username,
             entity_type="Target",
-            entity_id=str(updated["target_name"]),
+            entity_id=str(updated.target_name),
             operation="update",
             note="Target updated via v2 endpoint",
         )
@@ -300,9 +315,9 @@ def delete_target(
         log_activity(
             username=username,
             entity_type="Target",
-            entity_id=str(existing["target_name"]),
+            entity_id=str(existing.target_name),
             operation="delete",
-            note=f"Target '{existing['target_name']}' deleted",
+            note=f"Target '{existing.target_name}' deleted",
         )
 
     return {"message": "Target deleted successfully"}

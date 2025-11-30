@@ -155,3 +155,4 @@ useEffect(() => {
 - Default permissions are the most restrictive (no access)
 - All permission checks should be done on both frontend and backend for security
 
+

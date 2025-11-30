@@ -24,7 +24,7 @@ export const API_ENDPOINTS = {
     `${API_BASE_URL}/api/v2/testcases/delete/${testcase_id}`,
 
   TARGETS: `${API_BASE_URL}/api/targets`,
-  TARGET_TYPES: `${API_BASE_URL}/api/targets/target/types`,
+  TARGET_TYPES: `${API_BASE_URL}/api/v2/targets/target/types`,
   TARGET_BY_ID: (target_id: number) =>
     `${API_BASE_URL}/api/targets/${target_id}`,
   TARGET_CREATE: `${API_BASE_URL}/api/targets/create`,

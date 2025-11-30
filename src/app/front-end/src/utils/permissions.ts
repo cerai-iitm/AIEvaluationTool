@@ -38,9 +38,9 @@ export function getRolePermissions(role: string): RolePermissions {
         canCreateUser: true,
         canUpdateUser: true,
         canDeleteUser: true,
-        canCreateTables: false,
-        canUpdateTables: false,
-        canDeleteTables: false,
+        canCreateTables: true,
+        canUpdateTables: true,
+        canDeleteTables: true,
         canCreateRecords: false,
         canUpdateRecords: false,
         canExportData: false,
@@ -140,4 +140,5 @@ export function isCurator(role: string): boolean {
 export function isUser(role: string): boolean {
   return role.toLowerCase() === "user";
 }
+
 

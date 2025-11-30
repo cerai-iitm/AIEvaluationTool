@@ -119,7 +119,7 @@ export default function TargetAddDialog({
 
   const handleLanguageToggle = (lang: string) => {
     setSelectedLanguages((prev) =>
-      prev.includes(lang) ? prev.filter((l) => l !== lang) : [...prev, lang],
+      prev.includes(lang) ? prev.filter((l) => l !== lang) : [...prev, lang]
     );
   };
 
@@ -163,6 +163,15 @@ export default function TargetAddDialog({
       return;
     }
 
+    if (!selectedLanguages.length) {
+      toast({
+        title: "Validation Error",
+        description: "At least one language is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!notes.trim()) {
       toast({
         title: "Validation Error",
@@ -188,7 +197,7 @@ export default function TargetAddDialog({
         target_description: description.trim() || null,
         target_url: url.trim(),
         domain_name: domain,
-        lang_list: selectedLanguages,
+        target_languages: selectedLanguages,
       };
 
       const response = await fetch(API_ENDPOINTS.TARGET_CREATE_V2, {
