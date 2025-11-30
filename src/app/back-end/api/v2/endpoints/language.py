@@ -176,34 +176,51 @@ def create_language(
     db: DB = Depends(_get_db),
     authorization: Optional[str] = Header(None),
 ):
-    try:
-        lang_id = db.create_language_v2(payload.model_dump())
-    except IntegrityError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="A language with the same name already exists.",
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    with db.Session() as session:
+        try:
+            # Get existing language IDs to find the next available ID
+            existing_ids = [row[0] for row in session.query(Languages.lang_id).order_by(Languages.lang_id).all()]
+            next_id = 1
+            for id in existing_ids:
+                if id != next_id:
+                    break
+                next_id += 1
 
-    created = db.get_language_with_metadata(lang_id)
-    if created is None:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Language created but could not be loaded.",
-        )
+            # Create the language with the payload's lang_name
+            lang_id = db.create_language_v2(payload.lang_name, next_id)
+            
+            # Get the created language
+            created = db.get_language_with_metadata(lang_id)
+            if created is None:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Language created but could not be loaded.",
+                )
 
-    username = _get_username_from_token(authorization)
-    if username:
-        log_activity(
-            username=username,
-            entity_type="Language",
-            entity_id=str(created["lang_name"]),
-            operation="create",
-            note=f"Language '{created['lang_name']}' created (v2)",
-        )
+            # Log the activity
+            username = _get_username_from_token(authorization)
+            if username:
+                log_activity(
+                    username=username,
+                    entity_type="Language",
+                    entity_id=str(created["lang_name"]),
+                    operation="create",
+                    note=f"Language '{created['lang_name']}' created (v2)",
+                )
 
-    return created
+            # Return the created language in the expected format
+            return LanguageDetailResponse(
+                lang_id=created["lang_id"],
+                lang_name=created["lang_name"]
+            )
+            
+        except IntegrityError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="A language with the same name already exists.",
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @language_router.put(
@@ -282,9 +299,9 @@ def delete_language(
         log_activity(
             username=username,
             entity_type="Language",
-            entity_id=str(existing["lang_name"]),
+            entity_id=str(existing),
             operation="delete",
-            note=f"Language '{existing['lang_name']}' deleted (v2)",
+            note=f"Language '{existing}' deleted (v2)",
         )
 
     return {"message": "Language deleted successfully"}

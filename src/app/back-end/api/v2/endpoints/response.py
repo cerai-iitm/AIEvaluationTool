@@ -11,10 +11,11 @@ from schemas.response import (
     ResponseUpdateV2,
 )
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import joinedload
 from utils.activity_logger import log_activity
 
 from lib.orm.DB import DB
-from lib.orm.tables import Responses
+from lib.orm.tables import Responses as ResponsesTable
 from lib.data import Response, Prompt
 
 response_router = APIRouter(prefix="/api/v2/responses")
@@ -43,19 +44,29 @@ def _get_username_from_token(authorization: Optional[str]) -> Optional[str]:
 
 @response_router.get(
     "",
-    response_model=List[ResponseListResponse],
+    response_model=List[ResponseDetailResponse],
     summary="List all responses (v2)",
 )
 def list_responses(db: DB = Depends(_get_db)):
-    responses = db.responses 
-
-    return [
-        ResponseListResponse(
-            response_id=response.response_id,
-            response_text=response.response_text,
-        )
-        for response in responses
-    ]
+    session = db.Session()
+    try:
+        responses = session.query(ResponsesTable).options(
+            joinedload(ResponsesTable.prompt),
+            joinedload(ResponsesTable.lang)
+        ).all()
+        return [
+            ResponseDetailResponse(
+                response_id=r.response_id,
+                response_text=r.response_text,
+                response_type=r.response_type,
+                user_prompt=getattr(r.prompt, "user_prompt", None) if r.prompt else None,
+                system_prompt=getattr(r.prompt, "system_prompt", None) if r.prompt else None,
+                language=getattr(r.lang, "lang_name", None) if r.lang else None,
+            )
+            for r in responses
+        ]
+    finally:
+        session.close()
 
 
 # @response_router.get(
@@ -264,18 +275,18 @@ def update_response_v2(
         log_activity(
             username=username,
             entity_type="Response",
-            entity_id=str(updated["response_id"]),
+            entity_id=str(updated.response_id),
             operation="update",
             note="Response updated via v2 endpoint",
         )
 
     return ResponseDetailResponse(
-        response_id=updated["response_id"],
-        response_text=updated["response_text"],
-        response_type=updated["response_type"],
-        language=updated.get("language"),
-        user_prompt=updated.get("user_prompt", ""),
-        system_prompt=updated.get("system_prompt"),
+        response_id=updated.response_id,
+        response_text=updated.response_text,
+        response_type=updated.response_type,
+        language=getattr(updated, "lang", None),
+        user_prompt=getattr(updated, "user_prompt", ""),
+        system_prompt=getattr(updated, "system_prompt", None),
     )
 
 
@@ -304,9 +315,9 @@ def delete_response(
         log_activity(
             username=username,
             entity_type="Response",
-            entity_id=str(existing["response_id"]),
+            entity_id=str(existing.response_id),
             operation="delete",
-            note=f"Response '{existing['response_id']}' deleted",
+            note=f"Response '{existing.response_id}' deleted",
         )
 
     return {"message": "Response deleted successfully"}

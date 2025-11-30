@@ -132,7 +132,7 @@ export const ResponseAddDialog = ({
   };
 
   const handleSelectPrompt = (selection: PromptSearchSelection) => {
-    setPromptId(selection.prompt_id);
+    setPromptId(selection.promptId);
     setUserPrompts(selection.userPrompt);
     setSystemPrompts(selection.systemPrompt ?? "");
     setFocusedField(null);
@@ -140,7 +140,7 @@ export const ResponseAddDialog = ({
   };
 
   const isFormValid =
-    promptId && responseText.trim() && responseType && language && notes.trim();
+    responseText.trim() && responseType && language && notes.trim() && (promptId !== null);
 
   const handleSubmit = async () => {
     if (!isFormValid) {

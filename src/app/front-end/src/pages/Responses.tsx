@@ -59,7 +59,9 @@ const Responses = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const itemsPerPage = 100;
+  const itemsPerPage = 15;
+
+  const [searchField, setSearchField] = useState("");
 
   const fetchResponses = useCallback(async () => {
     setIsLoading(true);
