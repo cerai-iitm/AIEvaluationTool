@@ -277,9 +277,9 @@ def delete_strategy(
         log_activity(
             username=username,
             entity_type="Strategy",
-            entity_id=str(existing["strategy_name"]),
+            entity_id=str(existing.name),
             operation="delete",
-            note=f"Strategy '{existing['strategy_name']}' deleted",
+            note=f"Strategy '{existing.name}' deleted",
         )
 
     return {"message": "Strategy deleted successfully"}
