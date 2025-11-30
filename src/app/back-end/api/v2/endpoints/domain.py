@@ -241,14 +241,14 @@ def update_domain_v2(
         log_activity(
             username=username,
             entity_type="Domain",
-            entity_id=str(updated.domain_id),
+            entity_id=str(updated['domain_id']),
             operation="update",
             note="Domain updated via v2 endpoint",
         )
 
     return DomainDetailResponse(
-        domain_id=updated.domain_id,
-        domain_name=updated.domain_name,
+        domain_id=updated['domain_id'],
+        domain_name=updated['domain_name'],
     )
 
 

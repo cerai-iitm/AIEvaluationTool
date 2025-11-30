@@ -40,6 +40,7 @@ class ActivityLog(Base):
 
     OPERATION = (
         ('create', 'Create'),
+        ('created', 'Created'),  # For backward compatibility
         ('update', 'Update'),
         ('delete', 'Delete'),
     )
