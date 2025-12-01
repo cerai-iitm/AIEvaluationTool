@@ -91,8 +91,8 @@ class Evaluator:
             "response_score" : ,
         }
 
-        The example files must start with the same name as the strategy name in the strategy file, not the actual strategy name
-        e.g. llm_judge, not llm_judge_positive
+        The example files must start with the same name as the value of the "name" inside the strategy file.
+        e.g. for llm_judge, the example file should be llm_judge, not llm_judge_positive
 
         """
         self.set_strategy(strategy_name, metric_name)
@@ -103,7 +103,7 @@ class Evaluator:
         combined = self.combine_examples(examples)
         assigned_scores, human_scores = [], []
         for ex_list in combined.values():
-            for example in ex_list[:]: # later do for all the examples, just for now we are taking some examples
+            for example in ex_list[:20]: #2:5:2 # later do for all the examples, just for now we are taking some examples
                 self.runner.set_metric_strategy(strategy_name, metric_name)
                 try:
                     human_scores.append(example["response_score"])
@@ -117,4 +117,4 @@ class Evaluator:
         self.save_scores(strategy_name, {"evaluated_score" : avg_score, "human_score" : human_score})
                 
 ev = Evaluator()
-ev.main(strategy_name="entity_recognition", metric_name="")
+ev.main(strategy_name="indian_lang_grammatical_check", metric_name="")

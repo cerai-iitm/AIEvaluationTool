@@ -45,25 +45,26 @@ class GrammaticalStrategy(Strategy):
         # for very short sentences there might not be any dependency arcs
         if(len(dep_arc_corr) == 0 and len(dep_arc_ori) == 0):
             return 1.0
-        matches = dep_arc_corr.intersection(dep_arc_ori)
-        mismatches = dep_arc_corr.union(dep_arc_ori) - matches
-        sim_score = len(matches) / (len(matches) + len(mismatches))
+        # we want to find the maximum number of changes that leads from original to corrected dependency arcs
+        changes = dep_arc_ori.symmetric_difference(dep_arc_corr)
+        union = dep_arc_ori.union(dep_arc_corr)
+        sim_score = 1 - (len(changes) / len(union))
         return sim_score
     
-    def evaluate(self, agent_response: str, expected_response: Optional[str] = None) -> float: #testcase:TestCase, conversation:Conversation):
+    def evaluate(self, testcase:TestCase, conversation:Conversation): #agent_response: str, expected_response: Optional[str] = None) -> float: #testcase:TestCase, conversation:Conversation):
         logger.info("Evaluating Grammatical Errors...")
-        if detect(agent_response) == "en":
-            corrected = self.grammarCorrector(agent_response)
-            grammar_score = round(self.dep_similarity(agent_response, corrected), 3)
+        if detect(conversation.agent_response) == "en":
+            corrected = self.grammarCorrector(conversation.agent_response)
+            print(corrected)
+            grammar_score = round(self.dep_similarity(conversation.agent_response, corrected), 3)
             logger.info(f"The grammar consistency score for the given input is : {grammar_score}.")
         else:
             grammar_score = 0.0
             logger.error(f"The identified language is not English. Returning a 0 score.")
         return grammar_score
     
-# Test
-strategy = GrammaticalStrategy()
-response = "They is doing well but he are not doing the most well."
-score = strategy.evaluate(response)
-print(f"Grammatical Score: {score}")
-# This is working good!
+# # Test
+# strategy = GrammaticalStrategy()
+# response = "They is coming home for the cristmas"
+# score = strategy.evaluate(response)
+# print(f"Grammatical Score: {score}")

@@ -63,21 +63,38 @@ class IndianLangGrammaticalCheck(Strategy):
         if(isinstance(self.nlp, stanza.Pipeline)):
             doc = self.nlp(text)
             sentence = doc.sentences[0]
-            print("sentence type :", type(sentence))
             return self.build_tree(sentence)
         else:
             logger.debug("Using Levenshtein distance.")
             return None
 
     def tree_similarity(self, original:str, corrected:str, use_ted=True):
+
+        def count_nodes(node):
+            if node is None:
+                return 0
+            total = 1
+            for child in node.children:
+                total += count_nodes(child)
+            return total
+
+        # if(use_ted):
         self.detect_lang(original, corrected)
         ori_tree, corr_tree = self.get_parse_tree(original), self.get_parse_tree(corrected)
-        if(ori_tree is not None and corr_tree is not None and use_ted):
+        score_ted = None
+        if(ori_tree is not None and corr_tree is not None):
             ted = simple_distance(ori_tree, corr_tree)
-        else:
-            ted = Levenshtein.distance(original, corrected)
+            ori_tree_len = count_nodes(ori_tree)
+            corr_tree_len = count_nodes(corr_tree)
+            max_dist = max(ori_tree_len, corr_tree_len)
+            score_ted = 1 - (ted / max_dist)
+
+        # else:
+        ted = Levenshtein.distance(original, corrected)
         max_dist = max(len(original), len(corrected))
-        sim = 1 - (ted / max_dist)
+        score_lev = 1 - (ted / max_dist)
+        
+        sim = (score_lev + score_ted) / 2 if score_ted is not None else score_lev
         return sim
 
     def make_prompt(self, sent:str):
@@ -87,6 +104,10 @@ class IndianLangGrammaticalCheck(Strategy):
     def ollama_connect(self, model_name:str, text:str):
         ollama_client = Client(host=self.ollama_url)
         try:
+            """
+            We are making a strong assumption that the model we provide will return a 
+            grammatically correct response.
+            """
             response = ollama_client.chat(
                 model = model_name,
                 messages = [
@@ -95,7 +116,12 @@ class IndianLangGrammaticalCheck(Strategy):
                         "content" : f"{text} /nothink",
                     }
                 ],
-                format="json"
+                format="json",
+                options= {
+                    "temperature": 0.3,
+                    "top_p": 0.5,
+                    "repeat_penalty": 1.2
+                }
             )
         except Exception as e:
             logger.error(f"Could not communicate with the {model_name}. Make sure the model is downloaded and running.")
@@ -130,25 +156,30 @@ class IndianLangGrammaticalCheck(Strategy):
             return [corr["correct"] for corr in corrections]
         else:
             return []
+    
+    def weighted_f1(self, scores:list, weights:list = [0.8, 0.2]): # weights  = [for vector sim, for avg_edit_dist]
+        weights = [w / sum(weights) for w in weights] # normalizing so the weights sum to 1
+        return 1 / sum(wt / score for wt, score in zip(weights, scores))
 
-    def evaluate(self, agent_response:str, expected:Optional[str]=None): #testcase:TestCase, conversation:Conversation):#agent_response:str, expected:Optional[str]=None):
-        prompt = self.make_prompt(agent_response)
+    def evaluate(self, testcase:TestCase, conversation:Conversation): #testcase:TestCase, conversation:Conversation):#agent_response:str, expected:Optional[str]=None):
+        prompt = self.make_prompt(conversation.agent_response)
         corr_sents = self.make_corrections(prompt)
-        # print(corr_sents)
-        # print(agent_response)
+        print(corr_sents)
+        print(conversation.agent_response)
         scores = []
         if len(corr_sents) > 0:
             for final in corr_sents:
                 # we are taking the embedding for both the sentences using the initial layer of the LLM which captures morpheme and strctural information
-                a1, b1 = self.embed(agent_response), self.embed(final)
+                a1, b1 = self.embed(conversation.agent_response), self.embed(final)
                 sim = self.cosine(a1, b1)
-                ted_sim = self.tree_similarity(agent_response, final, use_ted=dflt_vals.use_ted)
+                ted_sim = self.tree_similarity(conversation.agent_response, final, use_ted=dflt_vals.use_ted)
                 print(sim)
                 print(ted_sim)
                 # harmonic mean between the lev distance and the structural vector similarity score
-                score =  2 * sim * ted_sim / (sim + ted_sim + 1e-12)
+                # score =  2 * sim * ted_sim / (sim + ted_sim + 1e-12)
+                score = self.weighted_f1([sim, ted_sim])
                 scores.append(score)
-            final_score = float(np.mean(scores))
+            final_score = round(float(np.mean(scores)), 3)
             logger.info(f"Grammatical consistency score for the input is : {final_score}")
             return final_score
         else:
@@ -156,8 +187,8 @@ class IndianLangGrammaticalCheck(Strategy):
             logger.error("Could not receive corrections for the sentence using the user provided models. Returning 0 score.")
         return final_score
 
-if __name__ == "__main__":
-    checker = IndianLangGrammaticalCheck()
-    sent = "நான் இன்று ரொம்ப மகிழ்ச்சி இருக்கு ஆனா என் மனசுல ஏதோ சில ஒத்துக்காத மாதிரி எண்ணம் வருது அது எப்படி சரியா சொல்லுவது நான் ஒண்ணும் நன்றா நினைக்க முடியலே, அதனால கொஞ்சம் எல்லாம் குழப்பம் போல இருக்கு."
-    score = checker.evaluate(sent)
-    print(score)
+# if __name__ == "__main__":
+#     checker = IndianLangGrammaticalCheck()
+#     sent = "நான் இன்று ரொம்ப மகிழ்ச்சி இருக்கு ஆனா என் மனசுல ஏதோ சில ஒத்துக்காத மாதிரி எண்ணம் வருது அது எப்படி சரியா சொல்லுவது நான் ஒண்ணும் நன்றா நினைக்க முடியலே, அதனால கொஞ்சம் எல்லாம் குழப்பம் போல இருக்கு."
+#     score = checker.evaluate(sent)
+#     print(score)

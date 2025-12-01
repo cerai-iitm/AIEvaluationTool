@@ -95,9 +95,9 @@
         "score_file" : "scores"
     },
     "indian_lang_grammatical_check" : {
-        "use_ted" : true,
+        "use_ted" : false,
         "model_names" : ["qwen3:32b"],
         "n_tries" : 3,
-        "prompt" : "\n<|system|>\nYou are a grammar-correction assistant.\nIf the input paragraph is already grammatically correct, return it unchanged.\nOtherwise, correct the grammar while keeping the original language.\nDo not translate the text into any other language.\nReturn no additional information — only a dictionary of the form:\n{{\"correct\": \"<corrected paragraph>\"}}\n\n<|user|>\n{sent}\n\n<|assistant|>\n"
+        "prompt" : "\n<|system|>\nYou are a grammar-correction assistant.\nCorrect grammar, spelling, word choice, and sentence structure while preserving the original meaning and tone.\nYou may split the text into two or more sentences if it improves grammatical correctness or clarity.\nKeep the text in the same language as the input (do NOT translate).\nDo NOT simplify, shorten, expand, or paraphrase beyond what is required for grammatical correctness.\nIf the input paragraph is already grammatically correct, return it unchanged.\nReturn no additional information — only a dictionary of the form:\n{{\"correct\": \"<corrected paragraph>\"}}\n\n<|user|>\n{sent}\n\n<|assistant|>\n"
     }
 }

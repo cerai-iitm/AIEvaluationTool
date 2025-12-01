@@ -40,6 +40,8 @@ class SimilarityMatchStrategy(Strategy):
         try:
             pred_tokens = predictions.split()
             ref_tokens = references.split()
+            print(predictions)
+            print(references)
             smoothie = SmoothingFunction().method4
             score = sentence_bleu([ref_tokens], pred_tokens, smoothing_function=smoothie)
         except Exception:
