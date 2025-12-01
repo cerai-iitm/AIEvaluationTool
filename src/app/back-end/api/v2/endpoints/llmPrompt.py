@@ -50,8 +50,9 @@ def list_llm_prompts(db: DB = Depends(_get_db)):
     llmjudgeprompt = db.llmjudgeprompts
     return [
         LlmPromptListResponse(
-            llmjudgeprompt_id=llm.prompt_id,
-            llmjudgeprompt_name=llm.prompt,
+            llmPromptId=llm.prompt_id,
+            prompt=llm.prompt,
+            language=db.get_language_name(llm.lang_id)
         )
         for llm in llmjudgeprompt
     ]
@@ -273,9 +274,9 @@ def delete_llm_prompt(
         log_activity(
             username=username,
             entity_type="LLM Prompt",
-            entity_id=str(existing["llmPromptId"]),
+            entity_id=str(existing.prompt_id),
             operation="delete",
-            note=f"LLM Prompt '{existing['llmPromptId']}' deleted (v2)",
+            note=f"LLM Prompt '{existing.prompt_id}' deleted (v2)",
         )
 
     return {"message": "LLM prompt deleted successfully"}

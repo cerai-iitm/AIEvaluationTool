@@ -148,7 +148,8 @@ def create_response(
                     break
                 next_id += 1
 
-        lang_id = db.add_or_get_language_id(payload.language)
+        language = payload.language if payload.language else "English"
+        lang_id = db.add_or_get_language_id(language)
 
         prompt_obj = Prompt(user_prompt=payload.user_prompt, system_prompt=payload.system_prompt, lang_id=lang_id)
         prompt_id = db.add_or_get_prompt(prompt_obj)
@@ -284,9 +285,9 @@ def update_response_v2(
         response_id=updated.response_id,
         response_text=updated.response_text,
         response_type=updated.response_type,
-        language=getattr(updated, "lang", None),
-        user_prompt=getattr(updated, "user_prompt", ""),
-        system_prompt=getattr(updated, "system_prompt", None),
+        language=updated.lang.lang_name if updated.lang else None,
+        user_prompt=updated.prompt.user_prompt if updated.prompt else "",
+        system_prompt=updated.prompt.system_prompt if updated.prompt else None,
     )
 
 

@@ -225,7 +225,7 @@ export function PromptAddDialog({
               value={systemPrompt}
               onChange={(e) => setSystemPrompt(e.target.value)}
               className="bg-muted min-h-[80px]"
-              readOnly
+              
             />
           </div>
           <div className="space-y-1">

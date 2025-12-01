@@ -185,8 +185,10 @@ class DB:
                     prompt_id=getattr(prompt, "prompt_id"),
                     user_prompt=getattr(prompt, "user_prompt"),
                     system_prompt=getattr(prompt, "system_prompt"),
+                    lang=getattr(prompt, "lang"),
+                    domain=getattr(prompt, "domain"),
                 )
-                for prompt in session.query(Prompts).all()
+                for prompt in session.query(Prompts).options(joinedload(Prompts.lang), joinedload(Prompts.domain)).all()
             ]
 
     @property
@@ -2923,7 +2925,7 @@ class DB:
                 ).digest
             if "language" in updates:
                 lang_id = self.add_or_get_language_id(updates["language"])
-                if lang_id == -1:
+                if lang_id is None:
                     raise ValueError(f"Language '{updates['language']}' not found")
                 llm_prompt.lang_id = lang_id
                 # Recompute hash if language changed
@@ -3028,12 +3030,12 @@ class DB:
                 prompt.system_prompt = updates["system_prompt"]
             if "language" in updates:
                 lang_id = self.add_or_get_language_id(updates["language"])
-                if lang_id == -1:
+                if lang_id is None:
                     raise ValueError(f"Language '{updates['language']}' not found")
                 prompt.lang_id = lang_id
             if "domain" in updates:
                 domain_id = self.add_or_get_domain_id(updates["domain"])
-                if domain_id == -1:
+                if domain_id is None:
                     raise ValueError(f"Domain '{updates['domain']}' not found")
                 prompt.domain_id = domain_id
 
@@ -3176,7 +3178,7 @@ class DB:
                 # Update language if provided
                 if "language" in updates and updates["language"] is not None:
                     lang_id = self.add_or_get_language_id(updates["language"])
-                    if lang_id == -1:
+                    if lang_id is None:
                         raise ValueError(f"Language '{updates['language']}' not found")
                     if response.lang_id != lang_id:
                         response.lang_id = lang_id

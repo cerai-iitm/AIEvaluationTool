@@ -42,7 +42,7 @@ def _get_username_from_token(authorization: Optional[str]) -> Optional[str]:
 
 @prompt_router.get(
     "",
-    response_model=List[PromptListResponse],
+    response_model=List[PromptDetailResponse],
     summary="List all prompts (v2)",
 )
 def list_prompts(db: DB = Depends(_get_db)):
@@ -52,10 +52,12 @@ def list_prompts(db: DB = Depends(_get_db)):
             status_code=status.HTTP_404_NOT_FOUND, detail="Prompts not found"
         )
     return [
-        PromptListResponse(
+        PromptDetailResponse(
             prompt_id=prompt.prompt_id,
             user_prompt=prompt.user_prompt,
             system_prompt=prompt.system_prompt,
+            language = prompt.lang.lang_name if prompt.lang else None,
+            domain = prompt.domain.domain_name if prompt.domain else None
         )
         for prompt in prompts
     ]
@@ -303,9 +305,9 @@ def delete_prompt(
         log_activity(
             username=username,
             entity_type="Prompt",
-            entity_id=str(existing["prompt_id"]),
+            entity_id=str(existing.prompt_id),
             operation="delete",
-            note=f"Prompt '{existing['prompt_id']}' deleted",
+            note=f"Prompt '{existing.prompt_id}' deleted",
         )
 
     return {"message": "Prompt deleted successfully"}

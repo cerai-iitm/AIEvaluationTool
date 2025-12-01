@@ -18,8 +18,9 @@ class LlmPromptUpdateV2(BaseModel):
 
 
 class LlmPromptListResponse(BaseModel):
-    llmjudgeprompt_id: int
-    llmjudgeprompt_name: str
+    llmPromptId: int
+    prompt: str
+    language: Optional[str] = None
 
 
 class LlmPromptDetailResponse(BaseModel):
