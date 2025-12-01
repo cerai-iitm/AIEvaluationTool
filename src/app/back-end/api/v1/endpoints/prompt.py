@@ -103,85 +103,101 @@ async def update_prompt(
     db: DB = Depends(_get_db),
     authorization: Optional[str] = Header(None)
 ):
+    update_data = prompt_update.model_dump(exclude_unset=True)
+    if not update_data:
+        existing = db.get_prompt(prompt_id)
+        if existing is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Prompt not found")
+        return existing
+
+    try:
+        updated = db.update_prompt_v2(prompt_id, **update_data)
+        return updated
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+    if updated is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Prompt not found")
+
     if not authorization:
         raise HTTPException(status_code=401, detail="Authorization header missing")
 
-    session = db.Session()
-    try:
-        prompt = session.query(PromptsTable).filter(PromptsTable.prompt_id == prompt_id).first()
-        if not prompt:
-            raise HTTPException(status_code=404, detail="Prompt not found")
+    # session = db.Session()
+    # try:
+    #     prompt = session.query(PromptsTable).filter(PromptsTable.prompt_id == prompt_id).first()
+    #     if not prompt:
+    #         raise HTTPException(status_code=404, detail="Prompt not found")
 
-        previous_user_prompt = prompt.user_prompt
-        previous_system_prompt = prompt.system_prompt
-        previous_language = getattr(prompt.lang, "lang_name", None)
-        previous_domain = getattr(prompt.domain, "domain_name", None)
+    #     previous_user_prompt = prompt.user_prompt
+    #     previous_system_prompt = prompt.system_prompt
+    #     previous_language = getattr(prompt.lang, "lang_name", None)
+    #     previous_domain = getattr(prompt.domain, "domain_name", None)
 
-        if prompt_update.user_prompt is not None:
-            prompt.user_prompt = prompt_update.user_prompt
-        if prompt_update.system_prompt is not None:
-            prompt.system_prompt = prompt_update.system_prompt
-        if prompt_update.language is not None:
-            language = session.query(Languages).filter(Languages.lang_name == prompt_update.language).first()
-            if not language:
-                raise HTTPException(status_code=404, detail="Language not found")
-            prompt.lang = language
-        if prompt_update.domain is not None:
-            domain = session.query(Domains).filter(Domains.domain_name == prompt_update.domain).first()
-            if not domain:
-                raise HTTPException(status_code=404, detail="Domain not found")
-            prompt.domain = domain
+    #     if prompt_update.user_prompt is not None:
+    #         prompt.user_prompt = prompt_update.user_prompt
+    #     if prompt_update.system_prompt is not None:
+    #         prompt.system_prompt = prompt_update.system_prompt
+    #     if prompt_update.language is not None:
+    #         language = session.query(Languages).filter(Languages.lang_name == prompt_update.language).first()
+    #         if not language:
+    #             raise HTTPException(status_code=404, detail="Language not found")
+    #         prompt.lang = language
+    #     if prompt_update.domain is not None:
+    #         domain = session.query(Domains).filter(Domains.domain_name == prompt_update.domain).first()
+    #         if not domain:
+    #             raise HTTPException(status_code=404, detail="Domain not found")
+    #         prompt.domain = domain
 
-        session.commit()
-        session.refresh(prompt)
+    #     session.commit()
+    #     session.refresh(prompt)
 
-        username = get_username_from_token(authorization)
-        if not username:
-            raise HTTPException(status_code=401, detail="Unauthorized")
+    username = get_username_from_token(authorization)
+    if not username:
+        raise HTTPException(status_code=401, detail="Unauthorized")
 
-        changes = []
-        if prompt.user_prompt != previous_user_prompt:
-            changes.append("user prompt updated")
-        if prompt.system_prompt != previous_system_prompt:
-            changes.append("system prompt updated")
+    changes = []
+    if prompt.user_prompt != previous_user_prompt:
+        changes.append("user prompt updated")
+    if prompt.system_prompt != previous_system_prompt:
+        changes.append("system prompt updated")
 
-        current_language = getattr(prompt.lang, "lang_name", None)
-        if current_language != previous_language:
-            changes.append("language updated")
+    current_language = getattr(prompt.lang, "lang_name", None)
+    if current_language != previous_language:
+        changes.append("language updated")
 
-        current_domain = getattr(prompt.domain, "domain_name", None)
-        if current_domain != previous_domain:
-            changes.append("domain updated")
+    current_domain = getattr(prompt.domain, "domain_name", None)
+    if current_domain != previous_domain:
+        changes.append("domain updated")
 
-        note = f"Prompt {prompt_id} updated"
-        if changes:
-            note += f": {', '.join(changes)}"
-        else:
-            note += " (no changes detected)"
+    note = f"Prompt {prompt_id} updated"
+    if changes:
+        note += f": {', '.join(changes)}"
+    else:
+        note += " (no changes detected)"
 
-        log_activity(
-            username=username,
-            entity_type="Prompt",
-            entity_id=prompt_id,
-            operation="update",
-            note=note
-        )
+    log_activity(
+        username=username,
+        entity_type="Prompt",
+        entity_id=prompt_id,
+        operation="update",
+        note=note
+    )
 
-        return PromptUpdate(
-            prompt_id=prompt.prompt_id,
-            user_prompt=prompt.user_prompt,
-            system_prompt=prompt.system_prompt,
-            language=getattr(prompt.lang, "lang_name", None) if prompt.lang else None,
-            domain=getattr(prompt.domain, "domain_name", None) if prompt.domain else None,
-        )
-    except HTTPException:
-        session.rollback()
-        raise
-    except Exception as e:
-        session.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        session.close()
+    return PromptUpdate(
+        prompt_id=updated.prompt_id,
+        user_prompt=updated.user_prompt,
+        system_prompt=updated.system_prompt,
+        language=getattr(updated.lang, "lang_name", None) if updated.lang else None,
+        domain=getattr(updated.domain, "domain_name", None) if updated.domain else None,
+    )
+    # except HTTPException:
+    #     session.rollback()
+    #     raise
+    # except Exception as e:
+    #     session.rollback()
+    #     raise HTTPException(status_code=500, detail=str(e))
+    # finally:
+    #     session.close()
 
 
 @prompt_router.post("/create", response_model=Prompts, summary="Create a new prompt")

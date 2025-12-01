@@ -39,8 +39,7 @@ class ActivityLog(Base):
     """Tracks actions performed by a user on various entities."""
 
     OPERATION = (
-        ('create', 'Create'),
-        ('created', 'Created'),  # For backward compatibility
+        ('create', 'Create'), #        ('created', 'Created'),  # For backward compatibility
         ('update', 'Update'),
         ('delete', 'Delete'),
     )

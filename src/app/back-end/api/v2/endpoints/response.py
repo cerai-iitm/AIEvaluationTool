@@ -240,6 +240,9 @@ def update_response_v2(
     db: DB = Depends(_get_db),
     authorization: Optional[str] = Header(None),
 ):
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Authorization header missing")
+
     update_data = payload.model_dump(exclude_unset=True)
     if not update_data:
         existing = db.get_response(response_id)
@@ -262,6 +265,11 @@ def update_response_v2(
     try:
         updated = db.update_response_v2(response_id, update_data)
     except ValueError as exc:
+        msg =str(exc)
+        if "Language" in msg and "not found" in msg:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Language not found"
+            ) from exc
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
         ) from exc
@@ -273,12 +281,29 @@ def update_response_v2(
 
     username = _get_username_from_token(authorization)
     if username:
+        changes: list[str] = [] 
+
+        if "response_text" in update_data and update_data["response_text"]:
+            changes.append("text updated")
+        if "user_prompt" in update_data or "system_prompt" in update_data:
+            changes.append("prompt updated")
+        if "response_type" in update_data and update_data["response_type"] is not None:
+            changes.append("type updated")
+        if "language" in update_data and update_data["language"] is not None:
+            changes.append("language updated")
+
+        note = f"Response '{updated.response_id}' updated"
+        if changes:
+            note += f": {', '.join(changes)}"
+        else:
+            note += " (no changes detected)"
+
         log_activity(
             username=username,
             entity_type="Response",
             entity_id=str(updated.response_id),
             operation="update",
-            note="Response updated via v2 endpoint",
+            note=note,
         )
 
     return ResponseDetailResponse(

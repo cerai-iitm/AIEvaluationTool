@@ -237,16 +237,16 @@ def update_llm_prompt_v2(
         log_activity(
             username=username,
             entity_type="LLM Prompt",
-            entity_id=str(updated["llmPromptId"]),
+            entity_id=str(updated.prompt_id),
             operation="update",
             note="LLM prompt updated via v2 endpoint",
         )
 
     return LlmPromptDetailResponse(
-        llmPromptId=updated["llmPromptId"],
-        prompt=updated["prompt"],
-        language=updated.get("language"),
-    )
+        llmPromptId=updated.prompt_id,
+        prompt=updated.prompt,
+        language=getattr(updated.lang, "lang_name", None) if updated.lang else None,
+    ) 
 
 
 @llm_prompt_router.delete(

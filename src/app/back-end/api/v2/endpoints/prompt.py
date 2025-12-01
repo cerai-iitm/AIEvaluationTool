@@ -132,8 +132,9 @@ def create_prompt(
     db: DB = Depends(_get_db),
     authorization: Optional[str] = Header(None),
 ):
-    try:
-        with db.Session() as session:
+    #try:
+    with db.Session() as session:
+        try:
             existing_ids = [row[0] for row in session.query(PromptsTable.prompt_id).order_by(PromptsTable.prompt_id).all()]
             next_id = 1
             for id in existing_ids:
@@ -141,42 +142,42 @@ def create_prompt(
                     break
                 next_id += 1
 
-        lang_id = db.add_or_get_language_id(prompt.language)
-        domain_id = db.add_or_get_domain_id(prompt.domain)   
+            lang_id = db.add_or_get_language_id(prompt.language)
+            domain_id = db.add_or_get_domain_id(prompt.domain)   
 
-        # Import and create Prompt data class instance
-        from lib.data.prompt import Prompt as PromptData
-        prompt_data = PromptData(
-            user_prompt=prompt.user_prompt,
-            system_prompt=prompt.system_prompt
-        )
-
-        prompt_obj = db._DB__add_or_get_prompt_custom_Id(prompt_data, next_id, domain_id, lang_id)         
-        if prompt_obj is None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="A prompt with the same content already exists.",
+            # Import and create Prompt data class instance
+            from lib.data.prompt import Prompt as PromptData
+            prompt_data = PromptData(
+                user_prompt=prompt.user_prompt,
+                system_prompt=prompt.system_prompt
             )
-        username = _get_username_from_token(authorization)
-        if username:
-            log_activity(
-                username=username,
-                entity_type="prompt",
-                entity_id = prompt_obj.prompt_id,
-                operation="create",
-                note=f"Created prompt with ID {prompt_obj.prompt_id}",
-            )
-        
-        return PromptDetailResponse(
-            prompt_id = prompt_obj.prompt_id,
-            user_prompt = prompt_obj.user_prompt,
-            system_prompt = prompt_obj.system_prompt,
-            language = prompt.language,
-            domain = prompt.domain
-        )
 
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+            prompt_obj = db._DB__add_or_get_prompt_custom_Id(prompt_data, next_id, domain_id, lang_id)         
+            if prompt_obj is None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="A prompt with the same content already exists.",
+                )
+            username = _get_username_from_token(authorization)
+            if username:
+                log_activity(
+                    username=username,
+                    entity_type="prompt",
+                    entity_id = prompt_obj.prompt_id,
+                    operation="create",
+                    note=f"Created prompt with ID {prompt_obj.prompt_id}",
+                )
+            
+            return PromptDetailResponse(
+                prompt_id = prompt_obj.prompt_id,
+                user_prompt = prompt_obj.user_prompt,
+                system_prompt = prompt_obj.system_prompt,
+                language = prompt.language,
+                domain = prompt.domain
+            )
+
+        except ValueError as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 
@@ -263,20 +264,33 @@ def update_prompt_v2(
 
     username = _get_username_from_token(authorization)
     if username:
+        changes = []
+        if "prompt" in update_data or "user_prompt" in update_data or "system_prompt" in update_data:
+            changes.append("prompt updated")
+        if "language" in update_data:
+            changes.append("language updated")
+        if "domain" in update_data:
+            changes.append("domain updated")
+
+        note = f"Prompt {prompt_id} updated"
+        if changes:
+            note += f": {', '.join(changes)}"
+        else:
+            note += " (no changes detected)"
         log_activity(
             username=username,
             entity_type="Prompt",
-            entity_id=str(updated["prompt_id"]),
+            entity_id=str(updated.prompt_id),
             operation="update",
-            note="Prompt updated via v2 endpoint",
-        )
+            note=note,
+        ) 
 
     return PromptDetailResponse(
-        prompt_id=updated["prompt_id"],
-        user_prompt=updated["user_prompt"],
-        system_prompt=updated.get("system_prompt"),
-        language=updated.get("language"),
-        domain=updated.get("domain"),
+        prompt_id=updated.prompt_id,
+        user_prompt=updated.user_prompt,
+        system_prompt=updated.system_prompt,
+        language=getattr(updated.lang, "lang_name", None) if updated.lang else None,
+        domain=getattr(updated.domain, "domain_name", None) if updated.domain else None,
     )
 
 
@@ -310,4 +324,4 @@ def delete_prompt(
             note=f"Prompt '{existing.prompt_id}' deleted",
         )
 
-    return {"message": "Prompt deleted successfully"}
+    return {"message": "Prompt deleted successfully"} 
