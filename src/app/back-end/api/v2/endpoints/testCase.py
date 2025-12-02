@@ -243,7 +243,7 @@ def create_testcase(
                 if username:
                     log_activity(
                         username=username,
-                        entity_type="test_case",
+                        entity_type="Test Case",
                         entity_id=str(testcase_full.testcase_id),
                         operation="create",
                         note=f"Created test case: {testcase_full.testcase_name}",

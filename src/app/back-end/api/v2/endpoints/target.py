@@ -158,7 +158,7 @@ def create_target(
             if username:
                 log_activity(
                     username=username,
-                    entity_type="target",
+                    entity_type="Target",
                     entity_id=str(target_obj.target_id),
                     operation="create",
                     note=f"Created target: {target_obj.target_name}",

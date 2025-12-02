@@ -283,9 +283,30 @@ export const TestCaseUpdateDialog = ({
       if (responseText !== (testCaseInitial.responseText || "")) {
         updatePayload.response_text = responseText;
       }
-      if (llmPrompt !== (testCaseInitial.llmPrompt || "")) {
-        updatePayload.llm_judge_prompt = llmPrompt;
+      // if (llmPrompt !== (testCaseInitial.llmPrompt || "")) {
+      //   updatePayload.llm_judge_prompt = llmPrompt;
+      // }
+      
+      // Handle LLM judge prompt based on strategy requirements
+      const currentStrategyRequiresLLM = selectedStrategyRequiresLLM;
+      const hasLLMPromptChanged = llmPrompt !== (testCaseInitial.llmPrompt || "");
+      const strategyChanged = strategy !== (testCaseInitial.strategyName || "");
+      
+      // If strategy doesn't require LLM prompt, always send null to clear judge_prompt
+      if (!currentStrategyRequiresLLM) {
+        // Strategy doesn't require LLM prompt - always send null
+        // This ensures judge_prompt is set to null when requires_llm_prompt is false
+        updatePayload.llm_judge_prompt = null;
+      } else if (hasLLMPromptChanged || strategyChanged) {
+        // Strategy requires LLM prompt and something changed
+        if (llmPrompt && llmPrompt.trim() !== "" && llmPrompt !== "none") {
+          updatePayload.llm_judge_prompt = llmPrompt;
+        } else {
+          // If strategy requires LLM but prompt is empty/none, send null to clear it
+          updatePayload.llm_judge_prompt = null;
+        }
       }
+      
       if (strategy !== (testCaseInitial.strategyName || "")) {
         updatePayload.strategy_name = strategy;
       }

@@ -162,7 +162,7 @@ def create_prompt(
             if username:
                 log_activity(
                     username=username,
-                    entity_type="prompt",
+                    entity_type="Prompt",
                     entity_id = prompt_obj.prompt_id,
                     operation="create",
                     note=f"Created prompt with ID {prompt_obj.prompt_id}",

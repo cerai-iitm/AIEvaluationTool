@@ -138,7 +138,7 @@ def create_llm_prompt(
         if username:
             log_activity(
                 username=username,
-                entity_type="llm_prompt",
+                entity_type="LLM Prompt",
                 entity_id=llm_prompt_obj.prompt_id,
                 operation="create",
                 note=f"Created LLM prompt with ID {llm_prompt_obj.prompt_id}",

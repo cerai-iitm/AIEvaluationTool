@@ -427,12 +427,9 @@ class DB:
             existing_strategy = (
                 session.query(Strategies).filter_by(strategy_name=strategy.name).first()
             )
+
             if existing_strategy:
-                self.logger.debug(
-                    f"Returning the existing strategy ID: {existing_strategy.strategy_id}"
-                )
-                # Return the existing strategy object
-                return existing_strategy
+                raise ValueError(f"Strategy name '{strategy.name}' already exists in the database.")
             
             self.logger.debug(f"Adding new strategy with custom strategy_id {strategy_id}: {strategy.name}")
 
@@ -559,6 +556,9 @@ class DB:
             with self.Session() as session:
                 existing_language = session.query(Languages).filter_by(lang_name=language_name).first()
                 if existing_language:
+                    raise ValueError(f"Language with name '{language_name}' already exists.")
+
+                if existing_language:
                     self.logger.debug(f"Returning the existing language: {existing_language.lang_name}")
                     return existing_language
                 
@@ -641,9 +641,9 @@ class DB:
         try:
             with self.Session() as session:
                 existing_domain = session.query(Domains).filter_by(domain_name=domain_name).first()
+
                 if existing_domain:
-                    self.logger.debug(f"Returning the existing domain: {existing_domain.domain_name}")
-                    return existing_domain
+                    raise ValueError(f"Domain '{domain_name}' already exists.")
                 
                 self.logger.debug(f"Adding new domain with custom domain_id {domain_id}: {domain_name}")
                 new_domain = Domains(domain_id=domain_id, domain_name=domain_name)
@@ -1334,6 +1334,9 @@ class DB:
                     .filter_by(hash_value=response.digest)
                     .first()
                 )
+                if existing_reponse:
+                    raise ValueError(f"Response already exists: {response}")
+
                 if existing_response:
                     self.logger.debug(
                         f"Returning the existing response ID: {existing_response.response_id}"
@@ -2330,6 +2333,18 @@ class DB:
                         (Targets.target_url == target.target_url)
                     )\
                     .first()
+                
+                # URL uniqueness validation
+                if target.target_url:
+                    existing_url = session.query(Targets).filter(Targets.target_url == target.target_url).first()
+                    if existing_url:
+                        raise ValueError(f"Target with URL '{target.target_url}' already exists.")
+
+                if target.target_name:
+                    existing_name = session.query(Targets).filter(Targets.target_name == target.target_name).first()
+                    if existing_name:
+                        raise ValueError(f"Target with name '{target.target_name}' already exists.")
+
                 if existing_target:
                     self.logger.debug(
                         f"Returning the existing target ID: {existing_target.target_id}"
