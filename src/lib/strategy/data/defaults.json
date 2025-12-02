@@ -92,12 +92,17 @@
         "type" : "perplexity"
     },
     "_evaluator" : {
-        "score_file" : "scores"
+        "score_file" : "scores",
+        "checkpoint" : 5
     },
     "indian_lang_grammatical_check" : {
         "use_ted" : false,
         "model_names" : ["qwen3:32b"],
         "n_tries" : 3,
         "prompt" : "\n<|system|>\nYou are a grammar-correction assistant.\nCorrect grammar, spelling, word choice, and sentence structure while preserving the original meaning and tone.\nYou may split the text into two or more sentences if it improves grammatical correctness or clarity.\nKeep the text in the same language as the input (do NOT translate).\nDo NOT simplify, shorten, expand, or paraphrase beyond what is required for grammatical correctness.\nIf the input paragraph is already grammatically correct, return it unchanged.\nReturn no additional information — only a dictionary of the form:\n{{\"correct\": \"<corrected paragraph>\"}}\n\n<|user|>\n{sent}\n\n<|assistant|>\n"
+    },
+    "grammatical_strategies" : {
+        "model_name" : "qwen3:32b",
+        "prompt" : "\n<|system|>\nYou are a grammar scoring assistant. \nBased on the corrected paragraph, score the grammar of the input paragraph. \nThe score should be between 0 and 1 continuous value.\nReturn no additional information - only a dictionary of the form\n{{\"grammar_score\":\"<score>\"}}\n\n <|corrected|>\n {corr}\n\n <|input|> {ori}\n\n <|assistant|>\n"
     }
 }

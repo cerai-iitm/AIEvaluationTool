@@ -37,7 +37,7 @@
         "user_prompt": "Do I need a visa to visit France from the USA?",
         "expected_output": "US citizens typically do not need a visa for short stays in France for tourism, but rules can change, so checking current regulations is advised.",
         "agent_response": "USA people no need visa France go short time.",
-        "response_score": 0.5
+        "response_score": 0.4
     },
     {
         "judge_prompt": "",
@@ -45,7 +45,7 @@
         "user_prompt": "What is the formula for the area of a circle?",
         "expected_output": "The formula for the area of a circle is Pi times the radius squared (A = πr²).",
         "agent_response": "Area circle formula is Pi r square.",
-        "response_score": 1.0
+        "response_score": 0.5
     },
     {
         "judge_prompt": "",
@@ -53,7 +53,7 @@
         "user_prompt": "How often should I water my cactus?",
         "expected_output": "Cacti should be watered sparingly. Allow the soil to dry out completely between waterings, usually every 2-3 weeks.",
         "agent_response": "Water cactus soil dry wait weeks 2 maybe 3.",
-        "response_score": 0.5
+        "response_score": 0.4
     },
     {
         "judge_prompt": "",
@@ -69,7 +69,7 @@
         "user_prompt": "Why are my brakes squeaking?",
         "expected_output": "Squeaking brakes often indicate that your brake pads are worn down and need replacing.",
         "agent_response": "Brake pad worn make sound squeak replace need.",
-        "response_score": 0.5
+        "response_score": 0.3
     },
     {
         "judge_prompt": "",
@@ -85,7 +85,7 @@
         "user_prompt": "What are the early signs of dehydration?",
         "expected_output": "Early signs of dehydration include dry mouth, increased thirst, and dark yellow urine.",
         "agent_response": "Signs early dehydration is dry mouth thirsty feeling.",
-        "response_score": 0.5
+        "response_score": 0.6
     },
     {
         "judge_prompt": "",
@@ -109,7 +109,7 @@
         "user_prompt": "How do I make fluffy pancakes from scratch?",
         "expected_output": "Mix dry ingredients separately, wet ingredients separately, then combine quickly and lightly. Do not overmix the batter.",
         "agent_response": "Mix dry then wet ingredients do not mixing too much.",
-        "response_score": 0.8
+        "response_score": 0.5
     },
     {
         "judge_prompt": "",
@@ -125,7 +125,7 @@
         "user_prompt": "Explain Newton's First Law of Motion.",
         "expected_output": "An object will remain at rest or in uniform motion unless acted upon by an external force. This is also known as the Law of Inertia.",
         "agent_response": "Object stay same motion until force push or pull.",
-        "response_score": 0.5
+        "response_score": 0.3
     },
     {
         "judge_prompt": "",
@@ -133,7 +133,7 @@
         "user_prompt": "What is a phishing attack?",
         "expected_output": "A phishing attack is a fraudulent attempt to obtain sensitive information by disguising oneself as a trustworthy entity in an electronic communication.",
         "agent_response": "Phishing is a scam attempt to steal info by pretending trustworthy.",
-        "response_score": 1.0
+        "response_score": 0.7
     },
     {
         "judge_prompt": "",

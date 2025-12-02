@@ -46,7 +46,6 @@ class IndianLangGrammaticalCheck(Strategy):
                 self.nlp = stanza.Pipeline(lang1, processors="tokenize, pos, lemma, depparse")
             except:
                 logger.debug(f"Language parser not available for {lang1}. Defaulting to Levenshtein distance for score calculation.")
-    
 
     def build_tree(self, sent):
         nodes = {word.id : Node(f"{word.text}/{word.upos}") for word in sent.words}
@@ -106,7 +105,7 @@ class IndianLangGrammaticalCheck(Strategy):
         try:
             """
             We are making a strong assumption that the model we provide will return a 
-            grammatically correct response.
+            grammatically correct response based on the input text.
             """
             response = ollama_client.chat(
                 model = model_name,

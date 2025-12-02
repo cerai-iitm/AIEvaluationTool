@@ -33,7 +33,7 @@ class StrategyImplementor:
                     score = obj.evaluate(testcase, conversation)
                     logger.info(f"Evaluation is complete...")
                 else:
-                    logger.info(f"The specified class name : {cls_name} could not be found.")
+                    logger.error(f"The specified strategy name : {self.strategy_name} could not be found.")
         except Exception as e:
             logger.error(f"[ERROR] : {e}")
         return score
