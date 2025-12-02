@@ -1518,7 +1518,17 @@ class DB:
                        end_ts=result.end_ts.isoformat(),
                        status=str(result.status),
                        run_id=getattr(result, 'run_id'))
-        
+    
+    def _ensure_datetime(self, value):
+        if value is None:
+            return None
+        if isinstance(value, datetime):
+            return value
+        try:
+            return datetime.fromisoformat(value)
+        except Exception:
+            return None
+
     def add_or_update_testrun(self, run: Run, override:bool = False) -> int:
         """
         Adds a new test run to the database or fetches its ID if it already exists.
@@ -1547,7 +1557,7 @@ class DB:
                     
                     # update the existing run with new details
                     self.logger.debug(f"Run '{run.run_name}' already exists. Updating existing run details (Status: {existing_run.status} -> {run.status}, TS: {existing_run.end_ts} -> {run.end_ts}) ..")
-                    setattr(existing_run, "end_ts", run.end_ts)  # Update the end timestamp
+                    setattr(existing_run, "end_ts", self._ensure_datetime(run.end_ts))  # Update the end timestamp
                     setattr(existing_run, "status", run.status)  # Update the status
 
                     # Commit the session to save the updated run
@@ -1569,8 +1579,8 @@ class DB:
                 # Create the Runs object
                 new_run = TestRuns(run_name=run.run_name,
                                    target_id = target_id,  # Use the target ID if the target exists
-                                   start_ts=run.start_ts,
-                                   end_ts=run.end_ts,
+                                   start_ts=self._ensure_datetime(run.start_ts),            # made changes for supporting both mariadb and sqlite
+                                   end_ts=self._ensure_datetime(run.end_ts),
                                    status=run.status)
                 
                 # Add the new run to the session
@@ -2073,7 +2083,7 @@ class DB:
                         # Update the existing conversation with the new details
                         setattr(existing_conversation, "evaluation_score", conversation.evaluation_score)
                         setattr(existing_conversation, "evaluation_reason", conversation.evaluation_reason)
-                        setattr(existing_conversation, "evaluation_ts", conversation.evaluation_ts)
+                        setattr(existing_conversation, "evaluation_ts", self._ensure_datetime(conversation.evaluation_ts))
                     # update the agent response details.
                     else:
                         if existing_conversation.prompt_ts is None and conversation.prompt_ts is not None:
@@ -2091,8 +2101,8 @@ class DB:
 
                         # Update the existing conversation with the new details
                         setattr(existing_conversation, "agent_response", conversation.agent_response)
-                        setattr(existing_conversation, "prompt_ts", conversation.prompt_ts)
-                        setattr(existing_conversation, "response_ts", conversation.response_ts)
+                        setattr(existing_conversation, "prompt_ts", self._ensure_datetime(conversation.prompt_ts))
+                        setattr(existing_conversation, "response_ts", self._ensure_datetime(conversation.response_ts))
                     
                     # Commit the session to save the updated conversation
                     session.commit()
@@ -2106,14 +2116,17 @@ class DB:
                 self.logger.debug(f"Adding a new conversation with run detail ID: {conversation.run_detail_id}")
 
                 # Create the Conversations object
-                new_conversation = Conversations(target_id=target_id,
-                                                 detail_id=conversation.run_detail_id,
-                                                 agent_response=conversation.agent_response,
-                                                 prompt_ts=conversation.prompt_ts,
-                                                 response_ts=conversation.response_ts,
-                                                 evaluation_score=conversation.evaluation_score,
-                                                 evaluation_reason=conversation.evaluation_reason,
-                                                 evaluation_ts=conversation.evaluation_ts)
+                new_conversation = Conversations(
+                                                target_id=target_id,
+                                                detail_id=conversation.run_detail_id,
+                                                agent_response=conversation.agent_response,
+                                                prompt_ts=self._ensure_datetime(conversation.prompt_ts),
+                                                response_ts=self._ensure_datetime(conversation.response_ts),
+                                                evaluation_score=conversation.evaluation_score,
+                                                evaluation_reason=conversation.evaluation_reason,
+                                                evaluation_ts=self._ensure_datetime(conversation.evaluation_ts)
+                                            )
+
 
                 # Add the new conversation to the session
                 session.add(new_conversation)

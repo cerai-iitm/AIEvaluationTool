@@ -109,7 +109,34 @@ def main():
         return
     
     # setting up the database connection
-    db_url = f"mariadb+mariadbconnector://{config['database']['user']}:{config['database']['password']}@{config['database']['host']}:{config['database']['port']}/{config['database']['database']}"
+    # db_url = f"mariadb+mariadbconnector://{config['database']['user']}:{config['database']['password']}@{config['database']['host']}:{config['database']['port']}/{config['database']['database']}"
+
+    # setting up the database connection
+    if config["database"]["engine"] == "sqlite":
+        db_file = config["database"].get("file", "app.db")
+
+        # Resolve project root (this file → importer → app → src → project_root)
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
+
+        # Place DB inside project_root/data
+        db_folder = os.path.join(project_root, "data")
+        os.makedirs(db_folder, exist_ok=True)
+
+        # Full DB path
+        db_path = os.path.join(db_folder, db_file)
+
+        # SQLite requires a file URL
+        db_url = f"sqlite:///{db_path}"
+
+    else:
+        # Original MariaDB path (fallback)
+        db_url = (
+            f"mariadb+mariadbconnector://"
+            f"{config['database']['user']}:{config['database']['password']}"
+            f"@{config['database']['host']}:{config['database']['port']}/"
+            f"{config['database']['database']}"
+        )
+
     try:
         logger.info(f"Database URL: {db_url}")
         db = DB(db_url=db_url, debug=False, loglevel=loglevel)
