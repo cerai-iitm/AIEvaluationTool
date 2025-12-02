@@ -251,14 +251,14 @@ export const TestCaseUpdateDialog = ({
       });
       return;
     }
-    if (!testCase?.llmPrompt && selectedStrategyRequiresLLM) {
-      toast({
-        title: "Error",
-        description: "LLM prompt is required",
-        variant: "destructive",
-      });
-      return;
-    }
+    // if (!llmPrompt && selectedStrategyRequiresLLM) {
+    //   toast({
+    //     title: "Error",
+    //     description: "LLM prompt is required",
+    //     variant: "destructive",
+    //   });
+    //   return;
+    // }
 
     setIsLoading(true);
     try {
@@ -504,7 +504,7 @@ export const TestCaseUpdateDialog = ({
                 </div>
               </div>
             ):(
-                <div className="space-y-1 pb-4">
+                <div className="space-y-1 pb-4 hidden">
                   <Label className="text-base font-semibold">LLM Prompt</Label>
                   <Textarea
                     value="none"

@@ -367,7 +367,7 @@ def update_testcase(
         normalized_updates[key] = value
 
     # Normalize optional fields
-    for optional_field in ("system_prompt", "response_text", "llm_judge_prompt"):
+    for optional_field in ("response_text", "llm_judge_prompt"):
         if optional_field in normalized_updates:
             normalized_updates[optional_field] = _normalize_optional(normalized_updates[optional_field])
 
