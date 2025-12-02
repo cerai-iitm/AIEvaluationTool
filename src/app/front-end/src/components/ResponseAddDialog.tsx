@@ -131,9 +131,14 @@ export const ResponseAddDialog = ({
     setSearchDialogOpen(true);
   };
 
-  const handleSelectPrompt = (selection: PromptSearchSelection) => {
-    setPromptId(selection.promptId);
-    setUserPrompts(selection.userPrompt);
+  const handleSelectPrompt = (
+    selection: Extract<
+      PromptSearchSelection,
+      { type: "userPrompt" | "systemPrompt" }
+    >,
+  ) => {
+    setPromptId(selection.promptId ?? null);
+    setUserPrompts(selection.userPrompt ?? "");
     setSystemPrompts(selection.systemPrompt ?? "");
     setFocusedField(null);
     setSearchDialogOpen(false);
@@ -167,8 +172,9 @@ export const ResponseAddDialog = ({
       const payload = {
         response_text: responseText.trim(),
         response_type: responseType,
-        language: language,
-        prompt_id: promptId,
+        language: language || undefined,
+        user_prompt: userPrompts.trim(),
+        system_prompt: systemPrompts.trim() || undefined,
       };
 
       const response = await fetch(API_ENDPOINTS.RESPONSE_CREATE_V2, {
@@ -339,7 +345,14 @@ export const ResponseAddDialog = ({
       <PromptSearchDialog
         open={searchDialogOpen}
         onOpenChange={setSearchDialogOpen}
-        onSelect={handleSelectPrompt}
+        onSelect={(selection) => {
+          if (
+            selection.type === "userPrompt" ||
+            selection.type === "systemPrompt"
+          ) {
+            handleSelectPrompt(selection);
+          }
+        }}
         searchType={searchType}
       />
     </>

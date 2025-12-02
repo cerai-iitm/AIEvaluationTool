@@ -139,52 +139,52 @@ def create_response(
     db: DB = Depends(_get_db),
     authorization: Optional[str] = Header(None),
 ):
-    try:
-        with db.Session() as session:
-            existing_ids = [row[0] for row in session.query(Responses.response_id).order_by(Responses.response_id).all()]
-            next_id = 1
-            for id in existing_ids:
-                if id != next_id:
-                    break
-                next_id += 1
+    # try:
+    with db.Session() as session:
+        existing_ids = [row[0] for row in session.query(ResponsesTable.response_id).order_by(ResponsesTable.response_id).all()]
+        next_id = 1
+        for id in existing_ids:
+            if id != next_id:
+                break
+            next_id += 1
 
-        language = payload.language if payload.language else "English"
-        lang_id = db.add_or_get_language_id(language)
+    language = payload.language if payload.language else "English"
+    lang_id = db.add_or_get_language_id(language)
 
-        prompt_obj = Prompt(user_prompt=payload.user_prompt, system_prompt=payload.system_prompt, lang_id=lang_id)
-        prompt_id = db.add_or_get_prompt(prompt_obj)
-        
-        if prompt_id == -1:
-             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to process prompt.")
+    prompt_obj = Prompt(user_prompt=payload.user_prompt, system_prompt=payload.system_prompt, lang_id=lang_id)
+    prompt_id = db.add_or_get_prompt(prompt_obj)
+    
+    if prompt_id == -1:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to process prompt.")
 
-        response_data = Response(response_text=payload.response_text, response_type=payload.response_type, lang_id=lang_id)
-        response_obj = db._DB__add_or_get_response_by_custom_id(response_data, prompt_id, next_id)
-        if response_obj is None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="A response with the same content already exists.",
-            )
-
-        username = _get_username_from_token(authorization)
-        if username:
-            log_activity(
-                username=username,
-                entity_type="Response",
-                entity_id=str(response_obj.response_id),
-                operation="create",
-                note=f"Created prompt with ID:{response_obj.response_id}",
-            )
-
-        return ResponseDetailResponse(
-            response_id=response_obj.response_id,
-            response_text=response_obj.response_text,
-            response_type=response_obj.response_type,
-            language = payload.language,
-            user_prompt = payload.user_prompt,
-            system_prompt = payload.system_prompt
+    response_data = Response(response_text=payload.response_text, response_type=payload.response_type, lang_id=lang_id)
+    response_obj = db._DB__add_or_get_response_by_custom_id(response_data, prompt_id, next_id)
+    if response_obj is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A response with the same content already exists.",
         )
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+    username = _get_username_from_token(authorization)
+    if username:
+        log_activity(
+            username=username,
+            entity_type="Response",
+            entity_id=str(response_obj.response_id),
+            operation="create",
+            note=f"Created prompt with ID:{response_obj.response_id}",
+        )
+
+    return ResponseDetailResponse(
+        response_id=response_obj.response_id,
+        response_text=response_obj.response_text,
+        response_type=response_obj.response_type,
+        language = payload.language,
+        user_prompt = payload.user_prompt,
+        system_prompt = payload.system_prompt
+    )
+    # except ValueError as e:
+    #     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 
