@@ -82,15 +82,15 @@ export const TestCaseUpdateDialog = ({
 
   const [focusedField, setFocusedField] = useState<null | "userPrompt" | "response" | "llm">(null);
 
-  function getTextareaHeight(lineCount: number){
-    if (lineCount <=1) return 40;
-    if (lineCount <=4) return lineCount * 40;
-    return 160
-  }
-  const SmartTextarea = ({ value, ...props}) => {
-    const lineCount = value.split("\n").length;
-    const height = getTextareaHeight(lineCount);
-  }
+  // function getTextareaHeight(lineCount: number){
+  //   if (lineCount <=1) return 40;
+  //   if (lineCount <=4) return lineCount * 40;
+  //   return 160
+  // }
+  // const SmartTextarea = ({ value, ...props}) => {
+  //   const lineCount = value.split("\n").length;
+  //   const height = getTextareaHeight(lineCount);
+  // }
 
   const handleSelectPrompt = (selection: PromptSearchSelection) => {
     switch (selection.type) {
@@ -247,6 +247,14 @@ export const TestCaseUpdateDialog = ({
       toast({
         title: "Error",
         description: "Test case ID is missing",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!testCase?.llmPrompt && selectedStrategyRequiresLLM) {
+      toast({
+        title: "Error",
+        description: "LLM prompt is required",
         variant: "destructive",
       });
       return;
@@ -421,6 +429,7 @@ export const TestCaseUpdateDialog = ({
                       minHeight: "40px",
                       overflowY: "auto"
                   }}
+                  readOnly = {responseText === "None"}
                   onFocus = { () => setFocusedField("response")}
                   onBlur={() => setTimeout(() => setFocusedField(null))}
                   onChange={(e) => setResponseText(e.target.value)}

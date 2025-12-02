@@ -72,6 +72,7 @@ def list_strategies(db: DB = Depends(_get_db)):
         StrategyListResponse(
             strategy_id=strategy.strategy_id,
             strategy_name=strategy.name,
+            strategy_description=strategy.description,
             requires_llm_prompt=strategy.strategy_id in strategy_ids_with_llm_prompt
         )
         for strategy in strategy

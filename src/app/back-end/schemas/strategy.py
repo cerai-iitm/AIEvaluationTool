@@ -26,6 +26,7 @@ class StrategyUpdateV2(BaseModel):
 class StrategyListResponse(BaseModel):
     strategy_id: int
     strategy_name: str
+    strategy_description: Optional[str]
     requires_llm_prompt: bool 
 
 

@@ -192,7 +192,7 @@ export const TestCaseAddDialog = ({
   // };
 
   const isAdded = (
-    userPrompts && systemPrompts && responseText && strategy && testCaseName
+    userPrompts && systemPrompts && strategy && testCaseName
   )
 
   const handleSelectPrompt = (selection: PromptSearchSelection) => {
@@ -268,10 +268,19 @@ export const TestCaseAddDialog = ({
       return;
     }
 
-    if (!responseText.trim()) {
+    // if (!responseText.trim()) {
+    //   toast({
+    //     title: "Validation Error",
+    //     description: "Response text is required",
+    //     variant: "destructive",
+    //   });
+    //   return;
+    // }
+
+    if (!llmPrompt.trim() && showLLMPrompt) {
       toast({
         title: "Validation Error",
-        description: "Response text is required",
+        description: "LLM prompt is required",
         variant: "destructive",
       });
       return;
@@ -480,7 +489,6 @@ export const TestCaseAddDialog = ({
                   value={responseText}
                   readOnly
                   className="bg-muted min-h-[73px] pr-10"
-                  required
                   onChange ={(e) => setResponseText(e.target.value)}
                   onFocus = {() => setFocusedField("response")}
                   onBlur = {() => setFocusedField(null)}
