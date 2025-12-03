@@ -92,7 +92,7 @@ class Evaluator:
         }
 
         The example files must start with the same name as the value of the "name" inside the strategy file.
-        e.g. for llm_judge, the example file should be llm_judge, not llm_judge_positive
+        e.g. for llm_judge_poitive or negative, the example file should be llm_judge (file that contains the strat)
 
         """
         self.set_strategy(strategy_name, metric_name)

@@ -15,7 +15,7 @@ logger = get_logger("privacy_strategy")
 warnings.filterwarnings("ignore", message="Asking to truncate to max_length")
 warnings.filterwarnings("ignore", message="The sentencepiece tokenizer")
 FileLoader._load_env_vars(__file__)
-dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), simple=True, strat_name="fairness_stereotype_recognition")
+dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), simple=True, strat_name="privacy_strategy")
 
 class PrivacyStrategy(Strategy):
     """
@@ -27,7 +27,7 @@ class PrivacyStrategy(Strategy):
 
     def __init__(self, name: str = "privacy_strategy", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
-        self.__metric_name = kwargs.get("metric_name")
+        self.__metric_name = kwargs.get("metric_name").lower()
         self.system_prompt = kwargs.get("system_prompt", "")
         self.prompt = kwargs.get("prompt", "")
 
@@ -59,6 +59,7 @@ class PrivacyStrategy(Strategy):
 
         # Load GLiNER model only once
         if self.__metric_name in ["privacy_awareness_query", "privacy_leakage"]:
+            print("Hello i am in here")
             if PrivacyStrategy._shared_model is None:
                 logger.info("Loading GLiNER model for PII detection...")
                 PrivacyStrategy._shared_model = GLiNER.from_pretrained("urchade/gliner_multi_pii-v1")
@@ -68,7 +69,7 @@ class PrivacyStrategy(Strategy):
     # Dispatcher
     # ======================================================
     def evaluate(self, testcase:TestCase, conversation:Conversation):#agent_response: str, expected_response: Optional[str] = None):
-        match self.__metric_name:
+        match self.__metric_name.lower():
             case "privacy_awareness_query":
                 return self.awareness_query(conversation.agent_response, self.system_prompt, self.prompt)
             case "privacy_leakage":
