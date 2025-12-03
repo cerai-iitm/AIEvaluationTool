@@ -1,6 +1,6 @@
 {
     "database": {
-        "driver":"sqlite",
+        "engine":"sqlite",
         "file": "datapoints.db",
         "host": "localhost",
         "port": 3306,

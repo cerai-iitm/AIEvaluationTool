@@ -20,10 +20,13 @@
           "login_button_element": "//button[normalize-space(.)='Sign In']"
       },
       "LogoutPage":{
-        "profile_element": "//div[.//div[@class='font-semibold' and text()='Subodh Kumar Singh']]",
-        "logout_button_element": "//button[.//span[normalize-space(text())='Logout']]"
+        "profile_pic_element": "//div[.//img[@alt='User']",
+        "send_element": "//button[@title='Send']",
+        "profile_element": "//div[.//div[@class='font-semibold' and text()='Sharwan kumar']]",
+        "logout_button_element": "//button[.//span[text()='Logout']]"
       },
       "ChatPage": {
+        "profile_pic_element": "//div[.//img[@alt='User']",
         "prompt_input_box_element": "//textarea[@id='react-transliterate-input'][@type='textarea']",
         "agent_response_element": "//div[@class='relative leading-relaxed text-sm']/div[@class='select-text selection:bg-blue-500 selection:text-white']/p"
       }
