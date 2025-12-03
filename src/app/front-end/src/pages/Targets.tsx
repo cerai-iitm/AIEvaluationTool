@@ -32,6 +32,7 @@ import TargetUpdateDialog from "@/components/TargetUpdateDialog";
 import TargetAddDialog from "@/components/TargetAddDialog";
 import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
+import { hasPermission } from "@/utils/permissions";
 
 interface Target {
   target_id: number;
@@ -61,6 +62,8 @@ const Targets = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [targetToDelete, setTargetToDelete] = useState<Target | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const [currentUserRole, setCurrentUserRole] = useState<string>("");
 
   const authHeaders = useCallback((): HeadersInit => {
     const headers: HeadersInit = {
@@ -147,8 +150,35 @@ const Targets = () => {
   );
 
   useEffect(() => {
-    fetchTargets();
-  }, [fetchTargets, refreshKey]);
+    const fetchUserRole = async () => {
+      try {
+        const token = localStorage.getItem("access_token");
+        if (!token) return;
+      
+
+        const response = await fetch(API_ENDPOINTS.CURRENT_USER, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (response.ok) {
+          const userData = await response.json();
+          setCurrentUserRole(userData.role || "");
+        }
+      } catch (error) {
+        console.error("Error fetching user role:", error);
+      }
+    };
+    if (open) {
+      fetchUserRole();
+      fetchTargets();
+    }
+  
+  }, [open, refreshKey]);
+
+
 
   const handleUpdateSuccess = () => {
     setRefreshKey((prev) => prev + 1);
@@ -369,14 +399,16 @@ const Targets = () => {
               </table>
             </div>
           </div>
-          <div className="mt-6 sticky bottom-5">
-            <Button
-              className="bg-primary hover:bg-primary/90"
-              onClick={() => setAddDialogOpen(true)}
-            >
-              + Add Target
-            </Button>
-          </div>
+          {(hasPermission(currentUserRole, "canCreateTables") || hasPermission(currentUserRole, "canCreateRecords")) && ( 
+              <div className="mt-6 sticky bottom-5">
+                <Button
+                  className="bg-primary hover:bg-primary/90"
+                  onClick={() => setAddDialogOpen(true)}
+                >
+                  + Add Target
+                </Button>
+              </div>
+          )}
         </div>
       </main>
 
@@ -460,25 +492,29 @@ const Targets = () => {
             <div className="p-4 text-center">No target selected.</div>
           )}
           <div className="sticky bottom-0 pt-4 flex justify-center gap-4 border-gray-200 z-10">
-            <Button
-              variant="destructive"
-              onClick={() =>
-                selectedTarget && handleDeleteClick(selectedTarget)
-              }
-            >
-              Delete
-            </Button>
-            <Button
-              className="bg-primary hover:bg-primary/90"
-              onClick={() => {
-                if (selectedTarget) {
-                  setUpdateTarget(selectedTarget);
+            { hasPermission(currentUserRole, "canDeleteTables") && (
+              <Button
+                variant="destructive"
+                onClick={() =>
+                  selectedTarget && handleDeleteClick(selectedTarget)
                 }
-                setIsDetailDialogOpen(false);
-              }}
-            >
-              Update
-            </Button>
+              >
+                Delete
+              </Button>
+            )}
+            {hasPermission(currentUserRole, "canUpdateTables") && (
+              <Button
+                className="bg-primary hover:bg-primary/90"
+                onClick={() => {
+                  if (selectedTarget) {
+                    setUpdateTarget(selectedTarget);
+                  }
+                  setIsDetailDialogOpen(false);
+                }}
+              >
+                Update
+              </Button>
+            )}
           </div>
         </DialogContent>
       </Dialog>

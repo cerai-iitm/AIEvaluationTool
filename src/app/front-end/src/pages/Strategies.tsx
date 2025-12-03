@@ -20,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { API_ENDPOINTS } from "@/config/api";
+import { hasPermission } from '@/utils/permissions';
 
 // Types
 interface Strategy {
@@ -64,6 +65,9 @@ const StrategyList: React.FC = () => {
   const [updateDescription, setUpdateDescription] = useState("");
   const [updateMessage, setUpdateMessage] = useState("");
 
+  const [currentUserRole, setCurrentUserRole] = useState<string>("");
+  const [refreshKey, setRefreshKey] = useState(0);
+
   // Fetch strategies from API
   const fetchStrategies = async () => {
     setIsLoading(true);
@@ -107,8 +111,35 @@ const StrategyList: React.FC = () => {
   };
 
   useEffect(() => {
+    // fetch current user role
+    const fetchUserRole = async () => {
+      try {
+        const token = localStorage.getItem("access_token");
+        if (!token) return;
+
+        const response = await fetch(API_ENDPOINTS.CURRENT_USER, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          }, 
+        });
+
+        if (response.ok) {
+          const userData = await response.json();
+          setCurrentUserRole(userData.role || "");
+        }
+      } catch (error) {
+        console.error("Error fetching user role:", error);
+      }
+    };
+
+    fetchUserRole();
     fetchStrategies();
-  }, []);
+  }, [refreshKey]);
+
+  // const handleUpdateSuccess = () => {
+  //   setRefreshKey((prev) => prev + 1); // Trigger refresh
+  // };
 
   useEffect(() => {
     if (selectedStrategy) {
@@ -262,6 +293,7 @@ const StrategyList: React.FC = () => {
       setShowEditDialog(false);
       setSelectedStrategy(null);
       fetchStrategies(); // Refresh the list
+      
     } catch (error: any) {
       console.error("Error deleting strategy:", error);
       toast({

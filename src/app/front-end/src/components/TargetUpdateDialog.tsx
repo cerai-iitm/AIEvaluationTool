@@ -19,6 +19,8 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
+import { hasPermission } from "@/utils/permissions";
+
 
 interface Target {
   target_id: number;
@@ -56,6 +58,8 @@ export default function TargetUpdateDialog({
   const [domainOptions, setDomainOptions] = useState<string[]>([]);
   const [languageOptions, setLanguageOptions] = useState<string[]>([]);
   const [isFetchingOptions, setIsFetchingOptions] = useState(false);
+
+  const [currentUserRole, setCurrentUserRole] = useState<string>("");
 
   // Fetch options from API
   const fetchOptions = useCallback(async () => {
@@ -104,8 +108,31 @@ export default function TargetUpdateDialog({
   }, []);
 
   useEffect(() => {
+    const fetchUserRole = async () => {
+      try {
+        const token = localStorage.getItem("access_token");
+        if (!token) return;
+
+        const response = await fetch(API_ENDPOINTS.CURRENT_USER, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+
+          },
+        });
+
+        if (response.ok) {
+          const userData = await response.json();
+          setCurrentUserRole(userData.role || "");
+        }
+
+      } catch (error) {
+        console.error("Error fetching user role:", error);
+      }
+    };
     if (open) {
       fetchOptions();
+      fetchUserRole();
     }
   }, [open, fetchOptions]);
 
@@ -146,6 +173,16 @@ export default function TargetUpdateDialog({
   };
 
   const handleSubmit = async () => {
+
+    if (!hasPermission(currentUserRole, "canUpdateTables") && !hasPermission(currentUserRole, "canUpdateRecords")) {
+      toast({
+        title: "Access Denied",
+        description: "You don't have permission to update targets",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!target?.target_id) {
       toast({
         title: "Error",
@@ -388,11 +425,19 @@ export default function TargetUpdateDialog({
             onChange={(e) => setNotes(e.target.value)}
             className="bg-gray-200 rounded px-4 py-1 mr-4 w-96"
             required
+            placeholder="Enter notes"
+            disabled={
+              !hasPermission(currentUserRole, "canUpdateTables") &&
+              !hasPermission(currentUserRole, "canUpdateRecords")
+            }
           />
           <Button
             onClick={handleSubmit}
             className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={!isChanged || !notes || isLoading}
+            disabled={!isChanged || !notes || isLoading ||
+              (!hasPermission(currentUserRole, "canUpdateTables") &&
+                !hasPermission(currentUserRole, "canUpdateRecords"))
+            }
           >
             {isLoading ? "Updating..." : "Submit"}
           </Button>

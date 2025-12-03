@@ -620,8 +620,7 @@ const TestCases = () => {
                 Delete
               </Button>
             )}
-            {(hasPermission(currentUserRole, "canUpdateTables") || 
-              hasPermission(currentUserRole, "canUpdateRecords")) && (
+            {hasPermission(currentUserRole, "canUpdateTables") && (
               <Button 
                 className="bg-primary hover:bg-primary/90"
                 onClick={() => {
