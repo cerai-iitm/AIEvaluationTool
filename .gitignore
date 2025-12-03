@@ -16,8 +16,6 @@ new_data.json
 responses_T**.json
 evaluation_summary**
 
-kul
-kul.pub
 test.py
 improvement_eval.py
 .deepeval
