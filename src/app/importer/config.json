@@ -1,10 +1,12 @@
 {
     "db": {
+        "driver":"sqlite",
+        "file": "datapoints.db",
         "host": "localhost",
         "port": 3306,
-        "user": "dbeaver",
-        "password": "root123",
-        "database": "mydb"
+        "user": "root",
+        "password": "jarvis2025",
+        "database": "aieval"
     },
     "files": {
         "plans": "data/plans.json",
