@@ -24,3 +24,8 @@ saved_evaluations
 new_fairness_stereotype_recognition.py
 *.pkl
 .strategy_*.json
+
+data/*.db
+*.db
+AI
+*.sqlite3
