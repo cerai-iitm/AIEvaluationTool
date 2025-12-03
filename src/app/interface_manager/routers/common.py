@@ -49,7 +49,7 @@ def login():
         result = login_whatsapp()
         return JSONResponse(content={"result": bool(result)})
 
-    if app_type == "WEBAPP":
+    if str.upper(app_type) == "WEBAPP":
         logger.info(f"Login request: WebApp {app_name}")
         result = login_webapp(app_name)
         return JSONResponse(content={"result": bool(result)})
@@ -69,7 +69,7 @@ def logout():
         result = logout_whatsapp()
         return JSONResponse(content={"result": bool(result)})
 
-    if app_type == "WEBAPP":
+    if str.upper(app_type) == "WEBAPP":
         logger.info(f"Logout request: WebApp {app_name}")
         result = logout_webapp(app_name)
         return JSONResponse(content={"result": bool(result)})
@@ -89,7 +89,7 @@ async def chat(prompt: PromptCreate):
         result = send_prompt_whatsapp(chat_id=prompt.chat_id, prompt_list=prompt.prompt_list)
         return JSONResponse(content={"response": result})
 
-    if app_type == "WEBAPP":
+    if str.upper(app_type) == "WEBAPP":
         logger.info(f"Chat request: WebApp {app_name}")
         result = send_prompt(app_name=app_name, chat_id=prompt.chat_id, prompt_list=prompt.prompt_list)
         return JSONResponse(content={"response": result})
@@ -109,7 +109,7 @@ def close():
         close_whatsapp()
         return JSONResponse(content={"message": "WhatsApp Web closed successfully"})
 
-    if app_type == "WEBAPP":
+    if str.upper(app_type) == "WEBAPP":
         logger.info(f"Close request: WebApp {app_name}")
         close_webapp(app_name)
         return JSONResponse(content={"message": f"Closed WebApp {app_name}"})
@@ -126,7 +126,7 @@ def chat_interface():
 
     if app_type == "WHATSAPP_WEB":
         return get_ui_response_whatsapp()
-    if app_type == "WEBAPP":
+    if str.upper(app_type) == "WEBAPP":
         return get_ui_response_webapp()
 
     return {"error": "Unsupported application type"}

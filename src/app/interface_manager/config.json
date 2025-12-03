@@ -1,13 +1,13 @@
 {
     "base_url": "http://localhost:8000",
-    "application_type": "WEBAPP",
+    "application_type": "WHATSAPP_WEB",
     "debug": "True",
     "ollama_server_url": "http://localhost:11434",
     "server_url": "http://localhost:3000",
     "whatsapp_url": "https://web.whatsapp.com",
     "action": "send_all_prompts",
     "run_mode": "single_window",
-    "agent_name": "CPGRAMS",
-    "application_name": "CPGRAMS",
-    "application_url": "https://cpgramsaichatbot.com/"
+    "agent_name": "August AI",
+    "application_name": "August AI",
+    "application_url": "http://localhost:8000"
 }

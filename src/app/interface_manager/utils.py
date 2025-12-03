@@ -197,14 +197,16 @@ def retry_on_internet(max_attempts: int = 5, initial_delay: int = 3, max_delay: 
 # --------------------------------------------------------------------
 # UI Helpers
 # --------------------------------------------------------------------
-def is_logged_in(driver: webdriver.Chrome, profile_element: str) -> bool:
+def is_logged_in(driver: webdriver.Chrome, send_element: str) -> bool:
     """Check if a user is logged in by verifying presence of a profile element."""
     try:
+        print("received xpath: ", send_element)
+        # print(driver.page_source)
         WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, profile_element))
+            EC.presence_of_element_located((By.XPATH, send_element))
         )
         return True
-    except Exception:
+    except Exception as e:
         return False
 
 
@@ -297,7 +299,7 @@ def login_app(driver: webdriver.Chrome, app_name: str) -> bool:
             return True
 
         # Already logged in?
-        if logout_cfg and is_logged_in(driver, logout_cfg.get("profile_element", "")):
+        if logout_cfg and is_logged_in(driver, logout_cfg["profile_pic_element"]):
             logger.info(f"Already logged in to {app_name.upper()}")
             return True
 
@@ -319,6 +321,7 @@ def login_app(driver: webdriver.Chrome, app_name: str) -> bool:
 
     except Exception as e:
         logger.error(f"{app_name.upper()} login failed: {e}")
+        print(e)
         return False
 
 

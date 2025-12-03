@@ -1,6 +1,6 @@
 {
     "database": {
-        "driver":"sqlite",
+        "engine":"sqlite",
         "file": "datapoints.db",
         "host": "localhost",
         "port": 3306,
@@ -9,12 +9,6 @@
         "database": "aieval"
     },
     "target": {
-        "application_type": "WEBAPP",
-        "application_name": "CPGRAMS",
-        "application_url": "http://localhost:8000",
-        "agent_name": "CPGRAMS"
-    },
-    "target0": {
         "application_type": "WHATSAPP_WEB",
         "application_name": "August AI",
         "application_url": "http://localhost:8000",
