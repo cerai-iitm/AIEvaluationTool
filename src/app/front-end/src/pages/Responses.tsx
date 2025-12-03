@@ -32,6 +32,7 @@ import { ResponseUpdateDialog } from "@/components/ResponseUpdateDialog";
 import { ResponseAddDialog } from "@/components/ResponseAddDialog";
 import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
+import { hasPermission } from "@/utils/permissions";
 
 interface Response {
   response_id: number;
@@ -62,6 +63,7 @@ const Responses = () => {
   const itemsPerPage = 15;
 
   const [searchField, setSearchField] = useState("");
+  const [currentUserRole, setCurrentUserRole] = useState<string>("");
 
   const fetchResponses = useCallback(async () => {
     setIsLoading(true);
@@ -111,6 +113,28 @@ const Responses = () => {
   }, [toast]);
 
   useEffect(() => {
+    const fetchUserRole = async () => {
+      try {
+        const token = localStorage.getItem("access_token");
+        if (!token) return;
+
+        const response = await fetch(API_ENDPOINTS.CURRENT_USER, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (response.ok) {
+          const userData = await response.json();
+          setCurrentUserRole(userData.role || "");
+        }
+      } catch (error) {
+        console.error("Error fetching user role:", error);
+      }
+    };
+
+    fetchUserRole();
     fetchResponses();
   }, [fetchResponses, refreshKey]);
 
@@ -308,14 +332,17 @@ const Responses = () => {
             </table>
           </div>
 
-          <div className="mt-6">
-            <Button
-              className="bg-primary hover:bg-primary/90"
-              onClick={() => setAddDialogOpen(true)}
-            >
-              + Add Response
-            </Button>
-          </div>
+          {(hasPermission(currentUserRole, "canCreateTables") ||
+            hasPermission(currentUserRole, "canCreateRecords")) && (
+            <div className="mt-6">
+              <Button
+                className="bg-primary hover:bg-primary/90"
+                onClick={() => setAddDialogOpen(true)}
+              >
+                + Add Response
+              </Button>
+            </div>
+          )}
         </div>
       </main>
 
@@ -376,21 +403,26 @@ const Responses = () => {
               </div>
 
               <div className="flex justify-center gap-4 pt-4">
-                <Button
-                  variant="destructive"
-                  onClick={() => handleDeleteClick(selectedResponse)}
-                >
-                  Delete
-                </Button>
-                <Button
-                  className="bg-primary hover:bg-primary/90"
-                  onClick={() => {
-                    setUpdateResponse(selectedResponse);
-                    setSelectedResponse(null);
-                  }}
-                >
-                  Update
-                </Button>
+                {hasPermission(currentUserRole, "canDeleteTables") && (
+                  <Button
+                    variant="destructive"
+                    onClick={() => handleDeleteClick(selectedResponse)}
+                  >
+                    Delete
+                  </Button>
+                )}
+                {(hasPermission(currentUserRole, "canUpdateTables") ||
+                  hasPermission(currentUserRole, "canUpdateRecords")) && (
+                  <Button
+                    className="bg-primary hover:bg-primary/90"
+                    onClick={() => {
+                      setUpdateResponse(selectedResponse);
+                      setSelectedResponse(null);
+                    }}
+                  >
+                    Update
+                  </Button>
+                )}
               </div>
             </div>
           )}

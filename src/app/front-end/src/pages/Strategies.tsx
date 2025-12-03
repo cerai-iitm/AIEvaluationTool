@@ -20,7 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { API_ENDPOINTS } from "@/config/api";
-import { hasPermission } from '@/utils/permissions';
+import { hasPermission } from "@/utils/permissions";
 
 // Types
 interface Strategy {
@@ -31,6 +31,7 @@ interface Strategy {
 
 const StrategyList: React.FC = () => {
   const { toast } = useToast();
+  const [currentUserRole, setCurrentUserRole] = useState<string>("");
   const [strategies, setStrategies] = useState<Strategy[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -65,7 +66,6 @@ const StrategyList: React.FC = () => {
   const [updateDescription, setUpdateDescription] = useState("");
   const [updateMessage, setUpdateMessage] = useState("");
 
-  const [currentUserRole, setCurrentUserRole] = useState<string>("");
   const [refreshKey, setRefreshKey] = useState(0);
 
   // Fetch strategies from API
@@ -111,7 +111,6 @@ const StrategyList: React.FC = () => {
   };
 
   useEffect(() => {
-    // fetch current user role
     const fetchUserRole = async () => {
       try {
         const token = localStorage.getItem("access_token");
@@ -121,7 +120,7 @@ const StrategyList: React.FC = () => {
           headers: {
             "Authorization": `Bearer ${token}`,
             "Content-Type": "application/json",
-          }, 
+          },
         });
 
         if (response.ok) {
@@ -402,14 +401,17 @@ const StrategyList: React.FC = () => {
             </div>
           </div>
           
-          <div className="mt-4 md:mt-6 sticky bottom-5">
-            <button 
-              className="bg-primary hover:bg-primary/90 text-white py-2 px-4 rounded text-sm md:text-base transition-colors" 
-              onClick={() => setAddOpen(true)}
-            >
-              + Add Strategy
-            </button>
-          </div>
+          {(hasPermission(currentUserRole, "canCreateTables") ||
+            hasPermission(currentUserRole, "canCreateRecords")) && (
+            <div className="mt-4 md:mt-6 sticky bottom-5">
+              <button 
+                className="bg-primary hover:bg-primary/90 text-white py-2 px-4 rounded text-sm md:text-base transition-colors" 
+                onClick={() => setAddOpen(true)}
+              >
+                + Add Strategy
+              </button>
+            </div>
+          )}
         </div>
       </main>
 
@@ -432,21 +434,26 @@ const StrategyList: React.FC = () => {
               <span className="text-sm md:text-base">{selectedStrategy.strategy_name}</span>
             </div>
             <div className="flex gap-4 md:gap-8 justify-center">
-              <button
-                className="px-6 md:px-8 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-sm md:text-base transition-colors"
-                onClick={handleDeleteClick}
-              >
-                Delete
-              </button>
-              <button
-                className="px-6 md:px-8 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm md:text-base transition-colors"
-                onClick={() => {
-                  setShowEditDialog(false);
-                  setShowUpdateModal(true);
-                }}
-              >
-                Update
-              </button>
+              {hasPermission(currentUserRole, "canDeleteTables") && (
+                <button
+                  className="px-6 md:px-8 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-sm md:text-base transition-colors"
+                  onClick={handleDeleteClick}
+                >
+                  Delete
+                </button>
+              )}
+              {(hasPermission(currentUserRole, "canUpdateTables") ||
+                hasPermission(currentUserRole, "canUpdateRecords")) && (
+                <button
+                  className="px-6 md:px-8 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm md:text-base transition-colors"
+                  onClick={() => {
+                    setShowEditDialog(false);
+                    setShowUpdateModal(true);
+                  }}
+                >
+                  Update
+                </button>
+              )}
             </div>
           </div>
         </div>
