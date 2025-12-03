@@ -6,7 +6,6 @@ from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
 from .logger import get_logger
 from .utils_new import FileLoader
-import spacy
 import os
 from ollama import Client
 import json
@@ -16,8 +15,6 @@ warnings.filterwarnings("ignore")
 FileLoader._load_env_vars(__file__)
 logger = get_logger("grammatical_strategies")
 dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), simple=True, strat_name="grammatical_strategies")
-
-nlp = spacy.load("en_core_web_sm")
 
 # This module implements grammatical strategies to analyze the agent response.
 class GrammaticalStrategy(Strategy):
