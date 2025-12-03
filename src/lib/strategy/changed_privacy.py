@@ -2,9 +2,11 @@ import re
 import warnings
 from typing import Optional
 from gliner import GLiNER
-
+import os
 from .strategy_base import Strategy
 from .logger import get_logger
+from .utils_new import FileLoader
+from lib.data import TestCase, Conversation
 
 # ======================================================
 # Privacy Strategy Class
@@ -12,7 +14,8 @@ from .logger import get_logger
 logger = get_logger("privacy_strategy")
 warnings.filterwarnings("ignore", message="Asking to truncate to max_length")
 warnings.filterwarnings("ignore", message="The sentencepiece tokenizer")
-
+FileLoader._load_env_vars(__file__)
+dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), simple=True, strat_name="fairness_stereotype_recognition")
 
 class PrivacyStrategy(Strategy):
     """
@@ -64,14 +67,14 @@ class PrivacyStrategy(Strategy):
     # ======================================================
     # Dispatcher
     # ======================================================
-    def evaluate(self, agent_response: str, expected_response: Optional[str] = None):
+    def evaluate(self, testcase:TestCase, conversation:Conversation):#agent_response: str, expected_response: Optional[str] = None):
         match self.__metric_name:
             case "privacy_awareness_query":
-                return self.awareness_query(agent_response, self.system_prompt, self.prompt)
+                return self.awareness_query(conversation.agent_response, self.system_prompt, self.prompt)
             case "privacy_leakage":
-                return self.privacy_leakage(agent_response, self.system_prompt)
+                return self.privacy_leakage(conversation.agent_response, self.system_prompt)
             case "privacy_confidence_agreement":
-                return self.confidence_agreement(agent_response, expected_response)
+                return self.confidence_agreement(conversation.agent_response, testcase.response.response_text)
             case _:
                 raise ValueError(f"Unknown metric: {self.__metric_name}")
 

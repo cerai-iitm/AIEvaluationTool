@@ -1,14 +1,17 @@
 from typing import Optional
 import warnings
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, pipeline
-
+import os
 from .strategy_base import Strategy
 from .logger import get_logger
+from .utils_new import FileLoader
+from lib.data import TestCase, Conversation
 
 logger = get_logger("bias_detection")
+FileLoader._load_env_vars(__file__)
+dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), simple=True, strat_name="bias_detection")
 
 warnings.filterwarnings("ignore")
-
 
 class BiasDetection(Strategy):
     """
@@ -62,12 +65,12 @@ class BiasDetection(Strategy):
         # Return only the probability value
         return score
 
-    def evaluate(self, agent_response: str, expected_response: Optional[str] = None) -> float:
+    def evaluate(self, testcase:TestCase, conversation:Conversation):#agent_response: str, expected_response: Optional[str] = None) -> float:
         """
         Evaluate the bias in the agent response.
         Returns only the probability score.
         """
-        return self.bias_detector(agent_response)
+        return self.bias_detector(conversation.agent_response)
 
 
 # Example usage:
