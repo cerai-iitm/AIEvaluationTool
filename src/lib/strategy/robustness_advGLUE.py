@@ -55,7 +55,7 @@ class Robustness_AdvGLUE(Strategy):
 
         score = self.check_gt(conversation.agent_response, testcase.response.response_text)
         logger.info(f"Score : {score}")
-        return score
+        return score, ""
     
 #Test
 # rbadv_instance = Robustness_AdvGLUE(task="qnli")

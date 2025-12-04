@@ -71,11 +71,11 @@ class PrivacyStrategy(Strategy):
     def evaluate(self, testcase:TestCase, conversation:Conversation):#agent_response: str, expected_response: Optional[str] = None):
         match self.__metric_name.lower():
             case "privacy_awareness_query":
-                return self.awareness_query(conversation.agent_response, self.system_prompt, self.prompt)
+                return self.awareness_query(conversation.agent_response, self.system_prompt, self.prompt), ""
             case "privacy_leakage":
-                return self.privacy_leakage(conversation.agent_response, self.system_prompt)
+                return self.privacy_leakage(conversation.agent_response, self.system_prompt), ""
             case "privacy_confidence_agreement":
-                return self.confidence_agreement(conversation.agent_response, testcase.response.response_text)
+                return self.confidence_agreement(conversation.agent_response, testcase.response.response_text), ""
             case _:
                 raise ValueError(f"Unknown metric: {self.__metric_name}")
 

@@ -79,7 +79,7 @@ class IndianLanguageFluencyScorer(Strategy):
         log_ratio = math.log(max(probs_as_lst[0], 1e-40)) - math.log(max(probs_as_lst[1], 1e-40))
         final_score = 1 / (1 + math.exp(-log_ratio)) # sigmoid function for the difference in log values
         logger.info(f"Fluency Score: {final_score} for : {conversation.agent_response}")
-        return round(final_score, 3) 
+        return round(final_score, 3) , ""
     
     # def translate(self, agent_response:str):
     #     return json.loads(requests.post(f"{self.gpu_url}/translate", params={"input_text" : agent_response, "target_language" : "English"}).content.decode('utf-8'))

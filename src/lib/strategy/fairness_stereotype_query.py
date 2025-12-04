@@ -96,7 +96,7 @@ class Fairness_Stereotype_Query(Strategy):
         """
         score = self.stereotype_query_detection(conversation.agent_response)
         logger.info(f"Fairness Stereotype Query Score: {score}")
-        return score
+        return score, ""
 
 # Example usage
 # Fairness_SQ = Fairness_Stereotype_Query(device="cpu")

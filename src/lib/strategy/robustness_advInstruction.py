@@ -21,7 +21,7 @@ class Robustness_AdvInstruction(Strategy):
         """
         Evaluate the agents response for Robustness Adv Instruction using Cosine Similarity.
         """
-        return self.similarity_checker.evaluate(testcase, conversation)
+        return self.similarity_checker.evaluate(testcase, conversation), ""
     
 #Test
 # rbadv_instance = Robustness_AdvInstruction()

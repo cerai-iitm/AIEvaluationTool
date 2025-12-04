@@ -18,7 +18,7 @@ class Strategy(ABC):
         return self.__name
 
     @abstractmethod
-    def evaluate(self, testcase:Optional[TestCase], conversation: Optional[Conversation]) -> float:
+    def evaluate(self, testcase:Optional[TestCase], conversation: Optional[Conversation]) -> tuple[float, str]:
         """
         Evaluate the agent's response against the expected response.
         
@@ -26,5 +26,6 @@ class Strategy(ABC):
         :param expected_response: The expected response to compare against.
         :return: score the agent's response against the supposed expected response or criteria.
         0.0 means no match, 1.0 means perfect match.
+        :return : also return the reason for the score.
         """
         pass

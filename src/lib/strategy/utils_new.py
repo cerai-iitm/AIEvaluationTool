@@ -2,11 +2,14 @@ import os
 from dotenv import load_dotenv
 import json
 import ast
+import csv
 from .logger import get_logger
 from types import SimpleNamespace
+import hashlib
 from deepeval.metrics.g_eval.schema import Steps, ReasonScore
 from ollama import Client, AsyncClient
 from deepeval.models.base_model import DeepEvalBaseLLM
+
 
 logger = get_logger("utils_new")
 
@@ -101,7 +104,33 @@ class FileLoader:
         else:
             logger.error(f"[ERROR] : could not find the path specified : {full_path}")
             return {}
+    
+    @staticmethod
+    def _save_to_csv(run_file_path:str, df:dict, **kwargs):
+        folder_path = os.path.join(os.path.dirname(run_file_path), os.path.join(kwargs.get("data_dir"), kwargs.get("save_dir")) )
+        if not os.path.exists(folder_path):
+            os.mkdir(folder_path)
+        file_path = os.path.join(folder_path, f"{kwargs.get('strat_name')}.csv")
+        file_exists = os.path.isfile(file_path)
+        hash = hashlib.sha256(df.get("id").encode('utf-8')).hexdigest()
 
+        if file_exists:
+            with open(file_path, newline='', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                fields = reader.fieldnames     
+                data = {row["id"] : row for row in reader}
+            values = [hash, *df.get("score").values()]
+            data.update({hash : {f : v for f, v in zip(fields, values)}}) 
+        else:
+            fields = ["id", *df.get("score").keys()]
+            values = [hash, *df.get("score").values()]
+            data = {hash : {f : v for f, v in zip(fields, values)}}
+
+        with open(file_path, mode='w', newline='', encoding='utf-8') as f:
+            writer = csv.DictWriter(f, fieldnames=fields)
+            writer.writeheader()
+            writer.writerows(data.values())
+        logger.info(f"Score and reason saved to : {file_path}")
 
 class CustomOllamaModel(DeepEvalBaseLLM):
     def __init__(self, model_name : str, url : str, *args, **kwargs):

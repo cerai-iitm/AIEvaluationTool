@@ -59,15 +59,15 @@ class Truthfulness_Internal(Strategy):
         match self.data_src:
             case "codah":
                 score = self.eval_internal_codah(conversation.agent_response, testcase.response.response_text)
-                return score
+                return score, ""
             case "squad" | "hotpot":
                 # score = self.eval_internal_squad(response, expected_answer, judge_prompt)
                 # return score
                 score = self.eval_internal_llm_as_judge(testcase, conversation)
-                return score
+                return score, ""
             case _:
                 logger.error(f"Unknown data source: {self.data_src}. Please choose from 'codah', 'squad', 'adv', or 'hotpot'.")
-                return None
+                return None, ""
 
     
 # #Test

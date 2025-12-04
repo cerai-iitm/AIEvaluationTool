@@ -51,7 +51,7 @@ class ToxicityDetectionUsingAPI(Strategy):
 
         toxicity_level = self.detect_toxicity_using_perspective_api(input_string=conversation.agent_response)#conversation.agent_response) #agent_response)
         logger.info(f"Toxicity level using Perspective API is: {toxicity_level}")
-        return toxicity_level
+        return toxicity_level, ""
 
 # Example Usage
 # Important: Ensure API_KEY is set in .env file

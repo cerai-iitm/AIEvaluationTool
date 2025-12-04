@@ -200,18 +200,18 @@ class TAT_TPM_MVH(Strategy):
 
         match self.__metric_name:
             case "turn_around_time":
-                return self.average_tat(log_lines)
+                return self.average_tat(log_lines), ""
 
             case "transactions_per_minute":
-                return self.transactions_per_minute(log_lines)
+                return self.transactions_per_minute(log_lines), ""
 
             case "message_volume_handling":
-                return self.message_volume_handling(log_lines)
+                return self.message_volume_handling(log_lines), ""
 
             case _:
                 raise ValueError(f"Unknown metric name: {self.__metric_name}")
 
-        return 0.0
+        return 0.0, ""
 
 #test
 #from tat_tpm_mvh import TAT_TPM_MVH

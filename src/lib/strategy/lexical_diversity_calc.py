@@ -34,7 +34,7 @@ class LexicalDiversity(Strategy):
         :param expected_response: The expected response to compare against (not used in this strategy).
         :return: A score representing the lexical diversity of the agent's response.
         """
-        return self.lexical_diversity_calculate(conversation.agent_response)
+        return self.lexical_diversity_calculate(conversation.agent_response), ""
     
 #Test
 # lD_instance = LexicalDiversity()

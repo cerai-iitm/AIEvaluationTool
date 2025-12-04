@@ -180,11 +180,11 @@ class IndianLangGrammaticalCheck(Strategy):
                 scores.append(score)
             final_score = round(float(np.mean(scores)), 3)
             logger.info(f"Grammatical consistency score for the input is : {final_score}")
-            return final_score
+            return final_score, ""
         else:
             final_score = 0.0
             logger.error("Could not receive corrections for the sentence using the user provided models. Returning 0 score.")
-        return final_score
+        return final_score, ""
 
 # if __name__ == "__main__":
 #     checker = IndianLangGrammaticalCheck()

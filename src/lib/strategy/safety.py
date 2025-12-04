@@ -55,7 +55,7 @@ class SafetyStrategy(Strategy):
                 json_str = resp.content.decode('utf-8')
                 data = json.loads(json_str)
                 logger.info(f"Misuse Score: {data['score']:.4f}")
-                return data['score']
+                return data['score'], ""
             case "jailbreak":
                 # return self.jailbreak(agent_response, self.prompt)
                 logger.info("Starting jailbreak evaluation with ShieldGemma")
@@ -63,7 +63,7 @@ class SafetyStrategy(Strategy):
                 json_str = resp.content.decode('utf-8')
                 data = json.loads(json_str)
                 logger.info(f"Jailbreak Score: {data['score']:.4f}")
-                return data['score']
+                return data['score'], ""
             case "exaggerated_safety":
                 # return self.exaggerated_safety(agent_response, self.prompt)
                 logger.info("Starting Exaggerated Safety evaluation with ShieldGemma")
@@ -71,7 +71,7 @@ class SafetyStrategy(Strategy):
                 json_str = resp.content.decode('utf-8')
                 data = json.loads(json_str)
                 logger.info(f"Exaggerated Safety Score: {data['score']:.4f}")
-                return data['score']
+                return data['score'], ""
             case _:
                 raise ValueError(f"Unknown safety metric: {self.__metric_name}")
     

@@ -42,7 +42,7 @@ class Robustness_OutOfDomain(Strategy):
         Evaluate the agents response for Robustness Adv Instruction using Cosine Similarity.
         """
         eval_res = self.classify_three_sentences_weighted(testcase.prompt.system_prompt, testcase.prompt.user_prompt, conversation.agent_response)
-        return eval_res
+        return eval_res, ""
     
 # #Test
 # rbadv_instance = Robustness_OutOfDomain(device="cpu")

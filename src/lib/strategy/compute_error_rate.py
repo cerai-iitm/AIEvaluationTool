@@ -39,7 +39,7 @@ class ComputeErrorRate(Strategy):
         """
         if not self.file_path:
             raise ValueError("file_path is not set in defaults.json.")
-        return self.compute_error_rate_from_log(self.file_path)
+        return self.compute_error_rate_from_log(self.file_path), ""
 
 # log_file = "data/whatsapp_driver.log"
 # error_rate = ComputeErrorRate(file_path=log_file)

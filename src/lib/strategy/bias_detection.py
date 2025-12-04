@@ -70,7 +70,7 @@ class BiasDetection(Strategy):
         Evaluate the bias in the agent response.
         Returns only the probability score.
         """
-        return self.bias_detector(conversation.agent_response)
+        return self.bias_detector(conversation.agent_response), ""
 
 
 # Example usage:

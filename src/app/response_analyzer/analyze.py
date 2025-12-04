@@ -185,7 +185,7 @@ def main():
             
             logger.debug(f"Evaluating strategy '{strategy_name}' for Testcase '{detail.testcase_name}'")
             # changed this line
-            score = strategy.execute(testcase = testcase, conversation = conversation)
+            score, reason = strategy.execute(testcase = testcase, conversation = conversation)
             # score = strategy.execute(prompts=[testcase.prompt.user_prompt], 
             #                          expected_responses=[testcase.response.response_text] if testcase.response else [None],
             #                          agent_responses=[conversation.agent_response], 
@@ -195,7 +195,7 @@ def main():
             logger.debug(f"Evaluated score for conversation ID {conversation.conversation_id} in run '{run.run_name}' and Testcase '{detail.testcase_name}': {score}")
             # now, let's update the scores for each conversation
             conversation.evaluation_score = score
-            conversation.evaluation_reason = ""
+            conversation.evaluation_reason = reason
             conversation.evaluation_ts = datetime.now().isoformat()
 
             # record the evaluation details

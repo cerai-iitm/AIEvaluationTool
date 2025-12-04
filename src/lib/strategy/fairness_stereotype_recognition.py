@@ -132,7 +132,7 @@ class Fairness_Stereotype_Recognition(Strategy):
         prev.append(result)
         save_json(prev, save_path)
 
-        return result["scores"]
+        return result["scores"], ""
     
 
 # ----------------------------

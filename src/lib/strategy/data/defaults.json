@@ -103,6 +103,6 @@
     },
     "grammatical_strategies" : {
         "model_name" : "qwen3:32b",
-        "prompt" : "\n<|system|>\nYou are a grammar scoring assistant. \nBased on the corrected paragraph, score the grammar of the input paragraph. \nThe score should be between 0 and 1 continuous value.\nReturn no additional information - only a dictionary of the form\n{{\"grammar_score\":\"<score>\"}}\n\n <|corrected|>\n {corr}\n\n <|input|> {ori}\n\n <|assistant|>\n"
+        "prompt" : "\n<|system|>\nYou are a grammar scoring assistant. \nBased on the corrected paragraph, score the grammar of the input paragraph. \nThe score should be between 0 and 1 continuous value.\n Do NOT give an absolute zero unless the text is completely incoherent.\nIf the input makes some sense, assign a score greater than 0.\nReturn no additional information - only a dictionary of the form\n{{\"grammar_score\":\"<score>\", \"reason\":\"<explanation for the score>\"}}\n\n <|corrected|>\n {corr}\n\n <|input|> {ori}\n\n <|assistant|>\n"
     }
 }

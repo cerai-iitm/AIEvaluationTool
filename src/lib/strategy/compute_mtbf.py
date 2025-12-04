@@ -70,7 +70,7 @@ class Compute_MTBF(Strategy):
             raise ValueError("file_path is not provided in strategy kwargs.")
         timestamps = self.extract_failure_timestamps(self.file_path)
         mtbf_time, uptime = self.calculate_mtbf_from_timestamps(timestamps)
-        return mtbf_time, uptime
+        return mtbf_time, ""#uptime
 
 # Example usage
 # file_path = "data/whatsapp_driver.log"

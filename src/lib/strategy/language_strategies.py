@@ -140,11 +140,11 @@ class LanguageStrategies(Strategy):
             case "language_detect_langdetect" | "language_similarity_sarvam":
                 score =  self.sync_eval(conversation.agent_response, testcase.response.response_text)
                 logger.info(f"Score : {score}")
-                return score
+                return score, ""
             case "language_detect_gt" | "language_similarity_gt":
                 score =  asyncio.run(self.async_eval(conversation.agent_response, testcase.response.response_text))
                 logger.info(f"Score : {score}")
-                return score
+                return score, ""
             case _:
                 logger.error(f"Strategy name {self.__strategy_name} is not recognized.")
                 raise ValueError(f"Strategy {self.__strategy_name} is not defined.")

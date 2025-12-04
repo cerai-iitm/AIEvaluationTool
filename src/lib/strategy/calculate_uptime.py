@@ -38,10 +38,10 @@ class UptimeCalculation(Strategy):
             if a == "None":
                 break
         if len(z) == int(self.__threshold/10):
-            return 1
+            return 1, ""
         else:
             logger.error("The application broke or uptime cannot be determined.")
-            return 0
+            return 0, ""
     
 # #Test
 # upt_instance = UptimeCalculation(threshold=100)

@@ -55,7 +55,7 @@ class TransliteratedStrategy(Strategy):
         logger.info("Evaluating transliterated text...")
         score = self.transliterate_text(conversation.agent_response, testcase.response.response_text)
         logger.info(f"Transliterated Score: {score}")
-        return score
+        return score, ""
 
 #Test
 # tl_instance = TransliteratedStrategy()

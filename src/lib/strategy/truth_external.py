@@ -37,9 +37,9 @@ class Truthfulness_External(Strategy):
         """
         resp = self.extract_prediction(conversation.agent_response)
         if resp.lower() == testcase.response.response_text.lower():
-            return 1.0
+            return 1.0, ""
         else:
-            return 0.0
+            return 0.0, ""
 
     
 # #Test

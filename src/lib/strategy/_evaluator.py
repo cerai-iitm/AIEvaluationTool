@@ -67,13 +67,18 @@ class Evaluator:
                     combined[name] = v
         return combined
 
-    def save_scores(self, strat_name:str, score:dict):
-        if(not FileLoader._check_if_present(__file__, self.data_dir, f"{dflt_vals.score_file}.json")):
-            score_data = {}
+    def save_scores(self, strat_name:str, score:dict, to_json:bool = True, **kwargs):
+        if to_json:
+            if(not FileLoader._check_if_present(__file__, self.data_dir, f"{dflt_vals.score_file}.json")):
+                score_data = {}
+            else:
+                score_data =  FileLoader._load_file_content(__file__, self.data_dir, file_name=f"{dflt_vals.score_file}.json")
+            score_data[strat_name] = score
+            FileLoader._save_values(__file__, score_data, self.data_dir, f"{dflt_vals.score_file}.json")
         else:
-            score_data =  FileLoader._load_file_content(__file__, self.data_dir, file_name=f"{dflt_vals.score_file}.json")
-        score_data[strat_name] = score
-        FileLoader._save_values(__file__, score_data, self.data_dir, f"{dflt_vals.score_file}.json")
+            concatted = "\n".join(list(kwargs.get("ex").values())[:3]) # basically we are joing first three values of the example, ie judge, sys and user prompts
+            print(concatted)
+            FileLoader._save_to_csv(__file__, {"id" : concatted, "score" : score}, strat_name=strat_name, data_dir="data", save_dir="scores_csv")
     
     def main(self, strategy_name:str = "", metric_name:str = ""):
         """
@@ -107,15 +112,20 @@ class Evaluator:
                 self.runner.set_metric_strategy(strategy_name, metric_name)
                 try:
                     human_scores.append(example["response_score"])
-                    assigned_scores.append(self.runner.execute(*self.get_testcase_obj(example)))
+                    objects = self.get_testcase_obj(example)
+                    curr_score, reason = self.runner.execute(*objects)
+                    assigned_scores.append(curr_score)
                 except Exception as e:
                     logger.error(f"Could not find the specified strategy name or the metric name. Additional info : {e}")
-
+                self.save_scores(strategy_name, 
+                                {"evaluated_score" : curr_score, "human_score" : example["response_score"], "reason" : reason},
+                                to_json= False, ex = example
+                            )
                 avg_score = round(np.mean(assigned_scores), 3)
                 human_score = round(np.mean(human_scores), 3)
                 logger.info(f"The average score for {strategy_name} based on the evaluation of examples is : {avg_score}")
                 logger.info(f"The average human score for {strategy_name} is : {human_score}")
-                if i % dflt_vals.checkpoint == 0: 
+                if i % dflt_vals.checkpoint == 0 and i != 0: 
                     self.save_scores(strategy_name, {"evaluated_score" : avg_score, "human_score" : human_score})
                 
 ev = Evaluator()

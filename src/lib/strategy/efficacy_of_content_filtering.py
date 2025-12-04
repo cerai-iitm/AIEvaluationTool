@@ -42,6 +42,6 @@ class ContentFiltering(Strategy):
             return 1
 
     def evaluate(self, testcase:TestCase, conversation:Conversation):
-        return self.is_content_filtered(conversation.agent_response)
+        return self.is_content_filtered(conversation.agent_response), ""
 
 

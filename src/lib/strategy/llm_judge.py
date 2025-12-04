@@ -56,7 +56,7 @@ class LLMJudgeStrategy(Strategy):
         eval_score = np.mean([metric.measure(to_evaluate) for metric in self.metrics])
         final_score = eval_score if self.eval_type == "positive" else (1 - eval_score)
         logger.info(f"Average score based on {len(self.models)} judge models : {final_score}, Reasons: {[model.score_reason for model in self.models]}")
-        return final_score
+        return final_score, "\n\n".join([model.score_reason for model in self.models])
         
 
 # dir_path = os.path.dirname(os.path.realpath(__file__))

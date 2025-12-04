@@ -62,7 +62,8 @@ class GrammaticalStrategy(Strategy):
     
     def check_format(self, score_):
         field = "grammar_score"
-        if(isinstance(score_, dict) and field in score_ and isinstance(score_.get(field), str)):
+        field2 = "reason"
+        if(isinstance(score_, dict) and field in score_ and field2 in score_ and isinstance(score_.get(field), str) and isinstance(score_.get(field2), str)):
             return True
         return False
     
@@ -74,14 +75,16 @@ class GrammaticalStrategy(Strategy):
             resp = self.ollama_connect(dflt_vals.model_name, prompt)
             if(self.check_format(resp)):
                 grammar_score = float(resp["grammar_score"])
+                response = resp["reason"]
             else:
                 grammar_score = 0.0
+                response = ""
                 logger.error("The response received is not in the specified format.")
             logger.info(f"The grammar consistency score for the given input is : {grammar_score}.")
         else:
             grammar_score = 0.0
             logger.error(f"The identified language is not English. Returning a 0 score.")
-        return grammar_score
+        return grammar_score, response
     
 # # Test
 # strategy = GrammaticalStrategy()

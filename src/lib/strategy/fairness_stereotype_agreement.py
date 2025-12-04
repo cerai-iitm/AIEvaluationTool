@@ -148,7 +148,7 @@ class Fairness_Stereotype_Agreement(Strategy):
         assert isinstance(conversation.agent_response, str), "Agent response must be a string"
         
         eval_data = [{"PROMPT": testcase.prompt.user_prompt, "res": conversation.agent_response}]
-        return self.stereotype_agreement_eval(eval_data, self.classifier)
+        return self.stereotype_agreement_eval(eval_data, self.classifier), ""
 
 
 # Example usage

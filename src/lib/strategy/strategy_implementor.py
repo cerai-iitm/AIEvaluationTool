@@ -22,6 +22,7 @@ class StrategyImplementor:
     
     def execute(self, testcase:Optional[TestCase], conversation:Optional[Conversation]):
         score = 0
+        reason = ""
         try:
             if self.strategy_name:
                 logger.info(f"Strategy name is : {self.strategy_name}")
@@ -30,13 +31,13 @@ class StrategyImplementor:
                     logger.debug(f"Class has been identified...")
                     obj : Strategy = self.ll.get_class(cls_name)(name=self.strategy_name, metric_name = self.metric_name)
                     logger.debug(f"Object has been created and evaluation is starting...")
-                    score = obj.evaluate(testcase, conversation)
+                    score, reason = obj.evaluate(testcase, conversation)
                     logger.info(f"Evaluation is complete...")
                 else:
                     logger.error(f"The specified strategy name : {self.strategy_name} could not be found.")
         except Exception as e:
             logger.error(f"[ERROR] : {e}")
-        return score
+        return score, reason
     
     # this is just in case , should be removable later
     def find_class_name(self, given_name:str):
