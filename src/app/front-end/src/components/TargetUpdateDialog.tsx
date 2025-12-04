@@ -201,6 +201,15 @@ export default function TargetUpdateDialog({
       return;
     }
 
+    if (!url || !url.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "URL field is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!notes || !notes.trim()) {
       toast({
         title: "Validation Error",
