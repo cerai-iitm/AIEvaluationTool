@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException
 
 from models.user import Users, ActivityLog
-from schemas import UserCreate, UserActivityCreate
+from schemas import UserCreate, UserActivityCreate, UpdateUser
 from config import helpers
 
 
@@ -27,6 +27,29 @@ def create_user(db: Session, payload: UserCreate) -> Users:
         is_active=True,
     )
     db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+def delete_user(db: Session, user_id: str) -> Users:
+    user = db.query(Users).filter(Users.user_id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    db.delete(user)
+    db.commit()
+    return user
+
+def update_user(db:Session, user_id: str, payload: UpdateUser) -> Users:
+    user = db.query(Users).filter(Users.user_id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.user_name = payload.user_name
+    user.email = payload.email
+    user.role = payload.role.lower()
+    if payload.password:
+        user.password = helpers.hash_password(payload.password)
+    if payload.is_active is not None:
+        user.is_active = payload.is_active
     db.commit()
     db.refresh(user)
     return user
@@ -99,3 +122,14 @@ def list_activity_by_entity_type(db: Session, entity_type: str) -> List[Activity
     )
 
 
+def delete_user_activity(db: Session, user_id: str) -> None:
+    # First get the user by user_id to get the username
+    user = db.query(Users).filter(Users.user_id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Delete all activities for this user by username
+    activities = db.query(ActivityLog).filter(ActivityLog.user_name == user.user_name).all()
+    for activity in activities:
+        db.delete(activity)
+    db.commit()

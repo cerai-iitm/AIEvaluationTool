@@ -5,7 +5,7 @@ from typing import List
 from database import get_db, get_current_user
 from models import user as user_model
 from controllers import users as users_controller
-from schemas import UserCreate, UserOut, UserActivityCreate, UserActivityResponse
+from schemas import UserCreate, UserOut, UserActivityCreate, UserActivityResponse, CreateUser, UpdateUser
 
 
 users_router = APIRouter(prefix="/api/users")
@@ -15,6 +15,7 @@ users_router = APIRouter(prefix="/api/users")
 async def get_current_user_info(current_user: user_model.Users = Depends(get_current_user)):
     """Get current authenticated user information."""
     return UserOut(
+        user_id=current_user.user_id,
         user_name=current_user.user_name,
         email=current_user.email,
         role=str(current_user.role)
@@ -26,15 +27,27 @@ async def get_users(db: Session = Depends(get_db)):
     rows = users_controller.list_users(db)
     # Map ORM to response schema
     return [
-        UserOut(user_name=row.user_name, email=row.email, role=str(row.role))
+        UserOut(user_id=row.user_id, user_name=row.user_name, email=row.email, role=str(row.role))
         for row in rows
     ]
 
 
+@users_router.put("/{user_id}", response_model=UserOut)
+async def update_user(user_id: str, payload: UpdateUser, db: Session = Depends(get_db)):
+    user = users_controller.update_user(db, user_id, payload)
+    return UserOut(user_id=user.user_id, user_name=user.user_name, email=user.email, role=str(user.role))
+
+
+
+@users_router.delete("/{user_id}", response_model=UserOut)
+async def delete_user(user_id: str, db: Session = Depends(get_db)):
+    user = users_controller.delete_user(db, user_id)
+    return UserOut(user_id=user.user_id, user_name=user.user_name, email=user.email, role=str(user.role))
+
 @users_router.post("", response_model=UserOut)
-async def create_user(payload: UserCreate, db: Session = Depends(get_db)):
+async def create_user(payload: CreateUser, db: Session = Depends(get_db)):
     user = users_controller.create_user(db, payload)
-    return UserOut(user_name=user.user_name, email=user.email, role=str(user.role))
+    return UserOut(user_id=user.user_id, user_name=user.user_name, email=user.email, role=str(user.role))
 
 
 @users_router.get("/activity/{entity_type}", response_model=List[UserActivityResponse])
@@ -63,6 +76,11 @@ async def get_activity_by_entity_type(entity_type: str, db: Session = Depends(ge
         for row in rows
     ]
 
+
+@users_router.delete("/activity/{user_id}")
+async def delete_user_activity(user_id: str, db: Session = Depends(get_db)):
+    users_controller.delete_user_activity(db, user_id)
+    return {"message": "User activity deleted successfully"}
 
 @users_router.get("/{username}", response_model=List[UserActivityResponse])
 async def get_user_activity(username: str, db: Session = Depends(get_db)):

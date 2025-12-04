@@ -1,18 +1,27 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 
-class UserCreate(BaseModel):
+class CreateUser(BaseModel):
     user_name: str
     email: EmailStr
     role: str
     password: str
     confirm_password: str
     is_active: Optional[bool] = True
+
+class UserCreate(CreateUser):
     created_at: Optional[str]
     updated_at: Optional[str]
 
     # class Config:
     #     orm_mode = True
+
+class UpdateUser(BaseModel):
+    user_name: str
+    email: EmailStr
+    role: str
+    password: Optional[str] = None
+    is_active: Optional[bool] = True
 
 class User(BaseModel):
     username: str
@@ -46,6 +55,7 @@ class UserHistory(BaseModel):
 
 
 class UserOut(BaseModel):
+    user_id: Optional[str] = None
     user_name: str
     email: EmailStr
     role: str

@@ -129,6 +129,9 @@ export const API_ENDPOINTS = {
   CURRENT_USER: `${API_BASE_URL}/api/users/me`,
   USERS: `${API_BASE_URL}/api/users`,
   USER_ACTIVITY: (username: string) => `${API_BASE_URL}/api/users/${username}`,
+  USER_UPDATE: (user_id: string) => `${API_BASE_URL}/api/users/${user_id}`,
+  USER_DELETE: (user_id: string) => `${API_BASE_URL}/api/users/${user_id}`,
+  USER_ACTIVITY_DELETE: (user_id: string) => `${API_BASE_URL}/api/users/activity/${user_id}`,
   ENTITY_ACTIVITY: (entityType: string) =>
     `${API_BASE_URL}/api/users/activity/${entityType}`,
 
