@@ -161,7 +161,7 @@ def create_target(
                     entity_type="Target",
                     entity_id=str(target_obj.target_id),
                     operation="create",
-                    note=f"Created target: {target_obj.target_name}",
+                    note=f"Target '{target_obj.target_name}' created",
                 )
             
             # Create response
@@ -249,15 +249,29 @@ def update_target(
     authorization: Optional[str] = Header(None),
 ):
     update_data = payload.model_dump(exclude_unset=True)
-    if not update_data:
+    # if not update_data:
+    #     existing = db.get_target_by_id(target_id)
+    #     if existing is None:
+    #         raise HTTPException(
+    #             status_code=status.HTTP_404_NOT_FOUND, detail="Target not found"
+    #         )
+    #     return existing
+
+    try:
         existing = db.get_target_by_id(target_id)
         if existing is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Target not found"
             )
-        return existing
 
-    try:
+        original_name = existing.target_name
+        original_type = existing.target_type
+        original_description = existing.target_description
+        original_url = existing.target_url
+        original_domain_name = existing.target_domain if hasattr(existing, "target_domain") else None
+        original_lang_names = sorted(existing.target_languages) if hasattr(existing, "target_languages") and existing.target_languages else []
+
+
         updated = db.update_target_by_id(target_id, update_data)
     except ValueError as exc:
         raise HTTPException(
@@ -270,14 +284,40 @@ def update_target(
         )
 
     username = _get_username_from_token(authorization)
-    if username:
-        log_activity(
-            username=username,
-            entity_type="Target",
-            entity_id=str(updated.target_name),
-            operation="update",
-            note="Target updated via v2 endpoint",
-        )
+    if not username:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
+
+    changes = []
+
+    if payload.target_name and original_name != payload.target_name:
+        changes.append(f"Name changed from '{original_name}' to '{payload.target_name}'")
+    if payload.target_type and original_type != payload.target_type:
+        changes.append("Type changed")
+    if payload.target_description and original_description != payload.target_description:
+        changes.append("Description changed")
+    if payload.target_url and original_url != payload.target_url:
+        changes.append("URL changed")
+    if payload.domain_name and original_domain_name != payload.domain_name:
+        changes.append("Domain changed")
+    if payload.lang_list is not None:
+        updated_lang_names = sorted(payload.lang_list)
+        if original_lang_names != updated_lang_names:
+            changes.append("Languages changed")
+
+    note = f"Target '{updated.target_name}' updated"
+    if changes:
+        note += f" ({', '.join(changes)})"
+    else:
+        note += " (no changes detected)"
+    
+
+    log_activity(
+        username=username,
+        entity_type="Target",
+        entity_id=str(updated.target_id),
+        operation="update",
+        note=note,
+    )
 
     return TargetDetailResponse(
         target_id=updated.target_id,
@@ -285,8 +325,8 @@ def update_target(
         target_type=updated.target_type,
         target_description=updated.target_description,
         target_url=updated.target_url,
-        domain_name=updated.domain.domain_name if updated.domain else None,
-        lang_list=[lang.lang_name for lang in updated.langs] if updated.langs else [],
+        domain_name=getattr(updated, "target_domain", None),
+        lang_list=getattr(updated, "target_languages", []),
     )
 
 
@@ -315,7 +355,7 @@ def delete_target(
         log_activity(
             username=username,
             entity_type="Target",
-            entity_id=str(existing.target_name),
+            entity_id=str(existing.target_id),
             operation="delete",
             note=f"Target '{existing.target_name}' deleted",
         )

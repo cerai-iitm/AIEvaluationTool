@@ -164,7 +164,7 @@ def create_strategy(
                 entity_type="Strategy",
                 entity_id=str(payload.strategy_name),
                 operation="create",
-                note=f"Created prompt with ID: {payload.strategy_name}",
+                note=f"Strategy {payload.strategy_name} created",
             )
 
         return StrategyDetailResponse(
@@ -241,14 +241,20 @@ def update_strategy(
         )
 
     username = _get_username_from_token(authorization)
-    if username:
-        log_activity(
-            username=username,
-            entity_type="Strategy",
-            entity_id=str(updated["strategy_name"]),
-            operation="update",
-            note="Strategy updated via v2 endpoint",
+    if not username:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Unauthorized: missing or invalid token",
         )
+
+
+    log_activity(
+        username=username,
+        entity_type="Strategy",
+        entity_id=str(updated.strategy_id),
+        operation="update",
+        note=f"Strategy '{updated.strategy_name}' updated (v2)",
+    )
 
     return updated
 

@@ -246,7 +246,7 @@ def create_testcase(
                         entity_type="Test Case",
                         entity_id=str(testcase_full.testcase_id),
                         operation="create",
-                        note=f"Created test case: {testcase_full.testcase_name}",
+                        note=f"Test Case: {testcase_full.testcase_name} Created",
                     )
 
                 return TestCaseDetailResponse(
@@ -389,7 +389,7 @@ def update_testcase(
     if username:
         changes = []
         if "testcase_name" in normalized_updates:
-            changes.append(f"name changed to '{updated.testcase_name}'")
+            changes.append(f"Name changed to '{updated.testcase_name}'")
         if "user_prompt" in normalized_updates or "system_prompt" in normalized_updates:
             changes.append("prompt updated")
         if "response_text" in normalized_updates:
@@ -399,7 +399,7 @@ def update_testcase(
         if "llm_judge_prompt" in normalized_updates:
             changes.append("judge prompt updated")
 
-        note = f"Test case '{updated.testcase_name}' updated"
+        note = f"Test Case '{updated.testcase_name}' updated"
         if changes:
             note += f": {', '.join(changes)}"
         else:
@@ -460,7 +460,7 @@ def delete_testcase(
         log_activity(
             username=username,
             entity_type="Test Case",
-            entity_id=str(existing.name),
+            entity_id=str(testcase_id),
             operation="delete",
             note=f"Test case '{existing.name}' deleted",
         )

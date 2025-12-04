@@ -149,8 +149,33 @@ const Targets = () => {
   );
 
   useEffect(() => {
-    fetchTargets();
-  }, [fetchTargets, refreshKey]);
+    const fetchUserRole = async () => {
+      try {
+        const token = localStorage.getItem("access_token");
+        if (!token) return;
+      
+
+        const response = await fetch(API_ENDPOINTS.CURRENT_USER, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (response.ok) {
+          const userData = await response.json();
+          setCurrentUserRole(userData.role || "");
+        }
+      } catch (error) {
+        console.error("Error fetching user role:", error);
+      }
+    };
+    if (open) {
+      fetchUserRole();
+      fetchTargets();
+    }
+  
+  }, [open, refreshKey]);
 
   const handleUpdateSuccess = () => {
     setRefreshKey((prev) => prev + 1);
@@ -475,8 +500,7 @@ const Targets = () => {
                 Delete
               </Button>
             )}
-            {(hasPermission(currentUserRole, "canUpdateTables") ||
-              hasPermission(currentUserRole, "canUpdateRecords")) && (
+            {hasPermission(currentUserRole, "canUpdateTables") && (
               <Button
                 className="bg-primary hover:bg-primary/90"
                 onClick={() => {

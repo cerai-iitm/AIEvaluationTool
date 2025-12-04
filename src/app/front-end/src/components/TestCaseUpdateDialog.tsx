@@ -299,7 +299,7 @@ export const TestCaseUpdateDialog = ({
         updatePayload.llm_judge_prompt = null;
       } else if (hasLLMPromptChanged || strategyChanged) {
         // Strategy requires LLM prompt and something changed
-        if (llmPrompt && llmPrompt.trim() !== "" && llmPrompt !== "none") {
+        if (llmPrompt && llmPrompt.trim() !== "") {  // && llmPrompt !== "none"
           updatePayload.llm_judge_prompt = llmPrompt;
         } else {
           // If strategy requires LLM but prompt is empty/none, send null to clear it
@@ -528,7 +528,7 @@ export const TestCaseUpdateDialog = ({
                 <div className="space-y-1 pb-4 hidden">
                   <Label className="text-base font-semibold">LLM Prompt</Label>
                   <Textarea
-                    value="none"
+                    value=""
                     readOnly
                     className="bg-muted min-h-[40px]"
                     style={{
