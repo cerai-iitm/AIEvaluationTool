@@ -57,6 +57,7 @@ def _get_username_from_token(authorization: Optional[str]) -> Optional[str]:
     summary="List all targets (v2)",
 )
 def list_targets(db: DB = Depends(_get_db)):
+    
     targets = db.targets
 
     return [

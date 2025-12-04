@@ -154,6 +154,15 @@ export default function TargetAddDialog({
       return;
     }
 
+    if (!description.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Target description is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!domain) {
       toast({
         title: "Validation Error",

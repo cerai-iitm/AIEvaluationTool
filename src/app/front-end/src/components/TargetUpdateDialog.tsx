@@ -192,6 +192,15 @@ export default function TargetUpdateDialog({
       return;
     }
 
+    if (!description || !description.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Description field is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!notes || !notes.trim()) {
       toast({
         title: "Validation Error",

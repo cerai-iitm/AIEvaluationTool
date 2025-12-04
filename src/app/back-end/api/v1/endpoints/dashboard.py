@@ -30,11 +30,11 @@ async def get_dashboard_summary(db: DB = Depends(_get_db)):
     session = db.Session()
     try:
         # Use DB helpers where available
-        test_cases_count = len(db.testcases) if db.testcases else 0
-        targets_count = len(db.targets) if db.targets else 0
-        domains_count = len(db.domains) if db.domains else 0
-        strategies_count = len(db.strategies) if db.strategies else 0
-        languages_count = len(db.languages) if db.languages else 0
+        test_cases_count = session.query(TestCases).count()
+        targets_count = session.query(Targets).count()
+        domains_count = session.query(Domains).count()
+        strategies_count = session.query(Strategies).count()
+        languages_count = session.query(Languages).count()
 
         # For prompts/responses/llm_prompts, count directly via session
         

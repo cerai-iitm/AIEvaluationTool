@@ -251,14 +251,23 @@ export const TestCaseUpdateDialog = ({
       });
       return;
     }
-    // if (!llmPrompt && selectedStrategyRequiresLLM) {
-    //   toast({
-    //     title: "Error",
-    //     description: "LLM prompt is required",
-    //     variant: "destructive",
-    //   });
-    //   return;
-    // }
+    if (selectedStrategyRequiresLLM && (llmPrompt === "None" || llmPrompt === null || !llmPrompt)) {
+      toast({
+        title: "Validation Error",
+        description: "LLM prompt is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!testCase?.llmPrompt || llmPrompt === "none") {
+      toast({
+        title: "Error",
+        description: "LLM prompt cannot be 'none'",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -510,6 +519,7 @@ export const TestCaseUpdateDialog = ({
                     onBlur = {() => setTimeout(() => setFocusedField(null), 100)}
                     onChange={(e) => setLlmPrompt(e.target.value)}
                     className="bg-muted min-h-[73px] pr-10"
+                    readOnly = {llmPrompt === "None" || llmPrompt === ""}
                   />
                   { focusedField === "llm" && (
                     <Button
