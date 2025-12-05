@@ -213,12 +213,21 @@ def update_llm_prompt_v2(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="LLM prompt not found"
             )
+
+        #existing_prompt = 
+        
         language_name = db.get_language_name(existing.lang_id)
-        return LlmPromptDetailResponse(
-            llmPromptId=existing.prompt_id,
-            prompt=existing.prompt,
-            language=language_name,
-        )
+        if payload.prompt is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Prompt cannot be empty",
+            )
+
+        # return LlmPromptDetailResponse(
+        #     llmPromptId=existing.prompt_id,
+        #     prompt=existing.prompt,
+        #     language=language_name,
+        # )
 
     try:
         updated = db.update_llm_prompt_v2(llm_prompt_id, update_data)

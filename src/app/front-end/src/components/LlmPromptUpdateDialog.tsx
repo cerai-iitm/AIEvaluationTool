@@ -146,6 +146,15 @@ export function LlmPromptUpdateDialog({
       return;
     }
 
+    if (!promptText.trim()) {
+      toast({
+        title: "Validation error",
+        description:
+          "LLM Prompt is empty.",
+        variant: "destructive",
+      })
+    }
+
     setIsSubmitting(true);
     try {
       const token = localStorage.getItem("access_token");
@@ -261,7 +270,7 @@ export function LlmPromptUpdateDialog({
 
           <Button
             className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800 ml-4"
-            disabled={!isChanged || !notes.trim() || isSubmitting}
+            disabled={!isChanged || !notes.trim() || isSubmitting || !language || !promptText.trim()}
             onClick={handleSubmit}
           >
             {isSubmitting ? (

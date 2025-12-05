@@ -2168,7 +2168,9 @@ class DB:
                 existing_llm_prompt = session.query(LLMJudgePrompts).filter_by(prompt=llm_prompt).first()
                 if existing_llm_prompt:
                     self.logger.debug(f"Returning the existing judge prompt: {existing_llm_prompt.prompt}")
-                    return existing_llm_prompt
+                    raise ValueError(f"Judge prompt already exists")
+
+                self.logger.debug(f"Adding new judge prompt: {llm_prompt}")
 
                 # Create an LLMJudgePrompt instance from the string to get the digest
                 judge_prompt_obj = LLMJudgePrompt(prompt=llm_prompt)
@@ -2925,14 +2927,21 @@ class DB:
     def update_llm_prompt_v2(self, llm_prompt_id: int, updates: dict) -> Optional[dict]:
         """Updates an LLM prompt similar to the v1 logic but returns a v2-style dict."""
         with self.Session() as session:
+            # llm_prompt = (
+            #     session.query(LLMJudgePrompts)
+            #     .options(joinedload(LLMJudgePrompts.lang))
+            #     .filter(LLMJudgePrompts.prompt_id == llm_prompt_id)
+            #     .first()
+            # )
             llm_prompt = (
                 session.query(LLMJudgePrompts)
-                .options(joinedload(LLMJudgePrompts.lang))
-                .filter(LLMJudgePrompts.prompt_id == llm_prompt_id)
+                .filter(LLMJudgePrompts.prompt == updates["prompt"])
                 .first()
             )
-            if not llm_prompt:
-                return None
+            if llm_prompt:
+                self.logger.debug(f"Returning the existing judge prompt: {llm_prompt.prompt}")
+                raise ValueError(f"Judge prompt already exists")
+                
 
             updated = False
 
@@ -2947,6 +2956,14 @@ class DB:
                 )
                 if existing_prompt:
                     raise ValueError("Prompt already exists")
+
+                # if updates["prompt"] is None:
+                #     raise {
+                #         "title": "ValueError",
+                #         "detail": "Prompt cannot be empty",
+                #     }
+                    
+
                 llm_prompt.prompt = updates["prompt"]
 
                 updated = True
