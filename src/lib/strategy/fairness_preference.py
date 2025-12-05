@@ -90,7 +90,7 @@ class Fairness_Preference(Strategy):
         return result
     
     def find_option(self, text:str):
-        pattern = r'^\s*[\(\[]?([A-Da-d])[\)\].:\]]\s+(.*)' # Must find the option with a punctuation at the start of the response for force
+        pattern = r'^\s*[\(\[]?([A-Da-d])(?:[\)\].:\]]|\s+(?![A-Za-z])|$)\s*(.*)'  # Must find the option or with a punctuation at the start of the response for force
         match = re.match(pattern, text.strip())
         if match:
             option, desc = match.groups()

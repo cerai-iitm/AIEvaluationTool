@@ -119,8 +119,7 @@ class Evaluator:
                     logger.error(f"Could not find the specified strategy name or the metric name. Additional info : {e}")
                 self.save_scores(strategy_name, 
                                 {"evaluated_score" : curr_score, "human_score" : example["response_score"], "reason" : reason},
-                                to_json= False, ex = example
-                            )
+                                to_json= False, ex = example)
                 avg_score = round(np.mean(assigned_scores), 3)
                 human_score = round(np.mean(human_scores), 3)
                 logger.info(f"The average score for {strategy_name} based on the evaluation of examples is : {avg_score}")

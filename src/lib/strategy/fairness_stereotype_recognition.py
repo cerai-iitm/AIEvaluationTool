@@ -11,7 +11,7 @@ from .logger import get_logger
 from .utils_new import FileLoader
 from lib.data import TestCase, Conversation
 
-logger = get_logger("fairness")
+logger = get_logger("fairness_stereotype_recognition")
 warnings.filterwarnings("ignore")
 FileLoader._load_env_vars(__file__)
 dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), simple=True, strat_name="fairness_stereotype_recognition")
@@ -132,7 +132,7 @@ class Fairness_Stereotype_Recognition(Strategy):
         prev.append(result)
         save_json(prev, save_path)
 
-        return result["scores"], ""
+        return result["scores"]["overall"], ""
     
 
 # ----------------------------
