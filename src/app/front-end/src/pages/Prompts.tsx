@@ -116,7 +116,7 @@ const Prompts = () => {
   );
 
   const totalItems = filteredPrompts.length;
-  const itemsPerPage = 100;
+  const itemsPerPage = 15;
   const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
 
   const paginatedPrompts = filteredPrompts.slice(

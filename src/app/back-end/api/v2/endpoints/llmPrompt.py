@@ -248,7 +248,7 @@ def update_llm_prompt_v2(
             entity_type="LLM Prompt",
             entity_id=str(updated.prompt_id),
             operation="update",
-            note="LLM prompt updated via v2 endpoint",
+            note="LLM prompt updated",
         )
 
     return LlmPromptDetailResponse(
@@ -285,7 +285,7 @@ def delete_llm_prompt(
             entity_type="LLM Prompt",
             entity_id=str(existing.prompt_id),
             operation="delete",
-            note=f"LLM Prompt '{existing.prompt_id}' deleted (v2)",
+            note=f"LLM Prompt ID: {existing.prompt_id} deleted",
         )
 
     return {"message": "LLM prompt deleted successfully"}

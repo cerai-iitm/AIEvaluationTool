@@ -203,9 +203,9 @@ def create_language(
                 log_activity(
                     username=username,
                     entity_type="Language",
-                    entity_id=str(created["lang_name"]),
+                    entity_id=str(created["lang_id"]),
                     operation="create",
-                    note=f"Language '{created['lang_name']}' created (v2)",
+                    note=f"Language '{created['lang_name']}' created",
                 )
 
             # Return the created language in the expected format
@@ -263,9 +263,9 @@ def update_language_v2(
         log_activity(
             username=username,
             entity_type="Language",
-            entity_id=str(updated["lang_id"]),
+            entity_id=str(lang_id),
             operation="update",
-            note="Language updated via v2 endpoint",
+            note="Language name updated",
         )
 
     return LanguageDetailResponse(
@@ -299,9 +299,9 @@ def delete_language(
         log_activity(
             username=username,
             entity_type="Language",
-            entity_id=str(existing),
+            entity_id=str(lang_id),
             operation="delete",
-            note=f"Language '{existing}' deleted (v2)",
+            note=f"Language '{existing}' deleted ",
         )
 
     return {"message": "Language deleted successfully"}

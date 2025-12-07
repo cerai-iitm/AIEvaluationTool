@@ -162,9 +162,9 @@ def create_strategy(
             log_activity(
                 username=username,
                 entity_type="Strategy",
-                entity_id=str(payload.strategy_name),
+                entity_id=str(strategy_obj.strategy_id),
                 operation="create",
-                note=f"Strategy {payload.strategy_name} created",
+                note=f"Strategy '{payload.strategy_name}' created",
             )
 
         return StrategyDetailResponse(
@@ -251,9 +251,9 @@ def update_strategy(
     log_activity(
         username=username,
         entity_type="Strategy",
-        entity_id=str(updated.strategy_id),
+        entity_id=str(updated['strategy_id']),
         operation="update",
-        note=f"Strategy '{updated.strategy_name}' updated (v2)",
+        note=f"Strategy '{updated['strategy_name']}' updated",
     )
 
     return updated
@@ -284,7 +284,7 @@ def delete_strategy(
         log_activity(
             username=username,
             entity_type="Strategy",
-            entity_id=str(existing.name),
+            entity_id=str(strategy_id),
             operation="delete",
             note=f"Strategy '{existing.name}' deleted",
         )

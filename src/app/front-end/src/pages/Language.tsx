@@ -513,23 +513,29 @@ const LanguageList: React.FC = () => {
             {/* Add Language Dialog */}
             {addOpen && (
                 <Dialog open={addOpen} onOpenChange={setAddOpen}>
-                    <DialogContent className="w-full max-w-md">
-                        <DialogHeader>
+                    <DialogContent className="w-full max-w-md p-4">
+                        {/* <DialogHeader>
                             <DialogTitle>Add Language</DialogTitle>
-                        </DialogHeader>
-                        <div className="flex flex-col gap-6">
-                            <div className="flex flex-col gap-2">
-                                <Label>Language Name</Label>
+                        </DialogHeader> */}
+                        <div className="flex flex-col gap-6 ">
+                            <div className="flex flex-col md:flex-row items-center mb-6 md:mb-8 mt-4 md:mt-5 gap-2 md:gap-0 mt-4 pt-4">
+                                <Label className='font-semibold tet-base md:text-lg min-w-[140px] md:min-w-[165px]'>Language Name</Label>
                                 <Input 
                                     value={newLanguageName} 
                                     onChange={e => setNewLanguageName(e.target.value)} 
                                     placeholder="Enter language name..." 
                                     maxLength={100} 
+                                    className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-lg flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
                                 />
                             </div>
-                            <Button onClick={handleAddLanguage} disabled={!newLanguageName.trim()}>
-                                Submit
-                            </Button>
+                            <div className="flex justify-center">
+                                <Button onClick={handleAddLanguage} disabled={!newLanguageName.trim()}
+                                className={`px-6 md:px-8 py-2 rounded text-sm md:text-base font-semibold shadow transition-colors 
+                                    }`}
+                                >
+                                    Submit
+                                </Button>
+                            </div>
                         </div>
                     </DialogContent>
                 </Dialog>

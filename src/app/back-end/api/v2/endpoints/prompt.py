@@ -272,7 +272,7 @@ def update_prompt_v2(
         if "domain" in update_data:
             changes.append("domain updated")
 
-        note = f"Prompt {prompt_id} updated"
+        note = f"Prompt updated"
         if changes:
             note += f": {', '.join(changes)}"
         else:
@@ -321,7 +321,7 @@ def delete_prompt(
             entity_type="Prompt",
             entity_id=str(existing.prompt_id),
             operation="delete",
-            note=f"Prompt '{existing.prompt_id}' deleted",
+            note=f"Prompt ID: {existing.prompt_id} deleted",
         )
 
     return {"message": "Prompt deleted successfully"} 

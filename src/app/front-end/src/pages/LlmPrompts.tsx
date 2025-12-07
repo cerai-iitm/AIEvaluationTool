@@ -114,7 +114,7 @@ const LlmPrompts = () => {
   );
 
   const totalItems = filteredPrompts.length;
-  const itemsPerPage = 20;
+  const itemsPerPage = 15;
   const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
 
   const paginatedPrompts = filteredPrompts.slice(

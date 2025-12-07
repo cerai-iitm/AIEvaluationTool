@@ -243,7 +243,7 @@ def update_domain_v2(
             entity_type="Domain",
             entity_id=str(updated['domain_id']),
             operation="update",
-            note="Domain updated via v2 endpoint",
+            note="Domain name updated",
         )
 
     return DomainDetailResponse(
@@ -277,9 +277,9 @@ def delete_domain(
         log_activity(
             username=username,
             entity_type="Domain",
-            entity_id=str(existing),
+            entity_id=str(domain_id),
             operation="delete",
-            note=f"Domain '{existing}' deleted (v2)",
+            note=f"Domain '{existing}' deleted",
         )
 
     return {"message": "Domain deleted successfully"}

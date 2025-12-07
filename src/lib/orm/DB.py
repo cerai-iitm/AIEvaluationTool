@@ -1334,8 +1334,8 @@ class DB:
                     .filter_by(hash_value=response.digest)
                     .first()
                 )
-                if existing_reponse:
-                    raise ValueError(f"Response already exists: {response}")
+                if existing_response:
+                    raise ValueError(f"Response already exists")
 
                 if existing_response:
                     self.logger.debug(
@@ -1590,8 +1590,7 @@ class DB:
                     self.logger.debug(
                         f"Returning the existing prompt ID: {existing_prompt.prompt_id}"
                     )
-                    # Return the existing prompt object
-                    return existing_prompt
+                    raise ValueError(f"Prompt already exists")
 
                 self.logger.debug(f"Adding new prompt: {prompt.user_prompt}")
 
@@ -2167,7 +2166,7 @@ class DB:
             with self.Session() as session:
                 existing_llm_prompt = session.query(LLMJudgePrompts).filter_by(prompt=llm_prompt).first()
                 if existing_llm_prompt:
-                    self.logger.debug(f"Returning the existing judge prompt: {existing_llm_prompt.prompt}")
+                    self.logger.debug(f"Returning the existing judge prompt: {existing_llm_prompt.prompt_id}")
                     raise ValueError(f"Judge prompt already exists")
 
                 self.logger.debug(f"Adding new judge prompt: {llm_prompt}")
@@ -3085,8 +3084,9 @@ class DB:
                 .filter(Prompts.prompt_id == prompt_id)
                 .first()
             )
-            if not prompt:
-                return None
+            if prompt:
+                self.logger.debug(f"Returning the existing prompt: {prompt.prompt_id}")
+                raise ValueError(f"Prompt already exists")
             
             # previous_prompt = prompt.prompt
             

@@ -292,7 +292,7 @@ def update_response_v2(
         if "language" in update_data and update_data["language"] is not None:
             changes.append("language updated")
 
-        note = f"Response '{updated.response_id}' updated"
+        note = f"Response updated"
         if changes:
             note += f": {', '.join(changes)}"
         else:
@@ -343,7 +343,7 @@ def delete_response(
             entity_type="Response",
             entity_id=str(existing.response_id),
             operation="delete",
-            note=f"Response '{existing.response_id}' deleted",
+            note=f"Response ID:{existing.response_id} deleted",
         )
 
     return {"message": "Response deleted successfully"}

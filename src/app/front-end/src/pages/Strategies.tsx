@@ -42,7 +42,7 @@ const StrategyList: React.FC = () => {
   );
 
   const totalItems = filteredStrategies.length;
-  const itemsPerPage = 20;
+  const itemsPerPage = 15;
   const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
   
   const PaginatedStrategies = filteredStrategies.slice(
@@ -513,7 +513,7 @@ const StrategyList: React.FC = () => {
               ×
             </button>
             
-            <div className="flex flex-col md:flex-row items-center mb-4 md:mb-6 mt-4 md:mt-5 gap-2 md:gap-0">
+            <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 mt-4 md:mt-5 gap-2 md:gap-0">
               <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy Name :</label>
               <input
                 value={updateName}
@@ -522,7 +522,7 @@ const StrategyList: React.FC = () => {
               />
             </div>
             
-            <div className="flex flex-col md:flex-row items-start mb-4 md:mb-6 gap-2 md:gap-0">
+            <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 gap-2 md:gap-0">
               <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Strategy Description :</label>
               <textarea
                 value={updateDescription}
@@ -569,7 +569,7 @@ const StrategyList: React.FC = () => {
             </button>
             
             <div className="flex flex-col items-center justify-center flex-1">
-              <div className="flex flex-col md:flex-row items-center mb-4 md:mb-6 w-full gap-2 md:gap-0">
+              <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 w-full gap-2 md:gap-0">
                 <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy Name :</label>
                 <input
                   value={newStrategyName}
@@ -579,7 +579,7 @@ const StrategyList: React.FC = () => {
                 />
               </div>
               
-              <div className="flex flex-col md:flex-row items-start mb-4 md:mb-6 w-full gap-2 md:gap-0">
+              <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 w-full gap-2 md:gap-0">
                 <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Strategy Description :</label>
                 <textarea
                   value={newStrategyDescription}
