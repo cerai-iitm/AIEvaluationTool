@@ -40,6 +40,7 @@ class InterfaceManagerClient:
         
         self.base_url = base_url.rstrip("/")
         self.application_type = application_type
+        print(self.application_type)
         self.model_name = os.getenv("TARGET_MODEL_NAME") if model_name == "None" else model_name
         self.openui_email = openui_email
         self.openui_password = openui_password
@@ -55,9 +56,6 @@ class InterfaceManagerClient:
 
         # Determine provider AUTOMATICALLY
         self.provider = self._auto_detect_provider()
-
-        # Initialize API clients
-        self._init_clients()
 
     def _init_clients(self):
         self.openai_client = None
@@ -98,6 +96,8 @@ class InterfaceManagerClient:
 
         # Unified API flow
         if self.application_type == "API":
+            # Initialize API clients
+            self._init_clients()
             return self._chat_api(chat_id, prompt)
 
         raise RuntimeError(f"Unsupported application type: {self.application_type}")
