@@ -190,3 +190,11 @@ tgt = Target(target_name="OPENWEB-UI",
              target_domain="LLM Interface",
              target_languages=["english"])
 target_id = db.add_or_get_target(target = tgt)
+
+tgt = Target(target_name="Gemini-2.5-Flash", 
+             target_type="API",
+             target_url="https://generativelanguage.googleapis.com/v1beta/", 
+             target_description="GEMINI 2.5 Flash is a state-of-the-art language model developed by Google, designed to deliver advanced natural language understanding and generation capabilities for a wide range of applications.",
+             target_domain="GEMINI API Interface",
+             target_languages=["english"])
+target_id = db.add_or_get_target(target = tgt)
