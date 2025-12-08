@@ -53,12 +53,6 @@ class InterfaceManagerClient:
         # Set up logging
         self.logger = get_logger(__name__)
 
-        # Determine provider AUTOMATICALLY
-        self.provider = self._auto_detect_provider()
-
-        # Initialize API clients
-        self._init_clients()
-
     def _init_clients(self):
         self.openai_client = None
         self.gemini_client_ready = False
@@ -98,6 +92,11 @@ class InterfaceManagerClient:
 
         # Unified API flow
         if self.application_type == "API":
+            # Determine provider AUTOMATICALLY
+            self.provider = self._auto_detect_provider()
+
+            # Initialize API clients
+            self._init_clients()
             return self._chat_api(chat_id, prompt)
 
         raise RuntimeError(f"Unsupported application type: {self.application_type}")
