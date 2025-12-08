@@ -40,7 +40,7 @@ class InterfaceManagerClient:
         
         self.base_url = base_url.rstrip("/")
         self.application_type = application_type
-        self.model_name = os.getenv("MODEL_NAME") if model_name == "None" else model_name
+        self.model_name = os.getenv("TARGET_MODEL_NAME") if model_name == "None" else model_name
         self.openui_email = openui_email
         self.openui_password = openui_password
         self.session = requests.Session()
@@ -73,7 +73,6 @@ class InterfaceManagerClient:
             key = os.getenv("GEMINI_API_KEY")
             if not key:
                 raise RuntimeError("Missing GEMINI_API_KEY in .env")
-            # genai.configure(api_key=key)
             self.gemini_client_ready = True
 
 
@@ -104,7 +103,7 @@ class InterfaceManagerClient:
         raise RuntimeError(f"Unsupported application type: {self.application_type}")
 
     def _auto_detect_provider(self):
-        model = (os.getenv("MODEL_NAME")).lower()
+        model = (os.getenv("TARGET_MODEL_NAME")).lower()
         print("Auto-detecting provider for model:", model)
 
         # Rule 1: model_name indicates provider
@@ -134,8 +133,6 @@ class InterfaceManagerClient:
 
     def _chat_openai(self, chat_id, prompt):
         print("Using OpenAI client...")
-        print("Chat ID: ", chat_id)
-        print("prompt: ", prompt)
         self.conversations[chat_id].append({"role": "user", "content": prompt})
 
         response = self.openai_client.chat.completions.create(
