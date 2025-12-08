@@ -77,7 +77,6 @@ class Evaluator:
             FileLoader._save_values(__file__, score_data, self.data_dir, f"{dflt_vals.score_file}.json")
         else:
             concatted = "\n".join(list(kwargs.get("ex").values())[:3]) # basically we are joing first three values of the example, ie judge, sys and user prompts
-            print(concatted)
             FileLoader._save_to_csv(__file__, {"id" : concatted, "score" : score}, strat_name=strat_name, data_dir="data", save_dir="scores_csv")
     
     def main(self, strategy_name:str = "", metric_name:str = ""):
@@ -108,7 +107,7 @@ class Evaluator:
         combined = self.combine_examples(examples)
         assigned_scores, human_scores = [], []
         for ex_list in combined.values():
-            for i, example in enumerate(ex_list[:]): #2:5:2 # later do for all the examples, just for now we are taking some examples
+            for i, example in enumerate(ex_list[:]):
                 self.runner.set_metric_strategy(strategy_name, metric_name)
                 try:
                     human_scores.append(example["response_score"])
@@ -128,4 +127,4 @@ class Evaluator:
                     self.save_scores(strategy_name, {"evaluated_score" : avg_score, "human_score" : human_score})
                 
 ev = Evaluator()
-ev.main(strategy_name="grammatical_strategies", metric_name="")
+ev.main(strategy_name="fairness_preference_plain", metric_name="")

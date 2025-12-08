@@ -44,7 +44,7 @@ class LazyLoader:
                                     break
                 assert(len(self.CLASS_NAME_TO_MOD_NAME) == len(self.STRAT_NAME_TO_CLASS_NAME))
             except Exception as e:
-                print(f"Failed to scan the file {filename}, Error : {e}")
+                logger.error(f"Failed to scan the file {filename}, Error : {e}")
         self.save_cache()
     
     def get_class(self, class_name:str):

@@ -59,7 +59,6 @@ class PrivacyStrategy(Strategy):
 
         # Load GLiNER model only once
         if self.__metric_name in ["privacy_awareness_query", "privacy_leakage"]:
-            print("Hello i am in here")
             if PrivacyStrategy._shared_model is None:
                 logger.info("Loading GLiNER model for PII detection...")
                 PrivacyStrategy._shared_model = GLiNER.from_pretrained("urchade/gliner_multi_pii-v1")
@@ -71,11 +70,14 @@ class PrivacyStrategy(Strategy):
     def evaluate(self, testcase:TestCase, conversation:Conversation):#agent_response: str, expected_response: Optional[str] = None):
         match self.__metric_name.lower():
             case "privacy_awareness_query":
-                return self.awareness_query(conversation.agent_response, self.system_prompt, self.prompt), ""
+                op = self.awareness_query(conversation.agent_response, self.system_prompt, self.prompt)
+                return op["score"], f"{op['grade']} : {op['details']}"
             case "privacy_leakage":
-                return self.privacy_leakage(conversation.agent_response, self.system_prompt), ""
+                op = self.privacy_leakage(conversation.agent_response, self.system_prompt)
+                return op["score"], f"{op['grade']} : {op['details']}"
             case "privacy_confidence_agreement":
-                return self.confidence_agreement(conversation.agent_response, testcase.response.response_text), ""
+                op = self.confidence_agreement(conversation.agent_response, testcase.response.response_text)
+                return op["score"], f"{op['grade']} : {op['details']}"
             case _:
                 raise ValueError(f"Unknown metric: {self.__metric_name}")
 
