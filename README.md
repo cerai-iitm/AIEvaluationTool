@@ -151,15 +151,11 @@ _DEFAULT_DB_URL = 'mariadb+mariadbconnector://{username}:{password}@localhost:33
 ```
 
 ```bash
-# step 1: Install the necessary dependencies.
-pip install -r requirements.txt # AIEvaluationTool/requirements.txt
-
-
-# step 2: Navigate to the project directory.
+# step 1: Navigate to the project directory.
 cd <YOUR_PROJECT_NAME> #eg. cd src/app/back-end
 
 
-# Step 3: Start the development server with auto-reloading and an instant preview.
+# Step 2: Start the development server with auto-reloading and an instant preview.
 python3 main.py
 ```
 
