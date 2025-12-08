@@ -135,6 +135,66 @@ Ensure the `data/` directory contains the following files (already present in th
 - **A detailed set of Seeding data points shall be provided upon request.**
 
 ---
+## DATABASE MANAGEMENT TOOL
+
+**1. Back-end setup**
+
+path - src/app/back-end/config/settings.py
+```
+_AIEVAL_DB_URL: str = "mariadb+mariadbconnector://{username}:{password}@localhost:3306/{database name}"
+```
+
+path - src/app/back-end/database/database.py
+```
+_DEFAULT_DB_URL = 'mariadb+mariadbconnector://{username}:{password}@localhost:3306/{database name}'
+
+```
+
+```bash
+# step 1: Install the necessary dependencies.
+pip install -r requirements.txt # AIEvaluationTool/requirements.txt
+
+
+# step 2: Navigate to the project directory.
+cd <YOUR_PROJECT_NAME> #eg. cd src/app/back-end
+
+
+# Step 3: Start the development server with auto-reloading and an instant preview.
+python3 main.py
+```
+
+**2. Front-end setup**
+
+```sh
+
+# Step 1: Navigate to the project directory.
+cd <YOUR_PROJECT_NAME> # eg. cd src/app/front-end
+
+# Step 2: Install the necessary dependencies.
+npm i
+
+# Step 3: Start the development server with auto-reloading and an instant preview.
+npm run dev
+
+```
+
+**Login Credentials**
+```
+Username: admin     | manager     | curator     | user
+Password: admin123  | manager123  | curator123  | user123
+```
+## Permission Names Reference
+
+- `canManageUsers` - Admin only
+- `canCreateUser` - Admin only
+- `canUpdateUser` - Admin only
+- `canDeleteUser` - Admin only
+- `canCreateTables` -Admin, Manager & Curator
+- `canUpdateTables` -Admin, Manager & Curator
+- `canDeleteTables` -Admin & Manager
+- `canExportData` - Admin, Manager, Curator & Viewer
+
+---
 
 ## Running the Evaluation Pipeline
 

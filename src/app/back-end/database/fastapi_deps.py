@@ -3,6 +3,9 @@ from typing import Iterator
 from fastapi import Depends, HTTPException
 from lib.orm.DB import DB
 
+
+# from config.settings.settings import AIEVAL_DB_URL    
+
 _DEFAULT_DB_URL = 'mariadb+mariadbconnector://root:password@localhost:3306/test'
 
 _db_instance: DB | None = None
