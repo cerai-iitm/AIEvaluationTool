@@ -9,7 +9,7 @@ import hashlib
 from deepeval.metrics.g_eval.schema import Steps, ReasonScore
 from ollama import Client, AsyncClient
 from deepeval.models.base_model import DeepEvalBaseLLM
-
+from typing import Optional, List
 
 logger = get_logger("utils_new")
 
@@ -90,7 +90,6 @@ class FileLoader:
         else:
             return d
 
-
     @staticmethod
     def _to_dot_dict(run_file_path:str, dir_file_path:str, **kwargs):
         full_path = os.path.join(os.path.dirname(run_file_path), dir_file_path)
@@ -98,7 +97,12 @@ class FileLoader:
             with open(full_path, "r") as f:
                 data = json.load(f)
             if kwargs.get("simple"):
-                return json.loads(json.dumps(data[kwargs.get("strat_name")]), object_hook=lambda d: SimpleNamespace(**d))
+                def hook(obj):
+                    if obj.get("__as_dict__") is True:
+                        obj.pop("__as_dict__", None)
+                        return obj
+                    return SimpleNamespace(**obj)
+                return json.loads(json.dumps(data[kwargs.get("strat_name")]), object_hook=hook)
             else:
                 return FileLoader.dot_dict(data)
         else:
@@ -176,6 +180,71 @@ class CustomOllamaModel(DeepEvalBaseLLM):
     
     def get_model_name(self, *args, **kwargs):
          return self.model_name
+
+
+class OllamaConnect:
+    
+    FileLoader._load_env_vars(__file__)
+    ollama_url = os.getenv("OLLAMA_URL")
+    dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), simple=True, strat_name="reason_provider")
+
+    @staticmethod
+    def prompt_model(text:str, fields:List[str], model_names:List[str] = None, options:dict = None) -> List[dict]:
+        ollama_client = Client(host=OllamaConnect.ollama_url)
+        tries = OllamaConnect.dflt_vals.n_tries
+        resp_in_format = []
+        models = OllamaConnect.dflt_vals.model_names if model_names is None else model_names
+        while(resp_in_format == [] and tries > 0):
+            for model in models:
+                try:
+                    inputs = {
+                        "model" : model,
+                        "messages" : [
+                            {
+                                "role" : "user",
+                                "content" : f"{text} /nothink",
+                            }
+                        ],
+                        "format":"json",
+                    }
+                    if options is not None:
+                        inputs.update({"options": options})
+                    response = ollama_client.chat(**inputs)
+                    try:
+                        final = json.loads(response.message.content)
+                    except:
+                        final = {}
+                except Exception as e:
+                    logger.error(f"Did not receive any response from the model : {model}.")
+                    final = {}
+                if(OllamaConnect.has_correct_format(final, fields)):
+                    resp_in_format.append(final)
+            tries -= 1
+        return resp_in_format
+    
+    @staticmethod
+    def has_correct_format(obj : Optional[dict], fields: List[str]):
+        correct = isinstance(obj, dict) 
+        for fld in fields:
+            correct = correct and fld in fields and isinstance(obj.get(fld), str) 
+        return correct
+    
+    @staticmethod
+    def get_reason(agent_response:str, strategy_name:str, score:float):
+        prompt = OllamaConnect.dflt_vals.reason_prompt.format(input_sent=agent_response, metric=strategy_name, score=score)
+        responses = OllamaConnect.prompt_model(prompt, OllamaConnect.dflt_vals.reqd_flds)
+        final_rsn = ""
+        if(len(responses) > 0):
+            reasons = [r["reason"] for r in responses]
+            for i, r in enumerate(reasons):
+                if i == 0:
+                    final_rsn += f"Reason {i} : {r}"
+                else:
+                    final_rsn += f"\n\n Reason {i} : {r}"
+            return final_rsn
+        else:
+            return "Could not get a proper reasoning for the score."
+
 
 
 

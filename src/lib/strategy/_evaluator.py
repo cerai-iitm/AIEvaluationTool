@@ -107,13 +107,14 @@ class Evaluator:
         combined = self.combine_examples(examples)
         assigned_scores, human_scores = [], []
         for ex_list in combined.values():
-            for i, example in enumerate(ex_list[:]):
+            for i, example in enumerate(ex_list[10:11]):
                 self.runner.set_metric_strategy(strategy_name, metric_name)
                 try:
-                    human_scores.append(example["response_score"])
                     objects = self.get_testcase_obj(example)
                     curr_score, reason = self.runner.execute(*objects)
+                    logger.info(f"Score : {curr_score}, Reasoning : {reason}")
                     assigned_scores.append(curr_score)
+                    human_scores.append(example["response_score"])
                 except Exception as e:
                     logger.error(f"Could not find the specified strategy name or the metric name. Additional info : {e}")
                 self.save_scores(strategy_name, 
@@ -127,4 +128,4 @@ class Evaluator:
                     self.save_scores(strategy_name, {"evaluated_score" : avg_score, "human_score" : human_score})
                 
 ev = Evaluator()
-ev.main(strategy_name="fairness_preference_plain", metric_name="")
+ev.main(strategy_name="grammatical_strategies", metric_name="")

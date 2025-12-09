@@ -3,8 +3,6 @@ import os
 import warnings
 from typing import Optional
 import numpy as np
-import json
-from ollama import Client
 import Levenshtein
 import stanza
 from langdetect import detect
@@ -12,7 +10,7 @@ from zss import Node, simple_distance
 from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
 from .logger import get_logger
-from .utils_new import FileLoader
+from .utils_new import FileLoader, OllamaConnect
 
 warnings.filterwarnings("ignore")
 
@@ -24,7 +22,6 @@ class IndianLangGrammaticalCheck(Strategy):
     def __init__(self, model=None, tokenizer=None, name="indian_lang_grammatical_check", **kwargs):
         super().__init__(name, **kwargs)
         self.gpu_url=os.getenv("GPU_URL")
-        self.ollama_url = os.getenv("OLLAMA_URL")
         self.nlp = None
 
         if not self.gpu_url:
@@ -95,41 +92,6 @@ class IndianLangGrammaticalCheck(Strategy):
         
         sim = (score_lev + score_ted) / 2 if score_ted is not None else score_lev
         return sim
-
-    def make_prompt(self, sent:str):
-        text = dflt_vals.prompt.format(sent=sent)
-        return text
-    
-    def ollama_connect(self, model_name:str, text:str):
-        ollama_client = Client(host=self.ollama_url)
-        try:
-            """
-            We are making a strong assumption that the model we provide will return a 
-            grammatically correct response based on the input text.
-            """
-            response = ollama_client.chat(
-                model = model_name,
-                messages = [
-                    {
-                        "role" : "user",
-                        "content" : f"{text} /nothink",
-                    }
-                ],
-                format="json",
-                options= {
-                    "temperature": 0.3,
-                    "top_p": 0.5,
-                    "repeat_penalty": 1.2
-                }
-            )
-        except Exception as e:
-            logger.error(f"Could not communicate with the {model_name}. Make sure the model is downloaded and running.")
-            return {}
-        try:
-            final = response.message.content
-            return json.loads(final)
-        except:
-            return {} 
     
     def embed(self, text:str):
         response = np.array(requests.post(f"{self.gpu_url}/hidden", params={"text" : text}).json()["hidden"], dtype=np.float32)
@@ -138,21 +100,20 @@ class IndianLangGrammaticalCheck(Strategy):
     def cosine(self, a, b):
         return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b) + 1e-12))
     
-    def has_correct_format(self, obj):
-        return (isinstance(obj, dict) and "correct" in obj and isinstance(obj.get("correct"), str))
-    
     def make_corrections(self, prompt:str):
-        model_names = dflt_vals.model_names
-        corrections = []
-        tries = dflt_vals.n_tries
-        while(corrections == [] and tries > 0):
-            for model_name in model_names:
-                corr_dict = self.ollama_connect(model_name, prompt)
-                if(self.has_correct_format(corr_dict)):
-                    corrections.append(corr_dict)
-            tries -= 1
+        # model_names = dflt_vals.model_names
+        # corrections = []
+        # tries = dflt_vals.n_tries
+        # while(corrections == [] and tries > 0):
+        #     for model_name in model_names:
+        #         corr_dict = OllamaConnect.prompt_model(model_name, prompt, options = dflt_vals.options)
+        #         print(corr_dict)
+        #         if(OllamaConnect.has_correct_format(corr_dict, dflt_vals.reqd_flds)):
+        #             corrections.append(corr_dict)
+        #     tries -= 1
+        corrections = OllamaConnect.prompt_model(prompt, dflt_vals.reqd_flds, model_names=dflt_vals.model_names, options=dflt_vals.options)
         if len(corrections) > 0: 
-            return [corr["correct"] for corr in corrections]
+            return [corr["corrected"] for corr in corrections]
         else:
             return []
     
@@ -161,10 +122,8 @@ class IndianLangGrammaticalCheck(Strategy):
         return 1 / sum(wt / score for wt, score in zip(weights, scores))
 
     def evaluate(self, testcase:TestCase, conversation:Conversation): #testcase:TestCase, conversation:Conversation):#agent_response:str, expected:Optional[str]=None):
-        prompt = self.make_prompt(conversation.agent_response)
+        prompt = dflt_vals.prompt.format(sent=conversation.agent_response)
         corr_sents = self.make_corrections(prompt)
-        print(corr_sents)
-        print(conversation.agent_response)
         scores = []
         if len(corr_sents) > 0:
             for final in corr_sents:
@@ -172,19 +131,17 @@ class IndianLangGrammaticalCheck(Strategy):
                 a1, b1 = self.embed(conversation.agent_response), self.embed(final)
                 sim = self.cosine(a1, b1)
                 ted_sim = self.tree_similarity(conversation.agent_response, final, use_ted=dflt_vals.use_ted)
-                print(sim)
-                print(ted_sim)
                 # harmonic mean between the lev distance and the structural vector similarity score
-                # score =  2 * sim * ted_sim / (sim + ted_sim + 1e-12)
                 score = self.weighted_f1([sim, ted_sim])
                 scores.append(score)
             final_score = round(float(np.mean(scores)), 3)
             logger.info(f"Grammatical consistency score for the input is : {final_score}")
-            return final_score, ""
+            return final_score, OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), final_score)
         else:
             final_score = 0.0
-            logger.error("Could not receive corrections for the sentence using the user provided models. Returning 0 score.")
-        return final_score, ""
+            rsn = "Could not receive corrections for the sentence using the user provided models."
+            logger.error(f"{rsn} Returning 0 score.")
+        return final_score, rsn
 
 # if __name__ == "__main__":
 #     checker = IndianLangGrammaticalCheck()
