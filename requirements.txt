@@ -31,3 +31,6 @@ randomname
 mariadb
 gliner
 python-iso639
+ollama
+deepeval
+google-genai
