@@ -174,6 +174,21 @@ tgt = Target(target_name="Vaidya AI",
              target_languages=["english"])
 target_id = db.add_or_get_target(target = tgt)
 
+tgt = Target(target_name="Jivi AI", 
+             target_type="WhatsApp", 
+             target_url="https://wa.me/8121839444", 
+             target_description="Jivi AI is a generative AI startup with the vision to harness artificial intelligence to enhance patient care. The platform accelerates diagnostics and ensures higher accuracy, enabling timely and precise treatment for all.",
+             target_domain="healthcare",
+             target_languages=["english"])
+target_id = db.add_or_get_target(target = tgt)
+
+tgt = Target(target_name="FarmSawa", 
+             target_type="WhatsApp", 
+             target_url="https://wa.me/+254704582362", 
+             target_description="FarmSawa is an AI-powered WhatsApp platform designed to support farmers with crop and disease identification, real-time advice, supplier connections and latest market prices.",
+             target_domain="healthcare",
+             target_languages=["english"])
+target_id = db.add_or_get_target(target = tgt)
 
 tgt = Target(target_name="CPGRAMS", 
              target_type="WebApp", 

@@ -1,16 +1,16 @@
 {
     "db": {
         "engine":"sqlite",
-        "file": "datapoints.db",
+        "file": "AIEvaluationData.db",
         "host": "localhost",
         "port": 3306,
         "user": "root",
         "password": "jarvis2025",
-        "database": "aieval"
+        "database": "AIEvaluationData"
     },
     "files": {
         "plans": "data/plans.json",
-        "testcases": "data/datapoints_combined.json",
+        "testcases": "data/updated_datapoints.json",
         "strategies": "data/strategy_id.json"
     }
 }
