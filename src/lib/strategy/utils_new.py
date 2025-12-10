@@ -186,7 +186,7 @@ class OllamaConnect:
     
     FileLoader._load_env_vars(__file__)
     ollama_url = os.getenv("OLLAMA_URL")
-    dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), simple=True, strat_name="reason_provider")
+    dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), simple=True, strat_name="ollama_comms")
 
     @staticmethod
     def prompt_model(text:str, fields:List[str], model_names:List[str] = None, options:dict = None) -> List[dict]:

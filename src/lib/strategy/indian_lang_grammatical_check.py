@@ -80,8 +80,7 @@ class IndianLangGrammaticalCheck(Strategy):
         score_ted = None
         if(ori_tree is not None and corr_tree is not None):
             ted = simple_distance(ori_tree, corr_tree)
-            ori_tree_len = count_nodes(ori_tree)
-            corr_tree_len = count_nodes(corr_tree)
+            ori_tree_len, corr_tree_len = count_nodes(ori_tree), count_nodes(corr_tree)
             max_dist = max(ori_tree_len, corr_tree_len)
             score_ted = 1 - (ted / max_dist)
 
@@ -101,16 +100,6 @@ class IndianLangGrammaticalCheck(Strategy):
         return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b) + 1e-12))
     
     def make_corrections(self, prompt:str):
-        # model_names = dflt_vals.model_names
-        # corrections = []
-        # tries = dflt_vals.n_tries
-        # while(corrections == [] and tries > 0):
-        #     for model_name in model_names:
-        #         corr_dict = OllamaConnect.prompt_model(model_name, prompt, options = dflt_vals.options)
-        #         print(corr_dict)
-        #         if(OllamaConnect.has_correct_format(corr_dict, dflt_vals.reqd_flds)):
-        #             corrections.append(corr_dict)
-        #     tries -= 1
         corrections = OllamaConnect.prompt_model(prompt, dflt_vals.reqd_flds, model_names=dflt_vals.model_names, options=dflt_vals.options)
         if len(corrections) > 0: 
             return [corr["corrected"] for corr in corrections]
