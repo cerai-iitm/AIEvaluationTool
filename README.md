@@ -144,7 +144,7 @@ path - src/app/back-end/config/settings.py
 _AIEVAL_DB_URL: str = "mariadb+mariadbconnector://{username}:{password}@localhost:3306/{database name}"
 ```
 
-path - src/app/back-end/database/database.py
+path - src/app/back-end/database/fastapi_deps.py
 ```
 _DEFAULT_DB_URL = 'mariadb+mariadbconnector://{username}:{password}@localhost:3306/{database name}'
 
