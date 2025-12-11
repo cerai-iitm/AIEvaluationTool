@@ -5,7 +5,7 @@ import json
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import gaussian_kde
-from .utils_new import FileLoader
+from .utils_new import FileLoader, OllamaConnect
 import warnings
 from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
@@ -72,14 +72,14 @@ class IndianLanguageFluencyScorer(Strategy):
             dist_int = dist(interval) # kde applied to the interval
             probs[k] = np.trapezoid(dist_int, interval)
 
-        self.save_res_as_img(ex_results, os.path.join(os.path.dirname(__file__), f"images/{dflt_vals.type}_dist.png"))
+        self.save_res_as_img(ex_results, os.path.join(os.path.dirname(__file__), f"{os.getenv('IMAGES_DIR')}/{dflt_vals.type}_dist.png"))
         
         probs_as_lst = list(probs.values())
         # if the differnce is positive the value is closer to fluent dist than non fluent
         log_ratio = math.log(max(probs_as_lst[0], 1e-40)) - math.log(max(probs_as_lst[1], 1e-40))
         final_score = 1 / (1 + math.exp(-log_ratio)) # sigmoid function for the difference in log values
-        logger.info(f"Fluency Score: {final_score} for : {conversation.agent_response}")
-        return round(final_score, 3) , ""
+        logger.info(f"Fluency Score: {final_score}") # for : {conversation.agent_response}")
+        return round(final_score, 3) , OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), final_score)
     
     # def translate(self, agent_response:str):
     #     return json.loads(requests.post(f"{self.gpu_url}/translate", params={"input_text" : agent_response, "target_language" : "English"}).content.decode('utf-8'))

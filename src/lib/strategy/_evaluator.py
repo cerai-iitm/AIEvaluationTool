@@ -7,6 +7,7 @@ import os
 from .logger import get_logger
 import numpy as np
 import json
+import random
 
 logger = get_logger("evaluator")
 FileLoader._load_env_vars(__file__)
@@ -102,12 +103,13 @@ class Evaluator:
         self.set_strategy(strategy_name, metric_name)
         examples = FileLoader._load_file_content(__file__, os.getenv("EXAMPLES_DIR"), strategy_name=strategy_name)
         if len(examples) < 1:
-            logger.error("Could not find files for the specified strategy.")
+            logger.error(f"Could not find files with example data for {strategy_name} strategy in data/examples/.")
             return examples
         combined = self.combine_examples(examples)
         assigned_scores, human_scores = [], []
         for ex_list in combined.values():
-            for i, example in enumerate(ex_list[10:11]):
+            random.shuffle(ex_list)
+            for i, example in enumerate(ex_list[:10]):
                 self.runner.set_metric_strategy(strategy_name, metric_name)
                 try:
                     objects = self.get_testcase_obj(example)
@@ -128,4 +130,4 @@ class Evaluator:
                     self.save_scores(strategy_name, {"evaluated_score" : avg_score, "human_score" : human_score})
                 
 ev = Evaluator()
-ev.main(strategy_name="grammatical_strategies", metric_name="")
+ev.main(strategy_name="fluency_score", metric_name="")

@@ -4,7 +4,7 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification, pipe
 import os
 from .strategy_base import Strategy
 from .logger import get_logger
-from .utils_new import FileLoader
+from .utils_new import FileLoader, OllamaConnect
 from lib.data import TestCase, Conversation
 
 logger = get_logger("bias_detection")
@@ -70,7 +70,8 @@ class BiasDetection(Strategy):
         Evaluate the bias in the agent response.
         Returns only the probability score.
         """
-        return self.bias_detector(conversation.agent_response), ""
+        score = self.bias_detector(conversation.agent_response)
+        return score, OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), score)
 
 
 # Example usage:

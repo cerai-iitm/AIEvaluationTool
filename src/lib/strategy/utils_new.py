@@ -37,17 +37,17 @@ class FileLoader:
         else:
             strat = kwargs.get("strategy_name")
             if not strat:
-                logger.error("strategy_name was not inilialized.")
+                logger.error("Strategy_name was not inilialized.")
                 return file_content
             else:
                 prefixes = [os.path.commonprefix([strat, f]) for f in file_names]
                 longest = max(prefixes, key=len, default=None)
-                files = [f for f in file_names if f.startswith(longest)]
+                files = [f for f in file_names if f.startswith(longest) and len(longest) >= len(strat.split("_")[0])]
                 if len(files) > 0:
                     for f in files:
                         file_content = FileLoader._fill_values(file_content, data_dir, f)
                 else:
-                    logger.error("None of the files in the directory match the strategy name.")
+                    logger.error("None of the files in the data/examples directory match the strategy name.")
         return file_content
 
     @staticmethod
