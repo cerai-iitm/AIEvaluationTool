@@ -111,7 +111,7 @@ def main():
         return
     
     # setting up the database connection
-    db_url = f"mariadb+mariadbconnector://{config['database']['user']}:{config['database']['password']}@{config['database']['host']}:{config['database']['port']}/{config['database']['database']}"
+    # db_url = f"mariadb+mariadbconnector://{config['database']['user']}:{config['database']['password']}@{config['database']['host']}:{config['database']['port']}/{config['database']['database']}"
     try:
         logger.info(f"Database URL: {db_url}")
         db = DB(db_url=db_url, debug=False, loglevel=loglevel)

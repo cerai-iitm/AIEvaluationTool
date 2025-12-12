@@ -477,7 +477,7 @@ export const TestCaseAddDialog = ({
                   value={systemPrompts}
                   onChange={(e) => setSystemPrompts(e.target.value)}
                   className="bg-muted min-h-[73px]"
-                  readOnly
+                  readOnly = {systemPrompts === "" || systemPrompts === null || systemPrompts === undefined}
                 />
               </div>
             </div>
@@ -487,7 +487,7 @@ export const TestCaseAddDialog = ({
               <div className="relative">
                 <Textarea
                   value={responseText}
-                  readOnly = {responseText === ""}
+                  readOnly = {responseText === "" || responseText === null || responseText === undefined}
                   className="bg-muted min-h-[73px] pr-10"
                   onChange ={(e) => setResponseText(e.target.value)}
                   onFocus = {() => setFocusedField("response")}

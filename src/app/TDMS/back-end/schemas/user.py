@@ -36,16 +36,16 @@ class Login(BaseModel):
     # is_active: Optional[bool]
     # role: Optional[str]
 
-    class Config:
-        orm_mode = True
-        schema_extra = {
-            "example": {
-                "user_name": "admin",
-                "password": "admin123",
-                # "role": "admin",
-                # "is_active": True
-            }
-        }
+    # class Config:
+    #     orm_mode = True
+    #     schema_extra = {
+    #         "example": {
+    #             "user_name": "admin",
+    #             "password": "admin123",
+    #             # "role": "admin",
+    #             # "is_active": True
+    #         }
+    #     }
 
 class UserHistory(BaseModel):
     table: str

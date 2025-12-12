@@ -55,13 +55,44 @@ parser.add_argument(
 args = parser.parse_args()
 
 config = json.load(open(args.config, "r"))
-db_url = "mariadb+mariadbconnector://{user}:{password}@{host}:{port}/{database}".format(
-    user=config["db"]["user"],
-    password=config["db"]["password"],
-    host=config["db"]["host"],
-    port=config["db"]["port"],
-    database=config["db"]["database"],
-)
+# db_url = "mariadb+mariadbconnector://{user}:{password}@{host}:{port}/{database}".format(
+#     user=config["db"]["user"],
+#     password=config["db"]["password"],
+#     host=config["db"]["host"],
+#     port=config["db"]["port"],
+#     database=config["db"]["database"],
+# )
+
+# Build DB URL based on engine type
+engine = config['db'].get('engine', 'sqlite').lower()
+
+if engine == "sqlite":
+    sqlite_file = config['db'].get('file', 'app.db')
+
+    # project_root = src/app/importer/../../../
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
+
+    # Put DB in project_root/data
+    db_folder = os.path.join(base_dir, "data")
+    os.makedirs(db_folder, exist_ok=True)
+
+    db_path = os.path.join(os.path.dirname(db_folder), sqlite_file)
+    db_url = f"sqlite:///{db_path}"
+
+elif engine == "mariadb":
+    db_url = (
+        "mariadb+mariadbconnector://{user}:{password}@{host}:{port}/{database}"
+        .format(
+            user=config['db']['user'],
+            password=config['db']['password'],
+            host=config['db']['host'],
+            port=config['db']['port'],
+            database=config['db']['database']
+        )
+    )
+
+else:
+    raise ValueError(f"Unsupported database engine: {engine}")
 
 plans = json.load(open(config["files"]["plans"], "r"))
 prompts = json.load(open(config["files"]["testcases"], "r"))

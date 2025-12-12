@@ -17,3 +17,4 @@ saved_evaluations/**
 new_data.json
 responses_T**.json
 evaluation_summary**
+app.db
