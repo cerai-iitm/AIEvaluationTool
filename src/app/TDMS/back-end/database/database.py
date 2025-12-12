@@ -7,9 +7,20 @@ from fastapi import Depends, HTTPException, status, Header
 from jose import jwt, JWTError
 from config.settings import settings
 from typing import Optional
+import os
 
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
+# project root: AIEvaluationTool
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../.."))
+
+# data folder under project root
+db_folder = os.path.join(project_root, "data")
+os.makedirs(db_folder, exist_ok=True)
+
+# DB file in data folder
+db_path = os.path.join(db_folder, "TDMS.db") 
+
+SQLALCHEMY_DATABASE_URL = f"sqlite:///{db_path}"
 
 engine = create_engine( 
     SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})

@@ -52,7 +52,7 @@ from .tables import (
 from jose import jwt, JWTError
 from fastapi import Depends, Header
 
-sys.path.append(os.path.dirname(__file__) + "/../../app/back-end")
+sys.path.append(os.path.dirname(__file__) + "/../../app/TDMS/back-end")
 from config import settings
 
 

@@ -21,19 +21,19 @@ db_cfg = config.get("db", {})
 engine = db_cfg.get("engine", "sqlite").lower()
 
 if engine == "sqlite":
-    db_file = db_cfg.get("file", "test.db")
+    db_file = db_cfg.get("file", "AIEvaluationData.db")
 
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../.."))
-    print(project_root)
+    # print(project_root)
 
     # data folder under project_root
     db_folder = os.path.join(project_root, "data")
-    print(db_folder)
+    # print(db_folder)
     os.makedirs(db_folder, exist_ok=True)
 
     # full path to DB file inside data folder (e.g. data/test.db)
     db_path = os.path.join(db_folder, db_file)
-    print(db_path)
+    # print(db_path)
 
     _DEFAULT_DB_URL = "sqlite:///{db_path}".format(db_path=db_path)
 elif engine == "mariadb":

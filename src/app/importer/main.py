@@ -67,7 +67,7 @@ config = json.load(open(args.config, "r"))
 engine = config['db'].get('engine', 'sqlite').lower()
 
 if engine == "sqlite":
-    sqlite_file = config['db'].get('file', 'app.db')
+    sqlite_file = config['db'].get('file', 'AIEvaluationData.db')
 
     # project_root = src/app/importer/../../../
     base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
@@ -76,7 +76,7 @@ if engine == "sqlite":
     db_folder = os.path.join(base_dir, "data")
     os.makedirs(db_folder, exist_ok=True)
 
-    db_path = os.path.join(os.path.dirname(db_folder), sqlite_file)
+    db_path = os.path.join(db_folder, sqlite_file)
     db_url = f"sqlite:///{db_path}"
 
 elif engine == "mariadb":
