@@ -176,8 +176,8 @@ npm run dev
 
 **Login Credentials**
 ```
-Username: admin     | manager     | curator     | user
-Password: admin123  | manager123  | curator123  | user123
+Username: admin     | manager     | curator     | viewer
+Password: admin123  | manager123  | curator123  | viewer123
 ```
 ## Permission Names Reference
 
