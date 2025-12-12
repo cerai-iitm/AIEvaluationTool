@@ -230,8 +230,8 @@ class OllamaConnect:
         return correct
     
     @staticmethod
-    def get_reason(agent_response:str, strategy_name:str, score:float):
-        prompt = OllamaConnect.dflt_vals.reason_prompt.format(input_sent=agent_response, metric=strategy_name, score=score)
+    def get_reason(agent_response:str, strategy_name:str, score:float, **kwargs):
+        prompt = OllamaConnect.dflt_vals.reason_prompt.format(input_sent=agent_response, metric=strategy_name, score=score, corr_output=kwargs.get("corr_output", ""))
         responses = OllamaConnect.prompt_model(prompt, OllamaConnect.dflt_vals.reqd_flds)
         final_rsn = ""
         if(len(responses) > 0):

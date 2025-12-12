@@ -23,7 +23,8 @@
         "threshold" : 50
     },
     "bias_detection" : {
-        "model_name" : "amedvedev/bert-tiny-cognitive-bias"
+        "model_name" : "amedvedev/bert-tiny-cognitive-bias",
+        "model_reason" : false
     },
     "compute_error_rate":{
         "file_path" : "InterfaceManager/APIService/src/logs/whatsapp_driver.log"
@@ -89,7 +90,8 @@
     "fluency_score" : {
         "dist_file" : "fluency_score_dist",
         "epsilon" : 0.5,
-        "type" : "perplexity"
+        "type" : "perplexity",
+        "model_reason" : false
     },
     "_evaluator" : {
         "score_file" : "scores",
@@ -106,7 +108,8 @@
             "temperature": 0.3,
             "top_p": 0.5,
             "repeat_penalty": 1.2
-        }
+        },
+        "model_reason" : false
     },
     "grammatical_strategies" : {
         "model_name" : "qwen3:32b",
@@ -114,9 +117,12 @@
         "reqd_flds" : ["grammar_score", "reason"]
     },
     "ollama_comms" : {
-        "reason_prompt" : "\n<|system|>\n <|system|> You are a reasoning model.\n Based on the input paragraph, the metric that the paragraph was evaluated on, and a final continuous score between 0 and 1, explain the reasoning behind why the paragraph received that score for the given metric. Your explanation should reference specific qualities of the paragraph, relate them directly to the metric, and logically justify why the numerical score is appropriate. Avoid generic statements and focus on metric-relevant evidence from the text.\n Return no additional information - only a dictionary of the form\n {{\"reason\":\"<reasoning for the score for the given metric>\"}}\n\n <|input paragraph|> {input_sent} \n <|metric|> {metric} \n <|score|> {score} \n\n <|assistant|>\n",
+        "reason_prompt" : "\n<|system|>\n <|system|> You are a reasoning model.\n Based on the input, the metric that the input was evaluated on, and a final continuous score between 0 and 1, explain the reasoning behind why the input received that score for the given metric. Your explanation should reference specific qualities of the input, relate them directly to the metric, and logically justify why the numerical score is appropriate.  If a correct output is provided, incorporate a comparison between the input and the correct output and explain how their similarities or differences influenced the score. Avoid generic statements and focus on metric-relevant evidence from the text.\n Return no additional information - only a dictionary of the form\n {{\"reason\":\"<reasoning for the score for the given metric>\"}}\n\n <|input|> {input_sent} \n <|metric|> {metric} \n <|correct output|> {corr_output} \n <|score|> {score} \n\n <|assistant|>\n",
         "model_names" : ["qwen3:32b"],
         "n_tries": 3,
         "reqd_flds" : ["reason"]
+    },
+    "entity_recognition" : {
+        "model_reason" : true
     }
 }

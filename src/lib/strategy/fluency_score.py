@@ -31,14 +31,17 @@ class IndianLanguageFluencyScorer(Strategy):
         if(not FileLoader._check_if_present(__file__, self.ex_dir, f"{self.dist_file}_{dflt_vals.type}.json")):
             examples = FileLoader._load_file_content(__file__, self.ex_dir, strategy_name=self.name__)
             score_dist = {}
-            for k, v in examples.items():
-                if(isinstance(v, list)):                        
-                    for para in v:
-                        if k in score_dist:
-                            score_dist[k].append(self.get_score(para["agent_response"], type=dflt_vals.type))
-                        else:
-                            score_dist[k] = [self.get_score(para["agent_response"], dflt_vals.type)]
-            FileLoader._save_values(__file__, score_dist, self.ex_dir, f"{self.dist_file}_{dflt_vals.type}.json")
+            if len(examples) > 0:
+                for k, v in examples.items():
+                    if(isinstance(v, list)):                        
+                        for para in v:
+                            if k in score_dist:
+                                score_dist[k].append(self.get_score(para["agent_response"], type=dflt_vals.type))
+                            else:
+                                score_dist[k] = [self.get_score(para["agent_response"], dflt_vals.type)]
+                FileLoader._save_values(__file__, score_dist, self.ex_dir, f"{self.dist_file}_{dflt_vals.type}.json")
+            else:
+                logger.error("No examples to generate the distributions.")
         else:
             score_dist = FileLoader._load_file_content(__file__, self.ex_dir, f"{self.dist_file}_{dflt_vals.type}.json")
         return score_dist
@@ -61,28 +64,52 @@ class IndianLanguageFluencyScorer(Strategy):
         plt.legend()
         plt.savefig(path)
         plt.clf()
-    
-    def evaluate(self, testcase:TestCase, conversation:Conversation): #agent_response:str): #testcase:TestCase, conversation:Conversation):
-        score = self.get_score(conversation.agent_response, dflt_vals.type) #agent_response)#conversation.agent_response)
-        ex_results = self.run_examples()
-        probs = {}
-        for k, v in ex_results.items():
-            dist = gaussian_kde(v)
-            interval = np.linspace(score-self.epsilon, score+self.epsilon, 500)
-            dist_int = dist(interval) # kde applied to the interval
-            probs[k] = np.trapezoid(dist_int, interval)
 
-        self.save_res_as_img(ex_results, os.path.join(os.path.dirname(__file__), f"{os.getenv('IMAGES_DIR')}/{dflt_vals.type}_dist.png"))
-        
-        probs_as_lst = list(probs.values())
-        # if the differnce is positive the value is closer to fluent dist than non fluent
-        log_ratio = math.log(max(probs_as_lst[0], 1e-40)) - math.log(max(probs_as_lst[1], 1e-40))
-        final_score = 1 / (1 + math.exp(-log_ratio)) # sigmoid function for the difference in log values
-        logger.info(f"Fluency Score: {final_score}") # for : {conversation.agent_response}")
-        return round(final_score, 3) , OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), final_score)
+    def reason_for_score(self, agent_response:str, score:float, model_reason:bool=False):
+        if(model_reason):
+            try:
+                return OllamaConnect.get_reason(agent_response, " ".join(self.name.split("_")), score)
+            except:
+                logger.error("Could not fetch the reason for score. Make sure Ollama is running with the specified model.")
+                return ""
+        else:
+            match score:
+                case s if s < 0.3:
+                    return "Highly unstructured wording and sentences."
+                case s if 0.3 <= s <= 0.6:
+                    return "Not completely structured sentences."
+                case s if 0.6 < s <= 1.0:
+                    return "Very fluent sentences."
+                case s if s < 0 or s > 1.0:
+                    return ""
     
-    # def translate(self, agent_response:str):
-    #     return json.loads(requests.post(f"{self.gpu_url}/translate", params={"input_text" : agent_response, "target_language" : "English"}).content.decode('utf-8'))
+    def evaluate(self, testcase:TestCase, conversation:Conversation, save_dist_img=False): #testcase:TestCase, conversation:Conversation):
+        score = self.get_score(conversation.agent_response, dflt_vals.type) #agent_response)#agent_response)
+        ex_results = self.run_examples()
+        final_score = 0.0
+        rsn = ""
+        if(len(ex_results) == 2): # for fluent and non fluent scores, the length of examples must be 2
+            probs = {}
+            for k, v in ex_results.items():
+                dist = gaussian_kde(v)
+                interval = np.linspace(score-self.epsilon, score+self.epsilon, 500)
+                dist_int = dist(interval) # kde applied to the interval
+                probs[k] = np.trapezoid(dist_int, interval)
+
+            if(save_dist_img):
+                self.save_res_as_img(ex_results, os.path.join(os.path.dirname(__file__), f"{os.getenv('IMAGES_DIR')}/{dflt_vals.type}_dist.png"))
+            
+            probs_as_lst = list(probs.values())
+            # if the differnce is positive the value is closer to fluent dist than non fluent
+            log_ratio = math.log(max(probs_as_lst[0], 1e-40)) - math.log(max(probs_as_lst[1], 1e-40))
+            final_score = 1 / (1 + math.exp(-log_ratio)) # sigmoid function for the difference in log values
+            logger.info(f"Fluency Score: {final_score}")
+            final_score = round(final_score, 3)
+            rsn = self.reason_for_score(conversation.agent_response, final_score, model_reason=dflt_vals.model_reason)
+        else:
+            logger.error("Distributions not generated in the absence of examples. Returning a 0 score.")
+        return final_score, rsn
+    
 
 # fluency = IndianLanguageFluencyScorer()
 # fluent = ["आज ऑफिस में दिन काफ़ी लंबा था। सुबह एक मीटिंग थी जो उम्मीद से ज़्यादा चल गई, और उसके बाद लगातार ईमेल्स और कॉल्स में टाइम निकल गया। लंच करने का भी वक़्त नहीं मिला। शाम तक थोड़ा थकान महसूस हुई, लेकिन जब काम पूरा हो गया तो थोड़ा सुकून भी मिला। अब बस घर पहुँचकर आराम करने का मन है।",

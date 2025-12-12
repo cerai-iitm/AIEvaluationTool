@@ -130,4 +130,4 @@ class Evaluator:
                     self.save_scores(strategy_name, {"evaluated_score" : avg_score, "human_score" : human_score})
                 
 ev = Evaluator()
-ev.main(strategy_name="fluency_score", metric_name="")
+ev.main(strategy_name="entity_recognition", metric_name="")
