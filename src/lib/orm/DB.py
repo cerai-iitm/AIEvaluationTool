@@ -1157,14 +1157,14 @@ class DB:
                     
                     judge_prompt_id = self.add_or_get_llm_judge_prompt(testcase.judge_prompt) if testcase.judge_prompt else None
                     if judge_prompt_id == -1:
-                        self.logger.error(f"Judge prompt '{getattr(testcase.judge_prompt, "prompt")}' already exists. Cannot add test case.")
+                        self.logger.error(f"Judge prompt '{getattr(testcase.judge_prompt, 'prompt')}' already exists. Cannot add test case.")
                         return False
                     
                     # If a response is provided, create a Responses object
                     response_id = self.add_or_get_response(testcase.response, prompt_id) if testcase.response else None
                     # If the response already exists, use its ID
                     if response_id == -1:
-                        self.logger.error(f"Response '{getattr(testcase.response, "response_text")}' already exists. Cannot add test case.")
+                        self.logger.error(f"Response '{getattr(testcase.response, 'response_text')}' already exists. Cannot add test case.")
                         return False
                     
                     strategy_id = self.add_or_get_strategy_id(testcase.strategy) if isinstance(testcase.strategy, str) else testcase.strategy

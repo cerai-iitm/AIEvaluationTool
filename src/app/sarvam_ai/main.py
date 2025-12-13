@@ -81,10 +81,27 @@ def evaluate_safety(prompt: str, agent_response: str, metric_name: str):
     except Exception as e:
         raise Exception(f"Safety evaluation failed: {str(e)}")
 
+@app.post("/perplexity")
+def get_perplexity(text : str):
+    perplexity = generator.get_perplexity(text)
+    print(f"Perplexity : {perplexity}")
+    return {"text" : text, "perplexity" : perplexity}
+
+@app.post("/slor")
+def get_perplexity(text : str):
+    slor = generator.get_SLOR(text)
+    print(f"SLOR : {slor}")
+    return {"text" : text, "SLOR" : slor}
+
+@app.post("/hidden")
+def get_hidden(text : str):
+    hidden_vecs = generator.early_embedding(text)
+    return {"hidden" : hidden_vecs}
+
 if __name__ == "__main__":
     # Parse command line arguments for host and port
     parser = argparse.ArgumentParser(description="Sarvam AI application")
-    parser.add_argument("--port", "-p", type=int, default=8000, help="Port to run the FastAPI application", dest="port")
+    parser.add_argument("--port", "-p", type=int, default=16000, help="Port to run the FastAPI application", dest="port")
     parser.add_argument("--host", "-H", type=str, default="0.0.0.0", help="Host to run the FastAPI application", dest="host")
     parser.add_argument("--verbosity", "-v", dest="verbosity", type=int, default=5, help="Verbosity level for logging", choices=[0,1,2,3,4,5])
     parser.add_argument("--translator-model", "-t", type=str, default="sarvamai/sarvam-translate", help="Sarvam AI translation model name", dest="translator_model")

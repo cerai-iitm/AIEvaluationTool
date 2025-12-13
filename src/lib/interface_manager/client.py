@@ -40,6 +40,7 @@ class InterfaceManagerClient:
         
         self.base_url = base_url.rstrip("/")
         self.application_type = application_type
+        print(self.application_type)
         self.model_name = os.getenv("TARGET_MODEL_NAME") if model_name == "None" else model_name
         self.openui_email = openui_email
         self.openui_password = openui_password

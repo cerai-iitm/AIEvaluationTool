@@ -1,27 +1,17 @@
-from transformers import AutoTokenizer, AutoModelForCausalLM
-import torch
-from typing import Optional
-from torch.nn.functional import softmax
 import warnings
 import os
-import asyncio
-from accelerate import infer_auto_device_map, dispatch_model
 import requests
 import json
-
-from dotenv import load_dotenv
-from os.path import join, dirname
-
+from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
 from .logger import get_logger
-from .utils import detect_text, google_lang_translate
+from .utils_new import FileLoader
 
-dotenv_path = join(dirname(__file__), '.env')
-load_dotenv(dotenv_path)
-
-logger = get_logger("safety_strategy")
 warnings.filterwarnings("ignore")
 
+FileLoader._load_env_vars(__file__)
+logger = get_logger("safety_strategy")
+dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), simple=True, strat_name="safety_strategy")
 
 class SafetyStrategy(Strategy):
     """
@@ -38,8 +28,7 @@ class SafetyStrategy(Strategy):
         - kwargs: Additional parameters including metric_name.
         """
         super().__init__(name, kwargs=kwargs)
-        self.__metric_name = kwargs.get("metric_name", "misuse")
-        self.prompt = kwargs.get("prompt", "")
+        self.__metric_name = kwargs.get("metric_name", dflt_vals.default_metric)
         self.gpu_url=os.getenv("GPU_URL")
 
         if not self.gpu_url:
@@ -47,7 +36,7 @@ class SafetyStrategy(Strategy):
         else:
             logger.info("GPU_URL is loaded from environment.")
 
-    def evaluate(self, agent_response: str, expected_response: Optional[str] = None) -> float:
+    def evaluate(self, testcase:TestCase, conversation:Conversation):#agent_response: str, expected_response: Optional[str] = None) -> float:
         """
         Dispatches to the appropriate safety metric based on the selected metric name.
 
@@ -62,27 +51,27 @@ class SafetyStrategy(Strategy):
             case "misuse":
                 # return self.misuse(agent_response, self.prompt)
                 logger.info("Starting misuse evaluation with ShieldGemma")
-                resp = requests.post(f"{self.gpu_url}/safety_eval",params={"prompt": self.prompt,"agent_response":agent_response,"metric_name": self.__metric_name})
+                resp = requests.post(f"{self.gpu_url}/safety_eval",params={"prompt": testcase.prompt.user_prompt,"agent_response":conversation.agent_response,"metric_name": self.__metric_name})
                 json_str = resp.content.decode('utf-8')
                 data = json.loads(json_str)
                 logger.info(f"Misuse Score: {data['score']:.4f}")
-                return data['score']
+                return data['score'], ""
             case "jailbreak":
                 # return self.jailbreak(agent_response, self.prompt)
                 logger.info("Starting jailbreak evaluation with ShieldGemma")
-                resp = requests.post(f"{self.gpu_url}/safety_eval",params={"prompt": self.prompt,"agent_response":agent_response,"metric_name": self.__metric_name})
+                resp = requests.post(f"{self.gpu_url}/safety_eval",params={"prompt": testcase.prompt.user_prompt,"agent_response":conversation.agent_response,"metric_name": self.__metric_name})
                 json_str = resp.content.decode('utf-8')
                 data = json.loads(json_str)
                 logger.info(f"Jailbreak Score: {data['score']:.4f}")
-                return data['score']
+                return data['score'], ""
             case "exaggerated_safety":
                 # return self.exaggerated_safety(agent_response, self.prompt)
                 logger.info("Starting Exaggerated Safety evaluation with ShieldGemma")
-                resp = requests.post(f"{self.gpu_url}/safety_eval",params={"prompt": self.prompt,"agent_response":agent_response,"metric_name": self.__metric_name})
+                resp = requests.post(f"{self.gpu_url}/safety_eval",params={"prompt": testcase.prompt.user_prompt,"agent_response":conversation.agent_response,"metric_name": self.__metric_name})
                 json_str = resp.content.decode('utf-8')
                 data = json.loads(json_str)
                 logger.info(f"Exaggerated Safety Score: {data['score']:.4f}")
-                return data['score']
+                return data['score'], ""
             case _:
                 raise ValueError(f"Unknown safety metric: {self.__metric_name}")
     

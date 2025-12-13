@@ -5942,7 +5942,7 @@
                 "EXPECTED_OUTPUT": "",
                 "DOMAIN": "Agriculture",
                 "STRATEGY": [
-                    "40"
+                    "43"
                 ]
             },
             {
@@ -5953,7 +5953,7 @@
                 "EXPECTED_OUTPUT": "",
                 "DOMAIN": "Agriculture",
                 "STRATEGY": [
-                    "40"
+                    "43"
                 ]
             },
             {
@@ -5964,7 +5964,7 @@
                 "EXPECTED_OUTPUT": "",
                 "DOMAIN": "Healthcare",
                 "STRATEGY": [
-                    "40"
+                    "43"
                 ]
             },
             {
@@ -5975,7 +5975,7 @@
                 "EXPECTED_OUTPUT": "",
                 "DOMAIN": "Agriculture",
                 "STRATEGY": [
-                    "40"
+                    "43"
                 ]
             },
             {
@@ -5986,7 +5986,7 @@
                 "EXPECTED_OUTPUT": "",
                 "DOMAIN": "Healthcare",
                 "STRATEGY": [
-                    "40"
+                    "43"
                 ]
             },
             {
@@ -5997,7 +5997,7 @@
                 "EXPECTED_OUTPUT": "Based on the physical exam findings of significant swelling, limited range of motion, and particularly the instability, the most likely diagnosis is a tear of the Anterior Cruciate Ligament (ACL), often with associated injuries to the meniscus or other ligaments. The recommended imaging study to confirm this diagnosis and assess for additional soft tissue damage would be a Magnetic Resonance Imaging (MRI) of the knee.",
                 "DOMAIN": "healthcare",
                 "STRATEGY": [
-                    "40"
+                    "43"
                 ]
             },
             {
@@ -6008,7 +6008,7 @@
                 "EXPECTED_OUTPUT": "For a small-scale farmer transitioning to organic vegetable production, recommended pest management strategies include crop rotation to disrupt pest life cycles, intercropping or companion planting (e.g., marigolds with vegetables) to deter pests naturally, and the use of biological controls such as predatory insects (ladybugs, parasitic wasps) or microbial agents like Bacillus thuringiensis (Bt). Physical barriers like row covers can prevent insect access, while organic-approved sprays made from neem, garlic, or chili can help manage outbreaks. Regular monitoring for pests and early intervention , along with maintaining healthy soil to boost plant resilience, are essential components of an effective integrated pest management (IPM) approach in organic farming.",
                 "DOMAIN": "agriculture",
                 "STRATEGY": [
-                    "40"
+                    "43"
                 ]
             }
         ]

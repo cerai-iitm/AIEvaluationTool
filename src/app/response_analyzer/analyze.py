@@ -14,6 +14,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__) + '/../../'))  # Adjust t
 
 from lib.orm.DB import DB
 from lib.utils import get_logger, get_logger_verbosity
+# from lib.strategy.strategy_implementor import StrategyImplementor
 from lib.strategy.strategy_implementor import StrategyImplementor
 
 def main():
@@ -119,6 +120,7 @@ def main():
         logger.error(f"No run details found for run '{args.run_name}'.")
         return
     
+    print(run_details)
     # let's group the all the run_details by strategy for computational convenience.
     grouped_run_details = {}
     for detail in run_details:
@@ -133,11 +135,14 @@ def main():
             grouped_run_details[group_key] = []
         grouped_run_details[group_key].append(detail)
 
+    # brought it out from the for loop below since strategyimplementor should not have to be initialized for every strategy
+    strategy = StrategyImplementor()
+
     for group in grouped_run_details.keys():
         strategy_name, metric_name = group.split(":")
 
-        strategy = StrategyImplementor(strategy_name=strategy_name, metric_name=metric_name)
-
+        # instead of initializing the strategyimplementor for every strategy, we just set its name and the metric name
+        strategy.set_metric_strategy(strategy_name=strategy_name, metric_name=metric_name)
         # Analyze the run details
         for detail in grouped_run_details[group]:
             # let's ignore the incomplete test cases.
@@ -173,18 +178,24 @@ def main():
             if not conversation.agent_response:
                 logger.error(f"Agent response not found for conversation ID '{detail.conversation_id}' in run '{run.run_name}'.")
                 continue
-
+            
+            """
+            just need to change here, pass conversation and testcase objects
+            """
+            
             logger.debug(f"Evaluating strategy '{strategy_name}' for Testcase '{detail.testcase_name}'")
-            score = strategy.execute(prompts=[testcase.prompt.user_prompt], 
-                                     expected_responses=[testcase.response.response_text] if testcase.response else [None],
-                                     agent_responses=[conversation.agent_response], 
-                                     system_prompts=[testcase.prompt.system_prompt] if testcase.prompt.system_prompt else [None],
-                                     judge_prompts=[testcase.judge_prompt.prompt] if testcase.judge_prompt else [None])
+            # changed this line
+            score, reason = strategy.execute(testcase = testcase, conversation = conversation)
+            # score = strategy.execute(prompts=[testcase.prompt.user_prompt], 
+            #                          expected_responses=[testcase.response.response_text] if testcase.response else [None],
+            #                          agent_responses=[conversation.agent_response], 
+            #                          system_prompts=[testcase.prompt.system_prompt] if testcase.prompt.system_prompt else [None],
+            #                          judge_prompts=[testcase.judge_prompt.prompt] if testcase.judge_prompt else [None])
 
             logger.debug(f"Evaluated score for conversation ID {conversation.conversation_id} in run '{run.run_name}' and Testcase '{detail.testcase_name}': {score}")
             # now, let's update the scores for each conversation
             conversation.evaluation_score = score
-            conversation.evaluation_reason = ""
+            conversation.evaluation_reason = reason
             conversation.evaluation_ts = datetime.now().isoformat()
 
             # record the evaluation details
