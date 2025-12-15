@@ -48,6 +48,7 @@ interface TestCase {
 const TestCases = () => {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchField, setSearchField] = useState<"testcase" | "strategy" | "domain">("testcase");
   const [selectedCase, setSelectedCase] = useState<TestCase | null>(null);
   const [updateCase, setUpdateCase] = useState<TestCase | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -285,10 +286,23 @@ const TestCases = () => {
     }
   };
 
-  const filteredCases = testCases.filter((tc) =>
-    tc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    tc.strategyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    tc.domainName.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredCases = testCases.filter((tc) =>{
+    const q = searchQuery.toLowerCase();
+
+    if (!q) return true;
+
+    if (searchField === "testcase") {
+      return tc.name.toLowerCase().includes(q);
+    } else if (searchField === "strategy") {
+      return tc.strategyName.toLowerCase().includes(q);
+    } else if (searchField === "domain") {
+      return tc.domainName.toLowerCase().includes(q);
+    }
+    return true;
+  }
+    // tc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    // tc.strategyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    // tc.domainName.toLowerCase().includes(searchQuery.toLowerCase())
   );
   const totalItems = filteredCases.length;
   const itemsPerPage = 15;
@@ -377,7 +391,9 @@ const TestCases = () => {
           <h1 className="text-4xl font-bold mb-8 text-center">Test Cases</h1>
 
           <div className="flex gap-4 mb-6 ">
-            <Select defaultValue="testcase">
+            <Select defaultValue="testcase"
+              onValueChange={(value: "testcase" | "strategy" | "domain") => setSearchField(value)}
+            >
               <SelectTrigger className="w-48">
                 <SelectValue />
               </SelectTrigger>

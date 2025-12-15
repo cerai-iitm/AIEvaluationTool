@@ -59,9 +59,9 @@ def _get_strategy_ids_requiring_llm_prompt(session: Session) -> set[int]:
     summary="List all strategies (v2)",
 )
 def list_strategies(db: DB = Depends(_get_db)):
-    strategy = db.strategies
+    strategies = db.strategies
 
-    if strategy is None:
+    if strategies is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Strategies not found"
         )
@@ -75,7 +75,7 @@ def list_strategies(db: DB = Depends(_get_db)):
             strategy_description=strategy.description,
             requires_llm_prompt=strategy.strategy_id in strategy_ids_with_llm_prompt
         )
-        for strategy in strategy
+        for strategy in strategies
     ]
 
 
