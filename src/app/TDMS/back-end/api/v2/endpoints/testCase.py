@@ -76,6 +76,7 @@ def list_testcases(db: DB = Depends(_get_db)):
     results = []
     for testcase in testcases:
         domain_name = db.get_domain_name(testcase.prompt.domain_id)
+        lang_name = db.get_language_name(testcase.prompt.lang_id)
         response_str = (
             testcase.response.response_text
             if hasattr(testcase.response, "response_text")
@@ -96,6 +97,7 @@ def list_testcases(db: DB = Depends(_get_db)):
                 strategy_name=testcase.strategy,
                 llm_judge_prompt=judge_prompt_str,
                 domain_name=domain_name,
+                lang_name=lang_name,
             )
         )
     return results

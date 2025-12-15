@@ -389,13 +389,14 @@ export const TestCaseUpdateDialog = ({
 
           <div className = "overflow-y-auto flex-1 pr-1 pl-1">
 
-            <div className="space-y-1 pb-4">
-              <Label className="text-base font-semibold">Test Case</Label>
-              <Input
+            <div className=" pb-4 flex flex-row align-center justify-center">
+              <Label className="text-base font-semibold">Test Case -</Label>
+              <Label className="text-base font-semibold text-xl pl-2 text-primary hover:text-primary/90">{testCase.name}</Label>
+              {/* <Input
                 value={testCase.name}
                 readOnly
                 className="bg-muted"
-              />
+              /> */}
             </div>
 
             <div className="space-y-1 pb-4">

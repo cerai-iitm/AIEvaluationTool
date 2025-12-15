@@ -43,6 +43,7 @@ interface TestCase {
   systemPrompts: string;
   responseText: string;
   llmPrompt: string;
+  language: string;
 }
 
 const TestCases = () => {
@@ -147,6 +148,7 @@ const TestCases = () => {
             systemPrompts: item.system_prompt ?? "",
             responseText: item.response_text ?? "",
             llmPrompt: item.llm_judge_prompt ?? item.prompt ?? "",
+            language: item.lang_name ?? item.lang ?? "",
           };
         });
         
@@ -165,6 +167,7 @@ const TestCases = () => {
             systemPrompts: item.system_prompt ?? "",
             responseText: item.response_text ?? "",
             llmPrompt: item.llm_judge_prompt ?? item.prompt ?? "",
+            language: item.lang_name ?? item.lang ?? "",
           }));
           setTestCases(mappedData);
         } else {
@@ -472,6 +475,7 @@ const TestCases = () => {
                   <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">Testcase Name</th>
                   <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">Strategy Name</th>
                   <th className="sticky top-0 bg-white z-10 p-4 font-semibold   text-left">Domain Name</th>
+                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">Language</th>
                 </tr>
               </thead>
               <tbody>
@@ -498,6 +502,7 @@ const TestCases = () => {
                       <td className="p-2 pl-12">{testCase.name}</td>
                       <td className="p-2">{testCase.strategyName}</td>
                       <td className="p-2 pl-6 capitalize first-letter">{testCase.domainName}</td>
+                      <td className="p-2 pl-6 capitalize first-letter">{testCase.language}</td>
                     </tr>
                   ))
                 )}
@@ -540,9 +545,9 @@ const TestCases = () => {
           {selectedCase && (
             <div className="flex-1 p-1 overflow-y-auto space-y-6 pb-5">
             {/* <div className="space-y-4 pt-4"> */}
-              <div className="space-y-1">
-                <Label className="text-base font-semibold">Testcase Name</Label>
-                <Input value={selectedCase.name} readOnly className="bg-muted" />
+              <div className=" flex flex-row align-center justify-center">
+                <Label className="text-base font-semibold pl-2">Test Case - </Label> <Label className="text-base font-semibold text-xl pl-2 text-primary hover:text-primary/90"> {selectedCase.name} </Label>
+                
               </div>
 
               <div className="space-y-1">
@@ -598,9 +603,10 @@ const TestCases = () => {
               </div>
               )}
               
-              <div className="space-y-1">
-                <Label className="text-base font-semibold">Strategy Name</Label>
-                <Input value={selectedCase.strategyName} readOnly className="bg-muted" />
+              <div className=" flex flex-row align-center justify-left ">
+                <Label className="text-base font-semibold basis-[25%] pt-1">Strategy Name</Label>
+                {/* <Label className=" font-normal p-2 m-4 bg-muted"> {selectedCase.strategyName} </Label> */}
+                <Input value={selectedCase.strategyName} readOnly className="bg-muted basis-[75%]" />
               </div>
               
 
@@ -644,7 +650,7 @@ const TestCases = () => {
                   setSelectedCase(null);
                 }}
               >
-                Update
+                <p className="text-white px-2.5">Edit</p>
               </Button>
             )}
           </div>
