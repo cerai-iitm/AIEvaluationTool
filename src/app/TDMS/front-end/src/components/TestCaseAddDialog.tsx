@@ -617,7 +617,7 @@ export const TestCaseAddDialog = ({
                   }}
                   onBlur={() => setFocusedField(null)}
                   //onClick={() => {setShowDetails((prev) => !prev); setFocusedField("userPrompt")}}
-                  onClick={() => {setShowDetails(true); setFocusedField("userPrompt")}}
+                  onClick={() => {setShowDetails(true); setFocusedField("userPrompt"), setShowRequestDetails(false)}}
                   className="bg-muted min-h-[73px] pr-10"
                   required
                 />
@@ -713,7 +713,6 @@ export const TestCaseAddDialog = ({
                 <div className="relative">
                   <Textarea
                     value={responseText}
-                    
                     className="bg-muted min-h-[73px] pr-10"
                     onChange={(e) => setResponseText(e.target.value)}
                     onFocus={() => {
@@ -721,6 +720,11 @@ export const TestCaseAddDialog = ({
                       setShowDetails(false);
                     }}
                     onBlur={() => setFocusedField(null)}
+                    onClick={() => {
+                      setShowRequestDetails(true);
+                      setFocusedField("response");
+                      setShowDetails(false);
+                    }}
                   />
                   { focusedField === "response" && (
                   <Button
