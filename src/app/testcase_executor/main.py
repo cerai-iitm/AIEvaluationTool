@@ -112,8 +112,8 @@ def main():
     # db_url = f"mariadb+mariadbconnector://{config['database']['user']}:{config['database']['password']}@{config['database']['host']}:{config['database']['port']}/{config['database']['database']}"
 
     # setting up the database connection
-    if config["database"]["engine"] == "sqlite":
-        db_file = config["database"].get("file", "app.db")
+    if config["db"]["engine"] == "sqlite":
+        db_file = config["db"].get("file", "app.db")
 
         # Resolve project root (this file → importer → app → src → project_root)
         project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
@@ -132,9 +132,9 @@ def main():
         # Original MariaDB path (fallback)
         db_url = (
             f"mariadb+mariadbconnector://"
-            f"{config['database']['user']}:{config['database']['password']}"
-            f"@{config['database']['host']}:{config['database']['port']}/"
-            f"{config['database']['database']}"
+            f"{config['db']['user']}:{config['db']['password']}"
+            f"@{config['db']['host']}:{config['db']['port']}/"
+            f"{config['db']['database']}"
         )
 
     try:
