@@ -78,7 +78,7 @@ def main():
             "database": "db name",
         },
         "target": {
-            "application_type": "WHATSAPP_WEB | WEBAPP",
+            "application_type": "WHATSAPP_WEB | WEBAPP | API",
             "application_name": "Name of the target application",
             "application_url": "http://localhost:8000",  # URL of the target application
             "agent_name": "Name of the AI agent",
@@ -421,13 +421,14 @@ def main():
                     db.add_or_update_testrun_detail(rundetail)
 
                     # Initialize the InterfaceManagerClient with the provided configuration
-                    client = InterfaceManagerClient(base_url="http://localhost:8000" ,application_type=application_type)
+                    client = InterfaceManagerClient(base_url="http://localhost:8000" ,application_type=application_type, agent_name=agent_name)
                     client.sync_config({
                         "application_name": application_name,
                         "application_type": application_type,
                         "agent_name": agent_name,
                         "application_url": application_url
                     })
+                    client.apply_server_config()
 
                     try:
                         conv.prompt_ts = datetime.now().isoformat()
@@ -505,13 +506,14 @@ def main():
                 db.add_or_update_testrun(run=run)
 
                 # Initialize the InterfaceManagerClient with the provided configuration
-                client = InterfaceManagerClient(base_url="http://localhost:8000" ,application_type=application_type)
+                client = InterfaceManagerClient(base_url="http://localhost:8000" ,application_type=application_type, agent_name=agent_name)
                 client.sync_config({
                     "application_name": application_name,
                     "application_type": application_type,
                     "agent_name": agent_name,
                     "application_url": application_url
                 })
+                client.apply_server_config()
 
                 # iterate through the test cases and execute
                 for testcase in testcases:
@@ -600,13 +602,14 @@ def main():
                 db.add_or_update_testrun(run=run)
 
                 # Initialize the InterfaceManagerClient with the provided configuration
-                client = InterfaceManagerClient(base_url="http://localhost:8000" ,application_type=application_type)
+                client = InterfaceManagerClient(base_url="http://localhost:8000" ,application_type=application_type, agent_name=agent_name)
                 client.sync_config({
                     "application_name": application_name,
                     "application_type": application_type,
                     "agent_name": agent_name,
                     "application_url": application_url
                 })
+                client.apply_server_config()
 
                 # iterate through the test cases and execute
                 for testcase in testcases:

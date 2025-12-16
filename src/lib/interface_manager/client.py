@@ -14,15 +14,12 @@ from google import genai
 sys.path.append(os.path.dirname(__file__) + '/..')
 
 from lib.utils import get_logger
-
 from dotenv import load_dotenv
 # Resolve the project root (two levels up from this file)
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
 
 # Construct full path to .env in project root
 ENV_PATH = os.path.join(PROJECT_ROOT, ".env")
-print("Loading .env from:", ENV_PATH)
-
 load_dotenv(ENV_PATH)
 
 class PromptCreate(BaseModel):
@@ -33,15 +30,20 @@ class InterfaceManagerClient:
     def __init__(self,
         base_url: str,
         application_type: str,
-        model_name: str = "None",
-        openui_email: str = "None",
-        openui_password: str = "None",
-        run_mode: str = "None"):
+        agent_name: Optional[str] = "None",
+        openui_email: Optional[str] = "None",
+        openui_password: Optional[str] = "None",
+        run_mode: Optional[str] = "None"):
         
         self.base_url = base_url.rstrip("/")
         self.application_type = application_type
-        print(self.application_type)
-        self.model_name = os.getenv("TARGET_MODEL_NAME") if model_name == "None" else model_name
+        self.agent_name = agent_name
+
+        # Normalize invalid placeholders
+        if isinstance(self.agent_name, str) and self.agent_name.lower() in {"none", "", "null"}:
+            self.agent_name = None
+        
+        self.local_llm_base_url: Optional[str] = None
         self.openui_email = openui_email
         self.openui_password = openui_password
         self.session = requests.Session()
@@ -51,8 +53,11 @@ class InterfaceManagerClient:
         # Chat memory per chat_id
         self.conversations = defaultdict(list)
 
-        # Set up logging
         self.logger = get_logger(__name__)
+
+     # ---------------------------
+    # Provider initialization
+    # ---------------------------
 
     def _init_clients(self):
         self.openai_client = None
@@ -70,60 +75,41 @@ class InterfaceManagerClient:
                 raise RuntimeError("Missing GEMINI_API_KEY in .env")
             self.gemini_client_ready = True
 
+        elif self.provider == "LOCAL":
+            if not getattr(self, "local_llm_base_url", None):
+                raise RuntimeError(
+                    "LOCAL provider selected but local_llm_base_url is not set. "
+                    "Did you call apply_server_config()?"
+                )
+
+    # ---------------------------
+    # Public API
+    # ---------------------------
 
     def login(self) -> requests.Response:
         return self._get("login")
 
     def logout(self) -> requests.Response:
         return self._get("logout")
-    
+
     def close(self) -> requests.Response:
-        """
-        Closes the session and cleans up resources.
-        """
         return self._get("close")
-    
+
     def chat(self, chat_id: int, prompt_list: List[str]):
         prompt = " ".join(prompt_list)
 
-        # Old flows unchanged
+        # Legacy flows
         if self.application_type in ["WHATSAPP_WEB", "WEBAPP"]:
             payload = PromptCreate(chat_id=chat_id, prompt_list=prompt_list).dict()
             return self._post("chat", json=payload)
 
         # Unified API flow
         if self.application_type == "API":
-            # Determine provider AUTOMATICALLY
             self.provider = self._auto_detect_provider()
-
-            # Initialize API clients
             self._init_clients()
             return self._chat_api(chat_id, prompt)
 
         raise RuntimeError(f"Unsupported application type: {self.application_type}")
-
-    def _auto_detect_provider(self):
-        model = (os.getenv("TARGET_MODEL_NAME")).lower()
-        print("Auto-detecting provider for model:", model)
-
-        # Rule 1: model_name indicates provider
-        if model.startswith("gemini"):
-            return "GEMINI"
-        if model.startswith("gpt") or model.startswith("o"):
-            return "OPENAI"
-
-        raise RuntimeError(
-            "Unable to determine provider: "
-            "No model prefix AND no API keys found in .env."
-        )
-
-    def _chat_api(self, chat_id: int, prompt: str):
-
-        if self.provider == "GEMINI":
-            return self._chat_gemini(chat_id, prompt)
-
-        # default = OPENAI-style client
-        return self._chat_openai(chat_id, prompt)
 
     def _wrap_dict_as_response(self, data: dict) -> Response:
         resp = Response()
@@ -131,33 +117,153 @@ class InterfaceManagerClient:
         resp._content = json.dumps(data).encode("utf-8")
         return resp
 
-    def _chat_openai(self, chat_id, prompt):
-        print("Using OpenAI client...")
-        self.conversations[chat_id].append({"role": "user", "content": prompt})
+    # ---------------------------
+    # Provider detection
+    # ---------------------------
+
+    def _auto_detect_provider(self):
+        if not self.agent_name:
+            raise RuntimeError(
+                "agent_name (model) is not set. "
+                "Please configure target.agent_name in config.json."
+            )
+
+        # If application_url is local → LOCAL provider
+        if self.base_url.startswith("http://localhost") or self.base_url.startswith("http://127.0.0.1"):
+            self.logger.info("Detected LOCAL provider via application_url")
+            return "LOCAL"
+
+        model = self.agent_name.lower()
+
+        if model.startswith("gemini"):
+            return "GEMINI"
+
+        if model.startswith("gpt") or model.startswith("o"):
+            return "OPENAI"
+
+        raise RuntimeError(
+            f"Unable to determine provider for model '{self.agent_name}'. "
+            f"base_url='{self.base_url}'"
+        )
+
+
+    # ---------------------------
+    # Chat dispatch
+    # ---------------------------
+
+    def _chat_api(self, chat_id: int, prompt: str):
+        if self.provider == "GEMINI":
+            return self._chat_gemini(chat_id, prompt)
+
+        if self.provider == "LOCAL":
+            return self._chat_local(chat_id, prompt)
+
+        return self._chat_openai(chat_id, prompt)
+
+    # ---------------------------
+    # OpenAI
+    # ---------------------------
+
+    def _chat_openai(self, chat_id: int, prompt: str):
+        self.logger.info("Using OpenAI client...")
+        self.conversations[chat_id].append(
+            {"role": "user", "content": prompt}
+        )
 
         response = self.openai_client.chat.completions.create(
-            model=self.model_name,
+            model=self.agent_name,
             messages=self.conversations[chat_id]
         )
 
         assistant_text = response.choices[0].message["content"]
-        self.conversations[chat_id].append({"role": "assistant", "content": assistant_text})
+        self.logger.info(f"OpenAI response: {assistant_text}")
+        self.conversations[chat_id].append(
+            {"role": "assistant", "content": assistant_text}
+        )
 
-        return self._wrap_dict_as_response({"response": [{"response": assistant_text}]})
+        return self._wrap_dict_as_response(
+            {"response": [{"response": assistant_text}]}
+        )
 
-    def _chat_gemini(self, chat_id, prompt):
-        print("Using Gemini client...")
-        self.conversations[chat_id].append({"role": "user", "content": prompt})
+    # ---------------------------
+    # Gemini
+    # ---------------------------
+
+    def _chat_gemini(self, chat_id: int, prompt: str):
+        self.logger.info("Using Gemini client...")
+        self.conversations[chat_id].append(
+            {"role": "user", "content": prompt}
+        )
+
         client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
-
         response = client.models.generate_content(
-            model=self.model_name,
+            model=self.agent_name,
             contents=prompt
         )
+
         assistant_text = response.text
-        print("Gemini response text: ", assistant_text)
-        self.conversations[chat_id].append({"role": "assistant", "content": assistant_text})
-        return self._wrap_dict_as_response({"response": [{"response": assistant_text}]})
+        self.logger.info(f"Gemini response: {assistant_text}")
+        self.conversations[chat_id].append(
+            {"role": "assistant", "content": assistant_text}
+        )
+
+        return self._wrap_dict_as_response(
+            {"response": [{"response": assistant_text}]}
+        )
+
+    # ---------------------------
+    # LOCAL (Ollama / vLLM / LM Studio)
+    # ---------------------------
+
+    def _chat_local(self, chat_id: int, prompt: str):
+        self.logger.info("Using LOCAL Ollama server (OpenAI-compatible API)...")
+
+        if not self.local_llm_base_url:
+            raise RuntimeError("local_llm_base_url is not set")
+
+        # Create OpenAI-compatible client pointing to Ollama
+        client = OpenAI(
+            base_url=f"{self.local_llm_base_url.rstrip('/')}/v1",
+            api_key="ollama",  # required but unused
+        )
+
+        response = client.chat.completions.create(
+            model=self.agent_name,
+            messages=[
+                {"role": "user", "content": prompt}
+            ],
+        )
+        
+        assistant_text = response.choices[0].message.content
+
+        return self._wrap_dict_as_response(
+            {"response": [{"response": assistant_text}]}
+        )
+
+    def apply_server_config(self) -> None:
+        """
+        Pull server config and bind relevant fields to the client runtime.
+        Assumes flat config (no 'target' nesting).
+        """
+        cfg = self.get_config()
+
+        # Bind agent/model name (required)
+        agent = cfg.get("agent_name")
+        if not agent:
+            raise RuntimeError("agent_name is missing from server config")
+
+        self.agent_name = agent.lower()
+
+        # Bind local LLM inference URL (optional but required for LOCAL)
+        app_url = cfg.get("application_url")
+        if app_url:
+            self.local_llm_base_url = app_url.rstrip("/")
+
+        self.logger.debug(
+            "Applied server config → "
+            f"agent_name={self.agent_name}, "
+            f"local_llm_base_url={self.local_llm_base_url}"
+        )
 
     def get_config(self) -> dict[str, Any]:
         response = self._get("config")
