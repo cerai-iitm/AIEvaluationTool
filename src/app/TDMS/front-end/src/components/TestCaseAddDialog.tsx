@@ -38,6 +38,12 @@ interface Strategy {
   requires_llm_prompt: boolean | null;
 }
 
+const responseTypes = [
+  {value: "GT", label: "Ground Truth"},
+  {value: "GTDesc", label: "Ground Truth Description"},
+  {value: "NA", label: "Not Applicable"}
+]
+
 export const TestCaseAddDialog = ({
   open,
   onOpenChange,
@@ -68,7 +74,18 @@ export const TestCaseAddDialog = ({
   const [domain, setDomain] = useState("");
   const [domainOptions, setDomainOptions] = useState<string[]>([]);
   const [isFetchingDomains, setIsFetchingDomains] = useState(false);
+
+  // Response Type and ResponseLanguage
+  const [responseType, setResponseType] = useState("");
+  const [typeOptions, setTypeOptions] = useState<string[]>([])
+  const [isFetchingTypes, setIsFetchingTypes] = useState(false);
+  const [responseLanguage, setResponseLanguage] = useState("");
+  const [responseLanguageOptions, setResponseLanguageOptions] = useState<string[]>([]);
+
+  //show response details state - control visibility of response type and response language
+  const [showRequestDetails, setShowRequestDetails] = useState(false);
   
+
   // Show details state - controls visibility of System Prompts, Domain, and Language
   const [showDetails, setShowDetails] = useState(false);
   const [domainSelectOpen, setDomainSelectOpen] = useState(false);
@@ -507,6 +524,10 @@ export const TestCaseAddDialog = ({
       setShowDetails(false);
       setFocusedField(null);
 
+      setShowRequestDetails(false);
+      setResponseType("");
+      setResponseLanguage("");
+
       // Close dialog
       onOpenChange(false);
 
@@ -550,7 +571,10 @@ export const TestCaseAddDialog = ({
                   placeholder="Enter New Test Case Name"
                   value={testCaseName}
                   onChange={(e) => setTestCaseName(e.target.value)}
-                  onFocus={() => setShowDetails(false)}
+                  onFocus={() => {
+                    setShowDetails(false);
+                    setShowRequestDetails(false);
+                  }}
                   className={`bg-muted pr-24 ${
                     isNameAvailable === false ? "border-destructive" : ""
                   }`}
@@ -587,7 +611,10 @@ export const TestCaseAddDialog = ({
                 <Textarea
                   value={userPrompts}
                   onChange={(e) => setUserPrompts(e.target.value)}
-                  onFocus={() => setFocusedField("userPrompt")}
+                  onFocus={() => {
+                    setFocusedField("userPrompt");
+                    setShowRequestDetails(false);
+                  }}
                   onBlur={() => setFocusedField(null)}
                   //onClick={() => {setShowDetails((prev) => !prev); setFocusedField("userPrompt")}}
                   onClick={() => {setShowDetails(true); setFocusedField("userPrompt")}}
@@ -679,33 +706,89 @@ export const TestCaseAddDialog = ({
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-base font-semibold">Response</Label>
-              <div className="relative">
-                <Textarea
-                  value={responseText}
-                  
-                  className="bg-muted min-h-[73px] pr-10"
-                  onChange={(e) => setResponseText(e.target.value)}
-                  onFocus={() => {
-                    setFocusedField("response");
-                    setShowDetails(false);
-                  }}
-                  onBlur={() => setFocusedField(null)}
-                />
-                { focusedField === "response" && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-2 top-2"
-                  onMouseDown = {e => e.preventDefault()}
-                  onClick={() => handleSearchClick("response")}
-                  tabIndex = {-1}
-                >
-                  <Search className="w-4 h-4" />
-                </Button>
-                )}
+
+            <div className="space-y-2 pb-4">
+              <div className="space-y-2">
+                <Label className="text-base font-semibold">Response</Label>
+                <div className="relative">
+                  <Textarea
+                    value={responseText}
+                    
+                    className="bg-muted min-h-[73px] pr-10"
+                    onChange={(e) => setResponseText(e.target.value)}
+                    onFocus={() => {
+                      setFocusedField("response");
+                      setShowDetails(false);
+                    }}
+                    onBlur={() => setFocusedField(null)}
+                  />
+                  { focusedField === "response" && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-2 top-2"
+                    onMouseDown = {e => e.preventDefault()}
+                    onClick={() => handleSearchClick("response")}
+                    tabIndex = {-1}
+                  >
+                    <Search className="w-4 h-4" />
+                  </Button>
+                  )}
+                </div>
               </div>
+              {showRequestDetails && (
+                <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-base font-semibold">Response Type</Label>
+                    <Select value={responseType} onValueChange={setResponseType}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select response type" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover max-h-[300px]">
+                        {responseTypes.map((type) => (
+                          <SelectItem key={type.value} value={type.value}>
+                            {type.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-base font-semibold">Language</Label>
+                    <Select
+                      value={language}
+                      onValueChange={setLanguage}
+                      disabled={isFetchingLanguages}
+                    >
+                      <SelectTrigger>
+                        <SelectValue
+                          placeholder={
+                            isFetchingLanguages
+                              ? "Loading languages..."
+                              : "Select language"
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover max-h-[300px]">
+                        {languageOptions.length === 0 && !isFetchingLanguages ? (
+                          <SelectItem value="" disabled>
+                            No languages available
+                          </SelectItem>
+                        ) : (
+                          languageOptions.map((lang) => (
+                            <SelectItem key={lang} value={lang}>
+                              {lang}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                </>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -716,6 +799,7 @@ export const TestCaseAddDialog = ({
                 onOpenChange={(open) => {
                   if (open) {
                     setShowDetails(false);
+                    setShowRequestDetails(false);
                   }
                 }}
                 disabled={isFetchingStrategies}
@@ -747,6 +831,7 @@ export const TestCaseAddDialog = ({
                     onFocus={() => {
                       setFocusedField("llm");
                       setShowDetails(false);
+                      setShowRequestDetails(false);
                     }}
                     onBlur={() => setFocusedField(null)}
                   />
@@ -772,7 +857,10 @@ export const TestCaseAddDialog = ({
                 type="text"
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
-                onFocus={() => setShowDetails(false)}
+                onFocus={() => {
+                  setShowDetails(false);
+                  setShowRequestDetails(false);
+                }}
                 className="bg-gray-200 rounded px-4 py-1 mr-4 w-96"
                 required
               />
