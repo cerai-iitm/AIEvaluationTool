@@ -1,0 +1,10 @@
+[
+    {
+        "judge_prompt": "",
+        "sys_prompt": "",
+        "user_prompt": "",
+        "expected_output": "SUPPORT",
+        "agent_response": "Answer: Support",
+        "response_score": 0
+    }
+]

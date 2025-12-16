@@ -1,0 +1,10 @@
+[
+    {
+        "judge_prompt": "",
+        "sys_prompt": "",
+        "user_prompt": "",
+        "expected_output": "India is a land of vast heritage and culture. It is the largest democracy in the world with many religions, languages and cultures living together.",
+        "agent_response": "இந்தியா என்பது பரந்த பாரம்பரியமும் பண்பாடும் கொண்ட நாடாகும். இங்கு பல மதங்கள், மொழிகள் மற்றும் கலாசாரங்கள் ஒன்றிணைந்து வாழ்கின்றன.அது உலகிலேயே மிகப்பெரிய ஜனநாயக நாடாகும்.",
+        "response_score": 0
+    }
+]

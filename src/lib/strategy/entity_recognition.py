@@ -100,12 +100,12 @@ class EntityRecognition(Strategy):
         f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
         return round(f1, 4)
     
-    def reason_for_score(self, agent_response:str, score:float, model_reason:bool=False, **kwargs):
-        if(model_reason):
+    def reason_for_score(self, agent_response:str, score:float, **kwargs):
+        if(dflt_vals.model_reason):
             try:
-                return OllamaConnect.get_reason(agent_response, " ".join(self.name.split("_")), score, corr_output=kwargs.get("corr_output", ""))
+                return OllamaConnect.get_reason(agent_response, " ".join(self.name.split("_")), score, add_info=kwargs.get("corr_output", ""))
             except:
-                logger.error("Could not fetch the reason for score. Make sure Ollama is running with the specified model.")
+                logger.error(f"Could not fetch the reason for score. \n Make sure Ollama is running with the specified model, OR change the model_reason to false for {self.name} in data/defaults.json")
                 return ""
         else:
             match score:
@@ -118,25 +118,10 @@ class EntityRecognition(Strategy):
                 case s if s < 0 or s > 1.0:
                     return ""
 
-    def evaluate(self, testcase:TestCase, conversation:Conversation) -> float: #, expected_response, agent_response):
+    def evaluate(self, testcase:TestCase, conversation:Conversation):
         """
         Evaluates the agent response against expected and returns only the F1 score.
         """
-        score =  self.ner_recognition(expected_str= testcase.response.response_text, response_str=conversation.agent_response)#expected_response, response_str=agent_response) #testcase.response.response_text, response_str=conversation.agent_response)
+        score =  self.ner_recognition(expected_str= testcase.response.response_text, response_str=conversation.agent_response)
         logger.info(f"Result: {score}")
-        return score, self.reason_for_score(conversation.agent_response, score, model_reason=dflt_vals.model_reason, corr_output=testcase.response.response_text)
-        
-# Example usage
-# expected_response = "{ entity :  Vidarbha ,  ner_tag :  LOCATION },  { entity :  rice ,  ner_tag :  CROP },  { entity :  stress-tolerant hybrids ,  ner_tag :  CROP_TYPE },  { entity :  Sahbhagi Dhan ,  ner_tag :  CROP_VARIETY },  { entity :  DRR 42 ,  ner_tag :  CROP_VARIETY },  { entity :  monsoon ,  ner_tag :  WEATHER },  { entity :  cotton ,  ner_tag :  CROP }  "
-# agent_response = """
-# [
-#   {'entity': 'rice', 'ner_tag': 'Crop'},
-#   {'entity': 'Sahbhagi Dhan', 'ner_tag': 'Crop'},
-#   {'entity': 'DRR 42', 'ner_tag': 'Crop'},
-#   {'entity': 'cotton', 'ner_tag': 'Crop'}
-# ]
-# """
-# ner_eval = EntityRecognition()
-# res = ner_eval.ner_recognition(expected_response, agent_response)
-# pprint(f"expected_resp : {expected_response}, agent_resp : {agent_response}")
-# print(f"current_score: {res}") #{res[0]}, prev_score : {res[1]}")
+        return score, self.reason_for_score(conversation.agent_response, score, corr_output=f"Expected Output : \n {testcase.response.response_text}")

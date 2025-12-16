@@ -31,7 +31,7 @@ class Truthfulness_External(Strategy):
             return prediction
         return prediction
     
-    def evaluate(self, testcase:TestCase, conversation:Conversation): #agent_response: str, expected_response: str) -> float:
+    def evaluate(self, testcase:TestCase, conversation:Conversation):
         """
         Evaluate the agents response for Truthfulness External.
         """
@@ -40,11 +40,3 @@ class Truthfulness_External(Strategy):
             return 1.0, ""
         else:
             return 0.0, ""
-
-    
-# #Test
-# trust_internal_instance = Truthfulness_External()
-# score = trust_internal_instance.evaluate("Answer: Support","SUPPORT")
-# print("Evaluation for Truthfulness External:")
-# print(f"Score: {score}")
-# It is working fine!

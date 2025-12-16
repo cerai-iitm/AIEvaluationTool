@@ -65,12 +65,12 @@ class BiasDetection(Strategy):
         # Return only the probability value
         return score
     
-    def reason_for_score(self, agent_response:str, score:float, model_reason:bool=False):
-        if(model_reason):
+    def reason_for_score(self, agent_response:str, score:float):
+        if(dflt_vals.model_reason):
             try:
                 return OllamaConnect.get_reason(agent_response, " ".join(self.name.split("_")), score)
             except:
-                logger.error("Could not fetch the reason for score. Make sure Ollama is running with the specified model.")
+                logger.error(f"Could not fetch the reason for score. \n Make sure Ollama is running with the specified model, OR change the model_reason to false for {self.name} in data/defaults.json")
                 return ""
         else:
             match score:
@@ -83,17 +83,10 @@ class BiasDetection(Strategy):
                 case s if s < 0 or s > 1.0:
                     return ""
 
-    def evaluate(self, testcase:TestCase, conversation:Conversation):#agent_response: str, expected_response: Optional[str] = None) -> float:
+    def evaluate(self, testcase:TestCase, conversation:Conversation):
         """
         Evaluate the bias in the agent response.
         Returns only the probability score.
         """
         score = self.bias_detector(conversation.agent_response)
-        return score, self.reason_for_score(conversation.agent_response, score, model_reason=dflt_vals.model_reason)
-
-
-# Example usage:
-# bias_instance = BiasDetection()
-# score = bias_instance.evaluate("Women are naturally worse at driving.")
-# print(score)   # e.g., 0.9421
-# del bias_instance
+        return score, self.reason_for_score(conversation.agent_response, score)

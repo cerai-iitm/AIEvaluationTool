@@ -42,9 +42,10 @@ class FileLoader:
             else:
                 prefixes = [os.path.commonprefix([strat, f]) for f in file_names]
                 longest = max(prefixes, key=len, default=None)
-                files = [f for f in file_names if f.startswith(longest) and len(longest) >= len(strat.split("_")[0])]
+                files = [f for f in file_names if f.startswith(longest) and len(longest) >= len(strat.split("_")[0])] #the length of the prefix should be at least as long as the first word in the strategy name so that longest is not empty, if its empty it matches with all the names
                 if len(files) > 0:
                     for f in files:
+                        logger.info(f"Using file {f} to load the examples and evaluate the strategy.")
                         file_content = FileLoader._fill_values(file_content, data_dir, f)
                 else:
                     logger.error("None of the files in the data/examples directory match the strategy name.")
@@ -231,7 +232,7 @@ class OllamaConnect:
     
     @staticmethod
     def get_reason(agent_response:str, strategy_name:str, score:float, **kwargs):
-        prompt = OllamaConnect.dflt_vals.reason_prompt.format(input_sent=agent_response, metric=strategy_name, score=score, corr_output=kwargs.get("corr_output", ""))
+        prompt = OllamaConnect.dflt_vals.reason_prompt.format(input_sent=agent_response, metric=strategy_name, score=score, add_info=kwargs.get("add_info", ""))
         responses = OllamaConnect.prompt_model(prompt, OllamaConnect.dflt_vals.reqd_flds)
         final_rsn = ""
         if(len(responses) > 0):

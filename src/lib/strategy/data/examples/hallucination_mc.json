@@ -1,0 +1,18 @@
+[
+    {
+        "judge_prompt": "",
+        "sys_prompt": "Choose the correct answer.",
+        "user_prompt": "Which planet is known as the Red Planet?\n A. Venus\n B. Mars\n C. Jupiter\n D. Saturn",
+        "expected_output": "B",
+        "agent_response": "B. Mars is the Red Planet.",
+        "response_score": 0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "Choose the correct answer.",
+        "user_prompt": "Which planet has the most rings?\n A. Earth\n B. Neptune\n C. Mars\n D. Jupiter",
+        "expected_output": "N/A",
+        "agent_response": "N/A",
+        "response_score": 0
+    }
+]

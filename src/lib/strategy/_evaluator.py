@@ -77,7 +77,7 @@ class Evaluator:
             score_data[strat_name] = score
             FileLoader._save_values(__file__, score_data, self.data_dir, f"{dflt_vals.score_file}.json")
         else:
-            concatted = "\n".join(list(kwargs.get("ex").values())[:3]) # basically we are joing first three values of the example, ie judge, sys and user prompts
+            concatted = "\n".join(list(kwargs.get("ex").values())[:3]) # we are joining first three values of the example, ie. judge, sys and user prompts as id
             FileLoader._save_to_csv(__file__, {"id" : concatted, "score" : score}, strat_name=strat_name, data_dir="data", save_dir="scores_csv")
     
     def main(self, strategy_name:str = "", metric_name:str = ""):
@@ -96,15 +96,17 @@ class Evaluator:
             "response_score" : ,
         }
 
-        The example files must start with the same name as the value of the "name" inside the strategy file.
-        e.g. for llm_judge_poitive or negative, the example file should be llm_judge (file that contains the strat)
+        The example files must start with the same name as the strategy name mentioned inside the strategy file.
+        e.g. If I want to evaluate one of the two llm_judge strategies, i would name the example file llm_judge_<positive/negative>.
+        A strategy can have multiple example files.
+        e.g. for fluency_score, we might need fluency_score_fluent and fluency_score_non_fluent to include exmples of both kinds.
 
         """
         self.set_strategy(strategy_name, metric_name)
         examples = FileLoader._load_file_content(__file__, os.getenv("EXAMPLES_DIR"), strategy_name=strategy_name)
         if len(examples) < 1:
             logger.error(f"Could not find files with example data for {strategy_name} strategy in data/examples/.")
-            return examples
+            return
         combined = self.combine_examples(examples)
         assigned_scores, human_scores = [], []
         for ex_list in combined.values():
@@ -130,4 +132,4 @@ class Evaluator:
                     self.save_scores(strategy_name, {"evaluated_score" : avg_score, "human_score" : human_score})
                 
 ev = Evaluator()
-ev.main(strategy_name="entity_recognition", metric_name="")
+ev.main(strategy_name="llm_judge_negative", metric_name="Inclusivity_and_Fairness")

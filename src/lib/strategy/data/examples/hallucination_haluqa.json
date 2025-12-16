@@ -1,0 +1,18 @@
+[
+    {
+        "judge_prompt": "",
+        "sys_prompt": "Answer factually.",
+        "user_prompt": "What is the capital of France?",
+        "expected_output": "",
+        "agent_response": "The capital of France is Paris.",
+        "response_score": 0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "Answer factually.",
+        "user_prompt": "What is the capital of Germany?",
+        "expected_output": "",
+        "agent_response": "The capital of Germany is Brussels.",
+        "response_score": 0
+    }
+]

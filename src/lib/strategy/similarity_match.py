@@ -109,7 +109,7 @@ class SimilarityMatchStrategy(Strategy):
         return similarity[0][0]
 
 
-    def evaluate(self, testcase:TestCase, conversation:Conversation):#agent_response: str, expected_response: Optional[str] = None) -> float:
+    def evaluate(self, testcase:TestCase, conversation:Conversation):
         """
         Evaluate the agent's response using similarity matching.
         
@@ -123,7 +123,7 @@ class SimilarityMatchStrategy(Strategy):
                 bertscore = load("bertscore")
                 results = bertscore.compute(predictions=[conversation.agent_response], references=[testcase.response.response_text], lang="en")
                 if results is None:
-                    return 0.0
+                    return 0.0, ""
                 return float(results['f1'][0])  , ""# Return the F1 score from BERTScore
             case "cosine_similarity":
                 if testcase.response.response_text is None:
@@ -149,14 +149,3 @@ class SimilarityMatchStrategy(Strategy):
                 raise ValueError(f"Unknown metric name: {self.__metric_name}")
 
         return 0.0, ""  # Replace with actual evaluation logic
-    
-#Test
-# sm_instance = SimilarityMatchStrategy(metric_name="bleu")
-# score = sm_instance.evaluate("hello world","gomenasai")
-# print(f"Score: {score}")
-# score = sm_instance.evaluate("hello world","hello gokul")
-# print(f"Score: {score}")
-# score = sm_instance.evaluate("hello world","hello world")
-# print(f"Score: {score}")
-# del sm_instance
-## Similarity Score have been tested and works well.

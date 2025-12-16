@@ -10,7 +10,7 @@
     },
     "files": {
         "plans": "data/plans.json",
-        "testcases": "data/datapoints_combined.json",
+        "testcases": "data/updated_datapoints.json",
         "strategies": "data/strategy_id.json"
     }
 }

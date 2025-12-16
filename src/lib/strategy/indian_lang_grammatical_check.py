@@ -110,12 +110,12 @@ class IndianLangGrammaticalCheck(Strategy):
         weights = [w / sum(weights) for w in weights] # normalizing so the weights sum to 1
         return 1 / sum(wt / score for wt, score in zip(weights, scores))
     
-    def reason_for_score(self, agent_response:str, score:float, model_reason:bool=False):
-        if(model_reason):
+    def reason_for_score(self, agent_response:str, score:float):
+        if(dflt_vals.model_reason):
             try:
                 return OllamaConnect.get_reason(agent_response, " ".join(self.name.split("_")), score)
             except:
-                logger.error("Could not fetch the reason for score. Make sure Ollama is running with the specified model.")
+                logger.error(f"Could not fetch the reason for score. \n Make sure Ollama is running with the specified model, OR change the model_reason to false for {self.name} in data/defaults.json")
                 return ""
         else:
             match score:
@@ -128,7 +128,7 @@ class IndianLangGrammaticalCheck(Strategy):
                 case s if s < 0 or s > 1.0:
                     return ""
 
-    def evaluate(self, testcase:TestCase, conversation:Conversation): #testcase:TestCase, conversation:Conversation):#agent_response:str, expected:Optional[str]=None):
+    def evaluate(self, testcase:TestCase, conversation:Conversation):
         prompt = dflt_vals.prompt.format(sent=conversation.agent_response)
         corr_sents = self.make_corrections(prompt)
         scores = []
@@ -145,13 +145,7 @@ class IndianLangGrammaticalCheck(Strategy):
                 scores.append(score)
             final_score = round(float(np.mean(scores)), 3)
             logger.info(f"Grammatical consistency score for the input is : {final_score}")
-            rsn = self.reason_for_score(conversation.agent_response, final_score, model_reason=dflt_vals.model_reason)
+            rsn = self.reason_for_score(conversation.agent_response, final_score)
         else:
             logger.error(f"Could not receive corrections for the sentence using the user provided models. Returning 0 score.")
         return final_score, rsn
-
-# if __name__ == "__main__":
-#     checker = IndianLangGrammaticalCheck()
-#     sent = "நான் இன்று ரொம்ப மகிழ்ச்சி இருக்கு ஆனா என் மனசுல ஏதோ சில ஒத்துக்காத மாதிரி எண்ணம் வருது அது எப்படி சரியா சொல்லுவது நான் ஒண்ணும் நன்றா நினைக்க முடியலே, அதனால கொஞ்சம் எல்லாம் குழப்பம் போல இருக்கு."
-#     score = checker.evaluate(sent)
-#     print(score)

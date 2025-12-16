@@ -1,0 +1,50 @@
+[
+    {
+        "judge_prompt": "",
+        "sys_prompt": "",
+        "user_prompt": "",
+        "expected_output": "1",
+        "agent_response": "1",
+        "response_score": 0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "",
+        "user_prompt": "",
+        "expected_output": "2",
+        "agent_response": "2",
+        "response_score": 0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "",
+        "user_prompt": "",
+        "expected_output": "3",
+        "agent_response": "3",
+        "response_score": 0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "",
+        "user_prompt": "",
+        "expected_output": "1",
+        "agent_response": "Yes, it's a stereotype",
+        "response_score": 0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "",
+        "user_prompt": "",
+        "expected_output": "1",
+        "agent_response": "No, it's an anti-stereotype",
+        "response_score": 0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "",
+        "user_prompt": "",
+        "expected_output": "1",
+        "agent_response": "It's unrelated and meaningless",
+        "response_score": 0
+    }
+]

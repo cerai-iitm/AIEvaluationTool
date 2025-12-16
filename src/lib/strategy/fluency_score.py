@@ -65,12 +65,12 @@ class IndianLanguageFluencyScorer(Strategy):
         plt.savefig(path)
         plt.clf()
 
-    def reason_for_score(self, agent_response:str, score:float, model_reason:bool=False):
-        if(model_reason):
+    def reason_for_score(self, agent_response:str, score:float):
+        if(dflt_vals.model_reason):
             try:
                 return OllamaConnect.get_reason(agent_response, " ".join(self.name.split("_")), score)
             except:
-                logger.error("Could not fetch the reason for score. Make sure Ollama is running with the specified model.")
+                logger.error(f"Could not fetch the reason for score. \n Make sure Ollama is running with the specified model, OR change the model_reason to false for {self.name} in data/defaults.json")
                 return ""
         else:
             match score:
@@ -83,12 +83,12 @@ class IndianLanguageFluencyScorer(Strategy):
                 case s if s < 0 or s > 1.0:
                     return ""
     
-    def evaluate(self, testcase:TestCase, conversation:Conversation, save_dist_img=False): #testcase:TestCase, conversation:Conversation):
-        score = self.get_score(conversation.agent_response, dflt_vals.type) #agent_response)#agent_response)
+    def evaluate(self, testcase:TestCase, conversation:Conversation, save_dist_img=False):
+        score = self.get_score(conversation.agent_response, dflt_vals.type)
         ex_results = self.run_examples()
         final_score = 0.0
         rsn = ""
-        if(len(ex_results) == 2): # for fluent and non fluent scores, the length of examples must be 2
+        if(len(ex_results) == 2): # needs examples for both fluent and non fluent
             probs = {}
             for k, v in ex_results.items():
                 dist = gaussian_kde(v)
@@ -105,29 +105,8 @@ class IndianLanguageFluencyScorer(Strategy):
             final_score = 1 / (1 + math.exp(-log_ratio)) # sigmoid function for the difference in log values
             logger.info(f"Fluency Score: {final_score}")
             final_score = round(final_score, 3)
-            rsn = self.reason_for_score(conversation.agent_response, final_score, model_reason=dflt_vals.model_reason)
+            rsn = self.reason_for_score(conversation.agent_response, final_score)
         else:
-            logger.error("Distributions not generated in the absence of examples. Returning a 0 score.")
+            logger.error(f"Distributions not generated in the absence of examples. Add examples for {self.name} in data/examples. Returning a 0 score.")
         return final_score, rsn
-    
-
-# fluency = IndianLanguageFluencyScorer()
-# fluent = ["आज ऑफिस में दिन काफ़ी लंबा था। सुबह एक मीटिंग थी जो उम्मीद से ज़्यादा चल गई, और उसके बाद लगातार ईमेल्स और कॉल्स में टाइम निकल गया। लंच करने का भी वक़्त नहीं मिला। शाम तक थोड़ा थकान महसूस हुई, लेकिन जब काम पूरा हो गया तो थोड़ा सुकून भी मिला। अब बस घर पहुँचकर आराम करने का मन है।",
-#           "पिछले हफ़्ते हम सब दोस्तों ने अचानक प्लान बनाया और पास के कैफ़े चले गए। बहुत दिनों बाद सब मिले थे, तो बातें ख़त्म ही नहीं हो रही थीं। किसी ने कॉफ़ी ली, किसी ने मोमोज़, और सब अपने-अपने कॉलेज के पुराने किस्से सुना रहे थे। वक्त पता ही नहीं चला कब निकल गया। आख़िर में सबने कहा कि अगली बार थोड़ा बड़ा ट्रिप प्लान करेंगे।",
-#           "रविवार को घर पर माहौल हमेशा थोड़ा हल्का रहता है। सब लोग देर तक सोते हैं और फिर साथ में नाश्ता करते हैं। माँ आमतौर पर कुछ स्पेशल बनाती हैं — कभी आलू के परांठे, कभी पोहा। उसके बाद पापा न्यूज़ देखते हैं, और हम लोग कभी-कभी मूवी लगा लेते हैं। ये छोटा-सा रूटीन पूरे हफ़्ते की थकान मिटा देता है।",
-#           "आज सुबह से ही आसमान में बादल थे, और दोपहर तक तेज़ बारिश शुरू हो गई। सड़कें भीग गईं और हवा में मिट्टी की ख़ुशबू फैल गई। मैंने खिड़की से बाहर देखा तो बच्चे बारिश में खेल रहे थे। बारिश का मौसम मुझे हमेशा थोड़ा रिलैक्स कर देता है — बस एक कप चाय और थोड़ा म्यूज़िक, और सब कुछ परफेक्ट लगता है।",
-#           "कभी-कभी लगता है कि हम मोबाइल पर ज़रूरत से ज़्यादा समय बिताने लगे हैं। सुबह उठते ही सबसे पहले नोटिफ़िकेशन चेक करते हैं, और फिर पता ही नहीं चलता कब आधा घंटा निकल गया। सोशल मीडिया अच्छी चीज़ है, लेकिन अगर कंट्रोल में रहे तो ही फ़ायदेमंद है। अब मैं कोशिश करता हूँ कि रात को फोन थोड़ा दूर रखकर सोऊँ।",
-#         ]
-
-# non_fluent = ["आज ऑफिस बहुत काम था मैं गया जल्दी लेकिन मीटिंग देर हो गया और खाना नहीं टाइम। बॉस बोलता बहुत काम करो जल्दी जल्दी और मैं थक गया पूरा। फिर ईमेल भेजना था लेकिन इंटरनेट नहीं चल रहा सही तो मैं गुस्सा आया। अब घर जाना बस सोना करना चाहिए मैं।",
-#               "हम सब दोस्त गया कैफ़े खाना और बात बहुत करता। कोई कॉफ़ी पीता मैं मोमो खाया बहुत। फोटो लिया सब हँसता बिना वजह। फिर बिल आया बड़ा और सबने देखता एक-दूसरा कौन देगा। टाइम जल्दी गया और सब चला घर देर में।",
-#               "रविवार दिन घर में सब लोग देर उठता और माँ बोलती खाना बनाओ कोई नहीं मदद करता। पापा टीवी देखता और मैं मोबाइल खेलना। फिर हम खाना खाया और चाय पीता लेकिन बात नहीं ज़्यादा। दिन गया जल्दी और मैं नींद किया दोपहर।",
-#               "सुबह आसमान काला और फिर पानी बहुत गिरा तेज़। सड़क गीला और लोग भागता कार अंदर। मैं खिड़की से देखता बाहर बच्चा कूदता पानी। मैं भी जाना चाहता लेकिन जूते खराब नहीं करना था इसलिए बस देखा।",
-#               "आजकल लोग मोबाइल बहुत चलाता दिन रात। सुबह उठते फोन देखना पहले और फिर खाना भूल जाता। मैं भी करता वैसे और बाद में सोचता टाइम गया सब बेकार। सोशल मीडिया अच्छा नहीं जब ज़्यादा करना। मैं कोशिश अब नहीं लेकिन नहीं होता बंद।",
-#             ]
-
-# for f in zip(fluent):
-#     print(fluency.evaluate(f))
-# for f in zip(non_fluent):
-#     print(fluency.evaluate(f))
         
