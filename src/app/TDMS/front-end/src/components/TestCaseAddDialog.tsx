@@ -61,6 +61,22 @@ export const TestCaseAddDialog = ({
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
   const [searchType, setSearchType] = useState<PromptSearchType>("userPrompt");
 
+  // Language and Domain states
+  const [language, setLanguage] = useState("");
+  const [languageOptions, setLanguageOptions] = useState<string[]>([]);
+  const [isFetchingLanguages, setIsFetchingLanguages] = useState(false);
+  const [domain, setDomain] = useState("");
+  const [domainOptions, setDomainOptions] = useState<string[]>([]);
+  const [isFetchingDomains, setIsFetchingDomains] = useState(false);
+  
+  // Show details state - controls visibility of System Prompts, Domain, and Language
+  const [showDetails, setShowDetails] = useState(false);
+  const [domainSelectOpen, setDomainSelectOpen] = useState(false);
+  const [languageSelectOpen, setLanguageSelectOpen] = useState(false);
+
+
+  
+
   // Fetch current user role and strategies from API
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -84,6 +100,105 @@ export const TestCaseAddDialog = ({
       }
     };
 
+    // Fetch language from API
+    const fetchLanguages = async () => {
+      setIsFetchingLanguages(true);
+      try {
+        const token = localStorage.getItem("access_token");
+        const headers: HeadersInit = {
+          "Content-Type": "application/json",
+        };
+
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(API_ENDPOINTS.LANGUAGES_V2, { headers });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (Array.isArray(data)) {
+          const langNames = data
+            .map((lang: any) => lang?.lang_name)
+            .filter((name: string | null | undefined): name is string => Boolean(name));
+          setLanguageOptions(langNames);
+          if (langNames.length > 0 && !language) {
+            setLanguage(langNames[0]);
+          }
+        } else {
+          console.error("Unexpected languages data format:", data);
+          toast({
+            title: "Error",
+            description: "Failed to load languages",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching languages:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load languages from server",
+          variant: "destructive",
+        });
+      } finally {
+        setIsFetchingLanguages(false);
+      }
+    };
+
+    // Fetch Domain from API
+    const fetchDomains = async () => {
+      setIsFetchingDomains(true);
+      try {
+        const token = localStorage.getItem("access_token");
+        const headers: HeadersInit = {
+          "Content-Type": "application/json",
+        };
+
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(API_ENDPOINTS.DOMAINS_V2, { headers });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (Array.isArray(data)) {
+          const domainNames = data
+            .map((dom: any) => dom?.domain_name)
+            .filter((name: string | null | undefined): name is string => Boolean(name));
+          setDomainOptions(domainNames);
+          if (domainNames.length > 0 && !domain) {
+            setDomain(domainNames[0]);
+          }
+        } else {
+          console.error("Unexpected domains data format:", data);
+          toast({
+            title: "Error",
+            description: "Failed to load domains",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching domains:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load domains from server",
+          variant: "destructive",
+        });
+      } finally {
+        setIsFetchingDomains(false);
+      }
+    };
+
+    // Fetch strategies from API
     const fetchStrategies = async () => {
       setIsFetchingStrategies(true);
       try {
@@ -129,6 +244,14 @@ export const TestCaseAddDialog = ({
     if (open) {
       fetchUserRole();
       fetchStrategies();
+      fetchLanguages();
+      fetchDomains();
+    } else {
+      // Reset states when dialog closes
+      setShowDetails(false);
+      setFocusedField(null);
+      setDomainSelectOpen(false);
+      setLanguageSelectOpen(false);
     }
   }, [open, toast]);
 
@@ -220,7 +343,15 @@ export const TestCaseAddDialog = ({
     setFocusedField(null);
   };
 
-  const [focusedField, setFocusedField] = useState<null | "userPrompt" | "response" | "llm">(null);
+  const [focusedField, setFocusedField] = useState<
+    | null
+    | "userPrompt"
+    | "systemPrompt"
+    | "response"
+    | "llm"
+    | "domain"
+    | "language"
+  >(null);
 
   const handleSearchClick = (type: PromptSearchType) => {
     setSearchType(type);
@@ -370,7 +501,11 @@ export const TestCaseAddDialog = ({
       setLlmPrompt("");
       setStrategy("");
       setNotes("");
+      setLanguage("");
+      setDomain("");
       setIsNameAvailable(null);
+      setShowDetails(false);
+      setFocusedField(null);
 
       // Close dialog
       onOpenChange(false);
@@ -415,6 +550,7 @@ export const TestCaseAddDialog = ({
                   placeholder="Enter New Test Case Name"
                   value={testCaseName}
                   onChange={(e) => setTestCaseName(e.target.value)}
+                  onFocus={() => setShowDetails(false)}
                   className={`bg-muted pr-24 ${
                     isNameAvailable === false ? "border-destructive" : ""
                   }`}
@@ -451,8 +587,10 @@ export const TestCaseAddDialog = ({
                 <Textarea
                   value={userPrompts}
                   onChange={(e) => setUserPrompts(e.target.value)}
-                  onFocus = {() => setFocusedField("userPrompt")}
-                  onBlur = {() => setFocusedField(null)}
+                  onFocus={() => setFocusedField("userPrompt")}
+                  onBlur={() => setFocusedField(null)}
+                  //onClick={() => {setShowDetails((prev) => !prev); setFocusedField("userPrompt")}}
+                  onClick={() => {setShowDetails(true); setFocusedField("userPrompt")}}
                   className="bg-muted min-h-[73px] pr-10"
                   required
                 />
@@ -471,15 +609,74 @@ export const TestCaseAddDialog = ({
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <Label className="text-sm font-semibold">System prompts</Label>
-                <Textarea
-                  value={systemPrompts}
-                  onChange={(e) => setSystemPrompts(e.target.value)}
-                  className="bg-muted min-h-[73px]"
-                  readOnly = {systemPrompts === "" || systemPrompts === null || systemPrompts === undefined}
-                />
-              </div>
+              {showDetails && (
+                <>
+                  <div className="space-y-1">
+                    <Label className="text-sm font-semibold">System prompts</Label>
+                    <Textarea
+                      value={systemPrompts}
+                      onChange={(e) => setSystemPrompts(e.target.value)}
+                      onFocus={() => setFocusedField("systemPrompt")}
+                      onBlur={() => setFocusedField(null)}
+                      className="bg-muted min-h-[73px]"
+                      
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold">Domain</Label>
+                      <Select
+                        value={domain}
+                        onValueChange={setDomain}
+                        onOpenChange={setDomainSelectOpen}
+                        disabled={isFetchingDomains}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={isFetchingDomains ? "Loading domains..." : "Select Domain"}/>
+                        </SelectTrigger>
+                        <SelectContent className="bg-popover max-h-[300px]">
+                          {domainOptions.length === 0 && !isFetchingDomains ? (
+                            <SelectItem value="" disabled>No domains available</SelectItem>
+                          ) : (
+                            domainOptions.map((dom) => (
+                              <SelectItem key={dom} value={dom}>
+                                {dom}
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold">Language</Label>
+                      <Select
+                        value={language}
+                        onValueChange={setLanguage}
+                        onOpenChange={setLanguageSelectOpen}
+                        disabled={isFetchingLanguages}
+                      >
+                        <SelectTrigger>
+                          <SelectValue
+                            placeholder={
+                              isFetchingLanguages ? "Loading languages..." : "Select Language"
+                            }
+                          />
+                        </SelectTrigger>
+                        <SelectContent className="bg-popover max-h-[300px]">
+                          {languageOptions.length === 0 && !isFetchingLanguages ? (
+                            <SelectItem value="" disabled>No languages available</SelectItem>
+                          ) : (
+                            languageOptions.map((lang) => (
+                              <SelectItem key={lang} value={lang}>{lang}</SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -487,11 +684,14 @@ export const TestCaseAddDialog = ({
               <div className="relative">
                 <Textarea
                   value={responseText}
-                  readOnly = {responseText === "" || responseText === null || responseText === undefined}
+                  
                   className="bg-muted min-h-[73px] pr-10"
-                  onChange ={(e) => setResponseText(e.target.value)}
-                  onFocus = {() => setFocusedField("response")}
-                  onBlur = {() => setFocusedField(null)}
+                  onChange={(e) => setResponseText(e.target.value)}
+                  onFocus={() => {
+                    setFocusedField("response");
+                    setShowDetails(false);
+                  }}
+                  onBlur={() => setFocusedField(null)}
                 />
                 { focusedField === "response" && (
                 <Button
@@ -513,6 +713,11 @@ export const TestCaseAddDialog = ({
               <Select 
                 value={strategy} 
                 onValueChange={setStrategy}
+                onOpenChange={(open) => {
+                  if (open) {
+                    setShowDetails(false);
+                  }
+                }}
                 disabled={isFetchingStrategies}
               >
                 <SelectTrigger>
@@ -539,8 +744,11 @@ export const TestCaseAddDialog = ({
                     readOnly = {llmPrompt === "" || llmPrompt === null || llmPrompt === "none"}
                     className="bg-muted min-h-[73px] pr-10"
                     required
-                    onFocus = {() => setFocusedField("llm")}
-                    onBlur = {() => setFocusedField(null)}
+                    onFocus={() => {
+                      setFocusedField("llm");
+                      setShowDetails(false);
+                    }}
+                    onBlur={() => setFocusedField(null)}
                   />
                   { focusedField === "llm" && (
                   <Button
@@ -564,6 +772,7 @@ export const TestCaseAddDialog = ({
                 type="text"
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
+                onFocus={() => setShowDetails(false)}
                 className="bg-gray-200 rounded px-4 py-1 mr-4 w-96"
                 required
               />
