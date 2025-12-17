@@ -61,6 +61,7 @@ const TestCases = () => {
   const [testCaseToDelete, setTestCaseToDelete] = useState<TestCase | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentUserRole, setCurrentUserRole] = useState<string>("");
+  const [highlightedRowId, setHighlightedRowId] = useState<number | null>(null);
   
   // Refs for textareas to enable auto-scroll
   const userPromptsRef = useRef<HTMLTextAreaElement>(null);
@@ -227,7 +228,15 @@ const TestCases = () => {
   }, [refreshKey]);
 
   const handleUpdateSuccess = () => {
+    // Preserve the highlighted row ID after update
+    const currentHighlightedId = highlightedRowId;
     setRefreshKey((prev) => prev + 1); // Trigger refresh
+    // Restore highlight after data refresh
+    setTimeout(() => {
+      if (currentHighlightedId !== null) {
+        setHighlightedRowId(currentHighlightedId);
+      }
+    }, 100);
   };
 
   const handleDeleteClick = (testCase: TestCase) => {
@@ -273,6 +282,7 @@ const TestCases = () => {
       setDeleteDialogOpen(false);
       setTestCaseToDelete(null);
       setSelectedCase(null);
+      setHighlightedRowId(null); // Clear highlight when row is deleted
       handleUpdateSuccess();
     } catch (error) {
       console.error("Error deleting test case:", error);
@@ -410,7 +420,10 @@ const TestCases = () => {
             <Input
               placeholder="search"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
               className="w-64"
             />
             <div className="ml-auto flex items-center gap-4">
@@ -495,8 +508,15 @@ const TestCases = () => {
                   paginatedCases.map((testCase) => (
                     <tr
                       key={testCase.id}
-                      className="border-b hover:bg-muted/50 cursor-pointer"
-                      onClick={() => setSelectedCase(testCase)}
+                      className={`border-b cursor-pointer transition-colors duration-200 ${
+                        highlightedRowId === testCase.id
+                          ? "bg-primary/10 hover:bg-primary/15 border-primary/30"
+                          : "hover:bg-muted/50"
+                      }`}
+                      onClick={() => {
+                        setSelectedCase(testCase);
+                        setHighlightedRowId(testCase.id);
+                      }}
                     >
                       <td className="p-2 pl-12">{testCase.id}</td>
                       <td className="p-2 pl-12">{testCase.name}</td>
