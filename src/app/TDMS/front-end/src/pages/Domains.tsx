@@ -412,7 +412,7 @@ const DomainList: React.FC = () => {
             </button>
             <div className="flex items-center justify-center mb-6 md:mb-7 mt-4 md:mt-5">
               <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Domain Name :</label>
-              <span className="text-sm md:text-base">{selectedDomain.domain_name}</span>
+              <span className="text-sm md:text-base capitalize">{selectedDomain.domain_name}</span>
             </div>
             <div className="flex gap-4 md:gap-8 justify-center">
               {hasPermission(currentUserRole, "canDeleteTables") && (

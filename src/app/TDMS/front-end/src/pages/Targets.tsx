@@ -33,6 +33,7 @@ import TargetAddDialog from "@/components/TargetAddDialog";
 import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
 import { hasPermission } from "@/utils/permissions";
+import { set } from "date-fns";
 
 interface Target {
   target_id: number;
@@ -63,6 +64,8 @@ const Targets = () => {
   const [targetToDelete, setTargetToDelete] = useState<Target | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentUserRole, setCurrentUserRole] = useState<string>("");
+
+  const [highlightedRowId, setHighlightedRowId] = useState<number | null>(null);
 
   const authHeaders = useCallback((): HeadersInit => {
     const headers: HeadersInit = {
@@ -225,6 +228,7 @@ const Targets = () => {
       setSelectedTarget(null);
       setIsDetailDialogOpen(false);
       handleUpdateSuccess();
+      setHighlightedRowId(null);
     } catch (error) {
       console.error("Error deleting target:", error);
       toast({
@@ -288,7 +292,10 @@ const Targets = () => {
             <Input
               placeholder="search"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
               className="w-64"
             />
             {/* <Button className="ml-auto" onClick={() => setAddDialogOpen(true)}>+ Add Target</Button> */}
@@ -368,12 +375,15 @@ const Targets = () => {
                     paginatedTargets.map((target) => (
                       <tr
                         key={target.target_id}
-                        className="border-b-2 cursor-pointer hover:bg-muted/50"
-                        onClick={() => handleSelectTarget(target.target_id)}
+                        className={`border-b cursor-pointer transition-colors duration-200 ${highlightedRowId === target.target_id ? "bg-primary/10 hover:bg-primary/15 border-primary//30" : "hover:bg-muted/50"}`}
+                        onClick={() => {
+                          handleSelectTarget(target.target_id);
+                          setHighlightedRowId(target.target_id);
+                        }}
                       >
-                        <td className="p-2">{target.target_id}</td>
-                        <td className="p-2">{target.target_name}</td>
-                        <td className="p-2">
+                        <td className="p-2 pl-12">{target.target_id}</td>
+                        <td className="p-2 pl-6">{target.target_name}</td>
+                        <td className="p-2 pl-12">
                           <span
                             onClick={(e) => {
                               e.stopPropagation();
@@ -388,7 +398,7 @@ const Targets = () => {
                             {target.target_type}
                           </span>
                         </td>
-                        <td className="p-2">{target.domain_name}</td>
+                        <td className="p-2 pl-8 capitalize">{target.domain_name}</td>
                       </tr>
                     ))
                   )}

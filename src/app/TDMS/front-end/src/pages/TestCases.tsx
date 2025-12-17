@@ -427,6 +427,10 @@ const TestCases = () => {
               className="w-64"
             />
             <div className="ml-auto flex items-center gap-4">
+              <div>
+                
+                <img src="src/assets/icons8-history-50.png" alt="Histroy" className="w-5 mr-5" />
+              </div>
               <span className="text-sm text-muted-foreground">
                 {totalItems === 0
                   ? "0"
