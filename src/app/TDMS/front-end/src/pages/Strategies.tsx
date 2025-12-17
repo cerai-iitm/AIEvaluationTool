@@ -22,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { API_ENDPOINTS } from "@/config/api";
 import { hasPermission } from "@/utils/permissions";
 import { HistoryButton } from "@/components/HistoryButton";
+import { set } from "date-fns";
 
 // Types
 interface Strategy {
@@ -68,6 +69,8 @@ const StrategyList: React.FC = () => {
   const [updateMessage, setUpdateMessage] = useState("");
 
   const [refreshKey, setRefreshKey] = useState(0);
+
+  const [highlightedRowId, setHighlightedRowId] = useState<number | null>(null);
 
   // Fetch strategies from API
   const fetchStrategies = async () => {
@@ -249,6 +252,7 @@ const StrategyList: React.FC = () => {
       setShowUpdateModal(false);
       setSelectedStrategy(null);
       fetchStrategies(); // Refresh the list
+      //setHighlightedRowId(selectedStrategy.strategy_id);
     } catch (error: any) {
       console.error("Error updating strategy:", error);
       toast({
@@ -293,6 +297,7 @@ const StrategyList: React.FC = () => {
       setShowEditDialog(false);
       setSelectedStrategy(null);
       fetchStrategies(); // Refresh the list
+      setHighlightedRowId(null);
       
     } catch (error: any) {
       console.error("Error deleting strategy:", error);
@@ -330,7 +335,10 @@ const StrategyList: React.FC = () => {
             <Input
               placeholder="search"
               value={searchQuery}
-              onChange={(e)=> setSearchQuery(e.target.value)}
+              onChange={(e)=> {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
               className="w-full sm:w-64"
             />
             <div className="ml-auto flex items-center gap-2 md:gap-4">
@@ -390,10 +398,13 @@ const StrategyList: React.FC = () => {
                       PaginatedStrategies.map((row) => (
                         <tr 
                           key={row.strategy_id}
-                          className="border-b hover:bg-muted/50 cursor-pointer transition-colors"
+                          className={`border-b cursor-pointer transition-colors duration-200 ${
+                            highlightedRowId === row.strategy_id ? "bg-primary/10 hover:bg-primary/15 border-primary/30" : "hover:bg-muted/50"
+                          }`}
                           onClick={() => {
                             setSelectedStrategy(row);
                             setShowEditDialog(true);
+                            setHighlightedRowId(row.strategy_id);
                           }}
                         >
                           <td className="p-2 text-center text-xs md:text-base">{row.strategy_id}</td>

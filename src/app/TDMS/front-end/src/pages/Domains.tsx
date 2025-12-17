@@ -64,6 +64,8 @@ const DomainList: React.FC = () => {
   // UPDATE - Dialog local state
   const [updateName, setUpdateName] = useState("");
 
+  const [highlightedRowId, setHighlightedRowId] = useState<number | null>(null);
+
   // Fetch domains from API
   const fetchDomains = async () => {
     setIsLoading(true);
@@ -182,6 +184,7 @@ const DomainList: React.FC = () => {
       setAddMessage("");
       setAddOpen(false);
       fetchDomains(); // Refresh the list
+      setHighlightedRowId(data.domain_id);
     } catch (error: any) {
       console.error("Error creating domain:", error);
       toast({
@@ -279,6 +282,7 @@ const DomainList: React.FC = () => {
       setShowEditDialog(false);
       setSelectedDomain(null);
       fetchDomains(); // Refresh the list
+      setHighlightedRowId(null);
     } catch (error: any) {
       console.error("Error deleting domain:", error);
       toast({
@@ -315,7 +319,10 @@ const DomainList: React.FC = () => {
             <Input
               placeholder="search"
               value={searchQuery}
-              onChange={(e)=> setSearchQuery(e.target.value)}
+              onChange={(e)=> {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
               className="w-full sm:w-64"
             />
             <div className="ml-auto flex items-center gap-2 md:gap-4">
@@ -373,10 +380,13 @@ const DomainList: React.FC = () => {
                       PaginatedDomains.map((row) => (
                         <tr 
                           key={row.domain_id}
-                          className="border-b hover:bg-muted/50 cursor-pointer transition-colors"
+                          className={`border-b cursor-pointer transition-colors duration-200 ${
+                            highlightedRowId === row.domain_id ? "bg-primary/10 hover:bg-primary/15 border-primary/30" : "hover:bg-muted/50"
+                          }`}
                           onClick={() => {
                             setSelectedDomain(row);
                             setShowEditDialog(true);
+                            setHighlightedRowId(row.domain_id);
                           }}
                         >
                           <td className="p-2 text-center text-xs md:text-base">{row.domain_id}</td>

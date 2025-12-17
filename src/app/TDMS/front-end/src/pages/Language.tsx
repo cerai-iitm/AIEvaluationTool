@@ -39,6 +39,8 @@ const LanguageList: React.FC = () => {
     // Update - Dialog local state
     const [updateName, setUpdateName] = useState("");
 
+    const [highlightedRowId, setHighlightedRowId] = useState<number | null>(null);
+
     // Fetch languages from API
     const fetchLanguages = async () => {
         setIsLoading(true);
@@ -168,6 +170,7 @@ const LanguageList: React.FC = () => {
             setAddOpen(false);
             setNewLanguageName("");
             fetchLanguages(); // Refresh the list
+            setHighlightedRowId(data.lang_id);
         } catch (error: any) {
             console.error("Error creating language:", error);
             toast({
@@ -265,6 +268,7 @@ const LanguageList: React.FC = () => {
             setShowEditDialog(false);
             setSelectedLanguage(null);
             fetchLanguages(); // Refresh the list
+            setHighlightedRowId(null);
         } catch (error: any) {
             console.error("Error deleting language:", error);
             toast({
@@ -309,7 +313,10 @@ const LanguageList: React.FC = () => {
                     <Input
                             placeholder="search"
                             value={searchQuery}
-                            onChange={e => setSearchQuery(e.target.value)}
+                            onChange={e => {
+                                setCurrentPage(1); 
+                                setSearchQuery(e.target.value);
+                            }}
                             className="w-full sm:w-64"
                         />
                         <div className="ml-auto flex items-center gap-2 md:gap-4">
@@ -367,8 +374,10 @@ const LanguageList: React.FC = () => {
                                             paginatedLanguages.map(lang => (
                                                 <tr 
                                                     key={lang.lang_id} 
-                                                    className="border-b hover:bg-muted/50 cursor-pointer transition-colors"
-                                                    onClick={() => handleRowClick(lang)}
+                                                    className={`border-b cursor-pointer transition-colors duration-200 ${
+                                                        highlightedRowId === lang.lang_id ? "bg-primary/10 hover:bg-primary/15 border-primary/30" : "hover:bg-muted/50"
+                                                    }`}
+                                                    onClick={() => {handleRowClick(lang); setHighlightedRowId(lang.lang_id);}}
                                                 >
                                                     <td className="p-2 text-center text-xs md:text-base">{lang.lang_id}</td>
                                                     <td className="p-2 text-xs md:text-base">{lang.lang_name}</td>
