@@ -345,7 +345,7 @@ const LlmPrompts = () => {
                   setSelectedPrompt(null);
                 }}
               >
-                Update
+                <p className="text-white px-2.5">Edit</p>
               </Button>
             )}
           </div>

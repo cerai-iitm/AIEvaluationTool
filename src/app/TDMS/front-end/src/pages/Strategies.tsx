@@ -451,7 +451,7 @@ const StrategyList: React.FC = () => {
                     setShowUpdateModal(true);
                   }}
                 >
-                  Update
+                  <p className="text-white px-2.5">Edit</p>
                 </button>
               )}
             </div>
