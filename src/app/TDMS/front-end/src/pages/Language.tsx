@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
 import { hasPermission } from '@/utils/permissions';
+import { HistoryButton } from "@/components/HistoryButton";
 
 
 interface Language {
@@ -305,13 +306,19 @@ const LanguageList: React.FC = () => {
                                 <SelectItem value="Language Name">Language Name</SelectItem>
                             </SelectContent>
                         </Select>
-                        <Input
+                    <Input
                             placeholder="search"
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
                             className="w-full sm:w-64"
                         />
                         <div className="ml-auto flex items-center gap-2 md:gap-4">
+                            <HistoryButton
+                                entityType="Language"
+                                title="Languages"
+                                idField="languageId"
+                                idLabel="Language ID"
+                            />
                             <span className="text-xs sm:text-sm text-muted-foreground">
                                 {totalItems ? `${(currentPage - 1) * itemsPerPage + 1} - ${Math.min(currentPage * itemsPerPage, totalItems)} of ${totalItems}` : "0"}
                             </span>

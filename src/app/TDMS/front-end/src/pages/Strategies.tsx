@@ -21,6 +21,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { API_ENDPOINTS } from "@/config/api";
 import { hasPermission } from "@/utils/permissions";
+import { HistoryButton } from "@/components/HistoryButton";
 
 // Types
 interface Strategy {
@@ -333,6 +334,12 @@ const StrategyList: React.FC = () => {
               className="w-full sm:w-64"
             />
             <div className="ml-auto flex items-center gap-2 md:gap-4">
+              <HistoryButton
+                entityType="Strategy"
+                title="Strategies"
+                idField="strategyId"
+                idLabel="Strategy ID"
+              />
               <span className="text-xs sm:text-sm text-muted-foreground">
                 {totalItems === 0 ? "0" : `${(currentPage - 1) * itemsPerPage + 1} - ${Math.min(currentPage * itemsPerPage, totalItems)} of ${totalItems}`}
               </span>

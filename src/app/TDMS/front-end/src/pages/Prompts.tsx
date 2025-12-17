@@ -23,6 +23,7 @@ import { PromptAddDialog } from "@/components/PromptAddDialog";
 import { useToast } from "@/hooks/use-toast";
 import { API_ENDPOINTS } from "@/config/api";
 import { hasPermission } from "@/utils/permissions";
+import { HistoryButton } from "@/components/HistoryButton";
 
 interface PromptItem {
   prompt_id: number;
@@ -198,6 +199,12 @@ const Prompts = () => {
               className="w-64"
             />
             <div className="ml-auto flex items-center gap-4">
+              <HistoryButton
+                entityType="Prompt"
+                title="Prompts"
+                idField="promptId"
+                idLabel="Prompt ID"
+              />
               <span className="text-sm text-muted-foreground">
                 {totalItems === 0
                   ? "0"

@@ -26,6 +26,7 @@ import { LlmPromptAddDialog } from "@/components/LlmPromptAddDialog";
 import { useToast } from "@/hooks/use-toast";
 import { API_ENDPOINTS } from "@/config/api";
 import { hasPermission } from "@/utils/permissions";
+import { HistoryButton } from "@/components/HistoryButton";
 
 const LlmPrompts = () => {
   const { toast } = useToast();
@@ -195,6 +196,12 @@ const LlmPrompts = () => {
               className="w-64"
             />
             <div className="ml-auto flex items-center gap-4">
+              <HistoryButton
+                entityType="LLM Prompt"
+                title="LLM Prompts"
+                idField="llmPromptId"
+                idLabel="Prompt ID"
+              />
               <span className="text-sm text-muted-foreground">
                 {totalItems === 0
                   ? "0"

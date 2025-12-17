@@ -33,7 +33,7 @@ import TargetAddDialog from "@/components/TargetAddDialog";
 import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
 import { hasPermission } from "@/utils/permissions";
-import { set } from "date-fns";
+import { HistoryButton } from "@/components/HistoryButton";
 
 interface Target {
   target_id: number;
@@ -300,6 +300,12 @@ const Targets = () => {
             />
             {/* <Button className="ml-auto" onClick={() => setAddDialogOpen(true)}>+ Add Target</Button> */}
             <div className="ml-auto flex items-center gap-4">
+              <HistoryButton
+                entityType="Target"
+                title="Targets"
+                idField="targetId"
+                idLabel="Target ID"
+              />
               <span className="test-sm text-muted-foreground">
                 {totalItems === 0
                   ? "0"

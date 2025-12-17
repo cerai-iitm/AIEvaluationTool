@@ -25,7 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ChevronLeft, ChevronRight, X, Loader2, Users } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, Loader2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { TestCaseUpdateDialog } from "@/components/TestCaseUpdateDialog";
@@ -33,6 +33,7 @@ import { TestCaseAddDialog } from "@/components/TestCaseAddDialog";
 import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
 import { hasPermission } from "@/utils/permissions";
+import { HistoryButton } from "@/components/HistoryButton";
 
 interface TestCase {
   id: number;
@@ -44,15 +45,6 @@ interface TestCase {
   responseText: string;
   llmPrompt: string;
   language: string;
-}
-
-interface Activity {
-  description: string;
-  type: string;
-  testCaseId: string;
-  status: "Created" | "Updated" | "Deleted";
-  timestamp: string;
-  user_name: string;
 }
 
 const TestCases = () => {
@@ -71,63 +63,12 @@ const TestCases = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentUserRole, setCurrentUserRole] = useState<string>("");
   const [highlightedRowId, setHighlightedRowId] = useState<number | null>(null);
-
-  // History state
-  const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
-  const [historyTitle] = useState("Test Cases");
-  const [historyActivities, setHistoryActivities] = useState<Activity[]>([]);
-  const [historyLoading, setHistoryLoading] = useState(false);
   
   // Refs for textareas to enable auto-scroll
   const userPromptsRef = useRef<HTMLTextAreaElement>(null);
   const systemPromptsRef = useRef<HTMLTextAreaElement>(null);
   const responseTextRef = useRef<HTMLTextAreaElement>(null);
   const llmPromptRef = useRef<HTMLTextAreaElement>(null);
-
-  const getStatusColor = (status: Activity["status"]) => {
-    switch (status) {
-      case "Created":
-        return "text-blue-600";
-      case "Updated":
-        return "text-accent";
-      case "Deleted":
-        return "text-destructive";
-      default:
-        return "text-foreground";
-    }
-  };
-
-  const fetchHistory = async () => {
-    setHistoryLoading(true);
-    setHistoryDialogOpen(true);
-
-    try {
-      const token = localStorage.getItem("access_token");
-      const headers: HeadersInit = {
-        "Content-Type": "application/json",
-      };
-
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
-      }
-
-      const encodedEntityType = encodeURIComponent("Test Case");
-      const response = await fetch(API_ENDPOINTS.ENTITY_ACTIVITY(encodedEntityType), {
-        headers,
-      });
-
-      if (response.ok) {
-        const data: Activity[] = await response.json();
-        setHistoryActivities(data);
-      } else {
-        setHistoryActivities([]);
-      }
-    } catch (error) {
-      setHistoryActivities([]);
-    } finally {
-      setHistoryLoading(false);
-    }
-  };
 
   const fetchTestCases = async () => {
     setIsLoading(true);
@@ -487,18 +428,12 @@ const TestCases = () => {
               className="w-64"
             />
             <div className="ml-auto flex items-center gap-4">
-              <button
-                type="button"
-                onClick={fetchHistory}
-                title="History"
-                className="flex items-center justify-center rounded-full p-1 hover:bg-muted transition-colors mr-1"
-              >
-                <img
-                  src="src/assets/icons8-history-50.png"
-                  alt="History"
-                  className="w-5 h-5"
-                />
-              </button>
+              <HistoryButton
+                entityType="Test Case"
+                title="Test Cases"
+                idField="testCaseId"
+                idLabel="Test Case ID"
+              />
               <span className="text-sm text-muted-foreground">
                 {totalItems === 0
                   ? "0"
@@ -616,66 +551,6 @@ const TestCases = () => {
           )}
         </div>
       </main>
-
-      {/* Test Case History Dialog */}
-      <Dialog open={historyDialogOpen} onOpenChange={setHistoryDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader className="mt-4 sticky top-0 mb-2 bg-white rounded-lg px-4 py-4 shadow-md">
-            <DialogTitle className="sticky">History - {historyTitle}</DialogTitle>
-          </DialogHeader>
-
-          {historyLoading ? (
-            <div className="text-center py-12">
-              <p className="text-lg text-muted-foreground">Loading history...</p>
-            </div>
-          ) : historyActivities.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-lg text-muted-foreground">
-                No history found for {historyTitle}.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4 mt-4">
-              {historyActivities.map((activity, index) => (
-                <div
-                  key={index}
-                  className="bg-white rounded-lg shadow-md p-6 border-l-4 border-primary"
-                >
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                          <Users className="w-4 h-4 text-primary" />
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">
-                            {activity.user_name}
-                          </p>
-                        </div>
-                      </div>
-                      <p className="text-lg mb-2">{activity.description}</p>
-                    </div>
-                    <div className="text-right">
-                      <div className="flex items-center gap-2 justify-end mb-1">
-                        <span className="font-medium">{activity.testCaseId}</span>
-                        <span className="text-xl">-</span>
-                        <span
-                          className={`font-semibold ${getStatusColor(activity.status)}`}
-                        >
-                          {activity.status}
-                        </span>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {activity.timestamp}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
 
       <Dialog open={!!selectedCase} onOpenChange={() => setSelectedCase(null)}>
         <DialogContent 

@@ -33,6 +33,7 @@ import { ResponseAddDialog } from "@/components/ResponseAddDialog";
 import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
 import { hasPermission } from "@/utils/permissions";
+import { HistoryButton } from "@/components/HistoryButton";
 
 interface Response {
   response_id: number;
@@ -248,6 +249,12 @@ const Responses = () => {
             />
 
             <div className="ml-auto flex items-center gap-4">
+              <HistoryButton
+                entityType="Response"
+                title="Responses"
+                idField="responseId"
+                idLabel="Response ID"
+              />
               <span className="text-sm text-muted-foreground">
                 {isLoading
                   ? "Loading..."
