@@ -25,6 +25,7 @@ import {
 import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
 import { hasPermission } from "@/utils/permissions";
+import { set } from "date-fns";
 
 
 interface TestCase {
@@ -80,7 +81,7 @@ export const TestCaseUpdateDialog = ({
     setSearchDialogOpen(true);
   };
 
-  const [focusedField, setFocusedField] = useState<null | "userPrompt" | "response" | "llm">(null);
+  const [focusedField, setFocusedField] = useState<null | "userPrompt" | "systemPrompt" | "response" | "llm">(null);
 
   // function getTextareaHeight(lineCount: number){
   //   if (lineCount <=1) return 40;
@@ -413,7 +414,7 @@ export const TestCaseUpdateDialog = ({
                       overflowY: "auto"
                     }}
                     onFocus={() => setFocusedField("userPrompt")}
-                    onBlur={() => setTimeout(() => setFocusedField(null))}
+                    onBlur={() => setFocusedField(null)}
                     onChange={(e) => setUserPrompts(e.target.value)}
                     className="bg-muted min-h-[73px] pr-10"
                   />
@@ -424,6 +425,7 @@ export const TestCaseUpdateDialog = ({
                       className="absolute right-2 top-2"
                       onMouseDown={e => e.preventDefault()}
                       onClick={() => handleSearchClick("userPrompt")}
+                      tabIndex = {-1}
                     >
                       <Search className="w-4 h-4" />
                     </Button>
@@ -434,18 +436,35 @@ export const TestCaseUpdateDialog = ({
 
               <div className="space-y-1">
                 <Label className="text-sm font-normal">System prompts</Label>
-                <Textarea
-                  value={systemPrompts}
-                  style = {{
-                      height: '${height}px',
-                      maxHeight: "160px",
-                      minHeight: "40px",
-                      overflowY: "auto"
-                  }}
-                  onChange={(e) => setSystemPrompts(e.target.value)}
-                  className="bg-muted min-h-[73px]"
-                  readOnly
-                />
+                <div className="relative">
+                  <Textarea
+                    value={systemPrompts}
+                    // style = {{
+                    //     height: '${height}px',
+                    //     maxHeight: "160px",
+                    //     minHeight: "40px",
+                    //     overflowY: "auto"
+                    // }}
+                    onChange={(e) => setSystemPrompts(e.target.value)}
+                    className="bg-muted min-h-[73px] "
+                    onFocus={() => setFocusedField("systemPrompt")}
+                    onBlur={() => setFocusedField(null)}
+                    // tabIndex = {-1}
+                    onClick = {() => setFocusedField("systemPrompt")}
+                  />
+                  { focusedField === "systemPrompt" && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-2 top-2"
+                      onMouseDown={e => e.preventDefault()}
+                      onClick={() => handleSearchClick("systemPrompt")}
+                      
+                    >
+                      <Search className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -460,11 +479,12 @@ export const TestCaseUpdateDialog = ({
                       minHeight: "40px",
                       overflowY: "auto"
                   }}
-                  readOnly = {responseText === "None"}
+                  // readOnly = {responseText === "None"}
                   onFocus = { () => setFocusedField("response")}
-                  onBlur={() => setTimeout(() => setFocusedField(null))}
+                  onBlur={() => setFocusedField(null)}
                   onChange={(e) => setResponseText(e.target.value)}
                   className="bg-muted min-h-[73px] pr-10"
+                  tabIndex = {-1}
                 />
                 { focusedField === "response" && (
                   

@@ -87,13 +87,19 @@ def list_system_prompts(db: DB = Depends(_get_db)):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Prompts not found"
         )
-    return [
-        SystemPrompt(
-            prompt_id=prompt.prompt_id,
-            system_prompt=prompt.system_prompt
-        )
-        for prompt in prompts
-    ]
+    # Remove duplicates based on system_prompt (or prompt_id if that's the key)
+    unique_prompts = []
+    seen_prompts = set()
+
+    for prompt in prompts:
+        if prompt.system_prompt not in seen_prompts:
+            unique_prompts.append(SystemPrompt(
+                prompt_id=prompt.prompt_id,
+                system_prompt=prompt.system_prompt
+            ))
+            seen_prompts.add(prompt.system_prompt)
+
+    return unique_prompts
 
 
 # @prompt_router.get(

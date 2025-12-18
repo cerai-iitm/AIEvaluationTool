@@ -845,9 +845,10 @@ export const TestCaseAddDialog = ({
                 <div className="relative">
                   <Textarea
                     value={llmPrompt}
-                    readOnly = {llmPrompt === "" || llmPrompt === null || llmPrompt === "none"}
+                    // readOnly = {llmPrompt === "" || llmPrompt === null || llmPrompt === "none"}
                     className="bg-muted min-h-[73px] pr-10"
                     required
+                    onChange={(e) => setLlmPrompt(e.target.value)}
                     onFocus={() => {
                       setFocusedField("llm");
                       setShowDetails(false);
