@@ -32,7 +32,7 @@
         "file_path" : "InterfaceManager/APIService/src/logs/whatsapp_driver.log"
     },
     "fairness_stereotype_agreement" : {
-        "model_name" : "LibrAI/longformer-harmful-ro",
+        "model_name" : "google/flan-t5-large",
         "device" : "cpu",
         "save_dir" : "saved_evaluations"
     },
@@ -42,7 +42,7 @@
         "save_dir": "saved_evaluations"
     },
     "fairness_stereotype_recognition": {
-        "model_name": "LibrAI/longformer-harmful-ro",
+        "model_name": "holistic-ai/bias_classifier_albertv2",
         "device": "cpu",
         "save_dir": "saved_evaluations"
     },
@@ -59,7 +59,8 @@
         "model_name" : "LibrAI/longformer-harmful-ro"
     },
     "robustness_ood" : {
-        "model_name" : "all-MiniLM-L6-v2",
+        "nli_model_name": "cross-encoder/nli-deberta-base",
+        "embed_model_name" : "all-MiniLM-L6-v2",
         "device" : "cpu",
         "save_dir" : "saved_evaluations"
     },
