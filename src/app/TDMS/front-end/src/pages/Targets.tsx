@@ -250,7 +250,7 @@ const Targets = () => {
   );
 
   const totalItems = filteredTargets.length;
-  const itemsPerPage = 20;
+  const itemsPerPage = 15;
   const TotalPages = Math.ceil(totalItems / itemsPerPage);
   const paginatedTargets = useMemo(
     () =>
@@ -337,7 +337,7 @@ const Targets = () => {
             </div>
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto">
-            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[67vh] overflow-y-auto">
+            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[67vh] max-w-[120vh] overflow-y-auto">
               <table className="w-full">
                 <thead className="border-b-2">
                   <tr>
@@ -388,7 +388,7 @@ const Targets = () => {
                         }}
                       >
                         <td className="p-2 pl-12">{target.target_id}</td>
-                        <td className="p-2 pl-6">{target.target_name}</td>
+                        <td className="p-2 pl-6 capitalize">{target.target_name}</td>
                         <td className="p-2 pl-12">
                           <span
                             onClick={(e) => {
@@ -453,21 +453,11 @@ const Targets = () => {
             </div>
           ) : selectedTarget ? (
             <div className="flex-1 p-1 overflow-y-auto space-y-6 pb-5">
-              <div className="space-y-1">
-                <Label className="text-base font-semibold">Target Name</Label>
-                <Input
-                  value={selectedTarget.target_name}
-                  readOnly
-                  className="bg-muted"
-                ></Input>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-base font-semibold">Type</Label>
-                <Input
-                  value={selectedTarget.target_type}
-                  readOnly
-                  className="bg-muted"
-                ></Input>
+              <div className="flex items-center justify-center gap-2">
+                <Label className="text-base font-semibold">Target Name -  </Label>
+                <Label className="text-xl font-semibold text-primary hover:text-primary/90">
+                  {selectedTarget.target_name}
+                </Label>
               </div>
               <div className="space-y-1">
                 <Label className="text-base font-semibold">Description</Label>
@@ -477,6 +467,25 @@ const Targets = () => {
                   className="bg-muted min-h-[80px]"
                 ></Textarea>
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label className="text-base font-semibold">Type</Label>
+                  <Input
+                    value={selectedTarget.target_type}
+                    readOnly
+                    className="bg-muted capitalize"
+                  ></Input>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-base font-semibold">Domain</Label>
+                  <Input
+                    value={selectedTarget.domain_name}
+                    readOnly
+                    className="bg-muted capitalize "
+                  ></Input>
+                </div>
+              </div>
+
               <div className="space-y-1">
                 <Label className="text-base font-semibold">URL</Label>
                 <Input
@@ -485,22 +494,16 @@ const Targets = () => {
                   className="bg-muted"
                 ></Input>
               </div>
-              <div className="space-y-1">
-                <Label className="text-base font-semibold">Domain</Label>
-                <Input
-                  value={selectedTarget.domain_name}
-                  readOnly
-                  className="bg-muted"
-                ></Input>
-              </div>
+
               <div className="space-y-1">
                 <Label className="text-base font-semibold">Languages</Label>
                 <Input
-                  value={selectedTarget.lang_list.join(", ")}
+                  value={selectedTarget.lang_list.join(" , ")}
                   readOnly
-                  className="bg-muted"
+                  className="bg-muted capitalize"
                 ></Input>
               </div>
+
             </div>
           ) : (
             <div className="p-4 text-center">No target selected.</div>

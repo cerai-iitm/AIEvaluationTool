@@ -96,15 +96,15 @@ export const TestCaseUpdateDialog = ({
     switch (selection.type) {
       case "userPrompt":
         setUserPrompts(selection.userPrompt);
-        if (selection.systemPrompt !== undefined) {
-          setSystemPrompts(selection.systemPrompt ?? "");
-        }
+        // if (selection.systemPrompt !== undefined) {
+        //   setSystemPrompts(selection.systemPrompt ?? "");
+        // }
         break;
       case "systemPrompt":
         setSystemPrompts(selection.systemPrompt);
-        if (selection.userPrompt) {
-          setUserPrompts(selection.userPrompt);
-        }
+        // if (selection.userPrompt) {
+        //   setUserPrompts(selection.userPrompt);
+        // }
         break;
       case "response":
         setResponseText(selection.responseText);

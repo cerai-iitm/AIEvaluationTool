@@ -16,18 +16,18 @@ export type PromptSearchSelection =
       type: "userPrompt";
       promptId?: number | null;
       userPrompt: string;
-      systemPrompt?: string | null;
-      language?: string | null;
-      domain?: string | null;
+      // systemPrompt?: string | null;
+      // language?: string | null;
+      // domain?: string | null;
       raw?: unknown;
     }
   | {
       type: "systemPrompt";
       promptId?: number | null;
       systemPrompt: string;
-      userPrompt?: string | null;
-      language?: string | null;
-      domain?: string | null;
+      // userPrompt?: string | null;
+      // language?: string | null;
+      // domain?: string | null;
       raw?: unknown;
     }
   | {
@@ -48,7 +48,7 @@ export type PromptSearchSelection =
 interface PromptSearchItem {
   id: string;
   displayPrimary: string;
-  displaySecondary?: string;
+  // displaySecondary?: string;
   searchIndex: string;
   selection: PromptSearchSelection;
 }
@@ -99,8 +99,10 @@ export const PromptSearchDialog = ({
         let endpoint: string;
         switch (searchType) {
           case "userPrompt":
+            endpoint = API_ENDPOINTS.USER_PROMPTS_V2;
+            break;
           case "systemPrompt":
-            endpoint = API_ENDPOINTS.PROMPTS_V2;
+            endpoint = API_ENDPOINTS.SYSTEM_PROMPTS_V2;
             break;
           case "response":
             endpoint = API_ENDPOINTS.RESPONSES_V2;
@@ -156,28 +158,28 @@ export const PromptSearchDialog = ({
                 return null;
               }
 
-              const language =
-                rawItem?.language ??
-                rawItem?.lang_name ??
-                rawItem?.lang ??
-                rawItem?.langName ??
-                null;
-              const domain =
-                rawItem?.domain ??
-                rawItem?.domain_name ??
-                rawItem?.domainName ??
-                null;
+              // const language =
+              //   rawItem?.language ??
+              //   rawItem?.lang_name ??
+              //   rawItem?.lang ??
+              //   rawItem?.langName ??
+              //   null;
+              // const domain =
+              //   rawItem?.domain ??
+              //   rawItem?.domain_name ??
+              //   rawItem?.domainName ??
+              //   null;
 
               const displayPrimary =
                 userPrompt.trim() || "(No user prompt text)";
-              const displaySecondary = systemPrompt.trim()
-                ? systemPrompt
-                : undefined;
+              // const displaySecondary = systemPrompt.trim()
+              //   ? systemPrompt
+              //   : undefined;
               const searchIndex = [
                 userPrompt,
                 systemPrompt,
-                language,
-                domain,
+                // language,
+                // domain,
               ]
                 .filter(Boolean)
                 .map((value) => value.toString().toLowerCase())
@@ -186,15 +188,15 @@ export const PromptSearchDialog = ({
               return {
                 id: `userPrompt-${promptId ?? index}`,
                 displayPrimary,
-                displaySecondary,
+                // displaySecondary,
                 searchIndex,
                 selection: {
                   type: "userPrompt",
                   promptId: typeof promptId === "number" ? promptId : null,
                   userPrompt,
-                  systemPrompt: systemPrompt || null,
-                  language,
-                  domain,
+                  // systemPrompt: systemPrompt || null,
+                  // language,
+                  // domain,
                   raw: rawItem,
                 },
               };
@@ -208,32 +210,32 @@ export const PromptSearchDialog = ({
                 normalizeString(rawItem?.user_prompt) ||
                 normalizeString(rawItem?.userPrompt);
 
-              if (!systemPrompt.trim() && !userPrompt.trim()) {
-                return null;
-              }
+              // if (!systemPrompt.trim() && !userPrompt.trim()) {
+              //   return null;
+              // }
 
-              const language =
-                rawItem?.language ??
-                rawItem?.lang_name ??
-                rawItem?.lang ??
-                rawItem?.langName ??
-                null;
-              const domain =
-                rawItem?.domain ??
-                rawItem?.domain_name ??
-                rawItem?.domainName ??
-                null;
+              // const language =
+              //   rawItem?.language ??
+              //   rawItem?.lang_name ??
+              //   rawItem?.lang ??
+              //   rawItem?.langName ??
+              //   null;
+              // const domain =
+              //   rawItem?.domain ??
+              //   rawItem?.domain_name ??
+              //   rawItem?.domainName ??
+              //   null;
 
               const displayPrimary =
                 systemPrompt.trim() || "(No system prompt text)";
-              const displaySecondary = userPrompt.trim()
-                ? userPrompt
-                : undefined;
+              // const displaySecondary = userPrompt.trim()
+              //   ? userPrompt
+              //   : undefined;
               const searchIndex = [
                 systemPrompt,
                 userPrompt,
-                language,
-                domain,
+                // language,
+                // domain,
               ]
                 .filter(Boolean)
                 .map((value) => value.toString().toLowerCase())
@@ -242,15 +244,15 @@ export const PromptSearchDialog = ({
               return {
                 id: `systemPrompt-${promptId ?? index}`,
                 displayPrimary,
-                displaySecondary,
+                // displaySecondary,
                 searchIndex,
                 selection: {
                   type: "systemPrompt",
                   promptId: typeof promptId === "number" ? promptId : null,
                   systemPrompt,
-                  userPrompt: userPrompt || null,
-                  language,
-                  domain,
+                  // userPrompt: userPrompt || null,
+                  // language,
+                  // domain,
                   raw: rawItem,
                 },
               };
@@ -290,9 +292,9 @@ export const PromptSearchDialog = ({
               return {
                 id: `response-${responseId ?? index}`,
                 displayPrimary: responseText,
-                displaySecondary: associatedUserPrompt
-                  ? `User: ${associatedUserPrompt}`
-                  : undefined,
+                // displaySecondary: associatedUserPrompt
+                //   ? `User: ${associatedUserPrompt}`
+                //   : undefined,
                 searchIndex,
                 selection: {
                   type: "response",
@@ -339,9 +341,9 @@ export const PromptSearchDialog = ({
               return {
                 id: `llm-${promptId ?? index}`,
                 displayPrimary: llmPrompt,
-                displaySecondary: language
-                  ? `Language: ${language}`
-                  : undefined,
+                // displaySecondary: language
+                //   ? `Language: ${language}`
+                //   : undefined,
                 searchIndex,
                 selection: {
                   type: "llm",
@@ -415,11 +417,11 @@ export const PromptSearchDialog = ({
                   className="w-full text-left p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
                 >
                   <p className="text-sm font-medium">{item.displayPrimary}</p>
-                  {item.displaySecondary ? (
+                  {/* {item.displaySecondary ? (
                     <p className="text-xs text-muted-foreground mt-1">
                       {item.displaySecondary}
                     </p>
-                  ) : null}
+                  ) : null} */}
                 </button>
               ))
             )}

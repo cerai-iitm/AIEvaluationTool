@@ -143,9 +143,9 @@ export const TestCaseAddDialog = ({
             .map((lang: any) => lang?.lang_name)
             .filter((name: string | null | undefined): name is string => Boolean(name));
           setLanguageOptions(langNames);
-          if (langNames.length > 0 && !language) {
-            setLanguage(langNames[0]);
-          }
+          // if (langNames.length > 0 && !language) {
+          //   setLanguage(langNames[0]);
+          // }
         } else {
           console.error("Unexpected languages data format:", data);
           toast({
@@ -192,9 +192,9 @@ export const TestCaseAddDialog = ({
             .map((dom: any) => dom?.domain_name)
             .filter((name: string | null | undefined): name is string => Boolean(name));
           setDomainOptions(domainNames);
-          if (domainNames.length > 0 && !domain) {
-            setDomain(domainNames[0]);
-          }
+          // if (domainNames.length > 0 && !domain) {
+          //   setDomain(domainNames[0]);
+          // }
         } else {
           console.error("Unexpected domains data format:", data);
           toast({
@@ -339,13 +339,13 @@ export const TestCaseAddDialog = ({
     switch (selection.type) {
       case "userPrompt":
         setUserPrompts(selection.userPrompt);
-        setSystemPrompts(selection.systemPrompt ?? "");
+        // setSystemPrompts(selection.systemPrompt ?? "");
         break;
       case "systemPrompt":
         setSystemPrompts(selection.systemPrompt);
-        if (selection.userPrompt) {
-          setUserPrompts(selection.userPrompt);
-        }
+        // if (selection.userPrompt) {
+        //   setUserPrompts(selection.userPrompt);
+        // }
         break;
       case "response":
         setResponseText(selection.responseText);
@@ -608,31 +608,31 @@ export const TestCaseAddDialog = ({
               <div className="space-y-1">
                 <Label className="text-sm font-semibold">User Prompts</Label>
                 <div className="relative">
-                <Textarea
-                  value={userPrompts}
-                  onChange={(e) => setUserPrompts(e.target.value)}
-                  onFocus={() => {
-                    setFocusedField("userPrompt");
-                    setShowRequestDetails(false);
-                  }}
-                  onBlur={() => setFocusedField(null)}
-                  //onClick={() => {setShowDetails((prev) => !prev); setFocusedField("userPrompt")}}
-                  onClick={() => {setShowDetails(true); setFocusedField("userPrompt"), setShowRequestDetails(false)}}
-                  className="bg-muted min-h-[73px] pr-10"
-                  required
-                />
-                { focusedField === "userPrompt" && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-2 top-2"
-                    onMouseDown = {e => e.preventDefault()}
-                    onClick={() => handleSearchClick("userPrompt")}
-                    tabIndex = {-1} //not focusable, only clickable
-                  >
-                    <Search className="w-4 h-4" />
-                  </Button>
-                )}
+                  <Textarea
+                    value={userPrompts}
+                    onChange={(e) => setUserPrompts(e.target.value)}
+                    onFocus={() => {
+                      setFocusedField("userPrompt");
+                      setShowRequestDetails(false);
+                    }}
+                    onBlur={() => setFocusedField(null)}
+                    //onClick={() => {setShowDetails((prev) => !prev); setFocusedField("userPrompt")}}
+                    onClick={() => {setShowDetails(true); setFocusedField("userPrompt"), setShowRequestDetails(false)}}
+                    className="bg-muted min-h-[73px] pr-10"
+                    required
+                  />
+                  { focusedField === "userPrompt" && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-2 top-2"
+                      onMouseDown = {e => e.preventDefault()}
+                      onClick={() => handleSearchClick("userPrompt")}
+                      tabIndex = {-1} //not focusable, only clickable
+                    >
+                      <Search className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
               </div>
 
@@ -640,14 +640,30 @@ export const TestCaseAddDialog = ({
                 <>
                   <div className="space-y-1">
                     <Label className="text-sm font-semibold">System prompts</Label>
-                    <Textarea
-                      value={systemPrompts}
-                      onChange={(e) => setSystemPrompts(e.target.value)}
-                      onFocus={() => setFocusedField("systemPrompt")}
-                      onBlur={() => setFocusedField(null)}
-                      className="bg-muted min-h-[73px]"
-                      
-                    />
+                    <div className="relative">
+                      <Textarea
+                        value={systemPrompts}
+                        onChange={(e) => setSystemPrompts(e.target.value)}
+                        onFocus={() => setFocusedField("systemPrompt")}
+                        onBlur={() => setFocusedField(null)}
+                        className="bg-muted min-h-[73px] pr-10"
+                        required
+                        onClick = {() => {setShowDetails(true); setFocusedField("systemPrompt"), setShowRequestDetails(false)}}
+                        
+                      />
+                      { focusedField === "systemPrompt" && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-2 top-2"
+                          onMouseDown = {e => e.preventDefault()}
+                          onClick={() => handleSearchClick("systemPrompt")}
+                          tabIndex = {-1} // not focusable, only clickable
+                        >
+                          <Search className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -680,7 +696,7 @@ export const TestCaseAddDialog = ({
                       <Select
                         value={language}
                         onValueChange={setLanguage}
-                        onOpenChange={setLanguageSelectOpen}
+                        // onOpenChange={setLanguageSelectOpen}
                         disabled={isFetchingLanguages}
                       >
                         <SelectTrigger>
@@ -762,8 +778,8 @@ export const TestCaseAddDialog = ({
                   <div className="space-y-2">
                     <Label className="text-base font-semibold">Language</Label>
                     <Select
-                      value={language}
-                      onValueChange={setLanguage}
+                      value={responseLanguage}
+                      onValueChange={setResponseLanguage}
                       disabled={isFetchingLanguages}
                     >
                       <SelectTrigger>

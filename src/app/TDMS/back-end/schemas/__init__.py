@@ -30,6 +30,8 @@ from .prompt import (
     PromptDetailResponse,
     PromptListResponse,
     PromptUpdateV2,
+    UserPrompt,
+    SystemPrompt,
 )
 from .response import (
     ResponseCreateV2,

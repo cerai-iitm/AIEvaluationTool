@@ -324,37 +324,12 @@ export default function TargetUpdateDialog({
         <DialogHeader>
           <DialogTitle className="sr-only">Update Target</DialogTitle>
         </DialogHeader>
-        <div className="overflow-y-auto flex-1 pr-1 pl-1">
-          <div className="space-y-4 pb-4">
-            <Label className="text-base font-semibold">Target Name</Label>
-            <Input value={target.target_name} className="bg-muted" />
-          </div>
-          <div className="space-y-4 pb-4">
-            <Label className="text-base font-semibold">Target Type</Label>
-            <Select
-              value={type}
-              onValueChange={setType}
-              disabled={isFetchingOptions}
-            >
-              <SelectTrigger>
-                <SelectValue
-                  placeholder={isFetchingOptions ? "Loading..." : "Select type"}
-                />
-              </SelectTrigger>
-              <SelectContent className="bg-popover max-h-[300px]">
-                {targetTypes.length === 0 && !isFetchingOptions ? (
-                  <SelectItem value="" disabled>
-                    No types available
-                  </SelectItem>
-                ) : (
-                  targetTypes.map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {t}
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
+        <div className="overflow-y-auto flex-1  space-y-2 pb-5 p-1">
+          <div className="flex items-center justify-center gap-2 pb-4">
+            <Label className="text-base font-semibold">Target Name -</Label>
+            <Label className="text-xl font-semibold text-primary hover:text-primary/90">
+              {target.target_name}
+            </Label>
           </div>
           <div className="space-y-1 pb-4">
             <Label className="text-base font-semibold">Description</Label>
@@ -365,6 +340,66 @@ export default function TargetUpdateDialog({
               required
             />
           </div>
+          <div className="grid grid-cols-2 gap-4 pb-4">
+            <div className="space-y-1 ">
+              <Label className="text-base font-semibold">Target Type</Label>
+              <Select
+                value={type}
+                onValueChange={setType}
+                disabled={isFetchingOptions}
+              >
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={isFetchingOptions ? "Loading..." : "Select type"}
+                  />
+                </SelectTrigger>
+                <SelectContent className="bg-popover max-h-[300px]">
+                  {targetTypes.length === 0 && !isFetchingOptions ? (
+                    <SelectItem value="" disabled>
+                      No types available
+                    </SelectItem>
+                  ) : (
+                    targetTypes.map((t) => (
+                      <SelectItem key={t} value={t}>
+                        {t}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
+
+            <div className="space-y-1">
+              <Label className="text-base font-semibold">Domain</Label>
+              <Select
+                value={domain}
+                onValueChange={setDomain}
+                disabled={isFetchingOptions}
+              >
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={
+                      isFetchingOptions ? "Loading..." : "Select domain"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent className="bg-popover max-h-[300px]">
+                  {domainOptions.length === 0 && !isFetchingOptions ? (
+                    <SelectItem value="" disabled>
+                      No domains available
+                    </SelectItem>
+                  ) : (
+                    domainOptions.map((d) => (
+                      <SelectItem key={d} value={d}>
+                        {d}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
           <div className="space-y-1 pb-4">
             <Label className="text-base font-semibold">URL</Label>
             <Input
@@ -372,35 +407,6 @@ export default function TargetUpdateDialog({
               onChange={(e) => setUrl(e.target.value)}
               className="bg-muted"
             />
-          </div>
-          <div className="space-y-1 pb-4">
-            <Label className="text-base font-semibold">Domain</Label>
-            <Select
-              value={domain}
-              onValueChange={setDomain}
-              disabled={isFetchingOptions}
-            >
-              <SelectTrigger>
-                <SelectValue
-                  placeholder={
-                    isFetchingOptions ? "Loading..." : "Select domain"
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent className="bg-popover max-h-[300px]">
-                {domainOptions.length === 0 && !isFetchingOptions ? (
-                  <SelectItem value="" disabled>
-                    No domains available
-                  </SelectItem>
-                ) : (
-                  domainOptions.map((d) => (
-                    <SelectItem key={d} value={d}>
-                      {d}
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
           </div>
           <div className="space-y-1 pb-4">
             <Label className="text-base font-semibold">Languages</Label>

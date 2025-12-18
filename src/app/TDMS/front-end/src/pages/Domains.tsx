@@ -42,7 +42,7 @@ const DomainList: React.FC = () => {
   );
 
   const totalItems = filteredDomains.length;
-  const itemsPerPage = 20;
+  const itemsPerPage = 15;
   const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
   
   const PaginatedDomains = filteredDomains.slice(
@@ -308,19 +308,19 @@ const DomainList: React.FC = () => {
           <h1 className="text-2xl md:text-4xl font-bold mb-4 md:mb-8 text-center">Domains</h1>
 
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <Select defaultValue="Domain">
+            {/* <Select defaultValue="Domain">
               <SelectTrigger className="w-full sm:w-48">
                 <SelectValue/>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="Domain">Domain Name</SelectItem>
               </SelectContent>
-            </Select>
+            </Select> */}
             <Input
               placeholder="search"
               value={searchQuery}
               onChange={(e)=> {
-                setSearchQuery(e.target.value);
+                setSearchQuery(e.target.value );
                 setCurrentPage(1);
               }}
               className="w-full sm:w-64"
@@ -356,7 +356,7 @@ const DomainList: React.FC = () => {
             </div>
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto">
-            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[67vh] max-w-[60vh] overflow-y-auto">
+            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[67vh] max-w-[50vh] overflow-y-auto">
               {isLoading ? (
                 <div className="flex items-center justify-center p-8">
                   <span>Loading...</span>
@@ -390,7 +390,7 @@ const DomainList: React.FC = () => {
                           }}
                         >
                           <td className="p-2 text-center text-xs md:text-base">{row.domain_id}</td>
-                          <td className="p-2 text-xs md:text-base">{row.domain_name}</td>
+                          <td className="p-2 text-xs md:text-base capitalize pl-6">{row.domain_name}</td>
                         </tr>
                       ))
                     )}

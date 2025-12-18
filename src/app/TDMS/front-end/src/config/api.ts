@@ -77,6 +77,9 @@ export const API_ENDPOINTS = {
     `${API_BASE_URL}/api/v2/prompts/update/${prompt_id}`,
   PROMPT_DELETE_V2: (prompt_id: number) =>
     `${API_BASE_URL}/api/v2/prompts/delete/${prompt_id}`,
+  USER_PROMPTS_V2:`${API_BASE_URL}/api/v2/prompts/user-prompt`, // user prompt list
+  SYSTEM_PROMPTS_V2:`${API_BASE_URL}/api/v2/prompts/system-prompt`, // system prompt list
+
 
   RESPONSES_V2: `${API_BASE_URL}/api/v2/responses`,
   RESPONSE_BY_ID_V2: (response_id: number) =>

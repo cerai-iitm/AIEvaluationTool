@@ -9,6 +9,8 @@ from schemas.prompt import (
     PromptDetailResponse,
     PromptListResponse,
     PromptUpdateV2,
+    UserPrompt,
+    SystemPrompt
 )
 from sqlalchemy.exc import IntegrityError
 from utils.activity_logger import log_activity
@@ -58,6 +60,37 @@ def list_prompts(db: DB = Depends(_get_db)):
             system_prompt=prompt.system_prompt,
             language = prompt.lang.lang_name if prompt.lang else None,
             domain = prompt.domain.domain_name if prompt.domain else None
+        )
+        for prompt in prompts
+    ]
+
+
+@prompt_router.get("/user-prompt", response_model=List[UserPrompt], summary="List all user prompts (v2)")
+def list_user_prompts(db: DB = Depends(_get_db)):
+    prompts = db.prompts
+    if prompts is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Prompts not found"
+        )
+    return [
+        UserPrompt(
+            prompt_id=prompt.prompt_id,
+            user_prompt=prompt.user_prompt
+        )
+        for prompt in prompts
+    ]
+
+@prompt_router.get("/system-prompt", response_model=List[SystemPrompt], summary="List all system prompts (v2)")
+def list_system_prompts(db: DB = Depends(_get_db)):
+    prompts = db.prompts
+    if prompts is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Prompts not found"
+        )
+    return [
+        SystemPrompt(
+            prompt_id=prompt.prompt_id,
+            system_prompt=prompt.system_prompt
         )
         for prompt in prompts
     ]

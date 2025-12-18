@@ -572,10 +572,20 @@ const TestCases = () => {
           {selectedCase && (
             <div className="flex-1 p-1 overflow-y-auto space-y-6 pb-5">
             {/* <div className="space-y-4 pt-4"> */}
-              <div className=" flex flex-row align-center justify-center">
-                <Label className="text-base font-semibold pl-2">Test Case - </Label> <Label className="text-base font-semibold text-xl pl-2 text-primary hover:text-primary/90"> {selectedCase.name} </Label>
+              {/* <div className=" flex flex-row align-center justify-center">
+                <Label className="text-base font-semibold pl-2">Test Case  - </Label> <Label className="text-base font-semibold text-xl pl-2 text-primary hover:text-primary/90"> {selectedCase.name} </Label>
                 
+              </div> */}
+              <div className="flex items-center justify-center gap-2">
+                <Label className="text-base font-semibold">
+                  Test Case -
+                </Label>
+
+                <Label className="text-xl font-semibold text-primary hover:text-primary/90">
+                  {selectedCase.name}
+                </Label>
               </div>
+
 
               <div className="space-y-1">
                 <Label className="text-base font-semibold">User Prompts</Label>
@@ -630,7 +640,7 @@ const TestCases = () => {
               </div>
               )}
               
-              <div className=" flex flex-row align-center justify-left ">
+              <div className=" space-y-1 ">
                 <Label className="text-base font-semibold basis-[25%] pt-1">Strategy Name</Label>
                 {/* <Label className=" font-normal p-2 m-4 bg-muted"> {selectedCase.strategyName} </Label> */}
                 <Input value={selectedCase.strategyName} readOnly className="bg-muted basis-[75%]" />

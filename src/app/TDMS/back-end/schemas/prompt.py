@@ -42,5 +42,12 @@ class PromptDetailResponse(BaseModel):
     language: Optional[str]
     domain: Optional[str]
 
-    class Config:
-        from_attributes = True
+
+class UserPrompt(BaseModel):
+    prompt_id: int
+    user_prompt: str
+
+class SystemPrompt(BaseModel):
+    prompt_id: int
+    system_prompt: str
+
