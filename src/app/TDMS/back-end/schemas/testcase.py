@@ -69,7 +69,11 @@ class TestCaseCreateV2(BaseModel):
     testcase_name: str
     user_prompt: str
     system_prompt: Optional[str] = None
+    language_name: str
+    domain_name: str
     response_text: Optional[str] = None
+    response_type: Optional[str] = None
+    response_lang: Optional[str] = None
     strategy_name: str
     llm_judge_prompt: Optional[str] = None
 
