@@ -47,6 +47,10 @@ class Login(BaseModel):
     #         }
     #     }
 
+
+class RefreshToken(BaseModel):
+    refresh_token: str
+
 class UserHistory(BaseModel):
     table: str
     table_name: str

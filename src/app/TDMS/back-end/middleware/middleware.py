@@ -15,11 +15,11 @@ class AuthMiddleware(BaseHTTPMiddleware):
         path = request.url.path
         method = request.method
 
-        if path in ["/login", "/docs", "openapi.json" ] or method == "OPTIONS":
+        if path in ["/login", "/refresh", "/logout", "/docs", "openapi.json"] or method == "OPTIONS":
             response = await call_next(request)
             return response
 
-        token : Optiona[str] = None
+        token: Optional[str] = None
 
         if path == "/api/v1/dashboard":
             raw_token = request.query_params.get("token")
