@@ -97,14 +97,10 @@ export const TestCaseAddDialog = ({
     language: false,
     responseType: false,
     responseLanguage: false,
-    llmPrompt: false,
-    strategy: false,
-    notes: false,
     systemPrompts: false,
+    llmPrompt: false
   })
 
-
-  
 
   // Fetch current user role and strategies from API
   useEffect(() => {
@@ -281,6 +277,14 @@ export const TestCaseAddDialog = ({
       setFocusedField(null);
       setDomainSelectOpen(false);
       setLanguageSelectOpen(false);
+      setErrors({
+        domain: false,
+        language: false,
+        responseType: false,
+        responseLanguage: false,
+        systemPrompts: false,
+        llmPrompt: false,
+      });
     }
   }, [open, toast]);
 
@@ -344,7 +348,8 @@ export const TestCaseAddDialog = ({
   // };
 
   const isAdded = (
-    userPrompts && systemPrompts && strategy && testCaseName
+    userPrompts && strategy && testCaseName
+    
   )
 
   const handleSelectPrompt = (selection: PromptSearchSelection) => {
@@ -439,12 +444,26 @@ export const TestCaseAddDialog = ({
       return;
     }
 
+    if (!systemPrompts.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "System prompt is required",
+        variant: "destructive",
+      });
+      setErrors(prev => ({ ...prev, systemPrompts: true }));
+      setShowDetails(true);
+      setShowRequestDetails(false);
+      setFocusedField("systemPrompt");
+      return;
+    }
+
     if (!domain.trim()) {
       toast({
         title: "Validation Error",
         description: "Prompt Domain is required",
         variant: "destructive",
       });
+      setErrors(prev => ({ ...prev, domain: true }));
       setShowDetails(true);
       setShowRequestDetails(false);
       setFocusedField("domain");
@@ -457,6 +476,7 @@ export const TestCaseAddDialog = ({
         description: "Prompt Language is required",
         variant: "destructive",
       });
+      setErrors(prev => ({ ...prev, language: true }));
       setShowDetails(true);
       setShowRequestDetails(false);
       setFocusedField("language");
@@ -480,6 +500,7 @@ export const TestCaseAddDialog = ({
           description: "Response type is required",
           variant: "destructive",
         });
+        setErrors(prev => ({ ...prev, responseType: true }));
         setShowRequestDetails(true);
         setShowDetails(false);
         setFocusedField("responseType");
@@ -492,6 +513,7 @@ export const TestCaseAddDialog = ({
           description: "Response language is required",
           variant: "destructive",
         });
+        setErrors(prev => ({ ...prev, responseLanguage: true }));
         setShowRequestDetails(true);
         setShowDetails(false);
         setFocusedField("responseLanguage");
@@ -505,6 +527,10 @@ export const TestCaseAddDialog = ({
         description: "LLM prompt is required",
         variant: "destructive",
       });
+      setErrors(prev => ({ ...prev, llmPrompt: true }));
+      setShowDetails(false);
+      setShowRequestDetails(false);
+      setFocusedField("llm");
       return;
     }
 
@@ -602,6 +628,14 @@ export const TestCaseAddDialog = ({
       setShowRequestDetails(false);
       setResponseType("");
       setResponseLanguage("");
+      setErrors({
+        domain: false,
+        language: false,
+        responseType: false,
+        responseLanguage: false,
+        systemPrompts: false,
+        llmPrompt: false,
+      });
 
       // Close dialog
       onOpenChange(false);
@@ -718,10 +752,17 @@ export const TestCaseAddDialog = ({
                     <div className="relative">
                       <Textarea
                         value={systemPrompts}
-                        onChange={(e) => setSystemPrompts(e.target.value)}
+                        onChange={(e) => {
+                          setSystemPrompts(e.target.value);
+                          if (errors.systemPrompts && e.target.value.trim()) {
+                            setErrors(prev => ({ ...prev, systemPrompts: false }));
+                          }
+                        }}
                         onFocus={() => setFocusedField("systemPrompt")}
                         onBlur={() => setFocusedField(null)}
-                        className="bg-muted min-h-[73px] pr-10"
+                        className={`bg-muted min-h-[73px] pr-10 ${
+                          errors.systemPrompts ? 'border-red-500 ring-2 ring-red-200' : ''
+                        }`}
                         required
                         onClick = {() => {setShowDetails(true); setFocusedField("systemPrompt"), setShowRequestDetails(false)}}
                         
@@ -745,7 +786,12 @@ export const TestCaseAddDialog = ({
                       <Label className="text-sm font-semibold">Domain</Label>
                       <Select
                         value={domain}
-                        onValueChange={setDomain}
+                        onValueChange={(value) => {
+                          setDomain(value);
+                          if (errors.domain && value.trim()) {
+                            setErrors(prev => ({ ...prev, domain: false }));
+                          }
+                        }}
                         onOpenChange={setDomainSelectOpen}
                         disabled={isFetchingDomains}
                         
@@ -774,7 +820,12 @@ export const TestCaseAddDialog = ({
                       <Label className="text-sm font-semibold">Language</Label>
                       <Select
                         value={language}
-                        onValueChange={setLanguage}
+                        onValueChange={(value) => {
+                          setLanguage(value);
+                          if (errors.language && value.trim()) {
+                            setErrors(prev => ({ ...prev, language: false }));
+                          }
+                        }}
                         // onOpenChange={setLanguageSelectOpen}
                         disabled={isFetchingLanguages}
                       >
@@ -845,8 +896,19 @@ export const TestCaseAddDialog = ({
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="text-base font-semibold">Response Type</Label>
-                    <Select value={responseType} onValueChange={setResponseType}>
-                      <SelectTrigger>
+                    <Select 
+                      value={responseType} 
+                      onValueChange={(value) => {
+                        setResponseType(value);
+                        if (errors.responseType && value) {
+                          setErrors(prev => ({ ...prev, responseType: false }));
+                        }
+                      }}
+                    >
+                      <SelectTrigger className={`
+                        ${errors.responseType ? 'bg-red-50 border-red-500 ring-2 ring-red-200' : 'bg-muted'}
+                        focus-visible:ring-ring focus-visible:ring-2
+                      `}>
                         <SelectValue placeholder="Select response type" />
                       </SelectTrigger>
                       <SelectContent className="bg-popover max-h-[300px]">
@@ -863,10 +925,18 @@ export const TestCaseAddDialog = ({
                     <Label className="text-base font-semibold">Language</Label>
                     <Select
                       value={responseLanguage}
-                      onValueChange={setResponseLanguage}
+                      onValueChange={(value) => {
+                        setResponseLanguage(value);
+                        if (errors.responseLanguage && value) {
+                          setErrors(prev => ({ ...prev, responseLanguage: false }));
+                        }
+                      }}
                       disabled={isFetchingLanguages}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className={`
+                        ${errors.responseLanguage ? 'bg-red-50 border-red-500 ring-2 ring-red-200' : 'bg-muted'}
+                        focus-visible:ring-ring focus-visible:ring-2
+                      `}>
                         <SelectValue
                           placeholder={
                             isFetchingLanguages
@@ -930,9 +1000,18 @@ export const TestCaseAddDialog = ({
                   <Textarea
                     value={llmPrompt}
                     // readOnly = {llmPrompt === "" || llmPrompt === null || llmPrompt === "none"}
-                    className="bg-muted min-h-[73px] pr-10"
+                    // className="bg-muted min-h-[73px] pr-10"
+                    className={`bg-muted min-h-[73px] pr-10 ${
+                          errors.llmPrompt ? 'border-red-500 ring-2 ring-red-200' : ''
+                    }`}
                     required
-                    onChange={(e) => setLlmPrompt(e.target.value)}
+                    // onChange={(e) => setLlmPrompt(e.target.value)}
+                    onChange={(e) => {
+                          setLlmPrompt(e.target.value);
+                          if (errors.llmPrompt && e.target.value) {
+                            setErrors(prev => ({ ...prev, llmPrompt: false }));
+                          }
+                        }}
                     onFocus={() => {
                       setFocusedField("llm");
                       setShowDetails(false);
