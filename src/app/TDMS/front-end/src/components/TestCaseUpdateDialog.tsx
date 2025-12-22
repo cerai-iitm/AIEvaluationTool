@@ -220,6 +220,15 @@ export const TestCaseUpdateDialog = ({
     notes !== ""
   );
 
+  // const notNull = (
+  //   userPrompts !== "" ||
+  //   systemPrompts !== "" ||
+  //   responseText !== "" ||
+  //   llmPrompt !== "" ||
+  //   strategy !== "" ||
+  //   notes !== ""
+  // );
+
   // Check if the selected strategy requires LLM prompt or if test case already has one
   // For update dialog, show LLM prompt field if:
   // 1. Selected strategy requires it, OR
@@ -609,6 +618,7 @@ export const TestCaseUpdateDialog = ({
                 className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleSubmit}
                 disabled={
+                 // !notNull ||
                   !isChanged || 
                   !notes || 
                   isLoading ||

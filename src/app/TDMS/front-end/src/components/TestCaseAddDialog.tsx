@@ -25,6 +25,7 @@ import {
 import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
 import { hasPermission } from "@/utils/permissions";
+import { set } from "date-fns";
 
 interface TestCaseAddDialogProps {
   open: boolean;
@@ -90,6 +91,17 @@ export const TestCaseAddDialog = ({
   const [showDetails, setShowDetails] = useState(false);
   const [domainSelectOpen, setDomainSelectOpen] = useState(false);
   const [languageSelectOpen, setLanguageSelectOpen] = useState(false);
+
+  const [errors, setErrors] = useState({
+    domain: false,
+    language: false,
+    responseType: false,
+    responseLanguage: false,
+    llmPrompt: false,
+    strategy: false,
+    notes: false,
+    systemPrompts: false,
+  })
 
 
   
@@ -368,6 +380,8 @@ export const TestCaseAddDialog = ({
     | "llm"
     | "domain"
     | "language"
+    | "responseType"
+    | "responseLanguage"
   >(null);
 
   const handleSearchClick = (type: PromptSearchType) => {
@@ -416,6 +430,39 @@ export const TestCaseAddDialog = ({
       return;
     }
 
+    if (!strategy) {
+      toast({
+        title: "Validation Error",
+        description: "Strategy is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!domain.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Prompt Domain is required",
+        variant: "destructive",
+      });
+      setShowDetails(true);
+      setShowRequestDetails(false);
+      setFocusedField("domain");
+      return;
+    }
+
+    if (!language.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Prompt Language is required",
+        variant: "destructive",
+      });
+      setShowDetails(true);
+      setShowRequestDetails(false);
+      setFocusedField("language");
+      return;
+    }
+
     // if (!responseText.trim()) {
     //   toast({
     //     title: "Validation Error",
@@ -424,6 +471,33 @@ export const TestCaseAddDialog = ({
     //   });
     //   return;
     // }
+
+    // if response text is available means response type and response language is required
+    if (responseText.trim()) {
+      if (!responseType) {
+        toast({
+          title: "Validation Error",
+          description: "Response type is required",
+          variant: "destructive",
+        });
+        setShowRequestDetails(true);
+        setShowDetails(false);
+        setFocusedField("responseType");
+        return;
+
+      }
+      if (!responseLanguage) {
+        toast({
+          title: "Validation Error",
+          description: "Response language is required",
+          variant: "destructive",
+        });
+        setShowRequestDetails(true);
+        setShowDetails(false);
+        setFocusedField("responseLanguage");
+        return;
+      }
+    }
 
     if (!llmPrompt.trim() && showLLMPrompt) {
       toast({
@@ -434,20 +508,17 @@ export const TestCaseAddDialog = ({
       return;
     }
 
-    if (!strategy) {
-      toast({
-        title: "Validation Error",
-        description: "Strategy is required",
-        variant: "destructive",
-      });
-      return;
-    }
+
+
+
+
 
     // Check if name is available
     if (isNameAvailable === false) {
       toast({
         title: "Validation Error",
-        description: "Test case name already exists. Please choose a different name.",
+        description:
+          "Test case name already exists. Please choose a different name.",
         variant: "destructive",
       });
       return;
@@ -479,11 +550,15 @@ export const TestCaseAddDialog = ({
         user_prompt: userPrompts.trim(),
         system_prompt: systemPrompts.trim() || null,
         response_text: responseText.trim() || null,
-        llm_judge_prompt: showLLMPrompt && llmPrompt.trim() ? llmPrompt.trim() : null,
+        response_type: responseType || null,
+        response_lang: responseLanguage || null,
+        language_name: language.trim(),
+        domain_name: domain.trim(),
+        llm_judge_prompt:
+          showLLMPrompt && llmPrompt.trim() ? llmPrompt.trim() : null,
       };
 
       console.log("Creating test case:", payload);
-      //const response = await fetch(API_ENDPOINTS.TEST_CASE_CREATE, {
       const response = await fetch(API_ENDPOINTS.TESTCASE_CREATE_V2, {
         method: "POST",
         headers,
@@ -673,8 +748,12 @@ export const TestCaseAddDialog = ({
                         onValueChange={setDomain}
                         onOpenChange={setDomainSelectOpen}
                         disabled={isFetchingDomains}
+                        
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className={`
+                          ${errors.domain ? 'bg-red-50 border-red-500 ring-2 ring-red-200' : 'bg-muted'}
+                          focus-visible:ring-ring focus-visible:ring-2
+                        `}>
                           <SelectValue placeholder={isFetchingDomains ? "Loading domains..." : "Select Domain"}/>
                         </SelectTrigger>
                         <SelectContent className="bg-popover max-h-[300px]">
@@ -699,7 +778,12 @@ export const TestCaseAddDialog = ({
                         // onOpenChange={setLanguageSelectOpen}
                         disabled={isFetchingLanguages}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger
+                          className={`
+                            ${errors.language ? 'bg-red-50 border-red-500 ring-2 ring-red-200': 'bg-muted'}
+                            focus-visible:ring-ring focus-visible:ring-2
+                            `}
+                        >
                           <SelectValue
                             placeholder={
                               isFetchingLanguages ? "Loading languages..." : "Select Language"

@@ -129,7 +129,7 @@ const EntityHistoryDialog: React.FC<EntityHistoryProps> = ({
                         {entityId && (
                           <>
                             <span className="font-medium">
-                              {idLabel}: {entityId}
+                               {entityId}
                             </span>
                             <span className="text-xl">-</span>
                           </>
