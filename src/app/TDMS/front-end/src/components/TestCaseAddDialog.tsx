@@ -640,6 +640,8 @@ export const TestCaseAddDialog = ({
       // Close dialog
       onOpenChange(false);
 
+      // setHighlightedRowId(data.testcase_id);
+
       // Trigger refresh in parent component
       if (onSuccess) {
         onSuccess();

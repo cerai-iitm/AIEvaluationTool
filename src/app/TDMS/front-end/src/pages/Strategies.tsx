@@ -325,12 +325,12 @@ const StrategyList: React.FC = () => {
 
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <Select defaultValue="Strategy">
-              <SelectTrigger className="w-full sm:w-48">
+              {/* <SelectTrigger className="w-full sm:w-48">
                 <SelectValue/>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="Strategy">Strategy Name</SelectItem>
-              </SelectContent>
+              </SelectContent> */}
             </Select>
             <Input
               placeholder="search"

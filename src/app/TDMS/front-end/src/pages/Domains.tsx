@@ -66,6 +66,25 @@ const DomainList: React.FC = () => {
 
   const [highlightedRowId, setHighlightedRowId] = useState<number | null>(null);
 
+  const domainInitial: Domain = {
+    domain_id: 0,
+    domain_name: "",
+  }
+
+  const isChanged = (
+    updateName !== selectedDomain?.domain_name || ""
+  )
+
+  // const handleOpenUpdateModal = (domain) => {
+  //   setSelectedDomain(domain);
+  //   setUpdateName(domain.domain_name);
+  //   setShowUpdateModal(true);
+  // }
+
+  // const isChanged = domains.some(
+  //   (domain) => domain.domain_name !== selectedDomain?.domain_name
+  // );
+
   // Fetch domains from API
   const fetchDomains = async () => {
     setIsLoading(true);
@@ -415,8 +434,15 @@ const DomainList: React.FC = () => {
 
       {/* Edit Dialog - Similar to original but with delete confirmation */}
       {showEditDialog && selectedDomain && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50 p-4">
-          <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-md">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50 p-4" 
+          onClick={() => {
+            setShowEditDialog(false);
+            setSelectedDomain(null);
+          }}
+        >
+          <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-md"
+            onClick = {(e) => e.stopPropagation()}
+          >
             <button 
               type="button" 
               className="absolute top-3 right-4 text-2xl font-bold hover:text-gray-600 transition-colors" 
@@ -459,7 +485,12 @@ const DomainList: React.FC = () => {
 
       {/* Delete Confirmation Dialog */}
       {showDeleteConfirm && selectedDomain && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50 p-4">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50 p-4"
+          onClick={() => {
+            setShowUpdateModal(false);
+            setSelectedDomain(null);
+          }}
+        >
           <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-md">
             <button 
               type="button" 
@@ -498,8 +529,15 @@ const DomainList: React.FC = () => {
 
       {/* Update Modal */}
       {showUpdateModal && selectedDomain && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50 p-4">
-          <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-lg min-h-[220px]">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50 p-4"
+          onClick={() => {
+            setShowUpdateModal(false);
+            setSelectedDomain(null);
+          }}
+        >
+          <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-lg min-h-[220px]"
+            onClick = {(e) => e.stopPropagation()}
+          >
             <button 
               type="button" 
               className="absolute top-3 right-4 text-2xl font-bold hover:text-gray-600 transition-colors" 
@@ -531,8 +569,9 @@ const DomainList: React.FC = () => {
                     ? "bg-green-600 hover:bg-green-700 text-white cursor-pointer" 
                     : "bg-green-300 text-white cursor-not-allowed"
                 }`}
-                disabled={!updateName.trim() || !addMessage.trim()}
+                disabled={!updateName.trim() || !addMessage.trim() || updateName === selectedDomain?.domain_name }
                 onClick={handleUpdate}
+                
               >
                 Submit
               </button>
@@ -543,7 +582,12 @@ const DomainList: React.FC = () => {
 
       {/* Add Domain Dialog */}
       {addOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50 p-4">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50 p-4"
+          onClick={() => {
+            setShowUpdateModal(false);
+            setSelectedDomain(null);
+          }}
+        >
           <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-lg min-h-[220px] flex flex-col justify-between">
             <button
               type="button"

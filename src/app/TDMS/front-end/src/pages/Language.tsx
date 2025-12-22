@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
 import { hasPermission } from '@/utils/permissions';
 import { HistoryButton } from "@/components/HistoryButton";
+import { set } from 'date-fns';
 
 
 interface Language {
@@ -224,6 +225,7 @@ const LanguageList: React.FC = () => {
             setShowUpdateModal(false);
             setSelectedLanguage(null);
             fetchLanguages(); // Refresh the list
+            setHighlightedRowId(selectedLanguage.lang_id);
         } catch (error: any) {
             console.error("Error updating language:", error);
             toast({
@@ -303,12 +305,12 @@ const LanguageList: React.FC = () => {
                     {/* Filter/Search Bar */}
                     <div className="flex flex-col sm:flex-row gap-4 mb-6">
                         <Select defaultValue="Language Name">
-                            <SelectTrigger className="w-full sm:w-48">
+                            {/* <SelectTrigger className="w-full sm:w-48">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="Language Name">Language Name</SelectItem>
-                            </SelectContent>
+                            </SelectContent> */}
                         </Select>
                     <Input
                             placeholder="search"
@@ -380,7 +382,7 @@ const LanguageList: React.FC = () => {
                                                     onClick={() => {handleRowClick(lang); setHighlightedRowId(lang.lang_id);}}
                                                 >
                                                     <td className="p-2 text-center text-xs md:text-base">{lang.lang_id}</td>
-                                                    <td className="p-2 text-xs md:text-base">{lang.lang_name}</td>
+                                                    <td className="p-2 text-xs md:text-base capitalize">{lang.lang_name}</td>
                                                 </tr>
                                             ))
                                         )}
@@ -406,8 +408,15 @@ const LanguageList: React.FC = () => {
 
             {/* Edit Dialog - Similar to Domains.tsx */}
             {showEditDialog && selectedLanguage && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50 p-4">
-                    <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-md">
+                <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50 p-4"
+                    onClick={ () => {
+                        setShowEditDialog(false);
+                        setSelectedLanguage(null);
+                    }}
+                >
+                    <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-md"
+                        onClick={e => e.stopPropagation()}
+                    >
                         <button 
                             type="button" 
                             className="absolute top-3 right-4 text-2xl font-bold hover:text-gray-600 transition-colors" 
@@ -420,7 +429,7 @@ const LanguageList: React.FC = () => {
                         </button>
                         <div className="flex items-center justify-center mb-6 md:mb-7 mt-4 md:mt-5">
                             <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Language Name :</label>
-                            <span className="text-sm md:text-base">{selectedLanguage.lang_name}</span>
+                            <span className="text-sm md:text-base capitalize">{selectedLanguage.lang_name}</span>
                         </div>
                         <div className="flex gap-4 md:gap-8 justify-center">
                             {hasPermission(currentUserRole, "canDeleteTables") && (
@@ -450,7 +459,12 @@ const LanguageList: React.FC = () => {
 
             {/* Delete Confirmation Dialog */}
             {showDeleteConfirm && selectedLanguage && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50 p-4">
+                <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50 p-4"
+                    onClick = {() => {
+                        setShowDeleteConfirm(false);
+                        setSelectedLanguage(null);
+                    }}
+                >
                     <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-md">
                         <button 
                             type="button" 
@@ -516,7 +530,7 @@ const LanguageList: React.FC = () => {
                                         ? "bg-green-600 hover:bg-green-700 text-white cursor-pointer" 
                                         : "bg-green-300 text-white cursor-not-allowed"
                                 }`}
-                                disabled={!updateName.trim()}
+                                disabled={!updateName.trim() || updateName === selectedLanguage.lang_name}
                                 onClick={handleUpdate}
                             >
                                 Submit

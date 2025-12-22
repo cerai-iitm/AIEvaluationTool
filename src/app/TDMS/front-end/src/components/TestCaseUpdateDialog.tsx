@@ -212,7 +212,7 @@ export const TestCaseUpdateDialog = ({
     llmPrompt: "",
   };
   const isChanged = (
-    userPrompts !== testCaseInitial.userPrompts ||
+    userPrompts !== (testCaseInitial.userPrompts || "") ||
     systemPrompts !== (testCaseInitial.systemPrompts || "") ||
     responseText !== (testCaseInitial.responseText || "") ||
     llmPrompt !== (testCaseInitial.llmPrompt || "") ||

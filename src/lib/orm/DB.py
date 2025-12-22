@@ -22,6 +22,7 @@ from data import (
     Metric,
     Prompt,
     Response,
+    LLMJudgePrompt,
     Run,
     RunDetail,
     Strategy,
