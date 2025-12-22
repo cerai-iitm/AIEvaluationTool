@@ -677,7 +677,7 @@ export const TestCaseAddDialog = ({
               <Label className="text-base font-semibold">Test Case</Label>
               <div className="relative">
                 <Input
-                  placeholder="Enter New Test Case Name"
+                  placeholder="Enter new test case name"
                   value={testCaseName}
                   onChange={(e) => setTestCaseName(e.target.value)}
                   onFocus={() => {
@@ -715,10 +715,17 @@ export const TestCaseAddDialog = ({
                 <Label className="text-base font-semibold">Prompt</Label>
               {/* </div> */}
               <div className="space-y-1">
-                <Label className="text-sm font-semibold">User Prompts</Label>
+                <Label className="text-sm font-semibold">User Prompt</Label>
                 <div className="relative">
                   <Textarea
                     value={userPrompts}
+                    style = {{
+                      height: '${height}px',
+                      maxHeight: "120px",
+                      minHeight: "75px",
+                      overflowY: "auto"
+                    }}
+                    placeholder="Enter user prompt or Search "
                     onChange={(e) => setUserPrompts(e.target.value)}
                     onFocus={() => {
                       setFocusedField("userPrompt");
@@ -748,10 +755,17 @@ export const TestCaseAddDialog = ({
               {showDetails && (
                 <>
                   <div className="space-y-1">
-                    <Label className="text-sm font-semibold">System prompts</Label>
+                    <Label className="text-sm font-semibold">System prompt</Label>
                     <div className="relative">
                       <Textarea
                         value={systemPrompts}
+                        style = {{
+                          height: '${height}px',
+                          maxHeight: "120px",
+                          minHeight: "40px",
+                          overflowY: "auto"
+                        }}
+                        placeholder="Enter system prompt or Search "
                         onChange={(e) => {
                           setSystemPrompts(e.target.value);
                           if (errors.systemPrompts && e.target.value.trim()) {
@@ -864,6 +878,13 @@ export const TestCaseAddDialog = ({
                 <div className="relative">
                   <Textarea
                     value={responseText}
+                    style = {{
+                      height: '${height}px',
+                      maxHeight: "120px",
+                      minHeight: "75px",
+                      overflowY: "auto"
+                    }}
+                    placeholder="Enter response or Search "
                     className="bg-muted min-h-[73px] pr-10"
                     onChange={(e) => setResponseText(e.target.value)}
                     onFocus={() => {
@@ -978,8 +999,8 @@ export const TestCaseAddDialog = ({
                 }}
                 disabled={isFetchingStrategies}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder={isFetchingStrategies ? "Loading strategies..." : "Select strategy"} />
+                <SelectTrigger className={`bg-muted`}>
+                  <SelectValue className="placeholder:blur" placeholder={isFetchingStrategies ? "Loading strategies..." : "Select strategy"} />
                 </SelectTrigger>
                 <SelectContent className="bg-popover max-h-[300px]">
                   {strategies
@@ -999,6 +1020,13 @@ export const TestCaseAddDialog = ({
                 <div className="relative">
                   <Textarea
                     value={llmPrompt}
+                    style = {{
+                      height: '${height}px',
+                      maxHeight: "120px",
+                      minHeight: "75px",
+                      overflowY: "auto"
+                    }}
+                    placeholder="Enter prompt or Search"
                     // readOnly = {llmPrompt === "" || llmPrompt === null || llmPrompt === "none"}
                     // className="bg-muted min-h-[73px] pr-10"
                     className={`bg-muted min-h-[73px] pr-10 ${
@@ -1018,6 +1046,10 @@ export const TestCaseAddDialog = ({
                       setShowRequestDetails(false);
                     }}
                     onBlur={() => setFocusedField(null)}
+                    onClick={() => {
+                      setShowDetails(false);
+                      setShowRequestDetails(false);
+                    }}
                   />
                   { focusedField === "llm" && (
                   <Button

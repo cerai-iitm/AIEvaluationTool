@@ -216,8 +216,8 @@ export const TestCaseUpdateDialog = ({
     systemPrompts !== (testCaseInitial.systemPrompts || "") ||
     responseText !== (testCaseInitial.responseText || "") ||
     llmPrompt !== (testCaseInitial.llmPrompt || "") ||
-    strategy !== (testCaseInitial.strategyName || "") ||
-    notes !== ""
+    strategy !== (testCaseInitial.strategyName || "")
+    // notes !== ""
   );
 
   // const notNull = (
@@ -270,14 +270,14 @@ export const TestCaseUpdateDialog = ({
       return;
     }
 
-    if (!testCase?.llmPrompt || llmPrompt === "none") {
-      toast({
-        title: "Error",
-        description: "LLM prompt cannot be 'none'",
-        variant: "destructive",
-      });
-      return;
-    }
+    // if (!testCase?.llmPrompt || llmPrompt === "none") {
+    //   toast({
+    //     title: "Error",
+    //     description: "LLM prompt cannot be 'none'",
+    //     variant: "destructive",
+    //   });
+    //   return;
+    // }
 
     setIsLoading(true);
     try {
@@ -418,8 +418,8 @@ export const TestCaseUpdateDialog = ({
                     value={userPrompts}
                     style = {{
                       height: '${height}px',
-                      maxHeight: "160px",
-                      minHeight: "40px",
+                      maxHeight: "120px",
+                      minHeight: "75px",
                       overflowY: "auto"
                     }}
                     onFocus={() => setFocusedField("userPrompt")}
@@ -448,18 +448,18 @@ export const TestCaseUpdateDialog = ({
                 <div className="relative">
                   <Textarea
                     value={systemPrompts}
-                    // style = {{
-                    //     height: '${height}px',
-                    //     maxHeight: "160px",
-                    //     minHeight: "40px",
-                    //     overflowY: "auto"
-                    // }}
+                    style = {{
+                        height: '${height}px',
+                        maxHeight: "120px",
+                        minHeight: "75px",
+                        overflowY: "auto"
+                    }}
                     onChange={(e) => setSystemPrompts(e.target.value)}
-                    className="bg-muted min-h-[73px] "
+                    className="bg-muted min-h-[73px] pr-10"
                     onFocus={() => setFocusedField("systemPrompt")}
                     onBlur={() => setFocusedField(null)}
                     // tabIndex = {-1}
-                    onClick = {() => setFocusedField("systemPrompt")}
+                    // onClick = {() => setFocusedField("systemPrompt")}
                   />
                   { focusedField === "systemPrompt" && (
                     <Button
@@ -484,8 +484,8 @@ export const TestCaseUpdateDialog = ({
                   value={responseText}
                   style = {{
                       height: '${height}px',
-                      maxHeight: "160px",
-                      minHeight: "40px",
+                      maxHeight: "120px",
+                      minHeight: "75px",
                       overflowY: "auto"
                   }}
                   // readOnly = {responseText === "None"}
@@ -541,15 +541,16 @@ export const TestCaseUpdateDialog = ({
                     value={llmPrompt}
                     style = {{
                         height: '${height}px',
-                        // maxHeight: "160px",
-                        // minHeight: "40px",
+                        maxHeight: "120px",
+                        minHeight: "75px",
                         overflowY: "auto"
                     }}
+                    placeholder="Enter prompt or Search"
                     onFocus={() => setFocusedField("llm")}
                     onBlur = {() => setTimeout(() => setFocusedField(null), 100)}
                     onChange={(e) => setLlmPrompt(e.target.value)}
                     className="bg-muted min-h-[73px] pr-10"
-                    readOnly = {llmPrompt === "None" || llmPrompt === ""}
+                    // readOnly = {llmPrompt === "None" || llmPrompt === ""}
                   />
                   { focusedField === "llm" && (
                     <Button

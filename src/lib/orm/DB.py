@@ -19,7 +19,6 @@ from data import (
     Conversation,
     Domain,
     Language,
-    LLMJudgePrompt,
     Metric,
     Prompt,
     Response,
@@ -959,7 +958,7 @@ class DB:
                             current_judge_prompt.prompt = judge_prompt_text
                             current_judge_prompt.hash_value = new_hash
                         else:
-                            judge_prompt_obj = LLMJudgePrompt(
+                            judge_prompt_obj = LLMJudgePrompts(
                                 prompt=judge_prompt_text,
                                 lang_id=Language.autodetect,
                                 hash_value=new_hash,
@@ -1068,8 +1067,8 @@ class DB:
     def delete_llm_judge_prompt_record(self, llm_judge_prompt_id:int) -> bool:
         with self.Session() as session:
             llm_judge_prompt = (
-                session.query(LLMJudgePrompt)
-                .filter(LLMJudgePrompt.prompt_id == llm_judge_prompt_id)
+                session.query(LLMJudgePrompts)
+                .filter(LLMJudgePrompts.prompt_id == llm_judge_prompt_id)
                 .first()
             )
             if llm_judge_prompt is None:
