@@ -210,6 +210,33 @@ export default function TargetUpdateDialog({
       return;
     }
 
+    if (!type || !type.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Type field is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!domain || !domain.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Domain field is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (selectedLanguages.length === 0) {
+      toast({
+        title: "Validation Error",
+        description: "At least one language must be selected",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!notes || !notes.trim()) {
       toast({
         title: "Validation Error",
@@ -377,7 +404,7 @@ export default function TargetUpdateDialog({
                 onValueChange={setDomain}
                 disabled={isFetchingOptions}
               >
-                <SelectTrigger>
+                <SelectTrigger className="bg-muted capitalize">
                   <SelectValue
                     placeholder={
                       isFetchingOptions ? "Loading..." : "Select domain"
@@ -391,7 +418,7 @@ export default function TargetUpdateDialog({
                     </SelectItem>
                   ) : (
                     domainOptions.map((d) => (
-                      <SelectItem key={d} value={d}>
+                      <SelectItem key={d} value={d} className="capitalize">
                         {d}
                       </SelectItem>
                     ))

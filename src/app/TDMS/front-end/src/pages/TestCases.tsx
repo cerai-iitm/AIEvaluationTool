@@ -596,8 +596,8 @@ const TestCases = () => {
                   style={{
                     height: '${height}px',
                     //height: `${getTextareaHeight(getLineCount(selectedCase.userPrompts))}px`,
-                    maxHeight: "160px",
-                    minHeight: "40px",
+                    maxHeight: "120px",
+                    minHeight: "70px",
                     overflowY: "auto"
                   }}
                   className="bg-muted"
@@ -613,8 +613,8 @@ const TestCases = () => {
                   style={{
                     height: '${height}px',
                     //height: `${getTextareaHeight(getLineCount(selectedCase.systemPrompts))}px`,
-                    maxHeight: "160px",
-                    minHeight: "40px",
+                    maxHeight: "120px",
+                    minHeight: "70px",
                     overflowY: "auto"
                   }}
                   className="bg-muted"
@@ -631,8 +631,8 @@ const TestCases = () => {
                   style={{
                     height: '${height}px',
                     //height: `${getTextareaHeight(getLineCount(selectedCase.responseText))}px`,
-                    maxHeight: "160px",
-                    minHeight: "40px",
+                    maxHeight: "120px",
+                    minHeight: "70px",
                     overflowY: "auto"
                   }}
                   className="bg-muted"
@@ -658,9 +658,9 @@ const TestCases = () => {
                   style={{
                     height: '${height}px',
                     //height: `${getTextareaHeight(getLineCount(selectedCase.llmPrompt))}px`,
-                    // maxHeight: "160px",
-                    // minHeight: "40px",
-                    // overflowY: "auto",
+                    maxHeight: "120px",
+                    minHeight: "70px",
+                    overflowY: "auto",
                   }}
                   className="bg-muted min-h-[80px]"
                 />

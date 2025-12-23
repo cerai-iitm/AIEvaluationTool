@@ -278,36 +278,10 @@ export default function TargetAddDialog({
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter target name"
               required
+              className="bg-muted"
             />
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-base font-semibold">Target Type</Label>
-            <Select
-              value={type}
-              onValueChange={setType}
-              disabled={isFetchingOptions}
-            >
-              <SelectTrigger>
-                <SelectValue
-                  placeholder={isFetchingOptions ? "Loading..." : "Select type"}
-                />
-              </SelectTrigger>
-              <SelectContent className="bg-popover max-h-[300px]">
-                {targetTypes.length === 0 && !isFetchingOptions ? (
-                  <SelectItem value="" disabled>
-                    No types available
-                  </SelectItem>
-                ) : (
-                  targetTypes.map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {t}
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
-          </div>
 
           <div className="space-y-2">
             <Label className="text-base font-semibold">Description</Label>
@@ -319,6 +293,64 @@ export default function TargetAddDialog({
             />
           </div>
 
+          <div className="grid grid-cols-2 gap-4 pb-4">
+            <div className="space-y-2">
+              <Label className="text-base font-semibold">Target Type</Label>
+              <Select
+                value={type}
+                onValueChange={setType}
+                disabled={isFetchingOptions}
+              >
+                <SelectTrigger className="bg-muted">
+                  <SelectValue
+                    placeholder={isFetchingOptions ? "Loading..." : "Select type"}
+                  />
+                </SelectTrigger>
+                <SelectContent className="bg-popover max-h-[300px]">
+                  {targetTypes.length === 0 && !isFetchingOptions ? (
+                    <SelectItem value="" disabled>
+                      No types available
+                    </SelectItem>
+                  ) : (
+                    targetTypes.map((t) => (
+                      <SelectItem key={t} value={t}>
+                        {t}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
+            
+            <div className="space-y-2">
+              <Label className="text-base font-semibold">Domain Name</Label>
+              <Select
+                
+                value={domain}
+                onValueChange={setDomain}
+                disabled={isFetchingOptions}
+              >
+                <SelectTrigger className= "bg-muted capitalize">
+                  <SelectValue placeholder= {isFetchingOptions ? "Loading..." : "Select domain"}/>
+                </SelectTrigger>
+                <SelectContent className="bg-popover max-h-[300px]">
+                  {domainOptions.length === 0 && !isFetchingOptions ? (
+                    <SelectItem value="" disabled>
+                      No domains available
+                    </SelectItem>
+                  ) : (
+                    domainOptions.map((d) => (
+                      <SelectItem key={d} value={d} className="capitalize">
+                        {d}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
+          </div>
           <div className="space-y-2">
             <Label className="text-base font-semibold">URL</Label>
             <Input
@@ -326,42 +358,13 @@ export default function TargetAddDialog({
               onChange={(e) => setUrl(e.target.value)}
               placeholder="Enter URL"
               required
+              className="bg-muted"
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-base font-semibold">Domain Name</Label>
-            <Select
-              value={domain}
-              onValueChange={setDomain}
-              disabled={isFetchingOptions}
-            >
-              <SelectTrigger>
-                <SelectValue
-                  placeholder={
-                    isFetchingOptions ? "Loading..." : "Select domain"
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent className="bg-popover max-h-[300px]">
-                {domainOptions.length === 0 && !isFetchingOptions ? (
-                  <SelectItem value="" disabled>
-                    No domains available
-                  </SelectItem>
-                ) : (
-                  domainOptions.map((d) => (
-                    <SelectItem key={d} value={d}>
-                      {d}
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
             <Label className="text-base font-semibold">Languages</Label>
-            <div className="bg-muted p-4 rounded-md max-h-[100px] overflow-y-auto">
+            <div className="bg-muted p-4 rounded-md max-h-[110px] overflow-y-auto">
               {isFetchingOptions ? (
                 <div className="text-sm text-muted-foreground">
                   Loading languages...
@@ -397,7 +400,7 @@ export default function TargetAddDialog({
             <Input
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Enter notes..."
+              placeholder="Enter notes"
               className="bg-gray-200 rounded px-4 py-1 mr-4 "
               required
             />

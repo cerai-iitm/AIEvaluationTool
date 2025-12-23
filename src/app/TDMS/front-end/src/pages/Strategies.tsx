@@ -373,7 +373,7 @@ const StrategyList: React.FC = () => {
           </div>
           
           <div className="flex-1 min-h-0 overflow-y-auto">
-            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[67vh] w-full overflow-y-auto">
+            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[70vh] w-full overflow-y-auto">
               {isLoading ? (
                 <div className="flex items-center justify-center p-8">
                   <span>Loading...</span>
@@ -435,8 +435,15 @@ const StrategyList: React.FC = () => {
 
       {/* Edit Dialog - Shows Delete and Update buttons */}
       {showEditDialog && selectedStrategy && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50 p-4">
-          <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-md">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50 p-4"
+          onClick = {() => {
+            setShowEditDialog(false);
+            setSelectedStrategy(null);
+          }}
+        >
+          <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-md"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button 
               type="button" 
               className="absolute top-3 right-4 text-2xl font-bold hover:text-gray-600 transition-colors" 
@@ -518,7 +525,12 @@ const StrategyList: React.FC = () => {
 
       {/* Update Modal */}
       {showUpdateModal && selectedStrategy && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50 p-4">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50 p-4"
+          onClick = {() => {
+            setShowUpdateModal(false);
+            setSelectedStrategy(null);
+          }}
+        >
           <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-lg min-h-[300px]">
             <button 
               type="button" 
@@ -575,8 +587,12 @@ const StrategyList: React.FC = () => {
 
       {/* Add Strategy Dialog */}
       {addOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50 p-4">
-          <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-lg min-h-[350px] flex flex-col justify-between">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50 p-4"
+          onClick={() => setAddOpen(false)}
+        >
+          <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-lg min-h-[350px] flex flex-col justify-between"
+            onClick={e => e.stopPropagation()}
+          >
             <button
               type="button"
               className="absolute top-3 right-4 text-2xl font-bold hover:text-gray-600 transition-colors focus:outline-none"

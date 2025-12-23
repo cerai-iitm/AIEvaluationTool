@@ -318,6 +318,14 @@ export const ResponseAddDialog = ({
                     className="bg-muted min-h-[80px] pr-10"
                     placeholder="System prompt will be populated from search"
                   />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-2 top-2"
+                    onClick={() => handleSearchClick("systemPrompt")}
+                  >
+                    <Search className="w-4 h-4" />
+                  </Button>
                 </div>
               </div>
             </div>

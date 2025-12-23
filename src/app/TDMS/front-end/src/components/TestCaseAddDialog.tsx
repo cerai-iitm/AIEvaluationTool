@@ -813,7 +813,7 @@ export const TestCaseAddDialog = ({
                         
                       >
                         <SelectTrigger className={`
-                          ${errors.domain ? 'bg-red-50 border-red-500 ring-2 ring-red-200' : 'bg-muted'}
+                          ${errors.domain ? 'bg-red-50 border-red-500 ring-2 ring-red-200' : 'bg-muted capitalize'}
                           focus-visible:ring-ring focus-visible:ring-2
                         `}>
                           <SelectValue placeholder={isFetchingDomains ? "Loading domains..." : "Select Domain"}/>
@@ -823,7 +823,7 @@ export const TestCaseAddDialog = ({
                             <SelectItem value="" disabled>No domains available</SelectItem>
                           ) : (
                             domainOptions.map((dom) => (
-                              <SelectItem key={dom} value={dom}>
+                              <SelectItem key={dom} value={dom} className="capitalize">
                                 {dom}
                               </SelectItem>
                             ))
@@ -847,7 +847,7 @@ export const TestCaseAddDialog = ({
                       >
                         <SelectTrigger
                           className={`
-                            ${errors.language ? 'bg-red-50 border-red-500 ring-2 ring-red-200': 'bg-muted'}
+                            ${errors.language ? 'bg-red-50 border-red-500 ring-2 ring-red-200': 'bg-muted capitalize'}
                             focus-visible:ring-ring focus-visible:ring-2
                             `}
                         >
@@ -862,7 +862,7 @@ export const TestCaseAddDialog = ({
                             <SelectItem value="" disabled>No languages available</SelectItem>
                           ) : (
                             languageOptions.map((lang) => (
-                              <SelectItem key={lang} value={lang}>{lang}</SelectItem>
+                              <SelectItem key={lang} value={lang} className="capitalize">{lang}</SelectItem>
                             ))
                           )}
                         </SelectContent>
@@ -957,10 +957,11 @@ export const TestCaseAddDialog = ({
                       disabled={isFetchingLanguages}
                     >
                       <SelectTrigger className={`
-                        ${errors.responseLanguage ? 'bg-red-50 border-red-500 ring-2 ring-red-200' : 'bg-muted'}
+                        ${errors.responseLanguage ? 'bg-red-50 border-red-500 ring-2 ring-red-200' : 'bg-muted capitalize'}
                         focus-visible:ring-ring focus-visible:ring-2
                       `}>
                         <SelectValue
+                          className="placeholder:blur placeholder:text-muted-foreground/50 placeholder:italic placeholder:text-sm placeholder:capitalize capitalize"  
                           placeholder={
                             isFetchingLanguages
                               ? "Loading languages..."
@@ -975,7 +976,7 @@ export const TestCaseAddDialog = ({
                           </SelectItem>
                         ) : (
                           languageOptions.map((lang) => (
-                            <SelectItem key={lang} value={lang}>
+                            <SelectItem key={lang} value={lang} className="capitalize">
                               {lang}
                             </SelectItem>
                           ))

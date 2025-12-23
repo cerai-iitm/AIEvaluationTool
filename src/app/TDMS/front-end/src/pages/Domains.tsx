@@ -584,11 +584,12 @@ const DomainList: React.FC = () => {
       {addOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50 p-4"
           onClick={() => {
-            setShowUpdateModal(false);
-            setSelectedDomain(null);
+            setAddOpen(false);
           }}
         >
-          <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-lg min-h-[220px] flex flex-col justify-between">
+          <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-lg min-h-[220px] flex flex-col justify-between"
+            onClick = {(e) => e.stopPropagation()}
+          >
             <button
               type="button"
               className="absolute top-3 right-4 text-2xl font-bold hover:text-gray-600 transition-colors focus:outline-none"

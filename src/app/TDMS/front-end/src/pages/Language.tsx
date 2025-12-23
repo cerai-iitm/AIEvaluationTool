@@ -18,7 +18,7 @@ interface Language {
     lang_name: string;
 }
 
-const itemsPerPage = 20;
+const itemsPerPage = 15;
 
 const LanguageList: React.FC = () => {
     const { toast } = useToast();
@@ -503,8 +503,15 @@ const LanguageList: React.FC = () => {
 
             {/* Update Modal */}
             {showUpdateModal && selectedLanguage && (
-                <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50 p-4">
-                    <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-lg min-h-[220px]">
+                <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50 p-4"
+                    onClick = {() => {
+                        setShowUpdateModal(false);
+                        setSelectedLanguage(null);
+                    }}
+                >
+                    <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-lg min-h-[220px]"
+                        onClick={e => e.stopPropagation()}
+                    >
                         <button 
                             type="button" 
                             className="absolute top-3 right-4 text-2xl font-bold hover:text-gray-600 transition-colors" 
@@ -520,7 +527,7 @@ const LanguageList: React.FC = () => {
                             <input
                                 value={updateName}
                                 onChange={e => setUpdateName(e.target.value)}
-                                className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-lg flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
+                                className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-lg flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200 capitalize"
                             />
                         </div>
                         <div className="flex justify-center">
@@ -543,24 +550,26 @@ const LanguageList: React.FC = () => {
             {/* Add Language Dialog */}
             {addOpen && (
                 <Dialog open={addOpen} onOpenChange={setAddOpen}>
-                    <DialogContent className="w-full max-w-md p-4">
+                    <DialogContent className="w-full max-w-md p-4 max-h-[90vh] max-w-[500px] overflow-y-auto">
                         {/* <DialogHeader>
                             <DialogTitle>Add Language</DialogTitle>
                         </DialogHeader> */}
-                        <div className="flex flex-col gap-6 ">
+                        <div className="flex flex-col gap-6">
                             <div className="flex flex-col md:flex-row items-center mb-6 md:mb-8 mt-4 md:mt-5 gap-2 md:gap-0 mt-4 pt-4">
                                 <Label className='font-semibold tet-base md:text-lg min-w-[140px] md:min-w-[165px]'>Language Name</Label>
-                                <Input 
-                                    value={newLanguageName} 
-                                    onChange={e => setNewLanguageName(e.target.value)} 
-                                    placeholder="Enter language name..." 
-                                    maxLength={100} 
-                                    className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-lg flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
-                                />
+                                <div className="relative">
+                                    <Input 
+                                        value={newLanguageName} 
+                                        onChange={e => setNewLanguageName(e.target.value)} 
+                                        placeholder="Enter language" 
+                                        maxLength={100} 
+                                        className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-lg flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
+                                    />
+                                </div>
                             </div>
                             <div className="flex justify-center">
                                 <Button onClick={handleAddLanguage} disabled={!newLanguageName.trim()}
-                                className={`px-6 md:px-8 py-2 rounded text-sm md:text-base font-semibold shadow transition-colors 
+                                className={`bg-green-600 hover:bg-green-700 text-white px-6 md:px-8 py-2 rounded text-sm md:text-base font-semibold shadow transition-colors 
                                     }`}
                                 >
                                     Submit
