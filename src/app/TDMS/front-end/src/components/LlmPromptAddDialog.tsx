@@ -184,6 +184,11 @@ export function LlmPromptAddDialog({
               onChange={(e) => setPrompt(e.target.value)}
               className="bg-muted min-h-[80px]"
               placeholder="Enter your LLM prompt here..."
+              style ={{
+                maxHeight: "120px",
+                minHeight: "70px",
+                overflowY: "auto",
+              }}
             />
           </div>
           <div className="space-y-1">
@@ -193,7 +198,7 @@ export function LlmPromptAddDialog({
               onValueChange={setLanguage}
               disabled={isOptionsLoading || !languageOptions.length}
             >
-              <SelectTrigger>
+              <SelectTrigger className="bg-muted capitalize">
                 <SelectValue
                   placeholder={
                     isOptionsLoading
@@ -201,11 +206,11 @@ export function LlmPromptAddDialog({
                       : "Select a language"
                   }
                 />
-              </SelectTrigger>
+              </SelectTrigger >
               <SelectContent className="bg-popover max-h-[300px]">
                 {languageOptions.length ? (
                   languageOptions.map((l) => (
-                    <SelectItem key={l} value={l}>
+                    <SelectItem key={l} value={l} className="capitalize">
                       {l}
                     </SelectItem>
                   ))

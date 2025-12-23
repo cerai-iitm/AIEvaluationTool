@@ -326,7 +326,12 @@ const Prompts = () => {
                 <Label className="text-base font-semibold">User Prompt</Label>
                 <Textarea
                   value={selectedPrompt.user_prompt}
-                
+                  style = {{
+                    height: '${height}px',
+                    maxHeight: "120px",
+                    minHeight: "40px",
+                    overflowY: "auto"
+                  }}                
                   className="bg-muted min-h-[80px]"
                 />
               </div>
@@ -334,7 +339,12 @@ const Prompts = () => {
                 <Label className="text-base font-semibold">System Prompt</Label>
                 <Textarea
                   value={selectedPrompt.system_prompt}
-                  
+                  style = {{
+                    height: '${height}px',
+                    maxHeight: "120px",
+                    minHeight: "40px",
+                    overflowY: "auto"
+                  }}               
                   className="bg-muted min-h-[80px]"
                 />
               </div>

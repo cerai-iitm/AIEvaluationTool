@@ -224,6 +224,11 @@ export function LlmPromptUpdateDialog({
               value={promptText}
               onChange={(e) => setPromptText(e.target.value)}
               className="bg-muted min-h-[80px]"
+              style={{
+                maxHeight: "120px",
+                minHeight: "75px",
+                overflowY: "auto",
+              }}
             />
           </div>
           <div className="space-y-1">
@@ -233,8 +238,8 @@ export function LlmPromptUpdateDialog({
               onValueChange={setLanguage}
               disabled={isOptionsLoading || !languageOptions.length}
             >
-              <SelectTrigger>
-                <SelectValue
+              <SelectTrigger className="capitalize bg-muted">
+                <SelectValue 
                   placeholder={
                     isOptionsLoading
                       ? "Loading languages..."
@@ -245,7 +250,7 @@ export function LlmPromptUpdateDialog({
               <SelectContent className="bg-popover max-h-[300px]">
                 {languageOptions.length ? (
                   languageOptions.map((l) => (
-                    <SelectItem key={l} value={l}>
+                    <SelectItem key={l} value={l} className="capitalize">
                       {l}
                     </SelectItem>
                   ))

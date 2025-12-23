@@ -208,26 +208,17 @@ def update_llm_prompt_v2(
 ):
     update_data = payload.model_dump(exclude_unset=True)
     if not update_data:
-        existing = db.get_llm_prompt_by_id(llm_prompt_id)
-        if existing is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="LLM prompt not found"
-            )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No update data provided",
+        )
 
-        #existing_prompt = 
-        
-        language_name = db.get_language_name(existing.lang_id)
-        if payload.prompt is None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Prompt cannot be empty",
-            )
-
-        # return LlmPromptDetailResponse(
-        #     llmPromptId=existing.prompt_id,
-        #     prompt=existing.prompt,
-        #     language=language_name,
-        # )
+    # Get the existing prompt before update for comparison
+    existing = db.get_llm_prompt_by_id(llm_prompt_id)
+    if existing is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="LLM prompt not found"
+        )
 
     try:
         updated = db.update_llm_prompt_v2(llm_prompt_id, update_data)
@@ -243,12 +234,26 @@ def update_llm_prompt_v2(
 
     username = _get_username_from_token(authorization)
     if username:
+        changes = []
+        
+        if updated.prompt != existing.prompt:
+            changes.append("prompt updated")
+        
+        if updated.lang_id != existing.lang_id:
+            changes.append("language updated")
+            
+        note = f"LLM Prompt ID:{updated.prompt_id} updated"
+        if changes:
+            note += f": {', '.join(changes)}"
+        else:
+            note += " (no changes detected)"
+        
         log_activity(
             username=username,
             entity_type="LLM Prompt",
             entity_id=str(updated.prompt_id),
             operation="update",
-            note="LLM prompt updated",
+            note=note
         )
 
     return LlmPromptDetailResponse(

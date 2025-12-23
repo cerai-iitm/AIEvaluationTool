@@ -46,6 +46,8 @@ const LlmPrompts = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentUserRole, setCurrentUserRole] = useState<string>("");
 
+  const [highlightedRowId, setHighlightedRowId] = useState<number | null>(null);
+
   const fetchLlmPrompts = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -150,6 +152,7 @@ const LlmPrompts = () => {
       setDeleteDialogOpen(false);
       setPromptToDelete(null);
       fetchLlmPrompts();
+      setHighlightedRowId(null);
     } catch (error: any) {
       console.error("Delete LLM prompt failed:", error);
       toast({
@@ -270,14 +273,16 @@ const LlmPrompts = () => {
                       paginatedPrompts.map((row) => (
                         <tr
                           key={row.llmPromptId}
-                          className="border-b hover:bg-muted/50 cursor-pointer"
-                          onClick={() => setSelectedPrompt(row)}
+                          className={`border-b cursor-pointer transition-colors duration-200 ${
+                            highlightedRowId === row.llmPromptId ? "bg-primary/10 hover:bg-primary/15 border-primary/30" : "hover:bg-muted/50"
+                          }`}
+                          onClick={() => {setSelectedPrompt(row); setHighlightedRowId(row.llmPromptId);}}
                         >
                           <td className="p-2 text-center">{row.llmPromptId}</td>
                           <td className="p-2 truncate max-w-[650px] pr-8 mr-2">
                             {row.prompt}
                           </td>
-                          <td className="p-2">{row.language ?? "—"}</td>
+                          <td className="p-2 pl-7 capitalize ">{row.language ?? "—"}</td>
                         </tr>
                       ))
                     )}
@@ -321,6 +326,11 @@ const LlmPrompts = () => {
                   value={selectedPrompt.prompt}
                   readOnly
                   className="bg-muted min-h-[80px]"
+                  style={{
+                    maxHeight: "120px",
+                    minHeight: "75px",
+                    overflowY: "auto",
+                  }}
                 />
               </div>
               <div className="space-y-1">
@@ -328,7 +338,7 @@ const LlmPrompts = () => {
                 <Input
                   value={selectedPrompt.language ?? "—"}
                   readOnly
-                  className="bg-muted"
+                  className={`bg-muted capitalize`}
                 />
               </div>
             </div>

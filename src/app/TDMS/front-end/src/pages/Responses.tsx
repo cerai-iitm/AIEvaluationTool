@@ -229,12 +229,12 @@ const Responses = () => {
           <h1 className="text-4xl font-bold mb-8 text-center">Responses</h1>
 
           <div className="flex gap-4 mb-6 flex-wrap">
-            <Select defaultValue="responseid">
+            <Select defaultValue="responsetext">
               <SelectTrigger className="w-48">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="responseid">Response ID</SelectItem>
+                {/* <SelectItem value="responseid">Response ID</SelectItem> */}
                 <SelectItem value="responsetext">Response Text</SelectItem>
                 <SelectItem value="responsetype">Response Type</SelectItem>
                 <SelectItem value="language">Language</SelectItem>
@@ -288,7 +288,7 @@ const Responses = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow overflow-hidden max-h-[67vh] w-full overflow-y-auto">
+          <div className="bg-white rounded-lg shadow overflow-hidden max-h-[70vh] w-full overflow-y-auto">
             <table className="w-full">
               <thead className="border-b-2">
                 <tr>
@@ -326,12 +326,12 @@ const Responses = () => {
                       className="border-b hover:bg-muted/50 cursor-pointer"
                       onClick={() => setSelectedResponse(response)}
                     >
-                      <td className="p-2">{response.response_id}</td>
+                      <td className="p-2 pl-12">{response.response_id}</td>
                       <td className="p-2 max-w-md truncate">
                         {response.response_text}
                       </td>
-                      <td className="p-2">{response.language}</td>
-                      <td className="p-2">{response.response_type}</td>
+                      <td className="p-2 pl-8 capitalize">{response.language}</td>
+                      <td className="p-2 pl-12">{response.response_type}</td>
                     </tr>
                   ))
                 )}
@@ -341,7 +341,7 @@ const Responses = () => {
 
           {(hasPermission(currentUserRole, "canCreateTables") ||
             hasPermission(currentUserRole, "canCreateRecords")) && (
-            <div className="mt-6">
+            <div className="mt-6 sticky bottom-5">
               <Button
                 className="bg-primary hover:bg-primary/90"
                 onClick={() => setAddDialogOpen(true)}

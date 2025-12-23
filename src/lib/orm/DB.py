@@ -2934,14 +2934,12 @@ class DB:
             # )
             llm_prompt = (
                 session.query(LLMJudgePrompts)
-                .filter(LLMJudgePrompts.prompt == updates["prompt"])
+                .filter(LLMJudgePrompts.prompt_id == llm_prompt_id)
                 .first()
             )
-            if llm_prompt:
-                self.logger.debug(f"Returning the existing judge prompt: {llm_prompt.prompt}")
-                raise ValueError(f"Judge prompt already exists")
+            if not llm_prompt:
+                raise ValueError(f"LLM prompt with ID {llm_prompt_id} not found")
                 
-
             updated = False
 
             if "prompt" in updates and updates["prompt"]:
