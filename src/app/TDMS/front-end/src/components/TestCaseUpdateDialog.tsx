@@ -83,6 +83,13 @@ export const TestCaseUpdateDialog = ({
 
   const [focusedField, setFocusedField] = useState<null | "userPrompt" | "systemPrompt" | "response" | "llm">(null);
 
+  const [errors, setErrors] = useState({
+    userPrompts: false,
+    systemPrompts: false,
+    responseText: false,
+    llmPrompt: false,
+  });
+
   // function getTextareaHeight(lineCount: number){
   //   if (lineCount <=1) return 40;
   //   if (lineCount <=4) return lineCount * 40;
@@ -97,21 +104,33 @@ export const TestCaseUpdateDialog = ({
     switch (selection.type) {
       case "userPrompt":
         setUserPrompts(selection.userPrompt);
+        if (errors.userPrompts && selection.userPrompt?.trim()) {
+          setErrors(prev => ({ ...prev, userPrompts: false }));
+        }
         // if (selection.systemPrompt !== undefined) {
         //   setSystemPrompts(selection.systemPrompt ?? "");
         // }
         break;
       case "systemPrompt":
         setSystemPrompts(selection.systemPrompt);
+        if (errors.systemPrompts && selection.systemPrompt?.trim()) {
+          setErrors(prev => ({ ...prev, systemPrompts: false }));
+        }
         // if (selection.userPrompt) {
         //   setUserPrompts(selection.userPrompt);
         // }
         break;
       case "response":
         setResponseText(selection.responseText);
+        if (errors.responseText && selection.responseText?.trim()) {
+          setErrors(prev => ({ ...prev, responseText: false }));
+        }
         break;
       case "llm":
         setLlmPrompt(selection.llmPrompt);
+        if (errors.llmPrompt && selection.llmPrompt?.trim() && selection.llmPrompt !== "None") {
+          setErrors(prev => ({ ...prev, llmPrompt: false }));
+        }
         break;
       default:
         break;
@@ -188,6 +207,14 @@ export const TestCaseUpdateDialog = ({
     if (open) {
       fetchUserRole();
       fetchStrategies();
+    } else {
+      // Reset errors when dialog closes
+      setErrors({
+        userPrompts: false,
+        systemPrompts: false,
+        responseText: false,
+        llmPrompt: false,
+      });
     }
   }, [open, toast]);
 
@@ -199,6 +226,13 @@ export const TestCaseUpdateDialog = ({
     setStrategy(testCase?.strategyName || '');
     // setDomain(testCase?.domainName || '');
     setNotes(''); // Or testCase?.notes if available
+    // Reset errors when test case changes
+    setErrors({
+      userPrompts: false,
+      systemPrompts: false,
+      responseText: false,
+      llmPrompt: false,
+    });
   }, [testCase]);
 
   const testCaseInitial: TestCase = testCase || {
@@ -261,12 +295,58 @@ export const TestCaseUpdateDialog = ({
       });
       return;
     }
-    if (selectedStrategyRequiresLLM && (llmPrompt === "None" || llmPrompt === null || !llmPrompt)) {
+
+    // Validate required fields
+    let hasErrors = false;
+    const newErrors = {
+      userPrompts: false,
+      systemPrompts: false,
+      responseText: false,
+      llmPrompt: false,
+    };
+
+    if (!userPrompts || !userPrompts.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "User prompt is required",
+        variant: "destructive",
+      });
+      newErrors.userPrompts = true;
+      hasErrors = true;
+    }
+
+    if (!systemPrompts || !systemPrompts.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "System prompt is required",
+        variant: "destructive",
+      });
+      newErrors.systemPrompts = true;
+      hasErrors = true;
+    }
+
+    if (!responseText || !responseText.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Response text is required",
+        variant: "destructive",
+      });
+      newErrors.responseText = true;
+      hasErrors = true;
+    }
+
+    if (selectedStrategyRequiresLLM && (!llmPrompt || llmPrompt === "None" || llmPrompt.trim() === "")) {
       toast({
         title: "Validation Error",
         description: "LLM prompt is required",
         variant: "destructive",
       });
+      newErrors.llmPrompt = true;
+      hasErrors = true;
+    }
+
+    if (hasErrors) {
+      setErrors(newErrors);
       return;
     }
 
@@ -355,6 +435,14 @@ export const TestCaseUpdateDialog = ({
         description: "Test case updated successfully",
       });
 
+      // Reset errors on successful update
+      setErrors({
+        userPrompts: false,
+        systemPrompts: false,
+        responseText: false,
+        llmPrompt: false,
+      });
+
       // Call the callback to refresh the test cases list
       if (onUpdateSuccess) {
         onUpdateSuccess();
@@ -424,8 +512,15 @@ export const TestCaseUpdateDialog = ({
                     }}
                     onFocus={() => setFocusedField("userPrompt")}
                     onBlur={() => setFocusedField(null)}
-                    onChange={(e) => setUserPrompts(e.target.value)}
-                    className="bg-muted min-h-[73px] pr-10"
+                    onChange={(e) => {
+                      setUserPrompts(e.target.value);
+                      if (errors.userPrompts && e.target.value.trim()) {
+                        setErrors(prev => ({ ...prev, userPrompts: false }));
+                      }
+                    }}
+                    className={`bg-muted min-h-[73px] pr-10 ${
+                      errors.userPrompts ? 'border-red-500 ring-2 ring-red-200' : ''
+                    }`}
                   />
                   { focusedField === "userPrompt" && (
                     <Button
@@ -454,8 +549,15 @@ export const TestCaseUpdateDialog = ({
                         minHeight: "75px",
                         overflowY: "auto"
                     }}
-                    onChange={(e) => setSystemPrompts(e.target.value)}
-                    className="bg-muted min-h-[73px] pr-10"
+                    onChange={(e) => {
+                      setSystemPrompts(e.target.value);
+                      if (errors.systemPrompts && e.target.value.trim()) {
+                        setErrors(prev => ({ ...prev, systemPrompts: false }));
+                      }
+                    }}
+                    className={`bg-muted min-h-[73px] pr-10 ${
+                      errors.systemPrompts ? 'border-red-500 ring-2 ring-red-200' : ''
+                    }`}
                     onFocus={() => setFocusedField("systemPrompt")}
                     onBlur={() => setFocusedField(null)}
                     // tabIndex = {-1}
@@ -491,8 +593,15 @@ export const TestCaseUpdateDialog = ({
                   // readOnly = {responseText === "None"}
                   onFocus = { () => setFocusedField("response")}
                   onBlur={() => setFocusedField(null)}
-                  onChange={(e) => setResponseText(e.target.value)}
-                  className="bg-muted min-h-[73px] pr-10"
+                  onChange={(e) => {
+                    setResponseText(e.target.value);
+                    if (errors.responseText && e.target.value.trim()) {
+                      setErrors(prev => ({ ...prev, responseText: false }));
+                    }
+                  }}
+                  className={`bg-muted min-h-[73px] pr-10 ${
+                    errors.responseText ? 'border-red-500 ring-2 ring-red-200' : ''
+                  }`}
                   tabIndex = {-1}
                 />
                 { focusedField === "response" && (
@@ -548,8 +657,15 @@ export const TestCaseUpdateDialog = ({
                     placeholder="Enter prompt or Search"
                     onFocus={() => setFocusedField("llm")}
                     onBlur = {() => setTimeout(() => setFocusedField(null), 100)}
-                    onChange={(e) => setLlmPrompt(e.target.value)}
-                    className="bg-muted min-h-[73px] pr-10"
+                    onChange={(e) => {
+                      setLlmPrompt(e.target.value);
+                      if (errors.llmPrompt && e.target.value.trim() && e.target.value !== "None") {
+                        setErrors(prev => ({ ...prev, llmPrompt: false }));
+                      }
+                    }}
+                    className={`bg-muted min-h-[73px] pr-10 ${
+                      errors.llmPrompt ? 'border-red-500 ring-2 ring-red-200' : ''
+                    }`}
                     // readOnly = {llmPrompt === "None" || llmPrompt === ""}
                   />
                   { focusedField === "llm" && (
