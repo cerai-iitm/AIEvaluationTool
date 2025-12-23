@@ -373,22 +373,24 @@ const Responses = () => {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label>Response Type</Label>
-                <Input
-                  value={selectedResponse.response_type}
-                  readOnly
-                  className="bg-muted"
-                />
-              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Response Type</Label>
+                  <Input
+                    value={selectedResponse.response_type}
+                    readOnly
+                    className="bg-muted"
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label>Language</Label>
-                <Input
-                  value={selectedResponse.language}
-                  readOnly
-                  className="bg-muted"
-                />
+                <div className="space-y-2">
+                  <Label>Language</Label>
+                  <Input
+                    value={selectedResponse.language}
+                    readOnly
+                    className="bg-muted"
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">

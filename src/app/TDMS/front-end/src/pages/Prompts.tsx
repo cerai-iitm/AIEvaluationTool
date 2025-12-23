@@ -283,8 +283,8 @@ const Prompts = () => {
                           <td className="p-2 truncate max-w-[650px] pr-8 mr-2">
                             {row.user_prompt}
                           </td>
-                          <td className="p-2 ">{row.language ?? "—"}</td>
-                          <td className="p-2 ">{row.domain ?? "—"}</td>
+                          <td className="p-2 pl-6 capitalize">{row.language ?? "—"}</td>
+                          <td className="p-2 capitalize">{row.domain ?? "—"}</td>
                         </tr>
                       ))
                     )}
@@ -348,21 +348,23 @@ const Prompts = () => {
                   className="bg-muted min-h-[80px]"
                 />
               </div>
-              <div className="space-y-1">
-                <Label className="text-base font-semibold">language Name</Label>
-                <Input
-                  value={selectedPrompt.language ?? ""}
-                  readOnly
-                  className="bg-muted"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-base font-semibold">Domain Name</Label>
-                <Input
-                  value={selectedPrompt.domain ?? ""}
-                  readOnly
-                  className="bg-muted"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label className="text-base font-semibold">language Name</Label>
+                  <Input
+                    value={selectedPrompt.language ?? ""}
+                    readOnly
+                    className="bg-muted capitalize"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-base font-semibold">Domain Name</Label>
+                  <Input
+                    value={selectedPrompt.domain ?? ""}
+                    readOnly
+                    className="bg-muted capitalize"
+                  />
+                </div>
               </div>
             </div>
           )}

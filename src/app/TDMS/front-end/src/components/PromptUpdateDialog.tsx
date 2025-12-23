@@ -270,65 +270,67 @@ export function PromptUpdateDialog({
               
             />
           </div>
-          <div className="space-y-1">
-            <Label className="text-base font-semibold">language Name</Label>
-            <Select
-              value={language || undefined}
-              onValueChange={setLanguage}
-              disabled={isOptionsLoading || !languageOptions.length}
-            >
-              <SelectTrigger>
-                <SelectValue
-                  placeholder={
-                    isOptionsLoading
-                      ? "Loading languages..."
-                      : "Select a language"
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent className="bg-popover max-h-[300px]">
-                {languageOptions.length ? (
-                  languageOptions.map((l) => (
-                    <SelectItem key={l} value={l}>
-                      {l}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <Label className="text-base font-semibold">Language Name</Label>
+              <Select
+                value={language || undefined}
+                onValueChange={setLanguage}
+                disabled={isOptionsLoading || !languageOptions.length}
+              >
+                <SelectTrigger className="bg-muted capitalize">
+                  <SelectValue
+                    placeholder={
+                      isOptionsLoading
+                        ? "Loading languages..."
+                        : "Select a language"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent className="bg-popover max-h-[300px]">
+                  {languageOptions.length ? (
+                    languageOptions.map((l) => (
+                      <SelectItem key={l} value={l} className="capitalize">
+                        {l}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="__no-language" disabled>
+                      No languages available
                     </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem value="__no-language" disabled>
-                    No languages available
-                  </SelectItem>
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1 pb-4">
-            <Label className="text-base font-semibold">Domain Name</Label>
-            <Select
-              value={domain || undefined}
-              onValueChange={setDomain}
-              disabled={isOptionsLoading || !domainOptions.length}
-            >
-              <SelectTrigger>
-                <SelectValue
-                  placeholder={
-                    isOptionsLoading ? "Loading domains..." : "Select a domain"
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent className="bg-popover max-h-[300px]">
-                {domainOptions.length ? (
-                  domainOptions.map((d) => (
-                    <SelectItem key={d} value={d}>
-                      {d}
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1 pb-4">
+              <Label className="text-base font-semibold">Domain Name</Label>
+              <Select
+                value={domain || undefined}
+                onValueChange={setDomain}
+                disabled={isOptionsLoading || !domainOptions.length}
+              >
+                <SelectTrigger className="bg-muted capitalize">
+                  <SelectValue
+                    placeholder={
+                      isOptionsLoading ? "Loading domains..." : "Select a domain"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent className="bg-popover max-h-[300px]">
+                  {domainOptions.length ? (
+                    domainOptions.map((d) => (
+                      <SelectItem key={d} value={d} className="capitalize">
+                        {d}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="__no-domain" disabled>
+                      No domains available
                     </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem value="__no-domain" disabled>
-                    No domains available
-                  </SelectItem>
-                )}
-              </SelectContent>
-            </Select>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
 
