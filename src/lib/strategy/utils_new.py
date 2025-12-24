@@ -117,7 +117,7 @@ class FileLoader:
             os.mkdir(folder_path)
         file_path = os.path.join(folder_path, f"{kwargs.get('strat_name')}.csv")
         file_exists = os.path.isfile(file_path)
-        hash = hashlib.sha256(df.get("id").encode('utf-8')).hexdigest()
+        hash = hashlib.sha256(df.get("id").encode('utf-8')).hexdigest()[:20]
 
         if file_exists:
             with open(file_path, newline='', encoding='utf-8') as f:
@@ -180,7 +180,7 @@ class CustomOllamaModel(DeepEvalBaseLLM):
         return schema_
     
     def get_model_name(self, *args, **kwargs):
-         return self.model_name
+        return self.model_name
 
 
 class OllamaConnect:

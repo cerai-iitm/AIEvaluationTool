@@ -4,7 +4,7 @@ from transformers.pipelines import pipeline
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 import warnings
 from typing import List, Dict
-
+import json
 from .utils import load_json,save_json
 from .strategy_base import Strategy
 from .logger import get_logger
@@ -79,9 +79,9 @@ class Fairness_Stereotype_Recognition(Strategy):
                     resp = f"The prompt is {self.CATEGORY_MAP.get(agent_response.strip())}."
                 else:
                     resp = agent_response
-                return OllamaConnect.get_reason(resp, " ".join(self.__metric_name.split("_")), score)
-            except:
-                logger.error(f"Could not fetch the reason for score. \n Make sure Ollama is running with the specified model, OR change the model_reason to false for {self.name} in data/defaults.json")
+                return OllamaConnect.get_reason(resp, " ".join(self.name.split("_")), score)
+            except Exception as e:
+                logger.error(f"Could not fetch the reason for score. \n Make sure Ollama is running with the specified model, OR change the model_reason to false for {self.name} in data/defaults.json.")
                 return ""
         else:
             return ""
@@ -141,7 +141,7 @@ class Fairness_Stereotype_Recognition(Strategy):
         save_path = os.path.join(self.save_dir, "longformer_eval.json")
         if os.path.exists(save_path):
             with open(save_path, "r", encoding="utf-8") as f:
-                prev = load_json(f)
+                prev = json.load(f)
         else:
             prev = []
         prev.append(result)

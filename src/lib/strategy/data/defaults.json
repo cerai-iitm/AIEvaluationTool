@@ -49,7 +49,8 @@
         "model_reason" : true
     },
     "efficacy_of_content_filtering" : {
-        "model_name" : "Human-CentricAI/LLM-Refusal-Classifier"
+        "model_name" : "Human-CentricAI/LLM-Refusal-Classifier",
+        "model_reason" : false
     },
     "hallucination" : {
         "model_name" : "vectara/hallucination_evaluation_model",
@@ -94,7 +95,7 @@
     "fluency_score" : {
         "dist_file" : "fluency_score_dist",
         "epsilon" : 0.5,
-        "type" : "perplexity",
+        "type" : "slor",
         "model_reason" : false
     },
     "_evaluator" : {

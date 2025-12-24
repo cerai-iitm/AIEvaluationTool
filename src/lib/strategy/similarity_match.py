@@ -40,8 +40,8 @@ class SimilarityMatchStrategy(Strategy):
         try:
             pred_tokens = predictions.split()
             ref_tokens = references.split()
-            print(predictions)
-            print(references)
+            # print(predictions)
+            # print(references)
             smoothie = SmoothingFunction().method4
             score = sentence_bleu([ref_tokens], pred_tokens, smoothing_function=smoothie)
         except Exception:
@@ -130,7 +130,7 @@ class SimilarityMatchStrategy(Strategy):
                     logger.error("Expected response is None, cannot compute cosine similarity.")
                     return 0.0, ""
                 cos_sim_score = self.cosine_similarity_metric(conversation.agent_response, testcase.response.response_text)
-                return float(cos_sim_score)
+                return float(cos_sim_score), ""
             case "ROUGE" | "rouge":
                 score = self.rouge_score_metric(conversation.agent_response, testcase.response.response_text)
                 return float(score['rougeLsum']), ""

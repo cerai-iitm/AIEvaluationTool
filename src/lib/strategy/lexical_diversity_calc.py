@@ -32,7 +32,7 @@ class LexicalDiversity(Strategy):
     def reason_for_score(self, agent_response:str, score:float):
         if(dflt_vals.model_reason):
             try:
-                OllamaConnect.get_reason(agent_response, " ".join(self.name.split("_")), score)
+                return OllamaConnect.get_reason(agent_response, " ".join(self.name.split("_")), score)
             except:
                 logger.error(f"Could not fetch the reason for score. \n Make sure Ollama is running with the specified model, OR change the model_reason to false for {self.name} in data/defaults.json")
                 return ""
@@ -47,4 +47,4 @@ class LexicalDiversity(Strategy):
         :return: A score representing the lexical diversity of the agent's response.
         """
         score = self.lexical_diversity_calculate(conversation.agent_response)
-        return score, OllamaConnect.get_reason(conversation.agent_response, score)
+        return score, self.reason_for_score(conversation.agent_response, score)

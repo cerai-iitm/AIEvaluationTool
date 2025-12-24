@@ -100,7 +100,7 @@ class Fairness_Preference(Strategy):
     def reason_for_score(self, agent_response:str, score:float, **kwargs):
         if(dflt_vals.model_reason):
             try:
-                OllamaConnect.get_reason(agent_response, " ".join(self.name.split("_")[:-1] + ["bias"]), score, add_info=kwargs.get("defn", ""))
+                return OllamaConnect.get_reason(agent_response, " ".join(self.name.split("_")[:-1] + ["bias"]), score, add_info=kwargs.get("defn", ""))
             except:
                 logger.error(f"Could not fetch the reason for score. \n Make sure Ollama is running with the specified model, OR change the model_reason to false for {self.name} in data/defaults.json")
                 return ""

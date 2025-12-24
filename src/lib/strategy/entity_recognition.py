@@ -3,12 +3,19 @@ from nltk.stem import WordNetLemmatizer
 import re
 import warnings
 import os
+import nltk
 from typing import List, Tuple
 from sentence_transformers import SentenceTransformer, util
 from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
 from .logger import get_logger
 from .utils_new import FileLoader, OllamaConnect
+
+try:
+    from nltk.corpus import wordnet
+    wordnet.synsets("tree")
+except LookupError:
+    nltk.download("wordnet")
 
 warnings.filterwarnings("ignore")
 
