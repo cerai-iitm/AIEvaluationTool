@@ -256,6 +256,7 @@ const DomainList: React.FC = () => {
       
       setShowUpdateModal(false);
       setSelectedDomain(null);
+      setAddMessage("");
       fetchDomains(); // Refresh the list
     } catch (error: any) {
       console.error("Error updating domain:", error);
@@ -375,7 +376,7 @@ const DomainList: React.FC = () => {
             </div>
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto">
-            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[67vh] max-w-[50vh] overflow-y-auto">
+            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[69vh] max-w-[50vh] overflow-y-auto">
               {isLoading ? (
                 <div className="flex items-center justify-center p-8">
                   <span>Loading...</span>
@@ -469,7 +470,7 @@ const DomainList: React.FC = () => {
               {(hasPermission(currentUserRole, "canUpdateTables") ||
                 hasPermission(currentUserRole, "canUpdateRecords")) && (
                 <button
-                  className="px-6 md:px-8 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm md:text-base transition-colors"
+                  className="px-6 md:px-8 py-2 bg-primary hover:bg-primary/90 text-white rounded text-sm md:text-base transition-colors"
                   onClick={() => {
                     setShowEditDialog(false);
                     setShowUpdateModal(true);
@@ -489,9 +490,12 @@ const DomainList: React.FC = () => {
           onClick={() => {
             setShowUpdateModal(false);
             setSelectedDomain(null);
+            setShowDeleteConfirm(false);
           }}
         >
-          <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-md">
+          <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-md"
+            onClick = {(e) => e.stopPropagation()}
+          >
             <button 
               type="button" 
               className="absolute top-3 right-4 w-6 h-6 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 transition-colors" 
@@ -500,26 +504,26 @@ const DomainList: React.FC = () => {
               <X className="w-4 h-4" />
             </button>
             <div className="mt-4 md:mt-6">
-              <p className="text-base md:text-lg font-semibold mb-4 text-center">
+              <p className="text-base md:text-lg font-normal mb-4 text-center">
                 Are you sure you want to delete the following domain? This action cannot be undone.
               </p>
               <div className="mb-6">
-                <p className="text-sm md:text-base">
-                  <span className="font-semibold">Domain Name :</span> {selectedDomain.domain_name}
+                <p className="text-sm md:text-base text-center capitalize font-semibold">
+                  <span className="font-normal">Domain Name :</span> {selectedDomain.domain_name}
                 </p>
               </div>
               <div className="flex gap-4 justify-center">
-                <button
-                  className="px-6 md:px-8 py-2 bg-gray-400 hover:bg-gray-500 text-white rounded text-sm md:text-base transition-colors"
+                {/* <button
+                  className="px-6 md:px-8 py-2 bg-primary hover:bg-primary/90 text-white rounded text-sm md:text-base transition-colors"
                   onClick={() => setShowDeleteConfirm(false)}
                 >
                   Cancel
-                </button>
+                </button> */}
                 <button
                   className="px-6 md:px-8 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-sm md:text-base transition-colors"
                   onClick={handleDelete}
                 >
-                  Delete
+                  Confirm
                 </button>
               </div>
             </div>
@@ -533,6 +537,8 @@ const DomainList: React.FC = () => {
           onClick={() => {
             setShowUpdateModal(false);
             setSelectedDomain(null);
+            setAddMessage("");
+            setUpdateName("");
           }}
         >
           <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-lg min-h-[220px]"
@@ -544,24 +550,26 @@ const DomainList: React.FC = () => {
               onClick={() => {
                 setShowUpdateModal(false);
                 setSelectedDomain(null);
+                setAddMessage("");
+                setUpdateName("");
               }}
             >
               ×
             </button>
             <div className="flex flex-col md:flex-row items-center mb-6 md:mb-8 mt-4 md:mt-5 gap-2 md:gap-0">
               <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Domain Name :</label>
-              <input
+              <Input
                 value={updateName}
                 onChange={e => setUpdateName(e.target.value)}
-                className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-lg flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
+                className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-lg flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200 capitalize"
               />
             </div>
-            <div className="flex flex-col md:flex-row justify-center gap-2 md:gap-0">
-              <label className="text-base md:text-lg min-w-[80px]"> Notes :</label>
-              <input
+            <div className="flex justify-center items-center p-4">
+              <label className="text-base md:text-lg mr-2"> Notes </label>
+              <Input
                 value={addMessage}
                 onChange={e => setAddMessage(e.target.value)}
-                className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 focus:outline-none focus:ring focus:ring-blue-200"
+                className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 focus:outline-none focus:ring focus:ring-blue-200 "
               />
               <button
                 className={`mt-2 md:mt-0 md:ml-4 px-6 py-2 rounded text-sm md:text-lg font-semibold shadow transition ${
@@ -585,6 +593,8 @@ const DomainList: React.FC = () => {
         <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50 p-4"
           onClick={() => {
             setAddOpen(false);
+            // setNewDomainName("");
+            setAddMessage("");
           }}
         >
           <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-lg min-h-[220px] flex flex-col justify-between"
@@ -593,7 +603,11 @@ const DomainList: React.FC = () => {
             <button
               type="button"
               className="absolute top-3 right-4 text-2xl font-bold hover:text-gray-600 transition-colors focus:outline-none"
-              onClick={() => setAddOpen(false)}
+              onClick={() => {
+                setAddOpen(false);
+                setNewDomainName("");
+                setAddMessage("");
+              }}
               aria-label="Close"
             >
               ×
@@ -602,18 +616,18 @@ const DomainList: React.FC = () => {
             {/* <div className="flex flex-col items-center justify-center flex-1"> */}
             <div className="flex flex-col md:flex-row items-center mb-6 mb:mb-8 mt-4 md:mt-5 gap-2 md:gap-0">
               <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Domain Name</label>
-              <input
+              <Input
                 value={newDomainName}
                 onChange={e => setNewDomainName(e.target.value)}
-                className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
+                className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200 capitalize"
                 maxLength={150}
               />
             </div>
             {/* </div> */}
             {/* Message Row + Submit Button */}
             <div className="flex flex-col md:flex-row items-center gap-2 md:gap-0">
-              <label className="text-base md:text-lg min-w-[80px]"> Notes :</label>
-              <input
+              <label className="text-base md:text-lg mr-2"> Notes   </label>
+              <Input
                 value={addMessage}
                 onChange={e => setAddMessage(e.target.value)}
                 className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
