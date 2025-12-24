@@ -6,7 +6,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { MoreVertical, Users } from "lucide-react";
 import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
+import { canViewHistory, canViewActivity } from "@/utils/permissions";
 
+// Menu options will be filtered based on user role
 const MENU_OPTIONS = [
   { label: "Open", action: "open", className: "" },
   // { label: "Add test case", action: "addTestCase" },
@@ -33,6 +35,8 @@ interface Activity {
   testCaseId: string;
   status: "Created" | "Updated" | "Deleted";
   timestamp: string;
+  user_name: string;
+  role: string;
 }
 
 interface DashboardStats {
@@ -65,8 +69,30 @@ const Dashboard = () => {
   const [historyTitle, setHistoryTitle] = useState("");
   const [historyActivities, setHistoryActivities] = useState<Activity[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [currentUserRole, setCurrentUserRole] = useState<string>("");
 
   useEffect(() => {
+    const fetchUserRole = async () => {
+      try {
+        const token = localStorage.getItem("access_token");
+        if (!token) return;
+
+        const response = await fetch(API_ENDPOINTS.CURRENT_USER, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (response.ok) {
+          const userData = await response.json();
+          setCurrentUserRole(userData.role || "");
+        }
+      } catch (error) {
+        console.error("Error fetching user role:", error);
+      }
+    };
+
     const fetchDashboardData = async () => {
       try {
         const token = localStorage.getItem("access_token");
@@ -111,6 +137,7 @@ const Dashboard = () => {
       }
     };
 
+    fetchUserRole();
     fetchDashboardData();
   }, [navigate, toast]);
 
@@ -144,12 +171,35 @@ const Dashboard = () => {
 
     try {
       const token = localStorage.getItem("access_token");
+      if (!token) {
+        toast({
+          title: "Error",
+          description: "Authentication required",
+          variant: "destructive",
+        });
+        setHistoryActivities([]);
+        setHistoryLoading(false);
+        return;
+      }
+
       const headers: HeadersInit = {
         "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
       };
 
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
+      // Fetch user role if not already loaded
+      let userRole = currentUserRole;
+      if (!userRole) {
+        try {
+          const userResponse = await fetch(API_ENDPOINTS.CURRENT_USER, { headers });
+          if (userResponse.ok) {
+            const userData = await userResponse.json();
+            userRole = userData.role || "";
+            setCurrentUserRole(userRole);
+          }
+        } catch (error) {
+          console.error("Error fetching user role:", error);
+        }
       }
 
       // URL encode the entity type
@@ -158,7 +208,15 @@ const Dashboard = () => {
       
       if (response.ok) {
         const data: Activity[] = await response.json();
-        setHistoryActivities(data);
+        // Filter activities based on current user's role
+        if (userRole) {
+          const filteredData = data.filter(activity => 
+            canViewActivity(userRole, activity.role || "")
+          );
+          setHistoryActivities(filteredData);
+        } else {
+          setHistoryActivities(data);
+        }
       } else {
         toast({
           title: "Error",
@@ -206,11 +264,17 @@ const Dashboard = () => {
                     setMenuOpen(menuOpen === idx ? null : idx); // Toggle menu for this card
                   }}
                 >
-                  <MoreVertical className="w-5 h-5" />
+                  {/* <MoreVertical className="w-5 h-5" /> */}
                 </button>
                 {menuOpen === idx && (
                   <div className="absolute top-12 right-4 z-10 bg-white border rounded shadow-lg flex flex-col min-w-[150px]">
-                    {MENU_OPTIONS.map(opt => (
+                    {MENU_OPTIONS.filter(opt => {
+                      // Hide History option for viewers
+                      if (opt.action === "history" && !canViewHistory(currentUserRole)) {
+                        return false;
+                      }
+                      return true;
+                    }).map(opt => (
                       <button
                         key={opt.label}
                         className={`px-4 py-2 text-left hover:bg-gray-100 ${(opt as any).className || ''}`}

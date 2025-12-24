@@ -308,7 +308,7 @@ npm run dev
 
 ### **Login Credentials**
 ```
-Username: admin     | manager     | curator     | viewer
+Username: admin     | manager     | curator     | user
 Password: admin123  | manager123  | curator123  | viewer123
 ```
 ## Permission based on role

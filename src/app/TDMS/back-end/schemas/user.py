@@ -79,3 +79,4 @@ class UserActivityResponse(BaseModel):
     testCaseId: str
     status: str
     timestamp: str
+    role: str

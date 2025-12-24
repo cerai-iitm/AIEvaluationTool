@@ -141,4 +141,49 @@ export function isUser(role: string): boolean {
   return role.toLowerCase() === "user";
 }
 
+/**
+ * Get list of roles that a user can view history for
+ * Based on RBAC rules:
+ * - admin can view history of: admin, manager, curator, viewer
+ * - manager can view history of: manager, curator, viewer
+ * - curator can view history of: curator, viewer
+ * - viewer cannot view history at all
+ */
+export function getViewableRoles(userRole: string): string[] {
+  const normalizedRole = userRole.toLowerCase();
+  
+  switch (normalizedRole) {
+    case "admin":
+      return ["admin", "manager", "curator", "viewer", "user"]; // Include "user" for backward compatibility
+    case "manager":
+      return ["manager", "curator", "viewer", "user"];
+    case "curator":
+      return ["curator", "viewer", "user"];
+    case "viewer":
+    case "user":
+      return []; // Viewers cannot view history
+    default:
+      return [];
+  }
+}
+
+/**
+ * Check if a user can view history based on their role
+ */
+export function canViewHistory(userRole: string): boolean {
+  const normalizedRole = userRole.toLowerCase();
+  return normalizedRole !== "viewer" && normalizedRole !== "user";
+}
+
+/**
+ * Check if an activity's role is viewable by the current user
+ */
+export function canViewActivity(currentUserRole: string, activityRole: string): boolean {
+  const viewableRoles = getViewableRoles(currentUserRole);
+  const normalizedActivityRole = activityRole.toLowerCase();
+  // Handle backward compatibility: "user" should be treated as "viewer"
+  const roleToCheck = normalizedActivityRole === "user" ? "viewer" : normalizedActivityRole;
+  return viewableRoles.some(role => role.toLowerCase() === roleToCheck);
+}
+
 

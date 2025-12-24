@@ -72,6 +72,7 @@ async def get_activity_by_entity_type(entity_type: str, db: Session = Depends(ge
             testCaseId=row.entity_id,
             status=map_status(row.operation),
             timestamp=row.created_at.strftime("%Y-%m-%d %H:%M"),
+            role=str(row.role),
         )
         for row in rows
     ]
@@ -103,6 +104,7 @@ async def get_user_activity(username: str, db: Session = Depends(get_db)):
             testCaseId=row.entity_id,
             status=map_status(row.operation),
             timestamp=row.created_at.strftime("%Y-%m-%d %H:%M"),
+            role=str(row.role),
         )
         for row in rows
     ]

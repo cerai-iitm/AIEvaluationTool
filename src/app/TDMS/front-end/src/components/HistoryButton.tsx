@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { API_ENDPOINTS } from "@/config/api";
+import { canViewHistory, canViewActivity } from "@/utils/permissions";
 
 interface Activity {
   description: string;
@@ -8,6 +9,7 @@ interface Activity {
   status: string;
   timestamp: string;
   user_name: string;
+  role: string;
   [key: string]: any; // allows id fields like testCaseId, domainId, etc.
 }
 
@@ -43,6 +45,7 @@ const EntityHistoryDialog: React.FC<EntityHistoryProps> = ({
 }) => {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(false);
+  const [currentUserRole, setCurrentUserRole] = useState<string>("");
 
   useEffect(() => {
     if (!open) return;
@@ -51,12 +54,31 @@ const EntityHistoryDialog: React.FC<EntityHistoryProps> = ({
       setLoading(true);
       try {
         const token = localStorage.getItem("access_token");
+        if (!token) {
+          setLoading(false);
+          return;
+        }
+
+        // First fetch user role
+        const userResponse = await fetch(API_ENDPOINTS.CURRENT_USER, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        let userRole = "";
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          userRole = userData.role || "";
+          setCurrentUserRole(userRole);
+        }
+
+        // Then fetch history
         const headers: HeadersInit = {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
         };
-        if (token) {
-          headers["Authorization"] = `Bearer ${token}`;
-        }
 
         const encodedEntityType = encodeURIComponent(entityType);
         const response = await fetch(API_ENDPOINTS.ENTITY_ACTIVITY(encodedEntityType), {
@@ -65,7 +87,15 @@ const EntityHistoryDialog: React.FC<EntityHistoryProps> = ({
 
         if (response.ok) {
           const data: Activity[] = await response.json();
-          setActivities(Array.isArray(data) ? data : []);
+          // Filter activities based on current user's role
+          if (userRole) {
+            const filteredData = data.filter(activity => 
+              canViewActivity(userRole, activity.role || "")
+            );
+            setActivities(Array.isArray(filteredData) ? filteredData : []);
+          } else {
+            setActivities(Array.isArray(data) ? data : []);
+          }
         } else {
           setActivities([]);
         }
@@ -173,6 +203,43 @@ export const HistoryButton: React.FC<HistoryButtonProps> = ({
   idLabel,
 }) => {
   const [open, setOpen] = useState(false);
+  const [currentUserRole, setCurrentUserRole] = useState<string>("");
+  const [roleLoaded, setRoleLoaded] = useState(false);
+
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      try {
+        const token = localStorage.getItem("access_token");
+        if (!token) {
+          setRoleLoaded(true);
+          return;
+        }
+
+        const response = await fetch(API_ENDPOINTS.CURRENT_USER, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (response.ok) {
+          const userData = await response.json();
+          setCurrentUserRole(userData.role || "");
+        }
+      } catch (error) {
+        console.error("Error fetching user role:", error);
+      } finally {
+        setRoleLoaded(true);
+      }
+    };
+
+    fetchUserRole();
+  }, []);
+
+  // Don't render the button if user is a viewer or if role hasn't loaded yet
+  if (!roleLoaded || !canViewHistory(currentUserRole)) {
+    return null;
+  }
 
   return (
     <>
