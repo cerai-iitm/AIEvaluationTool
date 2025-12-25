@@ -11,7 +11,7 @@ import torch
 import requests
 import asyncio
 from typing import Any, Dict, List, Type, Optional
-from opik.evaluation.models import OpikBaseModel
+# from opik.evaluation.models import OpikBaseModel
 import torch
 import torch.nn as nn
 import traceback
@@ -83,133 +83,133 @@ def save_json(data, file_path):
     with open(file_path, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
-def RtA(data, key='eval_res', refusal_label="LABEL_0", return_count=False):
-        """
-        Calculates the ratio of items in a list of dictionaries where the specified key's value equals the refusal label.
+# def RtA(data, key='eval_res', refusal_label="LABEL_0", return_count=False):
+#         """
+#         Calculates the ratio of items in a list of dictionaries where the specified key's value equals the refusal label.
 
-        Args:
-            data (list of dict): The list of dictionaries to check.
-            key (str): The key to check in the dictionaries. Defaults to 'eval_res'.
-            refusal_label (str): The label that signifies refusal to answer. Defaults to 'LABEL_0'.
+#         Args:
+#             data (list of dict): The list of dictionaries to check.
+#             key (str): The key to check in the dictionaries. Defaults to 'eval_res'.
+#             refusal_label (str): The label that signifies refusal to answer. Defaults to 'LABEL_0'.
 
-        Returns:
-            float: The ratio of items where the key's value is the refusal label. Returns 0 if the list is empty.
-        """
+#         Returns:
+#             float: The ratio of items where the key's value is the refusal label. Returns 0 if the list is empty.
+#         """
 
-        assert isinstance(data, list), "Data should be a list of dictionaries"
-        assert all(isinstance(d, dict) for d in data), "All elements in data should be dictionaries"
-        assert isinstance(key, str), "Key should be a string"
-        assert isinstance(refusal_label, str), "Refusal label should be a string"
+#         assert isinstance(data, list), "Data should be a list of dictionaries"
+#         assert all(isinstance(d, dict) for d in data), "All elements in data should be dictionaries"
+#         assert isinstance(key, str), "Key should be a string"
+#         assert isinstance(refusal_label, str), "Refusal label should be a string"
 
-        count = sum(1 for item in data if item.get(key) == refusal_label)
+#         count = sum(1 for item in data if item.get(key) == refusal_label)
 
-        rta_ratio = count / len(data) if data else 0
-        if return_count:
-            return rta_ratio, count
-        return rta_ratio
+#         rta_ratio = count / len(data) if data else 0
+#         if return_count:
+#             return rta_ratio, count
+#         return rta_ratio
 
-def get_key_by_value(dictionary, value):
-    for key, val in dictionary.items():
-        if val == value:
-            return key
-    return None
+# def get_key_by_value(dictionary, value):
+#     for key, val in dictionary.items():
+#         if val == value:
+#             return key
+#     return None
 
-def extract_from_uds(txt):
-    new_txt = txt.split("_")
-    return new_txt[-1]
+# def extract_from_uds(txt):
+#     new_txt = txt.split("_")
+#     return new_txt[-1]
 
 
-#try:
-from opik.evaluation.models import OpikBaseModel
-#except ImportError:
-#    OpikBaseModel = object
+# #try:
+# from opik.evaluation.models import OpikBaseModel
+# #except ImportError:
+# #    OpikBaseModel = object
 
-class DotDict:
-    """
-    A class to convert a dictionary to have dot notation access.
-    Allows accessing dictionary keys as attributes.
-    """
-    def __init__(self, data):
-        if isinstance(data, dict):
-            for key, value in data.items():
-                setattr(self, key, self._convert(value))
+# class DotDict:
+#     """
+#     A class to convert a dictionary to have dot notation access.
+#     Allows accessing dictionary keys as attributes.
+#     """
+#     def __init__(self, data):
+#         if isinstance(data, dict):
+#             for key, value in data.items():
+#                 setattr(self, key, self._convert(value))
        
-    def _convert(self, value):
-        if isinstance(value, dict):
-            return DotDict(value)
-        elif isinstance(value, list):
-            return [self._convert(item) for item in value]
-        else:
-            return value
+#     def _convert(self, value):
+#         if isinstance(value, dict):
+#             return DotDict(value)
+#         elif isinstance(value, list):
+#             return [self._convert(item) for item in value]
+#         else:
+#             return value
 
 
-class CustomOllamaModel(OpikBaseModel):
-    def __init__(self, model_name: str, base_url: str = os.getenv("OLLAMA_URL", "http://localhost:11434")):
-        super().__init__(model_name)
-        self.base_url = base_url.rstrip("/")
-        self.api_url = f"{self.base_url}/api/chat"
+# class CustomOllamaModel(OpikBaseModel):
+#     def __init__(self, model_name: str, base_url: str = os.getenv("OLLAMA_URL", "http://localhost:11434")):
+#         super().__init__(model_name)
+#         self.base_url = base_url.rstrip("/")
+#         self.api_url = f"{self.base_url}/api/chat"
 
-    def generate_string(self, input: str, response_format: Optional[Type] = None, **kwargs: Any) -> Any:
-        messages = [{"role": "user", "content": f'{input} /nothink'}]
-        response = self.generate_provider_response(messages, **kwargs)
-        #response = DotDict(response)
-        return response.choices[0].message.content
-        # return response["choices"][0]["message"]["content"]
+#     def generate_string(self, input: str, response_format: Optional[Type] = None, **kwargs: Any) -> Any:
+#         messages = [{"role": "user", "content": f'{input} /nothink'}]
+#         response = self.generate_provider_response(messages, **kwargs)
+#         #response = DotDict(response)
+#         return response.choices[0].message.content
+#         # return response["choices"][0]["message"]["content"]
 
-    def generate_provider_response(self, messages: List[Dict[str, Any]], **kwargs: Any) -> Dict[str, Any]:
-        payload = {
-            "model": self.model_name,
-            "messages": messages,
-            "stream": False,
-        }
-        for k, v in kwargs.items():
-            if isinstance(v, (str, int, float, bool, list, dict, type(None))):
-                payload[k] = v
-        try:
-            logger.info(f"[Ollama] Sending request to {self.api_url}...")
-            response = requests.post(self.api_url, json=payload, timeout=120,)
-            response.raise_for_status()
-            raw = response.json()
-            #print(raw)
-            #logger.debug(f"[Ollama] Raw content: {raw}")
-            content_text = raw.get("message", {}).get("content", "") 
-            #logger.info(content_text)
-            final_response={
-                "choices": [
-                    {
-                        "message": {
-                            "content": content_text
-                        }
-                    }
-                ]
-            }
-            #logger.info(final_response)
-            final_response= DotDict(final_response)
-            return final_response
-        except requests.exceptions.HTTPError as http_err:
-            logger.error(f"[Ollama] HTTP error occurred: {http_err.response.text}", exc_info=True)
-            raise
-        except requests.exceptions.ConnectionError as conn_err:
-            logger.error(f"[Ollama] Connection error occurred: {conn_err}", exc_info=True)
-            raise
-        except requests.exceptions.Timeout as timeout_err:
-            logger.error(f"[Ollama] Timeout occurred: {timeout_err}", exc_info=True)
-            raise
-        except requests.exceptions.RequestException as req_err:
-            logger.error(f"[Ollama] Request failed: {req_err}", exc_info=True)
-            raise
-        except ValueError as parse_err:
-            logger.error(f"[Ollama] Failed to parse response JSON: {parse_err}", exc_info=True)
-            raise
+#     def generate_provider_response(self, messages: List[Dict[str, Any]], **kwargs: Any) -> Dict[str, Any]:
+#         payload = {
+#             "model": self.model_name,
+#             "messages": messages,
+#             "stream": False,
+#         }
+#         for k, v in kwargs.items():
+#             if isinstance(v, (str, int, float, bool, list, dict, type(None))):
+#                 payload[k] = v
+#         try:
+#             logger.info(f"[Ollama] Sending request to {self.api_url}...")
+#             response = requests.post(self.api_url, json=payload, timeout=120,)
+#             response.raise_for_status()
+#             raw = response.json()
+#             #print(raw)
+#             #logger.debug(f"[Ollama] Raw content: {raw}")
+#             content_text = raw.get("message", {}).get("content", "") 
+#             #logger.info(content_text)
+#             final_response={
+#                 "choices": [
+#                     {
+#                         "message": {
+#                             "content": content_text
+#                         }
+#                     }
+#                 ]
+#             }
+#             #logger.info(final_response)
+#             final_response= DotDict(final_response)
+#             return final_response
+#         except requests.exceptions.HTTPError as http_err:
+#             logger.error(f"[Ollama] HTTP error occurred: {http_err.response.text}", exc_info=True)
+#             raise
+#         except requests.exceptions.ConnectionError as conn_err:
+#             logger.error(f"[Ollama] Connection error occurred: {conn_err}", exc_info=True)
+#             raise
+#         except requests.exceptions.Timeout as timeout_err:
+#             logger.error(f"[Ollama] Timeout occurred: {timeout_err}", exc_info=True)
+#             raise
+#         except requests.exceptions.RequestException as req_err:
+#             logger.error(f"[Ollama] Request failed: {req_err}", exc_info=True)
+#             raise
+#         except ValueError as parse_err:
+#             logger.error(f"[Ollama] Failed to parse response JSON: {parse_err}", exc_info=True)
+#             raise
         
 
-    async def agenerate_string(self, input: str, response_format: Optional[Type] = None, **kwargs: Any) -> str:
-        import asyncio
-        return await asyncio.to_thread(self.generate_string, input, response_format, **kwargs)
+#     async def agenerate_string(self, input: str, response_format: Optional[Type] = None, **kwargs: Any) -> str:
+#         import asyncio
+#         return await asyncio.to_thread(self.generate_string, input, response_format, **kwargs)
 
-    async def agenerate_provider_response(self, messages: List[Dict[str, Any]], **kwargs: Any) -> Any:
-        import asyncio
-        return await asyncio.to_thread(self.generate_provider_response, messages, **kwargs)
+#     async def agenerate_provider_response(self, messages: List[Dict[str, Any]], **kwargs: Any) -> Any:
+#         import asyncio
+#         return await asyncio.to_thread(self.generate_provider_response, messages, **kwargs)
 
     
 class BARTScorer:

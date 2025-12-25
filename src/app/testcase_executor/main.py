@@ -52,7 +52,7 @@ def main():
     parser.add_argument("--get-testcases", "-C", dest="get_testcases", action="store_true", help="Get the test cases for a specific test plan or all test cases if no plan ID is provided")
     parser.add_argument("--get-targets", "-G", dest="get_targets", action="store_true", help="Get all target applications")
     parser.add_argument("--get-runs", "-N", dest="get_runs", action="store_true", help="Get all test runs")
-    parser.add_argument("--testplan-id", "-p", dest="plan_id", type=int, help="ID of the test plan to execute")
+    parser.add_argument("--testplan-id", "-p", dest="plan_id", type=int, help="ID of the test plan to execute", required=True)
     parser.add_argument("--testcase-id", "-t", dest="testcase_id", type=int, help="ID of the specific test case to execute")
     parser.add_argument("--metric-id", "-m", dest="metric_id", type=int, help="ID of the evaluation metric to use")
     parser.add_argument("--max-testcases", "-n", dest="max_testcases", type=int, default=10, help="Maximum number of test cases to execute (default: 10)")
@@ -109,7 +109,34 @@ def main():
         return
     
     # setting up the database connection
-    db_url = f"mariadb+mariadbconnector://{config['database']['user']}:{config['database']['password']}@{config['database']['host']}:{config['database']['port']}/{config['database']['database']}"
+    # db_url = f"mariadb+mariadbconnector://{config['database']['user']}:{config['database']['password']}@{config['database']['host']}:{config['database']['port']}/{config['database']['database']}"
+
+    # setting up the database connection
+    if config["database"]["engine"] == "sqlite":
+        db_file = config["database"].get("file", "app.db")
+
+        # Resolve project root (this file → importer → app → src → project_root)
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
+
+        # Place DB inside project_root/data
+        db_folder = os.path.join(project_root, "data")
+        os.makedirs(db_folder, exist_ok=True)
+
+        # Full DB path
+        db_path = os.path.join(db_folder, db_file)
+
+        # SQLite requires a file URL
+        db_url = f"sqlite:///{db_path}"
+
+    else:
+        # Original MariaDB path (fallback)
+        db_url = (
+            f"mariadb+mariadbconnector://"
+            f"{config['database']['user']}:{config['database']['password']}"
+            f"@{config['database']['host']}:{config['database']['port']}/"
+            f"{config['database']['database']}"
+        )
+
     try:
         logger.info(f"Database URL: {db_url}")
         db = DB(db_url=db_url, debug=False, loglevel=loglevel)
@@ -292,8 +319,8 @@ def main():
 
     if args.execute:
         # Logic to execute the test case or test plan
-        if args.plan_id is None and args.testcase_id is None:
-            logger.error("Either test plan ID or test case ID must be provided for execution.")
+        if args.plan_id is None: # and args.testcase_id is None and args.metric_id is None:
+            logger.error("Test plan ID is mandatory with optionally a test case or metric ID to be provided for execution.")
             return
         
         # handle the "run" by creating a new run entry in the database or
@@ -386,7 +413,7 @@ def main():
                     # construct the message to send to the agent
                     message_to_agent = testcase.prompt.user_prompt if testcase.prompt.user_prompt else ""
                     if testcase.prompt.system_prompt:
-                        message_to_agent = testcase.prompt.system_prompt + "\n" + message_to_agent
+                        message_to_agent = testcase.prompt.system_prompt + " " + message_to_agent
 
                     logger.debug(f"A new conversation is created with ID: {conv_id}")
 
@@ -394,9 +421,10 @@ def main():
                     db.add_or_update_testrun_detail(rundetail)
 
                     # Initialize the InterfaceManagerClient with the provided configuration
-                    client = InterfaceManagerClient(base_url=application_url, application_type=application_type)
+                    client = InterfaceManagerClient(base_url="http://localhost:8000" ,application_type=application_type)
                     client.sync_config({
                         "application_name": application_name,
+                        "application_type": application_type,
                         "agent_name": agent_name,
                         "application_url": application_url
                     })
@@ -447,6 +475,12 @@ def main():
                     logger.error(f"No metric found with ID {args.metric_id}.")
                     return
                 
+                # Verify that the metric is part of the test plan
+                is_metric_in_plan = db.is_metric_in_testplan(metric_name=metric_name, plan_name=plan_name)
+                if not is_metric_in_plan:
+                    logger.error(f"Metric '{metric_name}' (ID: {args.metric_id}) is not part of the test plan '{plan_name}' (ID: {args.plan_id}).")
+                    return
+
                 # get the test cases for the metric
                 logger.debug(f"Fetching test cases for metric: {metric_name} (Plan: {plan_name}, Metric ID: {args.metric_id})")
                 testcases = db.get_testcases_by_metric(metric_name=metric_name, n=args.max_testcases, lang_names=lang_names, domain_name=domain_name)
@@ -471,9 +505,10 @@ def main():
                 db.add_or_update_testrun(run=run)
 
                 # Initialize the InterfaceManagerClient with the provided configuration
-                client = InterfaceManagerClient(base_url=application_url, application_type=application_type)
+                client = InterfaceManagerClient(base_url="http://localhost:8000" ,application_type=application_type)
                 client.sync_config({
                     "application_name": application_name,
+                    "application_type": application_type,
                     "agent_name": agent_name,
                     "application_url": application_url
                 })
@@ -496,7 +531,7 @@ def main():
                     # construct the message to send to the agent
                     message_to_agent = testcase.prompt.user_prompt if testcase.prompt.user_prompt else ""
                     if testcase.prompt.system_prompt:
-                        message_to_agent = testcase.prompt.system_prompt + "\n" + message_to_agent
+                        message_to_agent = testcase.prompt.system_prompt + " " + message_to_agent
 
                     conv = Conversation(target=target.target_name, 
                                         run_detail_id=rundetail_id, 
@@ -565,9 +600,10 @@ def main():
                 db.add_or_update_testrun(run=run)
 
                 # Initialize the InterfaceManagerClient with the provided configuration
-                client = InterfaceManagerClient(base_url=application_url, application_type=application_type)
+                client = InterfaceManagerClient(base_url="http://localhost:8000" ,application_type=application_type)
                 client.sync_config({
                     "application_name": application_name,
+                    "application_type": application_type,
                     "agent_name": agent_name,
                     "application_url": application_url
                 })
@@ -590,7 +626,7 @@ def main():
                     # construct the message to send to the agent
                     message_to_agent = testcase.prompt.user_prompt if testcase.prompt.user_prompt else ""
                     if testcase.prompt.system_prompt:
-                        message_to_agent = testcase.prompt.system_prompt + "\n" + message_to_agent
+                        message_to_agent = testcase.prompt.system_prompt + " " + message_to_agent
 
                     conv = Conversation(target=target.target_name, 
                                         run_detail_id=rundetail_id, 

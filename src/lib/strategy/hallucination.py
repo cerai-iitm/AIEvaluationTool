@@ -1,20 +1,26 @@
 from typing import Optional, Dict, List, Tuple
 import re
+import os
 import asyncio
+import warnings
 from transformers.pipelines import pipeline
 from transformers import AutoTokenizer
-
-from .logger import get_logger
-from .strategy_base import Strategy
 from .utils import detect_text, google_lang_translate
+from lib.data import TestCase, Conversation
+from .strategy_base import Strategy
+from .logger import get_logger
+from .utils_new import FileLoader
 
+warnings.filterwarnings("ignore")
+
+FileLoader._load_env_vars(__file__)
 logger = get_logger("hallucination")
+dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), simple=True, strat_name="hallucination")
 
 class HallucinationStrategy(Strategy):
     """
     Strategy for evaluating hallucination metrics across QA, summarization, and MC tasks.
     """
-
     def __init__(self, name: str = "hallucination", **kwargs) -> None:
         """
         Initializes the HallucinationStrategy with task type and prompt.
@@ -24,13 +30,12 @@ class HallucinationStrategy(Strategy):
         - kwargs: Must include 'prompt' (text given to model) and 'source_type' (task type).
         """
         super().__init__(name, kwargs=kwargs)
-        self.source_type = kwargs.get("source_type", "haluqa")
-        self.prompt = kwargs.get("prompt", "")
+        self.source_type = name.split("_")[-1] if len(name.split("_")) > 1 else dflt_vals.default_type
         
         self.classifier = pipeline(
             "text-classification",
-            model="vectara/hallucination_evaluation_model",
-            tokenizer=AutoTokenizer.from_pretrained("google/flan-t5-base"),
+            model=dflt_vals.model_name,
+            tokenizer=AutoTokenizer.from_pretrained(dflt_vals.tokenizer),
             trust_remote_code=True
         )
 
@@ -83,7 +88,7 @@ class HallucinationStrategy(Strategy):
             logger.error(f"Vectara model inference failed: {e}")
             return 0.0
 
-    def halu_qa(self, agent_response: str) -> float:
+    def halu_qa(self, prompt:str, agent_response: str) -> float:
         """
         Handles QA task hallucination evaluation.
 
@@ -94,11 +99,11 @@ class HallucinationStrategy(Strategy):
         - float: Hallucination score.
         """
         logger.info("Evaluating Hallucination - QA Task")
-        translated_prompt = self._translate_if_needed(self.prompt)
+        translated_prompt = self._translate_if_needed(prompt)
         translated_resp = self._translate_if_needed(agent_response)
         return self._score_with_vectara_model(translated_prompt, translated_resp)
 
-    def halu_summ(self, agent_response: str) -> float:
+    def halu_summ(self, prompt:str, agent_response: str) -> float:
         """
         Handles summarization task hallucination evaluation.
 
@@ -109,7 +114,7 @@ class HallucinationStrategy(Strategy):
         - float: Hallucination score.
         """
         logger.info("Evaluating Hallucination - Summarization Task")
-        translated_prompt = self._translate_if_needed(self.prompt)
+        translated_prompt = self._translate_if_needed(prompt)
         translated_resp = self._translate_if_needed(agent_response)
         return self._score_with_vectara_model(translated_prompt, translated_resp)
 
@@ -147,7 +152,7 @@ class HallucinationStrategy(Strategy):
         logger.info(f"Agent Response: {agent_response} | Prediction: {prediction} | Expected: {expected_response} | Score: {score}")
         return score
 
-    def evaluate(self, agent_response: str, expected_response: Optional[str] = None) -> float:
+    def evaluate(self, testcase:TestCase, conversation:Conversation):#agent_response: str, expected_response: Optional[str] = None) -> float:
         """
         Main evaluation entrypoint for hallucination across all task types.
 
@@ -160,17 +165,17 @@ class HallucinationStrategy(Strategy):
         """
         logger.info(f"Evaluating Hallucination for source type: {self.source_type}")
         if self.source_type == "haluqa":
-            return self.halu_qa(agent_response)
+            return self.halu_qa(testcase.prompt.user_prompt, conversation.agent_response), ""
         elif self.source_type == "halusumm":
-            return self.halu_summ(agent_response)
+            return self.halu_summ(testcase.prompt.user_prompt, conversation.agent_response), ""
         elif self.source_type == "mc":
-            if expected_response is None:
+            if testcase.response.response_text is None:
                 logger.warning("Expected response required for MC task")
-                return 0.0
-            return self.mc(agent_response, expected_response)
+                return 0.0, ""
+            return self.mc(conversation.agent_response, testcase.response.response_text), ""
         else:
             logger.warning(f"Unsupported source type: {self.source_type}")
-            return 0.0
+            return 0.0, ""
 
 # test_data_points = [
 #     {

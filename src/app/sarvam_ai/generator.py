@@ -3,11 +3,14 @@
 # @description: This module initializes the Sarvam AI application with text generation capabilities.
 
 # Sarvam AI text generation model wrapper
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, AutoModel
 import torch
 import sys, os, logging
 import numpy as np
 from sarvamai import SarvamAI
+import math
+from pydantic import BaseModel
+from typing import Optional, List
 
 # Adjust the path to include the "lib" directory
 sys.path.append(os.path.dirname(__file__) + "/../../")  
@@ -16,6 +19,12 @@ load_dotenv()
 
 from lib.utils.logger import get_logger
 # from logger import get_logger
+
+class Request(BaseModel):
+    text : str
+    layers : Optional[List[int]] = None
+    sent_vec : Optional[bool] = None
+    pool : Optional[str] = "mean"
 
 class SarvamAIGenerator:
     """ Sarvam AI text generation model wrapper.
@@ -26,6 +35,7 @@ class SarvamAIGenerator:
         self.logger = get_logger(__name__, loglevel=loglevel)
         self.model_loaded = False
         self.api_key_check = bool(os.environ.get('SARVAM_API_KEY'))
+        self.device = torch.device("cuda")
 
     def load_model(self, model_id: str = "sarvamai/sarvam-2b-v0.5"):
         """ Load the Sarvam AI model for text generation.
@@ -106,4 +116,49 @@ class SarvamAIGenerator:
             ]
         )
         return response.choices[0].message.content
-        
+    
+    def get_perplexity(self, text:str):
+        """
+        This function basically returns the perplexity obtained from a text.
+        """
+        inputs = self.tokenizer(text, return_tensors="pt", truncation=True, max_length=512).to(self.device)
+        with torch.no_grad():
+            outputs = self.model(**inputs, labels=inputs["input_ids"])
+            loss = outputs.loss
+            perplexity = math.exp(loss.item()) # this calculates the perplexity in the text -> e ^(- 1/N SUM(1->N) (log(w_{i}|c_{0:i-1})) )
+        return perplexity
+
+    def get_SLOR(self, text:str):
+        inputs = self.tokenizer(text, return_tensors="pt", truncation=True, max_length=512).to(self.device)
+        seq_len = inputs["input_ids"].size(1)
+        with torch.no_grad():
+            outputs = self.model(**inputs, labels=inputs["input_ids"])
+            loss = outputs.loss
+            log_prob = -1 * loss.item() * seq_len
+        vocab_size = len(self.tokenizer.get_vocab())
+        unigram_prob = 1.0 / vocab_size
+        uni_log_prob = seq_len * math.log(unigram_prob)
+
+        return (log_prob - uni_log_prob) / seq_len
+    
+    def early_embedding(self, text):
+        try:
+            model_name = "ai4bharat/IndicBERTv2-MLM-only"
+            tokenizer_ = AutoTokenizer.from_pretrained(model_name)
+            model_ = AutoModel.from_pretrained(model_name, output_hidden_states=True).to(self.device)
+        except:
+            self.logger.error("Could not load embedding model due to insufficient memory.")
+        model_.eval()
+        enc = tokenizer_(text, return_tensors="pt", truncation=True).to(self.device)
+        with torch.no_grad():
+            outputs = model_(**enc, output_hidden_states=True, return_dict=True)
+
+        layer_id = 2 # early layer that supposedly captures morphological information
+        h = outputs.hidden_states[layer_id][0]  # [seq_len, hidden_dim]
+        h = h - h.mean(dim=0, keepdim=True)
+        h = h / (h.norm(dim=-1, keepdim=True) + 1e-12)
+        vec = h.mean(dim=0)
+        vec = vec / (vec.norm() + 1e-12)
+        return vec.cpu().tolist()
+
+

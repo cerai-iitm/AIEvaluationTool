@@ -3,6 +3,10 @@ A comprehensive evaluation tool for verifying conversational AI applications.
 
 This project offers a robust, end-to-end framework for evaluating the performance and reliability of conversational AI systems across a variety of real-world scenarios and quality metrics. The AIEvaluationTool is designed to automate the process of testing, analyzing, and benchmarking conversational agents, ensuring they meet high standards of accuracy, safety, and user experience.
 
+## Architecture
+
+![The overall architecture](screenshots/Arch.png)
+
 ## Directory Structure
 
 ```
@@ -80,6 +84,7 @@ Before installing Python dependencies, ensure you have the following prerequisit
 - **Python 3.10+**
 - **Google Chrome Browser**
 - **ChromeDriver** (must match your Chrome version; this is a mandatory install for interface automation)
+- **MariaDB Server**
 
 ---
 
@@ -90,6 +95,70 @@ Install all dependencies for each component using the provided `requirements.txt
 ```bash
 # For installing dependencies
 pip install -r requirements.txt
+```
+---
+
+### 4. **Setting up the XPath and Credentials of the Accounts**
+
+This section explains how to configure XPath locators for web elements and securely store account credentials required for automated testing or web scraping. Proper setup ensures that your scripts interact with the correct UI elements and authenticate successfully.
+
+### 4.1 **Adding XPath Locators**
+
+XPath locators are used by automation frameworks (e.g., Selenium) to identify and interact with web elements.
+
+- Locate the element in the web application (e.g., username field, password field, login button, prompt textbox and response element's xpath).
+    - Right-click on the element → Inspect → Copy XPath.
+    - Prefer relative XPath over absolute to avoid breakage when the DOM structure changes.
+- Update the configuration file (`xpaths.json`).
+
+
+``` json
+{
+  "applications": {
+    "app_name_here": {
+      "LoginPage": {
+        "email_input": "xpath_for_email_input",
+        "password_input": "xpath_for_password_input",
+        "login_button": "xpath_for_login_button"
+      },
+      "LogoutPage": {
+        "profile": "xpath_for_profile_icon",
+        "logout_button": "xpath_for_logout_button"
+      },
+      "ChatPage": {
+        "contact_search": "xpath_for_contact_search",
+        "prompt_input": "xpath_for_prompt_input",
+        "agent_response": "xpath_for_agent_response",
+        "message_in": "xpath_for_incoming_message",
+        "message_out": "xpath_for_outgoing_message"
+      },
+      "OtherPages": {
+        "custom_element_1": "xpath_for_custom_element",
+        "custom_element_2": "xpath_for_custom_element"
+      }
+    }
+  }
+}
+```
+
+### 4.2 Storing Account Credentials
+
+To keep credentials secure and maintainable, here is the template of the `credentials.json`
+
+```json
+{
+  "applications":
+  {
+    "cpgrams": {
+      "username": "user_cpgrams",
+      "password": "pass_cpgrams"
+    },
+    "openweb-ui": {
+      "username": "user_openweb_ui",
+      "password": "pass_openweb_ui"
+    }
+  }
+}
 ```
 
 ---
@@ -107,6 +176,11 @@ To use the LLM-as-a-judge mechanism for evaluation, you must have a language mod
 - Any OpenAI-compatible local model
 
 **Configuration:**
+- Ensure that `.env.example` in the root folder is initialized with appropriate values to create a `.env` file.
+- `OLLAMA_URL` points to the installed Ollama instance's endpoint address.  Typically it is `http://localhost:11434/`
+- `LLM_AS_JUDGE_MODEL` points to the name of the LLM (loaded via Ollama) that we want to use as a judge.  Typically, it is `llama3.1:70b`.
+- `PERSPECTIVE_API_KEY` should have the API KEY of Perspective service for toxicity detection.
+- `GPU_URL` should point to the Sarvam AI RestAPI server (./src/app/sarvam_ai/) hosted elsewhere.  Typically, the URL is `http://localhost:8000`.
 - For API-based models, set your API key in a `.env` file or as an environment variable (e.g., `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`).
 - For local models, ensure the model server is running and accessible at the expected endpoint (see your model provider's documentation).
 
@@ -130,13 +204,15 @@ Ensure the `data/` directory contains the following files (already present in th
 
 **Step 1: Import datapoints into Database**
 
+Create a database in the MariaDB server and authorize a database user with full privileges.  Replace the host, port number, username, password, and database name in the `config.json` file. 
+
 Open a terminal on your machine and run:
 
 ```bash
 python3 src/app/importer/main.py --config "path to the config file"
 ```
 
-Replace the host, port number, username, password, and database name in the `config.json` file. After running the importer script, the terminal shows the following outputs.
+After running the importer script, the terminal shows the following outputs.
 
 ![Importing datapoints to database](screenshots/importing%20data%20to%20database.png)
 
@@ -246,6 +322,15 @@ python analyze.py --config "path to config file" --run-name <run-name>
 ## Results
 
 The Response Analyzer block when executed will display a detailed report on the terminal, showing scores evaluated for metrics under the test plan and can be used as an indicator of the validity of the model against a particular metric.
+
+**To see the evaluation report**, open a new terminal and run:
+
+```bash
+cd src/app/response_analyzer
+python report.py --config "path to config file" --run-name <run-name>
+```
+
+*(Use the same run-name used in analysis step.)*
 
 #### Evaluation Report
 A sample evaluation report generated by the Response Analyzer can be seen below:

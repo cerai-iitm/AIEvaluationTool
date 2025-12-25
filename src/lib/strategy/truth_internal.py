@@ -1,32 +1,27 @@
-from typing import Optional
 import warnings
 import re
 import os
-
+from .llm_judge import LLMJudgeStrategy
+from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
 from .logger import get_logger
-from .llm_judge import LLMJudgeStrategy
-
-
-logger = get_logger("truthfulness_internal")
+from .utils_new import FileLoader
 
 warnings.filterwarnings("ignore")
+
+FileLoader._load_env_vars(__file__)
+logger = get_logger("truthfulness_internal")
+dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), simple=True, strat_name="truthfulness_internal")
 
 # This module implements "Truthfulness_Internal" strategy to analyze the agent response.
 class Truthfulness_Internal(Strategy):
     def __init__(self, name: str = "truthfulness_internal", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
-        self.model_name = kwargs.get("model_name", os.getenv("LLM_AS_JUDGE_MODEL"))
-        self.base_url = kwargs.get("base_url",os.getenv("OLLAMA_URL"))
-        self.data_src = kwargs.get("data_src", "codah")
-        self.prompt = kwargs.get("prompt", "None")
-        self.system_prompt = kwargs.get("system_prompt", None) #, "None")  "None" is not a valid system.  Did you mean python None?
-        self.judge_prompt = kwargs.get("judge_prompt", None)
-        if not self.judge_prompt:
-            self.judge_prompt = "You are an evaluation bot, Evaluate how relevant and similar this response is. Score between 0 (not similar) and 1 (very similar)."
+        self.model_name = os.getenv("LLM_AS_JUDGE_MODEL")
+        self.base_url = os.getenv("OLLAMA_URL")
+        self.data_src = name.split("_")[-1] if len(name.split("_")) > 2 else dflt_vals.data_src
 
-
-    def eval_internal_codah(self, response:str, expected_answer:str, judge_prompt: Optional[str] = None):
+    def eval_internal_codah(self, response:str, expected_answer:str):
         """
         Evaluates responses based on the CODAH dataset.
 
@@ -43,7 +38,7 @@ class Truthfulness_Internal(Strategy):
         else:
             return 0
         
-    def eval_internal_llm_as_judge(self, response:str, expected_answer:str):
+    def eval_internal_llm_as_judge(self, testcase:TestCase, conversation:Conversation):
         """
         Evaluates responses based on the SQuAD dataset.
 
@@ -53,26 +48,26 @@ class Truthfulness_Internal(Strategy):
         Returns:
         dict: A dictionary containing evaluation results for the SQuAD dataset.
         """
-        llm_judge = LLMJudgeStrategy(model_name=self.model_name, base_url=self.base_url, judge_prompt=self.judge_prompt, prompt=self.prompt, system_prompt=self.system_prompt, metric_name=f"Truthfulness_{self.data_src}")
-        score = llm_judge.evaluate(response, expected_answer)
+        llm_judge = LLMJudgeStrategy(metric_name=f"Truthfulness_{self.data_src}")
+        score = llm_judge.evaluate(testcase, conversation)
         return score
     
-    def evaluate(self, agent_response: str, expected_response: str) -> float:
+    def evaluate(self, testcase:TestCase, conversation:Conversation): #agent_response: str, expected_response: str) -> float:
         """
         Evaluate the agents response for Truthfulness Internal.
         """
         match self.data_src:
             case "codah":
-                score = self.eval_internal_codah(agent_response, expected_response, self.judge_prompt)
-                return score
+                score = self.eval_internal_codah(conversation.agent_response, testcase.response.response_text)
+                return score, ""
             case "squad" | "hotpot":
                 # score = self.eval_internal_squad(response, expected_answer, judge_prompt)
                 # return score
-                score = self.eval_internal_llm_as_judge(response=agent_response, expected_answer=expected_response)
-                return score
+                score = self.eval_internal_llm_as_judge(testcase, conversation)
+                return score, ""
             case _:
                 logger.error(f"Unknown data source: {self.data_src}. Please choose from 'codah', 'squad', 'adv', or 'hotpot'.")
-                return None
+                return None, ""
 
     
 # #Test

@@ -1,12 +1,18 @@
-from typing import Optional
 from datetime import datetime
 import re
+import os
 import math
-
-from .logger import get_logger
+import warnings
+from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
+from .logger import get_logger
+from .utils_new import FileLoader
 
+warnings.filterwarnings("ignore")
+
+FileLoader._load_env_vars(__file__)
 logger = get_logger("tat_tpm_mvh")
+dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), simple=True, strat_name="tat_tpm_mvh")
 
 class TAT_TPM_MVH(Strategy):
     """
@@ -29,10 +35,10 @@ class TAT_TPM_MVH(Strategy):
         """
         super().__init__(name, kwargs=kwargs)
         self.__metric_name = kwargs.get("metric_name")
-        self.log_file_path = kwargs.get("log_file_path", "InterfaceManager/APIService/src/logs/whatsapp_driver.log")
-        self.prompt_keyword = "Sending prompt to the bot"
-        self.response_keyword = "Received response from WhatsApp"
-        self.time_period_minutes = kwargs.get("time_period_minutes", 1)
+        self.log_file_path = dflt_vals.log_file
+        self.prompt_keyword = dflt_vals.prompt_key
+        self.response_keyword = dflt_vals.response_key
+        self.time_period_minutes = dflt_vals.time_period
 
     def parse_log_file(self) -> list:
         """
@@ -179,7 +185,7 @@ class TAT_TPM_MVH(Strategy):
 
         return math.floor(messages_per_time_period)
 
-    def evaluate(self, agent_response: str, expected_response: Optional[str] = None) -> float:
+    def evaluate(self, testcase:TestCase, conversation:Conversation): #agent_response: str, expected_response: Optional[str] = None) -> float:
         """
         Evaluates the selected metric based on log file data.
 
@@ -194,18 +200,18 @@ class TAT_TPM_MVH(Strategy):
 
         match self.__metric_name:
             case "turn_around_time":
-                return self.average_tat(log_lines)
+                return self.average_tat(log_lines), ""
 
             case "transactions_per_minute":
-                return self.transactions_per_minute(log_lines)
+                return self.transactions_per_minute(log_lines), ""
 
             case "message_volume_handling":
-                return self.message_volume_handling(log_lines)
+                return self.message_volume_handling(log_lines), ""
 
             case _:
                 raise ValueError(f"Unknown metric name: {self.__metric_name}")
 
-        return 0.0
+        return 0.0, ""
 
 #test
 #from tat_tpm_mvh import TAT_TPM_MVH

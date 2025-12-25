@@ -1,12 +1,13 @@
 import warnings
-
+from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
 from .logger import get_logger
-
-
-logger = get_logger("truthfulness_external")
+from .utils_new import FileLoader
 
 warnings.filterwarnings("ignore")
+
+FileLoader._load_env_vars(__file__)
+logger = get_logger("truthfulness_external")
 
 # This module implements "Truthfulness_External" strategy to analyze the agent response.
 class Truthfulness_External(Strategy):
@@ -30,15 +31,15 @@ class Truthfulness_External(Strategy):
             return prediction
         return prediction
     
-    def evaluate(self, agent_response: str, expected_response: str) -> float:
+    def evaluate(self, testcase:TestCase, conversation:Conversation): #agent_response: str, expected_response: str) -> float:
         """
         Evaluate the agents response for Truthfulness External.
         """
-        resp = self.extract_prediction(agent_response)
-        if resp.lower() == expected_response.lower():
-            return 1.0
+        resp = self.extract_prediction(conversation.agent_response)
+        if resp.lower() == testcase.response.response_text.lower():
+            return 1.0, ""
         else:
-            return 0.0
+            return 0.0, ""
 
     
 # #Test

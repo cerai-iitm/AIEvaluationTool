@@ -1,10 +1,12 @@
 {
     "database": {
+        "engine":"sqlite",
+        "file": "datapoints.db",
         "host": "localhost",
-        "port": 5432,
+        "port": 3306,
         "user": "root",
-        "password": "ATmega32*",
-        "database": "test"
+        "password": "jarvis2025",
+        "database": "aieval"
     },
     "target": {
         "application_type": "WEBAPP",

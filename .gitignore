@@ -15,3 +15,17 @@ saved_evaluations/**
 new_data.json
 responses_T**.json
 evaluation_summary**
+
+test.py
+improvement_eval.py
+.deepeval
+saved_evaluations
+*.png
+new_fairness_stereotype_recognition.py
+*.pkl
+.strategy_*.json
+
+data/*.db
+*.db
+AI
+*.sqlite3

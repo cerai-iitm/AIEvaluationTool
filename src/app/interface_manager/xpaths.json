@@ -1,0 +1,54 @@
+{
+  "applications":{
+    "whatsapp_web":
+    {
+      "ChatPage":{
+        "contact_search_element": "//div[@aria-label='Search input textbox' and @contenteditable='true']",
+        "profile_element": "//button[@aria-label='Settings' and @role='button' and @data-tab='2']",
+        "logout_button_element": "//button[.//div[text()='Log out']]",
+        "prompt_input_box_element": "//div[@aria-placeholder='Type a message' and @contenteditable='true']",
+        "agent_response_element": "span.selectable-text",
+        "message_in_element": "div.message-in",
+        "message_out_element": "div.message-out"
+      }
+    },
+    "cpgrams": 
+    {
+      "LoginPage": {
+          "email_input_element": "//input[@id='email']",
+          "password_input_element": "//input[@id='password']",
+          "login_button_element": "//button[normalize-space(.)='Sign In']"
+      },
+      "LogoutPage":{
+        "profile_pic_element": "//div[.//img[@alt='User']",
+        "send_element": "//button[@title='Send']",
+        "profile_element": "//div[.//div[@class='font-semibold' and text()='Sharwan kumar']]",
+        "logout_button_element": "//button[.//span[text()='Logout']]"
+      },
+      "ChatPage": {
+        "profile_pic_element": "//div[.//img[@alt='User']",
+        "prompt_input_box_element": "//textarea[@id='react-transliterate-input'][@type='textarea']",
+        "agent_response_element": "//div[@class='relative leading-relaxed text-sm']/div[@class='select-text selection:bg-blue-500 selection:text-white']/p"
+      }
+    },
+    "openweb-ui": 
+    {
+      "LoginPage": {
+          "email_input_element": "//input[@id='email']",
+          "password_input_element": "//input[@id='password']",
+          "login_button_element": "//button[@type='submit' and text()='Sign in']"
+      },
+      "LogoutPage": {
+        "profile_element": "//span[normalize-space(text())='User menu']",
+        "logout_button_element": "//div[@role='menuitem']//div[normalize-space(text())='Sign Out']"
+      }
+      ,
+      "ChatPage": {
+        "model_selection_element": "//*[@id='model-selector-0-button']",
+        "model_name_entry_element": "//*[@id='model-search-input']",
+        "prompt_input_box_element": "//*[@id='chat-input']/p",
+        "agent_response_element": "//*[@id='response-content-container']"
+      }
+    }
+  }
+}
