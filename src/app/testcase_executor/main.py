@@ -605,12 +605,14 @@ def main():
                         conv.prompt_ts = datetime.now().isoformat()
                         db.add_or_update_conversation(conversation=conv)
 
+                        # send the prompt to the agent via the interface manager client
                         response_from_agent = client.chat(chat_id = testcase.testcase_id, prompt_list=[message_to_agent])
                         agent_response = response_from_agent.json().get("response", "")
 
                         # Check if the response is empty or indicates a chat not found
                         # Here, we will leave the Conversation entry dangling in the DB to indicate the the conversation was not successful.
-                        if len(agent_response) == 0 or agent_response[0]['response'] == "Chat not found":
+                        if len(agent_response) == 0 or agent_response[0]['response'] == "Chat not found" \
+                            or agent_response[0]['response'].strip() == "[Error: Max retries exceeded]":
                             logger.error(f"No response received from the agent for test case {testcase.testcase_id}.")
                             rundetail.status = "FAILED"
                             db.add_or_update_testrun_detail(rundetail)
