@@ -381,12 +381,12 @@ const StrategyList: React.FC = () => {
                   <span>Loading...</span>
                 </div>
               ) : (
-                <table className="w-full min-w-[600px]">
+                <table className="w-full table-fixed">
                   <thead className="border-b-2">
                     <tr>
-                      <th className="sticky top-0 bg-white z-10 p-2 md:p-4 font-semibold text-center text-xs md:text-base">Strategy ID</th>
-                      <th className="sticky top-0 bg-white z-10 p-2 md:p-4 font-semibold text-left pl-4 text-xs md:text-base">Strategy Name</th>
-                      <th className="sticky top-0 bg-white z-10 p-2 md:p-4 font-semibold text-left text-xs md:text-base">Strategy Description</th>
+                      <th className="sticky top-0 z-10 p-4 font-semibold text-left w-[15%] ">Strategy ID</th>
+                      <th className="sticky top-0 z-10 p-2 font-semibold text-left w-[30%]">Strategy Name</th>
+                      <th className="sticky top-0 z-10 pl-8 p-2 font-semibold text-left ">Strategy Description</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -409,9 +409,9 @@ const StrategyList: React.FC = () => {
                             setHighlightedRowId(row.strategy_id);
                           }}
                         >
-                          <td className="p-2 text-center text-xs md:text-base">{row.strategy_id}</td>
-                          <td className="p-2 text-xs md:text-base">{row.strategy_name}</td>
-                          <td className="p-2 text-xs md:text-base text-left">{row.strategy_description || ""}</td>
+                          <td className="p-2 pl-12">{row.strategy_id}</td>
+                          <td className="p-2 truncate">{row.strategy_name}</td>
+                          <td className="p-2 max-w-md truncate">{row.strategy_description || ""}</td>
                         </tr>
                       ))
                     )}
@@ -457,15 +457,15 @@ const StrategyList: React.FC = () => {
             >
               ×
             </button>
-            <div className="flex flex-col items-left justify-center mb-6 md:mb-7 mt-4 md:mt-5">
-              <div className="flex flex-col gap-2 md:gap-3">
-                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy Name :</label>
+            <div className="flex flex-col items-left justify-center mb-6 md:mb-7 mt-4 md:mt-5 gap-4 ">
+              <div className="flex flex-col gap-1">
+                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy Name</label>
                 <Input className="bg-muted text-sm md:text-base" value={selectedStrategy.strategy_name} readOnly />
               </div>
               {/* if strategy description is null, don't render it */}
               {selectedStrategy.strategy_description && (
-                <div className="flex flex-col gap-2 md:gap-3">
-                  <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy Description :</label>
+                <div className="flex flex-col gap-1">
+                  <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy Description</label>
                   <Textarea className="text-sm md:text-base min-h-[80px] flex-1 w-full md:w-auto resize-none bg-muted" readOnly>{selectedStrategy.strategy_description}</Textarea>
                 </div>
               )}
@@ -479,7 +479,11 @@ const StrategyList: React.FC = () => {
               {hasPermission(currentUserRole, "canDeleteTables") && (
                 <button
                   className="px-6 md:px-8 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-sm md:text-base transition-colors"
-                  onClick={handleDeleteClick}
+                  onClick={() =>{
+                    handleDeleteClick;
+                    setShowEditDialog(false);
+                    setShowDeleteConfirm(true);
+                  }}
                 >
                   Delete
                 </button>
@@ -491,6 +495,7 @@ const StrategyList: React.FC = () => {
                   onClick={() => {
                     setShowEditDialog(false);
                     setShowUpdateModal(true);
+                    setUpdateMessage("");
                   }}
                 >
                   <p className="text-white px-2.5">Edit</p>
@@ -524,26 +529,26 @@ const StrategyList: React.FC = () => {
               x
             </button>
             <div className="mt-4 md:mt-6">
-              <p className="text-base md:text-lg font-semibold mb-4 text-center">
+              <p className="text-base md:text-lg font-normal mb-4 text-center">
                 Are you sure you want to delete the following Strategy? This action cannot be undone.
               </p>
               <div className="mb-6">
-                <p className="text-sm md:text-base">
-                  <span className="font-semibold">Strategy Name :</span> {selectedStrategy.strategy_name}
+                <p className="text-sm md:text-base text-center capitalize font-semibold">
+                  <span className="font-medium">Strategy Name :</span> {selectedStrategy.strategy_name}
                 </p>
               </div>
               <div className="flex gap-4 justify-center">
-                <button
+                {/* <button
                   className="px-6 md:px-8 py-2 bg-gray-400 hover:bg-gray-500 text-white rounded text-sm md:text-base transition-colors"
                   onClick={() => setShowDeleteConfirm(false)}
                 >
                   Cancel
-                </button>
+                </button> */}
                 <button
                   className="px-6 md:px-8 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-sm md:text-base transition-colors"
                   onClick={handleDelete}
                 >
-                  Delete
+                  Confirm Delete
                 </button>
               </div>
             </div>
@@ -569,6 +574,7 @@ const StrategyList: React.FC = () => {
               onClick={() => {
                 setShowUpdateModal(false);
                 setSelectedStrategy(null);
+                
               }}
             >
               ×
@@ -630,7 +636,11 @@ const StrategyList: React.FC = () => {
             <button
               type="button"
               className="absolute top-3 right-4 text-2xl font-bold hover:text-gray-600 transition-colors focus:outline-none"
-              onClick={() => setAddOpen(false)}
+              onClick={() => {
+                setAddOpen(false);
+                setNewStrategyDescription("");
+                setNewStrategyName("");
+              }}
               aria-label="Close"
             >
               ×
@@ -668,7 +678,7 @@ const StrategyList: React.FC = () => {
               <button
                 type="button"
                 className={`mt-2 md:mt-0 md:ml-4 px-6 py-2 rounded text-sm md:text-lg font-semibold shadow transition ${
-                  newStrategyName.trim() && addMessage.trim() 
+                  newStrategyName.trim() && addMessage.trim() && newStrategyDescription.trim()
                     ? "bg-green-600 hover:bg-green-700 text-white cursor-pointer" 
                     : "bg-green-300 text-white cursor-not-allowed"
                 }`}

@@ -352,7 +352,7 @@ const LanguageList: React.FC = () => {
 
                     {/* Table */}
                     <div className="flex-1 min-h-0 overflow-y-auto">
-                        <div className="bg-white rounded-lg shadow overflow-hidden max-h-[67vh] max-w-[60vh] overflow-y-auto">
+                        <div className="bg-white rounded-lg shadow overflow-hidden max-h-[70vh] max-w-[60vh] overflow-y-auto">
                             {isLoading ? (
                                 <div className="flex items-center justify-center p-8">
                                     <span>Loading...</span>
@@ -390,10 +390,12 @@ const LanguageList: React.FC = () => {
                                 </table>
                             )}
                         </div>
+
+                    </div>
                         {/* Add Language Button */}
                         {(hasPermission(currentUserRole, "canCreateTables") || 
                           hasPermission(currentUserRole, "canCreateRecords")) && (
-                            <div className="mt-4 md:mt-6 sticky bottom-5 ">
+                            <div className="mt-6 sticky bottom-5 ">
                                 <button 
                                     className="bg-primary hover:bg-primary/90 text-white py-2 px-4 rounded text-sm md:text-base transition-colors" 
                                     onClick={() => setAddOpen(true)}
@@ -402,7 +404,6 @@ const LanguageList: React.FC = () => {
                                 </button>
                             </div>
                         )}
-                    </div>
                 </div>
             </main>
 
@@ -428,8 +429,8 @@ const LanguageList: React.FC = () => {
                             ×
                         </button>
                         <div className="flex items-center justify-center mb-6 md:mb-7 mt-4 md:mt-5">
-                            <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Language Name :</label>
-                            <span className="text-sm md:text-base capitalize">{selectedLanguage.lang_name}</span>
+                            <label className="font-semibold text-base md:text-lg min-w-[130px] md:min-w-[150px]">Language Name</label>
+                            <Input className="text-sm md:text-base capitalize bg-muted" value={selectedLanguage.lang_name} />
                         </div>
                         <div className="flex gap-4 md:gap-8 justify-center">
                             {hasPermission(currentUserRole, "canDeleteTables") && (
@@ -465,7 +466,9 @@ const LanguageList: React.FC = () => {
                         setSelectedLanguage(null);
                     }}
                 >
-                    <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-md">
+                    <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-md"
+                        onClick={e => e.stopPropagation()}
+                    >
                         <button 
                             type="button" 
                             className="absolute top-3 right-4 w-6 h-6 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 transition-colors" 
@@ -474,26 +477,26 @@ const LanguageList: React.FC = () => {
                             <X className="w-4 h-4" />
                         </button>
                         <div className="mt-4 md:mt-6">
-                            <p className="text-base md:text-lg font-semibold mb-4 text-center">
+                            <p className="text-base md:text-lg font-normal mb-4 text-center">
                                 Are you sure you want to delete the following language? This action cannot be undone.
                             </p>
                             <div className="mb-6">
-                                <p className="text-sm md:text-base">
-                                    <span className="font-semibold">Language Name :</span> {selectedLanguage.lang_name}
+                                <p className="text-sm md:text-base text-center font-semibold">
+                                    <span className="font-medium">Language :</span> {selectedLanguage.lang_name}
                                 </p>
                             </div>
                             <div className="flex gap-4 justify-center">
-                                <button
+                                {/* <button
                                     className="px-6 md:px-8 py-2 bg-gray-400 hover:bg-gray-500 text-white rounded text-sm md:text-base transition-colors"
                                     onClick={() => setShowDeleteConfirm(false)}
                                 >
                                     Cancel
-                                </button>
+                                </button> */}
                                 <button
                                     className="px-6 md:px-8 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-sm md:text-base transition-colors"
                                     onClick={handleDelete}
                                 >
-                                    Delete
+                                    Confirm Delete
                                 </button>
                             </div>
                         </div>
@@ -523,8 +526,8 @@ const LanguageList: React.FC = () => {
                             ×
                         </button>
                         <div className="flex flex-col md:flex-row items-center mb-6 md:mb-8 mt-4 md:mt-5 gap-2 md:gap-0">
-                            <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Language Name :</label>
-                            <input
+                            <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Language Name </label>
+                            <Input
                                 value={updateName}
                                 onChange={e => setUpdateName(e.target.value)}
                                 className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-lg flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200 capitalize"

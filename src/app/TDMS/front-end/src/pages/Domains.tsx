@@ -382,7 +382,7 @@ const DomainList: React.FC = () => {
                   <span>Loading...</span>
                 </div>
               ) : (
-                <table className="w-full min-w-[400px] ">
+                <table className="w-full min-w-[400px] table-fixed ">
                   <thead className="border-b-2">
                     <tr>
                       <th className="sticky top-0 bg-white z-10 p-2 md:p-4 font-semibold text-center text-xs md:text-base">Domain ID</th>
@@ -509,7 +509,7 @@ const DomainList: React.FC = () => {
               </p>
               <div className="mb-6">
                 <p className="text-sm md:text-base text-center capitalize font-semibold">
-                  <span className="font-normal">Domain Name :</span> {selectedDomain.domain_name}
+                  <span className="font-medium">Domain :</span> {selectedDomain.domain_name}
                 </p>
               </div>
               <div className="flex gap-4 justify-center">
@@ -523,7 +523,7 @@ const DomainList: React.FC = () => {
                   className="px-6 md:px-8 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-sm md:text-base transition-colors"
                   onClick={handleDelete}
                 >
-                  Confirm
+                  Confirm Delete
                 </button>
               </div>
             </div>
