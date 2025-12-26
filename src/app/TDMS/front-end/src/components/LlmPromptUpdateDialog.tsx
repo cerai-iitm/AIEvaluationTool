@@ -211,7 +211,7 @@ export function LlmPromptUpdateDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-3xl max-h-[90vh] overflow-y-auto"
+        className="max-w-3xl max-h-[80vh] max-w-[30vw] overflow-y-auto"
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <DialogHeader>
@@ -270,7 +270,8 @@ export function LlmPromptUpdateDialog({
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             className="bg-muted"
-            placeholder="Enter notes (required)"
+            placeholder="Enter notes"
+            maxLength={75}
           />
 
           <Button

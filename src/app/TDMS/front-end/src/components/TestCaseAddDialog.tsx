@@ -735,7 +735,7 @@ export const TestCaseAddDialog = ({
                     }}
                     onBlur={() => setFocusedField(null)}
                     //onClick={() => {setShowDetails((prev) => !prev); setFocusedField("userPrompt")}}
-                    onClick={() => {setShowDetails(true); setFocusedField("userPrompt"), setShowRequestDetails(false)}}
+                    onClick={() => {setShowDetails(true); setShowRequestDetails(false)}}
                     className="bg-muted min-h-[73px] pr-10"
                     required
                   />
@@ -780,7 +780,10 @@ export const TestCaseAddDialog = ({
                           errors.systemPrompts ? 'border-red-500 ring-2 ring-red-200' : ''
                         }`}
                         required
-                        onClick = {() => {setShowDetails(true); setFocusedField("systemPrompt"), setShowRequestDetails(false)}}
+                        onClick = {() => {
+                          setShowDetails(true);
+                          setShowRequestDetails(false);
+                        }}
                         
                       />
                       { focusedField === "systemPrompt" && (
@@ -896,7 +899,6 @@ export const TestCaseAddDialog = ({
                     onBlur={() => setFocusedField(null)}
                     onClick={() => {
                       setShowRequestDetails(true);
-                      setFocusedField("response");
                       setShowDetails(false);
                     }}
                   />

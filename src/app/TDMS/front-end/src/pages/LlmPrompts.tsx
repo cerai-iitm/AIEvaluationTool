@@ -311,7 +311,7 @@ const LlmPrompts = () => {
         onOpenChange={() => setSelectedPrompt(null)}
       >
         <DialogContent
-          className="max-w-3xl max-h-[90vh] overflow-y-auto"
+          className="max-w-3xl max-h-[90vh] max-w-[30vw] overflow-y-auto"
           onOpenAutoFocus={(e) => e.preventDefault()}
         >
           <DialogHeader>
@@ -413,18 +413,18 @@ const LlmPrompts = () => {
             {promptToDelete && (
               <div className="rounded-md bg-muted p-3 text-sm">
                 <p>
-                  <span className="font-semibold">Prompt ID:</span>{" "}
+                  <span className="font-semibold">Prompt ID :</span>{" "}
                   {promptToDelete.llmPromptId}
                 </p>
                 <p className="mt-2 line-clamp-3">
-                  <span className="font-semibold">Prompt:</span>{" "}
+                  <span className="font-semibold">Prompt :</span>{" "}
                   {promptToDelete.prompt}
                 </p>
               </div>
             )}
           </div>
-          <div className="flex justify-end gap-3 pt-4">
-            <Button
+          <div className="flex justify-center gap-3 pt-4">
+            {/* <Button
               variant="outline"
               onClick={() => {
                 setDeleteDialogOpen(false);
@@ -433,7 +433,7 @@ const LlmPrompts = () => {
               disabled={isDeleting}
             >
               Cancel
-            </Button>
+            </Button> */}
             <Button
               variant="destructive"
               onClick={handleDeletePrompt}
@@ -445,7 +445,7 @@ const LlmPrompts = () => {
                   Deleting...
                 </>
               ) : (
-                "Delete"
+                "Confirm Delete"
               )}
             </Button>
           </div>

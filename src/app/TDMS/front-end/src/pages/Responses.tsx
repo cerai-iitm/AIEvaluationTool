@@ -66,6 +66,8 @@ const Responses = () => {
   const [searchField, setSearchField] = useState("");
   const [currentUserRole, setCurrentUserRole] = useState<string>("");
 
+  const [highlightedRowId, setHighlightedRowId] = useState<number | null>(null);
+
   const fetchResponses = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -200,16 +202,27 @@ const Responses = () => {
   };
 
   const filteredResponses = responses.filter(
-    (response) =>
-      response.response_text
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase()) ||
-      response.language.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      response.response_type
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase()) ||
-      response.response_id.toString().includes(searchQuery.toLowerCase()),
-  );
+    (response) => { 
+      const  q = searchQuery.toLowerCase();
+      if (!q) return true;
+
+      if (searchField === "responsetext") {
+        return response.response_text.toLowerCase().includes(q);
+      } else if (searchField === "language") {
+        return response.language.toLowerCase().includes(q);
+      } else if (searchField === "responsetype") {
+        return response.response_type.toLowerCase().includes(q);
+      } 
+
+      // response.response_text
+      //   .toLowerCase()
+      //   .includes(searchQuery.toLowerCase()) ||
+      // response.language.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      // response.response_type
+      //   .toLowerCase()
+      //   .includes(searchQuery.toLowerCase()) ||
+      // response.response_id.toString().includes(searchQuery.toLowerCase()),
+  });
 
   const totalItems = filteredResponses.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
@@ -229,23 +242,29 @@ const Responses = () => {
           <h1 className="text-4xl font-bold mb-8 text-center">Responses</h1>
 
           <div className="flex gap-4 mb-6 flex-wrap">
-            <Select defaultValue="responsetext">
+            <Select 
+              defaultValue="responsetext"
+              onValueChange={(value: "responsetext" | "responsetype" | "language") => setSearchField(value)}
+            >
               <SelectTrigger className="w-48">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {/* <SelectItem value="responseid">Response ID</SelectItem> */}
                 <SelectItem value="responsetext">Response Text</SelectItem>
-                <SelectItem value="responsetype">Response Type</SelectItem>
                 <SelectItem value="language">Language</SelectItem>
+                <SelectItem value="responsetype">Response Type</SelectItem>
               </SelectContent>
             </Select>
 
             <Input
               placeholder="search"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="max-w-md"
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-64"
             />
 
             <div className="ml-auto flex items-center gap-4">
@@ -323,8 +342,13 @@ const Responses = () => {
                   paginatedResponses.map((response) => (
                     <tr
                       key={response.response_id}
-                      className="border-b hover:bg-muted/50 cursor-pointer"
-                      onClick={() => setSelectedResponse(response)}
+                      className={`border-b cursor-pointer transition-colors duration-200 ${
+                        highlightedRowId === response.response_id ? "bg-primary/10 hover:bg-primary/15 border-primary/30" : "hover:bg-muted/60"
+                      }`}
+                      onClick={() => {
+                        setSelectedResponse(response);
+                        setHighlightedRowId(response.response_id);
+                      }}
                     >
                       <td className="p-2 pl-12">{response.response_id}</td>
                       <td className="p-2 max-w-md truncate">
@@ -344,7 +368,7 @@ const Responses = () => {
             <div className="mt-6 sticky bottom-5">
               <Button
                 className="bg-primary hover:bg-primary/90"
-                onClick={() => setAddDialogOpen(true)}
+                // onClick={() => setAddDialogOpen(true)}
               >
                 + Add Response
               </Button>

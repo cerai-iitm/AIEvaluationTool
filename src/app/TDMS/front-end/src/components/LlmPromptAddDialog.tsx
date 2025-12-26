@@ -169,7 +169,7 @@ export function LlmPromptAddDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-3xl max-h-[90vh] overflow-y-auto"
+        className="max-w-3xl max-h-[80vh] max-w-[30vw] overflow-y-auto"
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <DialogHeader>
@@ -183,7 +183,7 @@ export function LlmPromptAddDialog({
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               className="bg-muted min-h-[80px]"
-              placeholder="Enter your LLM prompt here..."
+              placeholder="Enter LLM prompt"
               style ={{
                 maxHeight: "120px",
                 minHeight: "70px",
@@ -233,7 +233,8 @@ export function LlmPromptAddDialog({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               className="bg-muted"
-              placeholder="Enter notes (required)"
+              placeholder="Enter notes"
+              maxLength={75}
             />
           <Button
             className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800"
