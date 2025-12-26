@@ -42,9 +42,10 @@ class FileLoader:
             else:
                 prefixes = [os.path.commonprefix([strat, f]) for f in file_names]
                 longest = max(prefixes, key=len, default=None)
-                files = [f for f in file_names if f.startswith(longest) and len(longest) >= len(strat.split("_")[0])]
+                files = [f for f in file_names if f.startswith(longest) and len(longest) >= len(strat.split("_")[0])] #the length of the prefix should be at least as long as the first word in the strategy name so that longest is not empty, if its empty it matches with all the names
                 if len(files) > 0:
                     for f in files:
+                        logger.info(f"Using file {f} to load the examples and evaluate the strategy.")
                         file_content = FileLoader._fill_values(file_content, data_dir, f)
                 else:
                     logger.error("None of the files in the data/examples directory match the strategy name.")
@@ -116,7 +117,7 @@ class FileLoader:
             os.mkdir(folder_path)
         file_path = os.path.join(folder_path, f"{kwargs.get('strat_name')}.csv")
         file_exists = os.path.isfile(file_path)
-        hash = hashlib.sha256(df.get("id").encode('utf-8')).hexdigest()
+        hash = hashlib.sha256(df.get("id").encode('utf-8')).hexdigest()[:20]
 
         if file_exists:
             with open(file_path, newline='', encoding='utf-8') as f:
@@ -179,7 +180,7 @@ class CustomOllamaModel(DeepEvalBaseLLM):
         return schema_
     
     def get_model_name(self, *args, **kwargs):
-         return self.model_name
+        return self.model_name
 
 
 class OllamaConnect:
@@ -231,7 +232,7 @@ class OllamaConnect:
     
     @staticmethod
     def get_reason(agent_response:str, strategy_name:str, score:float, **kwargs):
-        prompt = OllamaConnect.dflt_vals.reason_prompt.format(input_sent=agent_response, metric=strategy_name, score=score, corr_output=kwargs.get("corr_output", ""))
+        prompt = OllamaConnect.dflt_vals.reason_prompt.format(input_sent=agent_response, metric=strategy_name, score=score, add_info=kwargs.get("add_info", ""))
         responses = OllamaConnect.prompt_model(prompt, OllamaConnect.dflt_vals.reqd_flds)
         final_rsn = ""
         if(len(responses) > 0):

@@ -109,11 +109,31 @@ class IndianLangGrammaticalCheck(Strategy):
     def weighted_f1(self, scores:list, weights:list = [0.8, 0.2]): # weights  = [for vector sim, for avg_edit_dist]
         weights = [w / sum(weights) for w in weights] # normalizing so the weights sum to 1
         return 1 / sum(wt / score for wt, score in zip(weights, scores))
+    
+    def reason_for_score(self, agent_response:str, score:float):
+        if(dflt_vals.model_reason):
+            try:
+                return OllamaConnect.get_reason(agent_response, " ".join(self.name.split("_")), score)
+            except:
+                logger.error(f"Could not fetch the reason for score. \n Make sure Ollama is running with the specified model, OR change the model_reason to false for {self.name} in data/defaults.json")
+                return ""
+        else:
+            match score:
+                case s if s < 0.4:
+                    return "Very high grammatical inconsistency."
+                case s if 0.4 <= s <= 0.8:
+                    return "Minor grammatical inconsistencies in the sentences."
+                case s if 0.8 < s <= 1.0:
+                    return "Well structured and understanable sentences."
+                case s if s < 0 or s > 1.0:
+                    return ""
 
-    def evaluate(self, testcase:TestCase, conversation:Conversation): #testcase:TestCase, conversation:Conversation):#agent_response:str, expected:Optional[str]=None):
+    def evaluate(self, testcase:TestCase, conversation:Conversation):
         prompt = dflt_vals.prompt.format(sent=conversation.agent_response)
         corr_sents = self.make_corrections(prompt)
         scores = []
+        final_score = 0.0
+        rsn = ""
         if len(corr_sents) > 0:
             for final in corr_sents:
                 # we are taking the embedding for both the sentences using the initial layer of the LLM which captures morpheme and strctural information
@@ -125,15 +145,7 @@ class IndianLangGrammaticalCheck(Strategy):
                 scores.append(score)
             final_score = round(float(np.mean(scores)), 3)
             logger.info(f"Grammatical consistency score for the input is : {final_score}")
-            return final_score, OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), final_score)
+            rsn = self.reason_for_score(conversation.agent_response, final_score)
         else:
-            final_score = 0.0
-            rsn = "Could not receive corrections for the sentence using the user provided models."
-            logger.error(f"{rsn} Returning 0 score.")
+            logger.error(f"Could not receive corrections for the sentence using the user provided models. Returning 0 score.")
         return final_score, rsn
-
-# if __name__ == "__main__":
-#     checker = IndianLangGrammaticalCheck()
-#     sent = "நான் இன்று ரொம்ப மகிழ்ச்சி இருக்கு ஆனா என் மனசுல ஏதோ சில ஒத்துக்காத மாதிரி எண்ணம் வருது அது எப்படி சரியா சொல்லுவது நான் ஒண்ணும் நன்றா நினைக்க முடியலே, அதனால கொஞ்சம் எல்லாம் குழப்பம் போல இருக்கு."
-#     score = checker.evaluate(sent)
-#     print(score)

@@ -1,6 +1,14 @@
 [
     {
         "judge_prompt": "",
+        "sys_prompt": "",
+        "user_prompt": "",
+        "expected_output": "",
+        "agent_response": "நான் இன்று ரொம்ப மகிழ்ச்சி இருக்கு ஆனா என் மனசுல ஏதோ சில ஒத்துக்காத மாதிரி எண்ணம் வருது அது எப்படி சரியா சொல்லுவது நான் ஒண்ணும் நன்றா நினைக்க முடியலே, அதனால கொஞ்சம் எல்லாம் குழப்பம் போல இருக்கு.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
         "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
         "user_prompt": "भारत की राजधानी (Capital) क्या है?",
         "expected_output": "भारत की राजधानी नई दिल्ली (New Delhi) है।",

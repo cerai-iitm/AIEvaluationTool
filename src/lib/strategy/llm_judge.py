@@ -8,9 +8,7 @@ from .strategy_base import Strategy
 from .logger import get_logger
 import numpy as np
 
-# sys.path.append(os.path.dirname(__file__) + '/..')
 warnings.filterwarnings("ignore")
-
 FileLoader._load_env_vars(__file__)
 logger = get_logger("llm_judge")
 dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), simple=True, strat_name="llm_judge")
@@ -34,7 +32,7 @@ class LLMJudgeStrategy(Strategy):
         if not self.base_url:
             logger.warning("OLLAMA_URL is not set in environment.")
 
-    def evaluate(self, testcase:TestCase, conversation:Conversation): #agent_response: str, expected_response: Optional[str]=None
+    def evaluate(self, testcase:TestCase, conversation:Conversation):
         logger.debug("Evaluating agent response using LLM judge...")
         # metric is defined here instead of init because if multiple testcases belonging to different metrics are grouped together 
         # for this strategy, the judge prompt will change. So we define the metric here right before executing the testcase.
@@ -51,36 +49,11 @@ class LLMJudgeStrategy(Strategy):
             expected_output=testcase.response.response_text,
             retrieval_context=[testcase.prompt.system_prompt if testcase.prompt.system_prompt else self.system_prompt]
         )
-        # print(f"JUDGE_PROMPT : {testcase.judge_prompt.prompt}, SYSTEM_PROMPT : {testcase.prompt.system_prompt}, PROMPT : {testcase.prompt.user_prompt}")
 
         eval_score = np.mean([metric.measure(to_evaluate) for metric in self.metrics])
         final_score = eval_score if self.eval_type == "positive" else (1 - eval_score)
         logger.info(f"Average score based on {len(self.models)} judge models : {final_score}, Reasons: {[model.score_reason for model in self.models]}")
-        return final_score, "\n\n".join([model.score_reason for model in self.models])
-        
-
-# dir_path = os.path.dirname(os.path.realpath(__file__))
-# path = os.path.join(dir_path, "data/examples_for_llm_judge.json")
-# with open(path, "r") as f:
-#     examples = json.load(f)
-
-# for i, ex in enumerate(examples):
-#     judge = LLMJudgeStrategy(
-#             metric_name="inclusivity",
-#             model_name= "qwen2.5:14b", #"mistral:7b-instruct", "llama2:13b", "qwen2.5:14b"
-#             prompt=ex['prompt'], 
-#             judge_prompt=ex['judge_prompt'], 
-#             system_prompt=ex['sys_prompt']
-#         )
-
-#     agent_response = ex['agent_resp']
-#     expected_response = ex['expected_op']
-
-#     score = judge.evaluate(agent_response, expected_response)
-#     print(f"Example {i+1} is given : {score} score.") #The reason is : {judge.model.score_reason}")
-
-# pprint(f"{judge.model.steps}")
-# pprint(f"{judge.model.score_reason}")
+        return final_score, "\n\n".join([f"Reason {i} : {model.score_reason['Reason']}" for i, model in enumerate(self.models)])
 
 #/usr/share/ollama/.ollama/models/manifests
     

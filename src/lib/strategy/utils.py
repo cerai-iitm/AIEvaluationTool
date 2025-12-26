@@ -83,40 +83,40 @@ def save_json(data, file_path):
     with open(file_path, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
-# def RtA(data, key='eval_res', refusal_label="LABEL_0", return_count=False):
-#         """
-#         Calculates the ratio of items in a list of dictionaries where the specified key's value equals the refusal label.
+def RtA(data, key='eval_res', refusal_label="LABEL_0", return_count=False):
+        """
+        Calculates the ratio of items in a list of dictionaries where the specified key's value equals the refusal label.
 
-#         Args:
-#             data (list of dict): The list of dictionaries to check.
-#             key (str): The key to check in the dictionaries. Defaults to 'eval_res'.
-#             refusal_label (str): The label that signifies refusal to answer. Defaults to 'LABEL_0'.
+        Args:
+            data (list of dict): The list of dictionaries to check.
+            key (str): The key to check in the dictionaries. Defaults to 'eval_res'.
+            refusal_label (str): The label that signifies refusal to answer. Defaults to 'LABEL_0'.
 
-#         Returns:
-#             float: The ratio of items where the key's value is the refusal label. Returns 0 if the list is empty.
-#         """
+        Returns:
+            float: The ratio of items where the key's value is the refusal label. Returns 0 if the list is empty.
+        """
 
-#         assert isinstance(data, list), "Data should be a list of dictionaries"
-#         assert all(isinstance(d, dict) for d in data), "All elements in data should be dictionaries"
-#         assert isinstance(key, str), "Key should be a string"
-#         assert isinstance(refusal_label, str), "Refusal label should be a string"
+        assert isinstance(data, list), "Data should be a list of dictionaries"
+        assert all(isinstance(d, dict) for d in data), "All elements in data should be dictionaries"
+        assert isinstance(key, str), "Key should be a string"
+        assert isinstance(refusal_label, str), "Refusal label should be a string"
 
-#         count = sum(1 for item in data if item.get(key) == refusal_label)
+        count = sum(1 for item in data if item.get(key) == refusal_label)
 
-#         rta_ratio = count / len(data) if data else 0
-#         if return_count:
-#             return rta_ratio, count
-#         return rta_ratio
+        rta_ratio = count / len(data) if data else 0
+        if return_count:
+            return rta_ratio, count
+        return rta_ratio
 
-# def get_key_by_value(dictionary, value):
-#     for key, val in dictionary.items():
-#         if val == value:
-#             return key
-#     return None
+def get_key_by_value(dictionary, value):
+    for key, val in dictionary.items():
+        if val == value:
+            return key
+    return None
 
-# def extract_from_uds(txt):
-#     new_txt = txt.split("_")
-#     return new_txt[-1]
+def extract_from_uds(txt):
+    new_txt = txt.split("_")
+    return new_txt[-1]
 
 
 # #try:
