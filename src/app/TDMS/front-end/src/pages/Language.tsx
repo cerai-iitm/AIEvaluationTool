@@ -3,14 +3,11 @@ import Sidebar from '@/components/Sidebar';
 import {Input} from '@/components/ui/input';
 import {Button} from '@/components/ui/button';
 import  {Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import  {Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
-import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
 import { hasPermission } from '@/utils/permissions';
 import { HistoryButton } from "@/components/HistoryButton";
-import { set } from 'date-fns';
 
 
 interface Language {
@@ -36,6 +33,7 @@ const LanguageList: React.FC = () => {
 
     // Add - Dialog local state
     const [newLanguageName, setNewLanguageName] = useState("");
+    const [addMessage, setAddMessage] = useState("");
 
     // Update - Dialog local state
     const [updateName, setUpdateName] = useState("");
@@ -129,10 +127,10 @@ const LanguageList: React.FC = () => {
 
     // Create language handler
     const handleAddLanguage = async () => {
-        if (!newLanguageName.trim()) {
+        if (!newLanguageName.trim() || !addMessage.trim()) {
             toast({
                 title: "Validation Error",
-                description: "Language name is required",
+                description: "Language name and notes are required",
                 variant: "destructive",
             });
             return;
@@ -168,8 +166,9 @@ const LanguageList: React.FC = () => {
                 variant: "default",
             });
             
-            setAddOpen(false);
             setNewLanguageName("");
+            setAddMessage("");
+            setAddOpen(false);
             fetchLanguages(); // Refresh the list
             setHighlightedRowId(data.lang_id);
         } catch (error: any) {
@@ -184,10 +183,10 @@ const LanguageList: React.FC = () => {
 
     // Update language handler
     const handleUpdate = async () => {
-        if (!selectedLanguage || !updateName.trim()) {
+        if (!selectedLanguage || !updateName.trim() || !addMessage.trim()) {
             toast({
                 title: "Validation Error",
-                description: "Language name is required",
+                description: "Language name and notes are required",
                 variant: "destructive",
             });
             return;
@@ -224,6 +223,7 @@ const LanguageList: React.FC = () => {
             
             setShowUpdateModal(false);
             setSelectedLanguage(null);
+            setAddMessage("");
             fetchLanguages(); // Refresh the list
             setHighlightedRowId(selectedLanguage.lang_id);
         } catch (error: any) {
@@ -382,7 +382,7 @@ const LanguageList: React.FC = () => {
                                                     onClick={() => {handleRowClick(lang); setHighlightedRowId(lang.lang_id);}}
                                                 >
                                                     <td className="p-2 text-center text-xs md:text-base">{lang.lang_id}</td>
-                                                    <td className="p-2 text-xs md:text-base capitalize">{lang.lang_name}</td>
+                                                    <td className="p-2 pl-10 text-xs md:text-base capitalize">{lang.lang_name}</td>
                                                 </tr>
                                             ))
                                         )}
@@ -444,7 +444,7 @@ const LanguageList: React.FC = () => {
                             {(hasPermission(currentUserRole, "canUpdateTables") || 
                               hasPermission(currentUserRole, "canUpdateRecords")) && (
                                 <button
-                                    className="px-6 md:px-8 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm md:text-base transition-colors"
+                                    className="px-6 md:px-8 py-2 bg-primary hover:bg-primary/90 text-white rounded text-sm md:text-base transition-colors"
                                     onClick={() => {
                                         setShowEditDialog(false);
                                         setShowUpdateModal(true);
@@ -481,7 +481,7 @@ const LanguageList: React.FC = () => {
                                 Are you sure you want to delete the following language? This action cannot be undone.
                             </p>
                             <div className="mb-6">
-                                <p className="text-sm md:text-base text-center font-semibold">
+                                <p className="text-sm md:text-base text-center font-semibold capitalize">
                                     <span className="font-medium">Language :</span> {selectedLanguage.lang_name}
                                 </p>
                             </div>
@@ -510,6 +510,8 @@ const LanguageList: React.FC = () => {
                     onClick = {() => {
                         setShowUpdateModal(false);
                         setSelectedLanguage(null);
+                        setAddMessage("");
+                        setUpdateName("");
                     }}
                 >
                     <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-lg min-h-[220px]"
@@ -521,27 +523,36 @@ const LanguageList: React.FC = () => {
                             onClick={() => {
                                 setShowUpdateModal(false);
                                 setSelectedLanguage(null);
+                                setAddMessage("");
+                                setUpdateName("");
                             }}
                         >
                             ×
                         </button>
                         <div className="flex flex-col md:flex-row items-center mb-6 md:mb-8 mt-4 md:mt-5 gap-2 md:gap-0">
-                            <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Language Name </label>
+                            <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Language Name :</label>
                             <Input
                                 value={updateName}
                                 onChange={e => setUpdateName(e.target.value)}
                                 className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-lg flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200 capitalize"
                             />
                         </div>
-                        <div className="flex justify-center">
+                        <div className="flex justify-center items-center p-4">
+                            <label className="text-base md:text-lg mr-2"> Notes </label>
+                            <Input
+                                value={addMessage}
+                                onChange={e => setAddMessage(e.target.value)}
+                                className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 focus:outline-none focus:ring focus:ring-blue-200 "
+                            />
                             <button
-                                className={`px-6 md:px-8 py-2 rounded text-sm md:text-base font-semibold shadow transition-colors ${
-                                    updateName.trim() 
+                                className={`mt-2 md:mt-0 md:ml-4 px-6 py-2 rounded text-sm md:text-lg font-semibold shadow transition ${
+                                    updateName.trim() && addMessage.trim() && updateName !== selectedLanguage?.lang_name
                                         ? "bg-green-600 hover:bg-green-700 text-white cursor-pointer" 
                                         : "bg-green-300 text-white cursor-not-allowed"
                                 }`}
-                                disabled={!updateName.trim() || updateName === selectedLanguage.lang_name}
+                                disabled={!updateName.trim() || !addMessage.trim() || updateName === selectedLanguage?.lang_name }
                                 onClick={handleUpdate}
+                                
                             >
                                 Submit
                             </button>
@@ -552,35 +563,61 @@ const LanguageList: React.FC = () => {
 
             {/* Add Language Dialog */}
             {addOpen && (
-                <Dialog open={addOpen} onOpenChange={setAddOpen}>
-                    <DialogContent className="w-full max-w-md p-4 max-h-[90vh] max-w-[500px] overflow-y-auto">
-                        {/* <DialogHeader>
-                            <DialogTitle>Add Language</DialogTitle>
-                        </DialogHeader> */}
-                        <div className="flex flex-col gap-6">
-                            <div className="flex flex-col md:flex-row items-center mb-6 md:mb-8 mt-4 md:mt-5 gap-2 md:gap-0 mt-4 pt-4">
-                                <Label className='font-semibold tet-base md:text-lg min-w-[140px] md:min-w-[165px]'>Language Name</Label>
-                                <div className="relative">
-                                    <Input 
-                                        value={newLanguageName} 
-                                        onChange={e => setNewLanguageName(e.target.value)} 
-                                        placeholder="Enter language" 
-                                        maxLength={100} 
-                                        className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-lg flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
-                                    />
-                                </div>
-                            </div>
-                            <div className="flex justify-center">
-                                <Button onClick={handleAddLanguage} disabled={!newLanguageName.trim()}
-                                className={`bg-green-600 hover:bg-green-700 text-white px-6 md:px-8 py-2 rounded text-sm md:text-base font-semibold shadow transition-colors 
-                                    }`}
-                                >
-                                    Submit
-                                </Button>
-                            </div>
+                <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50 p-4"
+                    onClick={() => {
+                        setAddOpen(false);
+                        // setNewLanguageName("");
+                        setAddMessage("");
+                    }}
+                >
+                    <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-lg min-h-[220px] flex flex-col justify-between"
+                        onClick = {(e) => e.stopPropagation()}
+                    >
+                        <button
+                            type="button"
+                            className="absolute top-3 right-4 text-2xl font-bold hover:text-gray-600 transition-colors focus:outline-none"
+                            onClick={() => {
+                                setAddOpen(false);
+                                setNewLanguageName("");
+                                setAddMessage("");
+                            }}
+                            aria-label="Close"
+                        >
+                            ×
+                        </button>
+                        {/* Language Name Row */}
+                        <div className="flex flex-col md:flex-row items-center mb-6 mb:mb-8 mt-4 md:mt-5 gap-2 md:gap-0">
+                            <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Language Name</label>
+                            <Input
+                                value={newLanguageName}
+                                onChange={e => setNewLanguageName(e.target.value)}
+                                className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200 capitalize"
+                                maxLength={150}
+                            />
                         </div>
-                    </DialogContent>
-                </Dialog>
+                        {/* Message Row + Submit Button */}
+                        <div className="flex flex-col md:flex-row items-center gap-2 md:gap-0">
+                            <label className="text-base md:text-lg mr-2"> Notes   </label>
+                            <Input
+                                value={addMessage}
+                                onChange={e => setAddMessage(e.target.value)}
+                                className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
+                            />
+                            <button
+                                type="button"
+                                className={`mt-2 md:mt-0 md:ml-4 px-6 py-2 rounded text-sm md:text-lg font-semibold shadow transition ${
+                                    newLanguageName.trim() && addMessage.trim() 
+                                        ? "bg-green-600 hover:bg-green-700 text-white cursor-pointer" 
+                                        : "bg-green-300 text-white cursor-not-allowed"
+                                }`}
+                                onClick={handleAddLanguage}
+                                disabled={!newLanguageName.trim() || !addMessage.trim()}
+                            >
+                                Submit
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );
