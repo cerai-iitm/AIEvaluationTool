@@ -3082,63 +3082,28 @@ class DB:
                 .filter(Prompts.prompt_id == prompt_id)
                 .first()
             )
-            if prompt:
-                self.logger.debug(f"Returning the existing prompt: {prompt.prompt_id}")
-                raise ValueError(f"Prompt already exists")
-            
-            # previous_prompt = prompt.prompt
+            if not prompt:
+                raise ValueError(f"Prompt with ID {prompt_id} not found")
             
             previous_language = getattr(prompt.lang, "lang_name", None) if prompt.lang else None
 
             updated = False
             
-            if "prompt" in updates:
-                prompt.prompt = updates["prompt"]
-                # update hash_value if prompt changed 
-                hash_input = prompt.prompt or ""
-                prompt.hash_value = hashlib.sha256(hash_input.encode("utf-8")).hexdigest()
+            if "user_prompt" in updates or "system_prompt" in updates:
+                new_user_prompt = updates.get("user_prompt", prompt.user_prompt)
+                new_system_prompt = updates.get("system_prompt", prompt.system_prompt)
+                
+                prompt.user_prompt = new_user_prompt
+                prompt.system_prompt = new_system_prompt
+                
+                # update hash_value
+                prompt_str = f"System: '{prompt.system_prompt or ''}'\tUser: '{prompt.user_prompt}'"
+                
+                hashing = hashlib.sha1()
+                hashing.update(prompt_str.encode("utf-8"))
+                prompt.hash_value = hashing.hexdigest()
                 updated = True
 
-            # if "user_prompt" in updates and updates["user_prompt"]:
-
-            #     existing_user_prompt = (
-            #         session.query(Prompts)
-            #         .filter(
-            #             Prompts.user_prompt == updates["user_prompt"],
-            #             Prompts.prompt_id != prompt_id,
-            #         )
-            #         .first()
-            #     )
-            #     if existing_user_prompt:
-            #         raise ValueError(
-            #             f"User prompt already exists"
-            #         )
-
-            #     prompt.user_prompt = updates["user_prompt"]
-
-            #     updated = True
-
-            # if "system_prompt" in updates and updates["system_prompt"]:
-
-            #     existing_system_prompt = (
-            #         session.query(Prompts)
-            #         .filter(
-            #             Prompts.system_prompt == updates["system_prompt"],
-            #             Prompts.prompt_id != prompt_id,
-            #         )
-            #         .first()
-            #     )
-            #     if existing_system_prompt:
-            #         raise ValueError(
-            #             f"System prompt already exists"
-            #         )
-
-            #     prompt.system_prompt = updates["system_prompt"]
-                
-            #     updated = True
-
-
-    
             if "language" in updates and updates["language"]:
                 language = (
                     session.query(Languages)
@@ -3146,18 +3111,10 @@ class DB:
                     .first()
                 )
                 if not language:
-                    raise HTTPException(
-                        status_code=status.HTTP_404_NOT_FOUND, detail="Language not found"
-                    )
+                    raise ValueError(f"Language '{updates['language']}' not found")
                 prompt.lang_id = language.lang_id
-
                 updated = True
 
-
-                # lang_id = self.add_or_get_language_id(updates["language"])
-                # if lang_id is None:
-                #     raise ValueError(f"Language '{updates['language']}' not found")
-                # prompt.lang_id = lang_id
             if "domain" in updates and updates["domain"]:
                 domain = (
                     session.query(Domains)
@@ -3165,26 +3122,9 @@ class DB:
                     .first()
                 )
                 if not domain:
-                    raise HTTPException(
-                        status_code=status.HTTP_404_NOT_FOUND, detail="Domain not found"
-                    )
+                    raise ValueError(f"Domain '{updates['domain']}' not found")
                 prompt.domain_id = domain.domain_id
                 updated = True
-
-                if "user_prompt" in updates or "system_prompt" in updates:
-                    new_user_prompt = updates.get("user_prompt", prompt.user_prompt)
-                    new_system_prompt = updates.get("system_prompt", prompt.system_prompt)
-                    
-                    prompt.user_prompt = new_user_prompt
-                    prompt.system_prompt = new_system_prompt
-                    
-                    # update hash_value
-                    prompt_str = f"System: '{prompt.system_prompt or ''}'\tUser: '{prompt.user_prompt}'"
-                    
-                    hashing = hashlib.sha1()
-                    hashing.update(prompt_str.encode("utf-8"))
-                    prompt.hash_value = hashing.hexdigest()
-                    updated = True
                 
                 
                 # domain_id = self.add_or_get_domain_id(updates["domain"])
