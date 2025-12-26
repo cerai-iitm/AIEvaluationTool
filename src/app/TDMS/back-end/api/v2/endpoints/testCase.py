@@ -270,9 +270,9 @@ def create_testcase(
                 log_activity(
                     username=username,
                     entity_type="Test Case",
-                    entity_id=str(testcase_full.testcase_id),
+                    entity_id=str(testcase_full.testcase_name),
                     operation="create",
-                    note=f"Test Case: {testcase_full.testcase_name} Created",
+                    note=f"Test Case - {testcase_full.testcase_name} created",
                 )
 
             # Get domain and language names
@@ -438,7 +438,7 @@ def update_testcase(
         if "llm_judge_prompt" in normalized_updates:
             changes.append("judge prompt updated")
 
-        note = f"Test Case '{updated.testcase_name}' updated"
+        note = f"Test Case - {updated.testcase_name} updated"
         if changes:
             note += f": {', '.join(changes)}"
         else:
@@ -499,9 +499,9 @@ def delete_testcase(
         log_activity(
             username=username,
             entity_type="Test Case",
-            entity_id=str(testcase_id),
+            entity_id=str(testcase_name),
             operation="delete",
-            note=f"Test case '{existing.name}' deleted",
+            note=f"Test case - {existing.name} deleted",
         )
 
     return {"message": "Test case deleted successfully"}

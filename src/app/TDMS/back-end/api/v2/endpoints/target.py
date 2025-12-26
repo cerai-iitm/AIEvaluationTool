@@ -160,9 +160,9 @@ def create_target(
                 log_activity(
                     username=username,
                     entity_type="Target",
-                    entity_id=str(target_obj.target_id),
+                    entity_id=str(target_obj.target_name),
                     operation="create",
-                    note=f"Target '{target_obj.target_name}' created",
+                    note=f"Target - {target_obj.target_name} created",
                 )
             
             # Create response
@@ -305,7 +305,7 @@ def update_target(
         if original_lang_names != updated_lang_names:
             changes.append("Languages changed")
 
-    note = f"Target '{updated.target_name}' updated"
+    note = f"Target - {updated.target_name} updated"
     if changes:
         note += f" ({', '.join(changes)})"
     else:
@@ -315,7 +315,7 @@ def update_target(
     log_activity(
         username=username,
         entity_type="Target",
-        entity_id=str(updated.target_id),
+        entity_id=str(updated.target_name),
         operation="update",
         note=note,
     )
@@ -356,9 +356,9 @@ def delete_target(
         log_activity(
             username=username,
             entity_type="Target",
-            entity_id=str(existing.target_id),
+            entity_id=str(existing.target_name),
             operation="delete",
-            note=f"Target '{existing.target_name}' deleted",
+            note=f"Target - {existing.target_name} deleted",
         )
 
     return {"message": "Target deleted successfully"}

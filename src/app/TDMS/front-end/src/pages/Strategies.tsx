@@ -198,6 +198,7 @@ const StrategyList: React.FC = () => {
       setAddMessage("");
       setAddOpen(false);
       fetchStrategies(); // Refresh the list
+      setHighlightedRowId(data.strategy_id);
     } catch (error: any) {
       console.error("Error creating strategy:", error);
       toast({
@@ -252,6 +253,7 @@ const StrategyList: React.FC = () => {
       setShowUpdateModal(false);
       setSelectedStrategy(null);
       fetchStrategies(); // Refresh the list
+      // setAddMessage("");
       //setHighlightedRowId(selectedStrategy.strategy_id);
     } catch (error: any) {
       console.error("Error updating strategy:", error);
@@ -373,7 +375,7 @@ const StrategyList: React.FC = () => {
           </div>
           
           <div className="flex-1 min-h-0 overflow-y-auto">
-            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[70vh] w-full overflow-y-auto">
+            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[70vh] max-w-[120vh] overflow-y-auto">
               {isLoading ? (
                 <div className="flex items-center justify-center p-8">
                   <span>Loading...</span>
@@ -383,7 +385,7 @@ const StrategyList: React.FC = () => {
                   <thead className="border-b-2">
                     <tr>
                       <th className="sticky top-0 bg-white z-10 p-2 md:p-4 font-semibold text-center text-xs md:text-base">Strategy ID</th>
-                      <th className="sticky top-0 bg-white z-10 p-2 md:p-4 font-semibold text-left text-xs md:text-base">Strategy Name</th>
+                      <th className="sticky top-0 bg-white z-10 p-2 md:p-4 font-semibold text-left pl-4 text-xs md:text-base">Strategy Name</th>
                       <th className="sticky top-0 bg-white z-10 p-2 md:p-4 font-semibold text-left text-xs md:text-base">Strategy Description</th>
                     </tr>
                   </thead>
@@ -409,7 +411,7 @@ const StrategyList: React.FC = () => {
                         >
                           <td className="p-2 text-center text-xs md:text-base">{row.strategy_id}</td>
                           <td className="p-2 text-xs md:text-base">{row.strategy_name}</td>
-                          <td className="p-2 text-xs md:text-base">{row.strategy_description || ""}</td>
+                          <td className="p-2 text-xs md:text-base text-left">{row.strategy_description || ""}</td>
                         </tr>
                       ))
                     )}
@@ -439,6 +441,7 @@ const StrategyList: React.FC = () => {
           onClick = {() => {
             setShowEditDialog(false);
             setSelectedStrategy(null);
+            setUpdateMessage("");
           }}
         >
           <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-md"
@@ -454,9 +457,23 @@ const StrategyList: React.FC = () => {
             >
               ×
             </button>
-            <div className="flex items-center justify-center mb-6 md:mb-7 mt-4 md:mt-5">
-              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy Name :</label>
-              <span className="text-sm md:text-base">{selectedStrategy.strategy_name}</span>
+            <div className="flex flex-col items-left justify-center mb-6 md:mb-7 mt-4 md:mt-5">
+              <div className="flex flex-col gap-2 md:gap-3">
+                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy Name :</label>
+                <Input className="bg-muted text-sm md:text-base" value={selectedStrategy.strategy_name} readOnly />
+              </div>
+              {/* if strategy description is null, don't render it */}
+              {selectedStrategy.strategy_description && (
+                <div className="flex flex-col gap-2 md:gap-3">
+                  <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy Description :</label>
+                  <Textarea className="text-sm md:text-base min-h-[80px] flex-1 w-full md:w-auto resize-none bg-muted" readOnly>{selectedStrategy.strategy_description}</Textarea>
+                </div>
+              )}
+              {/* <div className="flex flex-col gap-2 md:gap-3">
+                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy Description :</label>
+                
+                <Textarea className="text-sm md:text-base min-h-[80px] flex-1 w-full md:w-auto resize-none bg-muted" readOnly>{selectedStrategy.strategy_description}</Textarea>
+              </div> */}
             </div>
             <div className="flex gap-4 md:gap-8 justify-center">
               {hasPermission(currentUserRole, "canDeleteTables") && (
@@ -486,14 +503,25 @@ const StrategyList: React.FC = () => {
 
       {/* Delete Confirmation Dialog */}
       {showDeleteConfirm && selectedStrategy && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50 p-4">
-          <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-md">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50 p-4"
+          onClick={() => {
+            setShowUpdateModal(false);
+            setSelectedStrategy(null);
+            setShowDeleteConfirm(false);
+          }}
+        >
+          <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-md"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button 
               type="button" 
-              className="absolute top-3 right-4 w-6 h-6 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 transition-colors" 
-              onClick={() => setShowDeleteConfirm(false)}
+              className="absolute top-3 right-4 text-2xl font-bold hover:text-gray-600 transition-colors" 
+              onClick={() => {
+                setShowDeleteConfirm(false);
+                setShowUpdateModal(false);
+              }}
             >
-              <X className="w-4 h-4" />
+              x
             </button>
             <div className="mt-4 md:mt-6">
               <p className="text-base md:text-lg font-semibold mb-4 text-center">
@@ -529,9 +557,12 @@ const StrategyList: React.FC = () => {
           onClick = {() => {
             setShowUpdateModal(false);
             setSelectedStrategy(null);
+            setUpdateMessage("");
           }}
         >
-          <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-lg min-h-[300px]">
+          <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-lg min-h-[300px]"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button 
               type="button" 
               className="absolute top-3 right-4 text-2xl font-bold hover:text-gray-600 transition-colors" 
@@ -545,7 +576,7 @@ const StrategyList: React.FC = () => {
             
             <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 mt-4 md:mt-5 gap-2 md:gap-0">
               <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy Name :</label>
-              <input
+              <Input
                 value={updateName}
                 onChange={e => setUpdateName(e.target.value)}
                 className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-lg flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
@@ -554,7 +585,7 @@ const StrategyList: React.FC = () => {
             
             <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 gap-2 md:gap-0">
               <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Strategy Description :</label>
-              <textarea
+              <Textarea
                 value={updateDescription}
                 onChange={e => setUpdateDescription(e.target.value)}
                 className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-lg flex-1 w-full md:w-auto min-h-[80px] resize-none focus:outline-none focus:ring focus:ring-blue-200"
@@ -563,8 +594,8 @@ const StrategyList: React.FC = () => {
             </div>
             
             <div className="flex flex-col md:flex-row items-center gap-2 md:gap-0">
-              <label className="text-base md:text-lg min-w-[80px]">Notes :</label>
-              <input
+              <label className="text-base md:text-lg min-w-[60px]">Notes </label>
+              <Input
                 value={updateMessage}
                 onChange={e => setUpdateMessage(e.target.value)}
                 className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
@@ -588,7 +619,10 @@ const StrategyList: React.FC = () => {
       {/* Add Strategy Dialog */}
       {addOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50 p-4"
-          onClick={() => setAddOpen(false)}
+          onClick={() => {
+            setAddOpen(false);
+            setAddMessage("");
+          }}
         >
           <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-lg min-h-[350px] flex flex-col justify-between"
             onClick={e => e.stopPropagation()}
@@ -605,7 +639,7 @@ const StrategyList: React.FC = () => {
             <div className="flex flex-col items-center justify-center flex-1">
               <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 w-full gap-2 md:gap-0">
                 <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy Name :</label>
-                <input
+                <Input
                   value={newStrategyName}
                   onChange={e => setNewStrategyName(e.target.value)}
                   className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
@@ -615,7 +649,7 @@ const StrategyList: React.FC = () => {
               
               <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 w-full gap-2 md:gap-0">
                 <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Strategy Description :</label>
-                <textarea
+                <Textarea
                   value={newStrategyDescription}
                   onChange={e => setNewStrategyDescription(e.target.value)}
                   className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 w-full md:w-auto min-h-[80px] resize-none focus:outline-none focus:ring focus:ring-blue-200"
@@ -625,8 +659,8 @@ const StrategyList: React.FC = () => {
             </div>
             
             <div className="flex flex-col md:flex-row items-center gap-2 md:gap-0">
-              <label className="text-base md:text-lg min-w-[80px]">Note :</label>
-              <input
+              <label className="text-base md:text-lg min-w-[60px]">Notes</label>
+              <Input
                 value={addMessage}
                 onChange={e => setAddMessage(e.target.value)}
                 className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
@@ -639,7 +673,7 @@ const StrategyList: React.FC = () => {
                     : "bg-green-300 text-white cursor-not-allowed"
                 }`}
                 onClick={handleAdd}
-                disabled={!newStrategyName.trim() || !addMessage.trim()}
+                disabled={!newStrategyName.trim() || !newStrategyDescription.trim() || !addMessage.trim()}
               >
                 Submit
               </button>
