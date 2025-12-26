@@ -930,9 +930,9 @@ export const TestCaseAddDialog = ({
                     >
                       <SelectTrigger className={`
                         ${errors.responseType ? 'bg-red-50 border-red-500 ring-2 ring-red-200' : 'bg-muted'}
-                        focus-visible:ring-ring focus-visible:ring-2
+                        focus-visible:ring-ring focus-visible:ring-2 placeholder:text-muted-foreground
                       `}>
-                        <SelectValue placeholder="Select response type" />
+                        <SelectValue className="placeholder:text-muted-foreground" placeholder="Select response type" />
                       </SelectTrigger>
                       <SelectContent className="bg-popover max-h-[300px]">
                         {responseTypes.map((type) => (

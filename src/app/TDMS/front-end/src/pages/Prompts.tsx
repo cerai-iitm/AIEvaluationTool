@@ -24,6 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 import { API_ENDPOINTS } from "@/config/api";
 import { hasPermission } from "@/utils/permissions";
 import { HistoryButton } from "@/components/HistoryButton";
+import { set } from "date-fns";
 
 interface PromptItem {
   prompt_id: number;
@@ -36,6 +37,7 @@ interface PromptItem {
 const Prompts = () => {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchField, setSearchField] = useState<"user_prompt" | "domain" | "language">("user_prompt");
   const [selectedPrompt, setSelectedPrompt] = useState<PromptItem | null>(null);
   const [updatePrompt, setUpdatePrompt] = useState<PromptItem | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -46,6 +48,8 @@ const Prompts = () => {
   const [promptToDelete, setPromptToDelete] = useState<PromptItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentUserRole, setCurrentUserRole] = useState<string>("");
+
+  const [highlightedRowId, setHighlightedRowId] = useState<number | null>(null);
 
   const fetchPrompts = useCallback(async () => {
     setIsLoading(true);
@@ -103,18 +107,29 @@ const Prompts = () => {
     fetchPrompts();
   }, [fetchPrompts]);
 
-  const filteredPrompts = useMemo(
-    () =>
+  const filteredPrompts = 
       prompts.filter((p) => {
         const query = searchQuery.toLowerCase();
-        return (
-          p.user_prompt.toLowerCase().includes(query) ||
-          (p.language?.toLowerCase() ?? "").includes(query) ||
-          (p.domain?.toLowerCase() ?? "").includes(query)
-        );
-      }),
-    [prompts, searchQuery],
-  );
+
+        if (!query) {
+          return true;
+        }
+
+        if (searchField === "user_prompt") {
+          return p.user_prompt.toLowerCase().includes(query);
+        } else if (searchField === "domain") {
+          return (p.domain?.toLowerCase() ?? "").includes(query);
+        } else if (searchField === "language") {
+          return (p.language?.toLowerCase() ?? "").includes(query);
+        }
+        return true;
+      //     p.user_prompt.toLowerCase().includes(query) ||
+      //     (p.language?.toLowerCase() ?? "").includes(query) ||
+      //     (p.domain?.toLowerCase() ?? "").includes(query)
+      //   );
+      // }),
+    // [prompts, searchQuery],
+}, [prompts, searchQuery, searchField]);
 
   const totalItems = filteredPrompts.length;
   const itemsPerPage = 15;
@@ -181,7 +196,9 @@ const Prompts = () => {
           <h1 className="text-4xl font-bold mb-8 text-center">Prompts</h1>
 
           <div className="flex gap-4 mb-6 ">
-            <Select defaultValue="promptname">
+            <Select defaultValue="promptname"
+              onValueChange={(value: "promptname" | "domain" | "language") => setSearchField(value)}
+            >
               <SelectTrigger className="w-48">
                 <SelectValue />
               </SelectTrigger>
@@ -195,7 +212,10 @@ const Prompts = () => {
             <Input
               placeholder="search"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
               className="w-64"
             />
             <div className="ml-auto flex items-center gap-4">
@@ -236,7 +256,7 @@ const Prompts = () => {
             </div>
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto">
-            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[67vh] overflow-y-auto">
+            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[70vh] overflow-y-auto">
               {isLoading ? (
                 <div className="flex items-center justify-center py-16">
                   <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -276,8 +296,13 @@ const Prompts = () => {
                       paginatedPrompts.map((row) => (
                         <tr
                           key={row.prompt_id}
-                          className="border-b hover:bg-muted/50 cursor-pointer"
-                          onClick={() => setSelectedPrompt(row)}
+                          className={`border-b cursor-pointer transition-colors duration-200 ${
+                            highlightedRowId === row.prompt_id ? "bg-primary/10 hover:bg-primary/15 border-primary/30": "hover:bg-muted/50"
+                          }`}
+                          onClick={() => {
+                            setSelectedPrompt(row);
+                            setHighlightedRowId(row.prompt_id);
+                          }}
                         >
                           <td className="p-2 text-center">{row.prompt_id}</td>
                           <td className="p-2 truncate max-w-[650px] pr-8 mr-2">
@@ -329,8 +354,9 @@ const Prompts = () => {
                   style = {{
                     height: '${height}px',
                     maxHeight: "120px",
-                    minHeight: "40px",
-                    overflowY: "auto"
+                    minHeight: "70px",
+                    overflowY: "auto",
+                    // resize: "none"
                   }}                
                   className="bg-muted min-h-[80px]"
                 />
@@ -342,7 +368,7 @@ const Prompts = () => {
                   style = {{
                     height: '${height}px',
                     maxHeight: "120px",
-                    minHeight: "40px",
+                    minHeight: "70px",
                     overflowY: "auto"
                   }}               
                   className="bg-muted min-h-[80px]"
@@ -450,8 +476,8 @@ const Prompts = () => {
               </div>
             )}
           </div>
-          <div className="flex justify-end gap-3 pt-4">
-            <Button
+          <div className="flex justify-center gap-3 pt-4">
+            {/* <Button
               variant="outline"
               onClick={() => {
                 setDeleteDialogOpen(false);
@@ -460,7 +486,7 @@ const Prompts = () => {
               disabled={isDeleting}
             >
               Cancel
-            </Button>
+            </Button> */}
             <Button
               variant="destructive"
               onClick={handleDeletePrompt}
@@ -472,7 +498,7 @@ const Prompts = () => {
                   Deleting...
                 </>
               ) : (
-                "Delete"
+                "Confirm Delete"
               )}
             </Button>
           </div>

@@ -16,9 +16,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { API_ENDPOINTS } from "@/config/api";
+import {
+  PromptSearchDialog,
+  PromptSearchSelection,
+  PromptSearchType,
+} from "./PromptSearchDialog";
 
 export interface PromptItem {
   prompt_id: number;
@@ -54,6 +59,9 @@ export function PromptUpdateDialog({
   const [languageOptions, setLanguageOptions] = useState<string[]>([]);
   const [domainOptions, setDomainOptions] = useState<string[]>([]);
   const [isOptionsLoading, setIsOptionsLoading] = useState(false);
+  const [searchDialogOpen, setSearchDialogOpen] = useState(false);
+  const [searchType, setSearchType] = useState<PromptSearchType>("systemPrompt");
+  const [focusedField, setFocusedField] = useState<null | "systemPrompt">(null);
 
   const promptLanguage = prompt?.language ?? "";
   const promptDomain = prompt?.domain ?? "";
@@ -74,8 +82,32 @@ export function PromptUpdateDialog({
       setIsSubmitting(false);
       setLanguageOptions([]);
       setDomainOptions([]);
+      setFocusedField(null);
+      setSearchDialogOpen(false);
     }
   }, [open]);
+
+  const handleSearchClick = (type: PromptSearchType) => {
+    setSearchType(type);
+    setSearchDialogOpen(true);
+    if (type === "systemPrompt") {
+      setFocusedField("systemPrompt");
+    } else {
+      setFocusedField(null);
+    }
+  };
+
+  const handleSelectPrompt = (selection: PromptSearchSelection) => {
+    switch (selection.type) {
+      case "systemPrompt":
+        setSystemPrompt(selection.systemPrompt);
+        break;
+      default:
+        break;
+    }
+    setSearchDialogOpen(false);
+    setFocusedField(null);
+  };
 
   const fetchReferenceData = useCallback(async () => {
     setIsOptionsLoading(true);
@@ -259,16 +291,42 @@ export function PromptUpdateDialog({
               value={userPrompt}
               onChange={(e) => setUserPrompt(e.target.value)}
               className="bg-muted min-h-[80px]"
+              style={{
+                maxHeight: "120px",
+                minHeight: "70px",
+                overflow: "auto",
+              }}
             />
           </div>
           <div className="space-y-1">
             <Label className="text-base font-semibold">System Prompt</Label>
-            <Textarea
-              value={systemPrompt}
-              onChange={(e) => setSystemPrompt(e.target.value)}
-              className="bg-muted min-h-[80px]"
-              
-            />
+            <div className="relative">
+              <Textarea
+                value={systemPrompt}
+                onChange={(e) => setSystemPrompt(e.target.value)}
+                onFocus={() => setFocusedField("systemPrompt")}
+                onBlur={() => setFocusedField(null)}
+                className="bg-muted min-h-[80px] pr-10"
+                style={{
+                  maxHeight: "120px",
+                  minHeight: "70px",
+                  overflow: "auto",
+                }}
+                placeholder="Enter system prompt or Search "
+              />
+              {focusedField === "systemPrompt" && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-2 top-2"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => handleSearchClick("systemPrompt")}
+                  tabIndex={-1}
+                >
+                  <Search className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
@@ -365,6 +423,12 @@ export function PromptUpdateDialog({
           </Button>
         </div>
       </DialogContent>
+      <PromptSearchDialog
+        open={searchDialogOpen}
+        onOpenChange={setSearchDialogOpen}
+        onSelect={handleSelectPrompt}
+        searchType={searchType}
+      />
     </Dialog>
   );
 }

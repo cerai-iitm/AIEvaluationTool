@@ -3222,7 +3222,19 @@ class DB:
             prompt = session.query(Prompts).filter(Prompts.prompt_id == prompt_id).first()
             if not prompt:
                 return False
-            # First detach any TestCases that reference Responses for this prompt
+            
+            # First, delete any TestCases that directly reference this prompt_id
+            # since prompt_id is NOT NULL in TestCases, we must delete them
+            # before deleting the prompt to avoid violating the NOT NULL constraint.
+            testcases_with_prompt = (
+                session.query(TestCases)
+                .filter(TestCases.prompt_id == prompt_id)
+                .all()
+            )
+            for tc in testcases_with_prompt:
+                session.delete(tc)
+            
+            # Then detach any TestCases that reference Responses for this prompt
             # by nulling out their response_id, so that we can safely delete
             # the corresponding Responses rows without violating FK constraints.
             testcases_with_responses = (
