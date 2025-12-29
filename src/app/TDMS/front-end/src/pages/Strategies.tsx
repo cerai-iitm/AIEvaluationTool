@@ -347,7 +347,7 @@ const StrategyList: React.FC = () => {
               <HistoryButton
                 entityType="Strategy"
                 title="Strategies"
-                idField="strategyId"
+                idField="testCaseId"
                 idLabel="Strategy ID"
               />
               <span className="text-xs sm:text-sm text-muted-foreground">

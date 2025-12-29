@@ -271,7 +271,7 @@ const Responses = () => {
               <HistoryButton
                 entityType="Response"
                 title="Responses"
-                idField="responseId"
+                idField="testCaseId"
                 idLabel="Response ID"
               />
               <span className="text-sm text-muted-foreground">

@@ -222,7 +222,7 @@ const Prompts = () => {
               <HistoryButton
                 entityType="Prompt"
                 title="Prompts"
-                idField="promptId"
+                idField="testCaseId"
                 idLabel="Prompt ID"
               />
               <span className="text-sm text-muted-foreground">

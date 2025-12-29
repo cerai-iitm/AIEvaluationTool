@@ -325,7 +325,7 @@ const LanguageList: React.FC = () => {
                             <HistoryButton
                                 entityType="Language"
                                 title="Languages"
-                                idField="languageId"
+                                idField="testCaseId"
                                 idLabel="Language ID"
                             />
                             <span className="text-xs sm:text-sm text-muted-foreground">

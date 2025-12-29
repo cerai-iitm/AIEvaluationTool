@@ -303,8 +303,9 @@ const Targets = () => {
               <HistoryButton
                 entityType="Target"
                 title="Targets"
-                idField="targetId"
+                idField="testCaseId"
                 idLabel="Target ID"
+                entityId={selectedTarget?.target_id}
               />
               <span className="test-sm text-muted-foreground">
                 {totalItems === 0

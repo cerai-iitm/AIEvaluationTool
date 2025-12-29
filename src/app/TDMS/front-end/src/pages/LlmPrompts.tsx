@@ -202,7 +202,7 @@ const LlmPrompts = () => {
               <HistoryButton
                 entityType="LLM Prompt"
                 title="LLM Prompts"
-                idField="llmPromptId"
+                idField="testCaseId"
                 idLabel="Prompt ID"
               />
               <span className="text-sm text-muted-foreground">

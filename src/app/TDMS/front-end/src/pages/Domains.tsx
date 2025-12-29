@@ -349,7 +349,7 @@ const DomainList: React.FC = () => {
               <HistoryButton
                 entityType="Domain"
                 title="Domains"
-                idField="domainId"
+                idField="testCaseId"
                 idLabel="Domain ID"
               />
               <span className="text-xs sm:text-sm text-muted-foreground">
