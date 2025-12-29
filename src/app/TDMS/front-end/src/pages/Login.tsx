@@ -136,7 +136,7 @@ const Login = () => {
               <div  className="relative">
                 <Input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="h-12 pr-10"

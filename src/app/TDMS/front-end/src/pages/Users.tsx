@@ -225,7 +225,16 @@ const Users = () => {
       <main className="flex-1 bg-background ml-[224px]">
         <div className="p-8">
           <h1 className="text-4xl font-bold mb-12 text-center">User's List</h1>
-
+          {hasPermission(currentUserRole, "canCreateUser") && (
+            <div className="mt-8 max-w-5xl mx-auto mb-4">
+              <Button
+                className="bg-primary hover:bg-primary/90"
+                onClick={() => setShowCreateUser(true)}
+              >
+                + Add User
+              </Button>
+            </div>
+          )}
           {isLoading ? (
             <div className="text-center py-12">
               <p className="text-lg text-muted-foreground">Loading users...</p>
@@ -264,8 +273,9 @@ const Users = () => {
               </table>
             </div>
           )}
+          
 
-          {hasPermission(currentUserRole, "canCreateUser") && (
+          {/* {hasPermission(currentUserRole, "canCreateUser") && (
             <div className="mt-8 max-w-5xl mx-auto">
               <Button
                 className="bg-primary hover:bg-primary/90"
@@ -274,7 +284,7 @@ const Users = () => {
                 + Add User
               </Button>
             </div>
-          )}
+          )} */}
         </div>
       </main>
 

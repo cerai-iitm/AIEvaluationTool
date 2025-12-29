@@ -484,17 +484,18 @@ const UserHistory = () => {
                 Cancel
               </Button>
               <Button
-                className="bg-primary hover:bg-primary/90 px-12"
+                className="bg-primary hover:bg-primary/90 px-6"
                 onClick={handleUpdate}
                 disabled={isUpdating}
               >
                 {isUpdating ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Updating...
+                    Updating
                   </>
                 ) : (
-                  "Save"
+                  <>save</>
+                  
                 )}
               </Button>
             </div>

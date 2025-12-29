@@ -711,8 +711,8 @@ export const TestCaseAddDialog = ({
                 )}
               </div>
             </div>
-
-            <div className="space-y-2 pb-4">
+                <hr />
+            <div className="space-y-1 pb-2">
               {/* <div className="flex items-center justify-between"> */}
                 <Label className="text-base font-semibold">Prompt</Label>
               {/* </div> */}
@@ -875,9 +875,9 @@ export const TestCaseAddDialog = ({
                 </>
               )}
             </div>
-
-
-            <div className="space-y-2 pb-4">
+            <div className="line"></div>  
+              <hr />
+            <div className="space-y-1 pb-2">
               <div className="space-y-2">
                 <Label className="text-base font-semibold">Response</Label>
                 <div className="relative">
@@ -990,8 +990,8 @@ export const TestCaseAddDialog = ({
                 </>
               )}
             </div>
-
-            <div className="space-y-2">
+              <hr />
+            <div className="space-y-1">
               <Label className="text-base font-semibold">Strategy</Label>
               <Select 
                 value={strategy} 
@@ -1073,7 +1073,7 @@ export const TestCaseAddDialog = ({
 
             <div className="flex justify-center items-center p-4 border-gray-300 bg-white sticky bottom-0 z-10">
               <Label className="text-base font-semibold mr-2">Notes</Label>
-              <input
+              <Input
                 placeholder="Enter Notes"
                 type="text"
                 value={notes}
@@ -1082,7 +1082,7 @@ export const TestCaseAddDialog = ({
                   setShowDetails(false);
                   setShowRequestDetails(false);
                 }}
-                className="bg-gray-200 rounded px-4 py-1 mr-4 w-96"
+                className="bg-muted rounded px-4 py-1 mr-4 w-96"
                 required
               />
               <button
