@@ -270,7 +270,7 @@ def create_testcase(
                 log_activity(
                     username=username,
                     entity_type="Test Case",
-                    entity_id=str(testcase_full.testcase_name),
+                    entity_id=str(testcase_full.testcase_id),
                     operation="create",
                     note=f"Test Case - {testcase_full.testcase_name} created",
                 )
@@ -447,7 +447,7 @@ def update_testcase(
         log_activity(
             username=username,
             entity_type="Test Case",
-            entity_id=str(updated.testcase_name),
+            entity_id=str(updated.testcase_id),
             operation="update",
             note=note,
         )
@@ -499,7 +499,7 @@ def delete_testcase(
         log_activity(
             username=username,
             entity_type="Test Case",
-            entity_id=str(testcase_name),
+            entity_id=str(testcase_id),
             operation="delete",
             note=f"Test case - {existing.name} deleted",
         )

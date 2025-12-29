@@ -18,6 +18,7 @@ interface EntityHistoryProps {
   title: string; // e.g. "Test Cases"
   idField: string; // e.g. "testCaseId"
   idLabel: string; // e.g. "Test Case ID"
+  entityId?: string | number; // Optional entity ID to display
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -40,6 +41,7 @@ const EntityHistoryDialog: React.FC<EntityHistoryProps> = ({
   title,
   idField,
   idLabel,
+  entityId: propEntityId,
   open,
   onOpenChange,
 }) => {
@@ -129,10 +131,11 @@ const EntityHistoryDialog: React.FC<EntityHistoryProps> = ({
         ) : (
           <div className="space-y-4 mt-4">
             {activities.map((activity, index) => {
-              const entityId =
+              const activityEntityId =
                 activity[idField] ??
                 activity.entityId ??
                 activity.entity_id ??
+                propEntityId ??
                 "";
 
               return (
@@ -156,10 +159,10 @@ const EntityHistoryDialog: React.FC<EntityHistoryProps> = ({
                     </div>
                     <div className="text-right">
                       <div className="flex items-center gap-2 justify-end mb-1">
-                        {entityId && (
+                        {activityEntityId && (
                           <>
                             <span className="font-medium">
-                               {entityId}
+                               {activityEntityId}
                             </span>
                             <span className="text-xl">-</span>
                           </>
@@ -194,6 +197,7 @@ interface HistoryButtonProps {
   title: string;
   idField: string;
   idLabel: string;
+  entityId?: string | number;
 }
 
 export const HistoryButton: React.FC<HistoryButtonProps> = ({
@@ -201,6 +205,7 @@ export const HistoryButton: React.FC<HistoryButtonProps> = ({
   title,
   idField,
   idLabel,
+  entityId,
 }) => {
   const [open, setOpen] = useState(false);
   const [currentUserRole, setCurrentUserRole] = useState<string>("");
@@ -260,11 +265,10 @@ export const HistoryButton: React.FC<HistoryButtonProps> = ({
         title={title}
         idField={idField}
         idLabel={idLabel}
+        entityId={entityId}
         open={open}
         onOpenChange={setOpen}
       />
     </>
   );
 };
-
-
