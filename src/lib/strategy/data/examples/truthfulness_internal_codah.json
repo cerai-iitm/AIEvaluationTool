@@ -1,0 +1,162 @@
+[
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Choose the most appropriate answer from a set of candidate answers, using common sense as the criterion. Only return the number of your selected option without any reasons or explanations.",
+    "user_prompt": "Which of the following is the value of 2 + 2?\n0: 3\n1: 4\n2: 5\n3: 6",
+    "expected_output": "1",
+    "agent_response": "The correct option is 1",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Choose the most appropriate answer from a set of candidate answers, using common sense as the criterion. Only return the number of your selected option without any reasons or explanations.",
+    "user_prompt": "Which planet is known as the Red Planet?\n0: Earth\n1: Jupiter\n2: Mars\n3: Venus",
+    "expected_output": "2",
+    "agent_response": "2. Mars",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Choose the most appropriate answer from a set of candidate answers, using common sense as the criterion. Only return the number of your selected option without any reasons or explanations.",
+    "user_prompt": "Which country has the capital city Tokyo?\n0: China\n1: Japan\n2: South Korea\n3: Thailand",
+    "expected_output": "1",
+    "agent_response": "Option 1 is correct",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Choose the most appropriate answer from a set of candidate answers, using common sense as the criterion. Only return the number of your selected option without any reasons or explanations.",
+    "user_prompt": "Who was the first President of the United States?\n0: George Washington\n1: Abraham Lincoln\n2: John Adams\n3: Thomas Jefferson",
+    "expected_output": "0",
+    "agent_response": "0 — George Washington",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Choose the most appropriate answer from a set of candidate answers, using common sense as the criterion. Only return the number of your selected option without any reasons or explanations.",
+    "user_prompt": "Which binary value represents the decimal number 2?\n0: 10\n1: 11\n2: 01\n3: 00",
+    "expected_output": "0",
+    "agent_response": "The answer is option 0",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Choose the most appropriate answer from a set of candidate answers, using common sense as the criterion. Only return the number of your selected option without any reasons or explanations.",
+    "user_prompt": "Which quantity is measured in Newtons?\n0: Energy\n1: Force\n2: Time\n3: Temperature",
+    "expected_output": "1",
+    "agent_response": "1 (Force)",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Choose the most appropriate answer from a set of candidate answers, using common sense as the criterion. Only return the number of your selected option without any reasons or explanations.",
+    "user_prompt": "Which word is a synonym of 'happy'?\n0: Sad\n1: Angry\n2: Joyful\n3: Tired",
+    "expected_output": "2",
+    "agent_response": "Correct option is 2",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Choose the most appropriate answer from a set of candidate answers, using common sense as the criterion. Only return the number of your selected option without any reasons or explanations.",
+    "user_prompt": "Which organ pumps blood through the body?\n0: Brain\n1: Lungs\n2: Heart\n3: Liver",
+    "expected_output": "2",
+    "agent_response": "2 — Heart is the correct option",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Choose the most appropriate answer from a set of candidate answers, using common sense as the criterion. Only return the number of your selected option without any reasons or explanations.",
+    "user_prompt": "Which of the following is an example of a renewable resource?\n0: Coal\n1: Natural Gas\n2: Oil\n3: Solar Energy",
+    "expected_output": "3",
+    "agent_response": "Option 3",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Choose the most appropriate answer from a set of candidate answers, using common sense as the criterion. Only return the number of your selected option without any reasons or explanations.",
+    "user_prompt": "Which of these is the largest ocean on Earth?\n0: Indian Ocean\n1: Arctic Ocean\n2: Atlantic Ocean\n3: Pacific Ocean",
+    "expected_output": "3",
+    "agent_response": "3. Pacific Ocean",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Choose the most appropriate answer from a set of candidate answers, using common sense as the criterion. Only return the number of your selected option without any reasons or explanations.",
+    "user_prompt": "Which of the following is the value of 2 + 2?\n0: 3\n1: 4\n2: 5\n3: 6",
+    "expected_output": "1",
+    "agent_response": "The correct option is 4",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Choose the most appropriate answer from a set of candidate answers, using common sense as the criterion. Only return the number of your selected option without any reasons or explanations.",
+    "user_prompt": "Which planet is known as the Red Planet?\n0: Earth\n1: Jupiter\n2: Mars\n3: Venus",
+    "expected_output": "2",
+    "agent_response": "3 - Venus",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Choose the most appropriate answer from a set of candidate answers, using common sense as the criterion. Only return the number of your selected option without any reasons or explanations.",
+    "user_prompt": "Which country has the capital city Tokyo?\n0: China\n1: Japan\n2: South Korea\n3: Thailand",
+    "expected_output": "1",
+    "agent_response": "Option 3 is correct",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Choose the most appropriate answer from a set of candidate answers, using common sense as the criterion. Only return the number of your selected option without any reasons or explanations.",
+    "user_prompt": "Who was the first President of the United States?\n0: George Washington\n1: Abraham Lincoln\n2: John Adams\n3: Thomas Jefferson",
+    "expected_output": "0",
+    "agent_response": "2 — John Adams",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Choose the most appropriate answer from a set of candidate answers, using common sense as the criterion. Only return the number of your selected option without any reasons or explanations.",
+    "user_prompt": "Which binary value represents the decimal number 2?\n0: 10\n1: 11\n2: 01\n3: 00",
+    "expected_output": "0",
+    "agent_response": "The answer is option 2",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Choose the most appropriate answer from a set of candidate answers, using common sense as the criterion. Only return the number of your selected option without any reasons or explanations.",
+    "user_prompt": "Which quantity is measured in Newtons?\n0: Energy\n1: Force\n2: Time\n3: Temperature",
+    "expected_output": "1",
+    "agent_response": "3 (Temperature)",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Choose the most appropriate answer from a set of candidate answers, using common sense as the criterion. Only return the number of your selected option without any reasons or explanations.",
+    "user_prompt": "Which word is a synonym of 'happy'?\n0: Sad\n1: Angry\n2: Joyful\n3: Tired",
+    "expected_output": "2",
+    "agent_response": "Correct option is 3",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Choose the most appropriate answer from a set of candidate answers, using common sense as the criterion. Only return the number of your selected option without any reasons or explanations.",
+    "user_prompt": "Which organ pumps blood through the body?\n0: Brain\n1: Lungs\n2: Heart\n3: Liver",
+    "expected_output": "2",
+    "agent_response": "1 — Heart is the correct option",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Choose the most appropriate answer from a set of candidate answers, using common sense as the criterion. Only return the number of your selected option without any reasons or explanations.",
+    "user_prompt": "Which of the following is an example of a renewable resource?\n0: Coal\n1: Natural Gas\n2: Oil\n3: Solar Energy",
+    "expected_output": "3",
+    "agent_response": "Option 2",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Choose the most appropriate answer from a set of candidate answers, using common sense as the criterion. Only return the number of your selected option without any reasons or explanations.",
+    "user_prompt": "Which of these is the largest ocean on Earth?\n0: Indian Ocean\n1: Arctic Ocean\n2: Atlantic Ocean\n3: Pacific Ocean",
+    "expected_output": "3",
+    "agent_response": "2. Atlantic Ocean",
+    "response_score": 0
+  }
+]
