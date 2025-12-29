@@ -9,12 +9,15 @@ import iitBackground from "@/assets/iit-background.jpeg";
 import { useToast } from "@/hooks/use-toast";
 import { API_ENDPOINTS } from "@/config/api";
 
+import {Eye, EyeOff} from "lucide-react";
+
 const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setshowPassword] = useState(false);
 
   const getToastColor = (variant) => {
     switch(variant) {
@@ -108,7 +111,7 @@ const Login = () => {
         }}
         >
           <h1 className="text-3xl font-bold text-center mb-8 text-foreground">
-            Welcome to AI Evaluation Tool Data
+            Test Data Management System
           </h1>
 
           <form onSubmit={handleLogin} className="space-y-6">
@@ -130,14 +133,28 @@ const Login = () => {
               <Label htmlFor="password" className="text-base font-medium">
                 Password :
               </Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="h-12"
-                required
-              />
+              <div  className="relative">
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="h-12 pr-10"
+                  required
+                />
+                <button
+                  type = "button"
+                  onClick={() => setshowPassword((prev) => !prev)}
+                  className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className = "h-5 w-5" />
+                  )}
+                </button>
+              </div>
             </div>
 
             <div className="flex justify-center pt-4">
