@@ -46,87 +46,124 @@ class HallucinationStrategy(Strategy):
         pass
 
 
-# from ddgs import DDGS
-# import bs4
-# from langchain_community.document_loaders import WebBaseLoader
-# import re
-# import requests
-# import heapq
+from ddgs import DDGS
+import bs4
+from langchain_community.document_loaders import WebBaseLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_core.documents import Document
+import re
+import requests
+import heapq
+from typing import Optional
+from pydantic import BaseModel
+import itertools
 
-# def top_links(query, n=3):
-#     with DDGS() as ddgs:
-#         results = ddgs.text(query, max_results=n)
-#         # print(results)
-#         return [(r["title"], r["href"], r["body"]) for r in results if len(r["body"]) > 100]
+counter = itertools.count()
 
-# links = top_links("agriculture in india")
+class TextData(BaseModel):
+    text : str
+    title : Optional[str]
+    href : Optional[str]
 
-# # text_strainer = bs4.SoupStrainer(
-# #     ["article", "section", "p"],
-# #     class_=re.compile("content|article|main|body")
-# # )
-# headers = {
-#     "User-Agent" : (
-#         "MyTextFetcher/0.1"
-#         "(Research Project; https://github.com/anukul; anukul@gmail.com)"
-#     ),
-#     "Accept-Encoding" : "gzip"
-# }
+def top_links(query, n=3):
+    with DDGS() as ddgs:
+        results = ddgs.text(query, max_results=n)
+        return [TextData(text=r["body"], href=r["href"], title=r["title"]) for r in results if len(r["body"]) > 100]
 
-# html_pages = [requests.get(links[i][1], timeout=10, headers=headers) for i in range(len(links))]
-# text_strainer = bs4.SoupStrainer(["article", "section", "div", "main", "h1", "h2", "h3"])#, class_=[re.compile("content")])
-# soup = bs4.BeautifulSoup(html_pages[2].text, features="lxml", parse_only=text_strainer)
+page_info = top_links("agriculture in india")
 
-# candidates = []
+headers = {
+    "User-Agent" : (
+        "MyTextFetcher/0.1"
+        "(Research Project; https://github.com/anukul; anukul@gmail.com)"
+    ),
+    "Accept-Encoding" : "gzip"
+}
 
-# def rank_text(text:str):
-#     length_score = len(text)
-#     sentence_score = text.count(".") * 20
-#     paragraph_score = text.count("\n") * 5
+html_pages = [requests.get(l.href, timeout=10, headers=headers) for l in page_info]
+text_strainer = bs4.SoupStrainer(["article", "section", "div", "main", "h1", "h2", "h3"])#, class_=[re.compile("content")])
+soups = [(bs4.BeautifulSoup(page.text, features="lxml", parse_only=text_strainer), info.title, info.href) for page, info in zip(html_pages, page_info)]
 
-#     digit_penalty = len(re.findall(r"\d", text)) * 15
-#     symbol_penalty = len(re.findall(r"[|/\\=<>_{}<>@#$^*_+=~`[\]]", text)) * 20
+candidates = []
 
-#     short_word_pen = len(re.findall(r"\b\w{1,2}\b", text)) * 5
+def rank_text(text:str):
+    length_score = len(text)
+    sentence_score = text.count(".") * 20
+    paragraph_score = text.count("\n") * 5
+    digit_penalty = len(re.findall(r"\d", text)) * 15
+    symbol_penalty = len(re.findall(r"[|/\\=<>_{}<>@#$^*_+=~`[\]]", text)) * 20
+    short_word_pen = len(re.findall(r"\b\w{1,2}\b", text)) * 5
 
-#     return length_score + sentence_score + paragraph_score - digit_penalty - symbol_penalty - short_word_pen
+    return length_score + sentence_score + paragraph_score - digit_penalty - symbol_penalty - short_word_pen
 
-# def clean_text(text:str):
-#     text = re.sub(r"\s+", " ", text)
-#     text = re.sub(r"https://\S+", " ", text)
-#     text = re.sub(r"\[[^\]]{1,4}\]", "", text)
-#     text = re.sub(r"[|•·–—]{2,}", "", text)
-#     text = re.sub(r"[<>@#$^*_+=~`]", "", text)
-#     text = re.sub(r"\b[a-zA-Z]{30,}\b", "", text)
+def clean_text(text:str):
+    text = re.sub(r"https?://[^\s]+", "", text) # URLs, keep line breaks also
+    text = re.sub(r"\[[^\]]{1,4}\]", "", text) # remove texts like [1] [2]
+    text = re.sub(r"[|•·–—]+", " ", text) # whitespace after separators
+    text = re.sub(r"[<>@#$^*_+=~`]", " ", text) # whitespace after these symbols
+    text = re.sub(r"\b[a-zA-Z]{30,}\b", " ", text) # remove the long words, generally meaningless
+    text = re.sub(r"[ \t]+", " ", text)     # collapse spaces only
+    text = re.sub(r"\n{3,}", "\n\n", text)  # keep paragraphs
+    text = text.strip()
 
-#     lines = []
-#     for line in re.split(r"(?<=[.!?])\s+", text):
-#         line = line.strip()
-#         if len(line) < 25:
-#             continue
-#         if line.isupper():
-#             continue
-#         lines.append(line)
-#     return ". ".join(lines)
+    lines = []
+    for line in re.split(r"(?<=[.!?])\s+", text):
+        line = line.strip()
+        if len(line) < 25:
+            continue
+        if line.isupper():
+            continue
+        lines.append(line)
+    return ". ".join(lines)
 
-# for tag in soup.find_all([re.compile("article|main|section|div")]):
-#     text = tag.get_text(strip=True)
+for soup in soups:
+    for tag in soup[0].find_all([re.compile("article|main|section|div|h1|h2|h3")]):
+        text = tag.get_text(strip=True)
 
-#     if len(text) < 500:
-#         continue
-#     score = rank_text(text)
-#     text = clean_text(text)
-    
-#     heapq.heappush(candidates, (score, text))
+        if len(text) < 500:
+            continue
+        text = clean_text(text)
+        score = rank_text(text)
+        
+        heapq.heappush(candidates, (-1 * score, next(counter), TextData(text=text, title=soup[1], href=soup[2])))
 
-# print(heapq.nlargest(2, candidates))
-# # loader = WebBaseLoader(
-# #     web_paths=(links[0][1],),
-# #     bs_kwargs={"parse_only" : text_strainer},
-# # )
-# # docs = loader.load()
+# best_info_texts = [heapq.heappop(candidates)[1] for _ in range(len(soups))]
+best_info_texts = []
 
-# # for l in links:
-# #     print(l)
+sources = list(set([page_info[i].href for i in range(len(page_info))]))
+while(len(sources) > 0 and len(candidates) > 0):
+    popped_elem = heapq.heappop(candidates)[2]
+    best_info_texts.append(popped_elem)
+    if(popped_elem.href not in sources):
+        continue
+    sources.remove(popped_elem.href)
 
-# # print(f"{docs[0].page_content}")
+docs = []
+for pages in best_info_texts:
+    docs.append(
+        Document(
+            page_content=pages.text,
+            metadata = {
+                "source" : pages.href,
+                "title" : pages.title
+            }
+        )
+    )
+
+print(docs[0].page_content)
+
+splitter = RecursiveCharacterTextSplitter(chunk_size = 2000, chunk_overlap=400, add_start_index=True)
+chunked_docs = splitter.split_documents(docs)
+
+
+# loader = WebBaseLoader(
+#     web_paths=(links[0][1],),
+#     bs_kwargs={"parse_only" : text_strainer},
+# )
+# docs = loader.load()
+
+# for l in links:
+#     print(l)
+
+# print(f"{docs[0].page_content}")
+
