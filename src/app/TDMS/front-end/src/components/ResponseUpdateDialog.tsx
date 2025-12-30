@@ -271,7 +271,7 @@ export const ResponseUpdateDialog = ({
               <div className="space-y-2">
                 <Label className="text-base font-semibold">Response Type</Label>
                 <Select value={responseType} onValueChange={setResponseType}>
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-muted capitalize">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-popover max-h-[300px]">
@@ -291,7 +291,7 @@ export const ResponseUpdateDialog = ({
                   onValueChange={setLanguage}
                   disabled={isFetchingLanguages}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-muted capitalize">
                     <SelectValue
                       placeholder={
                         isFetchingLanguages

@@ -246,11 +246,11 @@ export const TestCaseUpdateDialog = ({
     llmPrompt: "",
   };
   const isChanged = (
-    userPrompts !== (testCaseInitial.userPrompts || "") ||
-    systemPrompts !== (testCaseInitial.systemPrompts || "") ||
-    responseText !== (testCaseInitial.responseText || "") ||
-    llmPrompt !== (testCaseInitial.llmPrompt || "") ||
-    strategy !== (testCaseInitial.strategyName || "")
+    userPrompts.trim() !== (testCaseInitial.userPrompts || "") ||
+    systemPrompts.trim() !== (testCaseInitial.systemPrompts || "") ||
+    responseText.trim() !== (testCaseInitial.responseText || "") ||
+    llmPrompt.trim() !== (testCaseInitial.llmPrompt || "") ||
+    strategy.trim() !== (testCaseInitial.strategyName || "")
     // notes !== ""
   );
 
@@ -737,7 +737,7 @@ export const TestCaseUpdateDialog = ({
                 disabled={
                  // !notNull ||
                   !isChanged || 
-                  !notes || 
+                  !notes.trim() || 
                   isLoading ||
                   (!hasPermission(currentUserRole, "canUpdateTables") && 
                    !hasPermission(currentUserRole, "canUpdateRecords"))

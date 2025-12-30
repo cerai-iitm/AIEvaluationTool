@@ -376,7 +376,7 @@ const Prompts = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <Label className="text-base font-semibold">language Name</Label>
+                  <Label className="text-base font-semibold">Language</Label>
                   <Input
                     value={selectedPrompt.language ?? ""}
                     readOnly
@@ -384,7 +384,7 @@ const Prompts = () => {
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-base font-semibold">Domain Name</Label>
+                  <Label className="text-base font-semibold">Domain</Label>
                   <Input
                     value={selectedPrompt.domain ?? ""}
                     readOnly

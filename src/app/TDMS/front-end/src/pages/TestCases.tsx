@@ -408,13 +408,13 @@ const TestCases = () => {
             <Select defaultValue="testcase"
               onValueChange={(value: "testcase" | "strategy" | "domain") => setSearchField(value)}
             >
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-40">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="testcase">Test Case Name</SelectItem>
-                <SelectItem value="strategy">Strategy Name</SelectItem>
-                <SelectItem value="domain">Domain Name</SelectItem>
+                <SelectItem value="testcase">Test Case</SelectItem>
+                <SelectItem value="strategy">Strategy</SelectItem>
+                <SelectItem value="domain">Domain</SelectItem>
               </SelectContent>
             </Select>
 
@@ -487,7 +487,7 @@ const TestCases = () => {
             </div> */}
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto">
-          <div className="bg-white rounded-lg shadow overflow-hidden max-h-[70vh] overflow-y-auto">
+          <div className="bg-white rounded-lg shadow overflow-hidden max-h-[70vh] max-w-[140vh] overflow-y-auto">
             <table className="w-full table-fixed">
               <thead className="border-b-2">
                 <tr>
@@ -588,7 +588,7 @@ const TestCases = () => {
 
 
               <div className="space-y-1">
-                <Label className="text-base font-semibold">User Prompts</Label>
+                <Label className="text-base font-semibold">User Prompt</Label>
                 <Textarea
                   ref={userPromptsRef}
                   value={selectedCase.userPrompts}
@@ -605,7 +605,7 @@ const TestCases = () => {
               </div>
 
               <div className="space-y-1">
-                <Label className="text-base font-semibold">System prompts</Label>
+                <Label className="text-base font-semibold">System prompt</Label>
                 <Textarea
                   ref={systemPromptsRef}
                   value={selectedCase.systemPrompts}
@@ -623,7 +623,7 @@ const TestCases = () => {
 
               { selectedCase.responseText && selectedCase.responseText.trim() !== "" && (
               <div className="space-y-1">
-                <Label className="text-base font-semibold">Response Text</Label>
+                <Label className="text-base font-semibold">Response</Label>
                 <Textarea
                   ref={responseTextRef}
                   value={selectedCase.responseText}
@@ -641,7 +641,7 @@ const TestCases = () => {
               )}
               
               <div className=" space-y-1 ">
-                <Label className="text-base font-semibold basis-[25%] pt-1">Strategy Name</Label>
+                <Label className="text-base font-semibold basis-[25%] pt-1">Strategy</Label>
                 {/* <Label className=" font-normal p-2 m-4 bg-muted"> {selectedCase.strategyName} </Label> */}
                 <Input value={selectedCase.strategyName} readOnly className="bg-muted basis-[75%]" />
               </div>

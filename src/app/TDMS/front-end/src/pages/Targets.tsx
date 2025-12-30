@@ -455,7 +455,7 @@ const Targets = () => {
           ) : selectedTarget ? (
             <div className="flex-1 p-1 overflow-y-auto space-y-6 pb-5">
               <div className="flex items-center justify-center gap-2">
-                <Label className="text-base font-semibold">Target Name -  </Label>
+                <Label className="text-base font-semibold">Target -  </Label>
                 <Label className="text-xl font-semibold text-primary hover:text-primary/90">
                   {selectedTarget.target_name}
                 </Label>
@@ -499,7 +499,7 @@ const Targets = () => {
               <div className="space-y-1">
                 <Label className="text-base font-semibold">Languages</Label>
                 <Input
-                  value={selectedTarget.lang_list.join(" , ")}
+                  value={selectedTarget.lang_list.join(",  ")}
                   readOnly
                   className="bg-muted capitalize"
                 ></Input>

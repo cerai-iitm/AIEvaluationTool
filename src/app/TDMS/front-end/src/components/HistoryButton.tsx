@@ -257,7 +257,7 @@ export const HistoryButton: React.FC<HistoryButtonProps> = ({
         <img
           src="src/assets/icons8-history-50.png"
           alt="History"
-          className="w-5 h-5"
+          className="w-6 h-6"
         />
       </button>
       <EntityHistoryDialog

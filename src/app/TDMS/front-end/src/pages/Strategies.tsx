@@ -459,13 +459,13 @@ const StrategyList: React.FC = () => {
             </button>
             <div className="flex flex-col items-left justify-center mb-6 md:mb-7 mt-4 md:mt-5 gap-4 ">
               <div className="flex flex-col gap-1">
-                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy Name</label>
+                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy</label>
                 <Input className="bg-muted text-sm md:text-base" value={selectedStrategy.strategy_name} readOnly />
               </div>
               {/* if strategy description is null, don't render it */}
               {selectedStrategy.strategy_description && (
                 <div className="flex flex-col gap-1">
-                  <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy Description</label>
+                  <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy</label>
                   <Textarea className="text-sm md:text-base min-h-[80px] flex-1 w-full md:w-auto resize-none bg-muted" readOnly>{selectedStrategy.strategy_description}</Textarea>
                 </div>
               )}
@@ -581,7 +581,7 @@ const StrategyList: React.FC = () => {
             </button>
             
             <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 mt-4 md:mt-5 gap-2 md:gap-0">
-              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy Name :</label>
+              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy</label>
               <Input
                 value={updateName}
                 onChange={e => setUpdateName(e.target.value)}
@@ -590,7 +590,7 @@ const StrategyList: React.FC = () => {
             </div>
             
             <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 gap-2 md:gap-0">
-              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Strategy Description :</label>
+              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Description </label>
               <Textarea
                 value={updateDescription}
                 onChange={e => setUpdateDescription(e.target.value)}
@@ -648,7 +648,7 @@ const StrategyList: React.FC = () => {
             
             <div className="flex flex-col items-center justify-center flex-1">
               <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 w-full gap-2 md:gap-0">
-                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy Name :</label>
+                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy</label>
                 <Input
                   value={newStrategyName}
                   onChange={e => setNewStrategyName(e.target.value)}
@@ -658,7 +658,7 @@ const StrategyList: React.FC = () => {
               </div>
               
               <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 w-full gap-2 md:gap-0">
-                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Strategy Description :</label>
+                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Description</label>
                 <Textarea
                   value={newStrategyDescription}
                   onChange={e => setNewStrategyDescription(e.target.value)}

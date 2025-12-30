@@ -353,7 +353,7 @@ export default function TargetUpdateDialog({
         </DialogHeader>
         <div className="overflow-y-auto flex-1  space-y-2 pb-5 p-1">
           <div className="flex items-center justify-center gap-2 pb-4">
-            <Label className="text-base font-semibold">Target Name -</Label>
+            <Label className="text-base font-semibold">Target -</Label>
             <Label className="text-xl font-semibold text-primary hover:text-primary/90">
               {target.target_name}
             </Label>
@@ -369,13 +369,13 @@ export default function TargetUpdateDialog({
           </div>
           <div className="grid grid-cols-2 gap-4 pb-4">
             <div className="space-y-1 ">
-              <Label className="text-base font-semibold">Target Type</Label>
+              <Label className="text-base font-semibold">Type</Label>
               <Select
                 value={type}
                 onValueChange={setType}
                 disabled={isFetchingOptions}
               >
-                <SelectTrigger>
+                <SelectTrigger className="bg-muted capitalize">
                   <SelectValue
                     placeholder={isFetchingOptions ? "Loading..." : "Select type"}
                   />
@@ -485,7 +485,7 @@ export default function TargetUpdateDialog({
           <Button
             onClick={handleSubmit}
             className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={!isChanged || !notes || isLoading ||
+            disabled={!isChanged || !notes.trim() || isLoading ||
               (!hasPermission(currentUserRole, "canUpdateTables") &&
                 !hasPermission(currentUserRole, "canUpdateRecords"))
             }

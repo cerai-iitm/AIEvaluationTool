@@ -272,7 +272,7 @@ export default function TargetAddDialog({
         </DialogHeader>
         <div className="space-y-4 pt-4">
           <div className="space-y-2">
-            <Label className="text-base font-semibold">Target Name</Label>
+            <Label className="text-base font-semibold">Target</Label>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -295,7 +295,7 @@ export default function TargetAddDialog({
 
           <div className="grid grid-cols-2 gap-4 pb-4">
             <div className="space-y-2">
-              <Label className="text-base font-semibold">Target Type</Label>
+              <Label className="text-base font-semibold">Type</Label>
               <Select
                 value={type}
                 onValueChange={setType}
@@ -324,7 +324,7 @@ export default function TargetAddDialog({
 
             
             <div className="space-y-2">
-              <Label className="text-base font-semibold">Domain Name</Label>
+              <Label className="text-base font-semibold">Domain</Label>
               <Select
                 
                 value={domain}

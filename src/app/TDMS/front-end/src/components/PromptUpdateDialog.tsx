@@ -330,7 +330,7 @@ export function PromptUpdateDialog({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <Label className="text-base font-semibold">Language Name</Label>
+              <Label className="text-base font-semibold">Language</Label>
               <Select
                 value={language || undefined}
                 onValueChange={setLanguage}
@@ -361,7 +361,7 @@ export function PromptUpdateDialog({
               </Select>
             </div>
             <div className="space-y-1 pb-4">
-              <Label className="text-base font-semibold">Domain Name</Label>
+              <Label className="text-base font-semibold">Domain</Label>
               <Select
                 value={domain || undefined}
                 onValueChange={setDomain}

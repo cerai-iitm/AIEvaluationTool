@@ -389,7 +389,7 @@ const Responses = () => {
           {selectedResponse && (
             <div className="space-y-4 pt-4">
               <div className="space-y-2">
-                <Label>Response Text</Label>
+                <Label className="text-base font-semibold">Response</Label>
                 <Textarea
                   value={selectedResponse.response_text}
                   readOnly
@@ -399,7 +399,7 @@ const Responses = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Response Type</Label>
+                  <Label className="text-base font-semibold">Type</Label>
                   <Input
                     value={selectedResponse.response_type}
                     readOnly
@@ -408,17 +408,17 @@ const Responses = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Language</Label>
+                  <Label className="text-base font-semibold">Language</Label>
                   <Input
                     value={selectedResponse.language}
                     readOnly
-                    className="bg-muted"
+                    className="bg-muted capitalize"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label>User Prompts</Label>
+                <Label className="text-base font-semibold">User Prompt</Label>
                 <Textarea
                   value={selectedResponse.user_prompt}
                   readOnly
@@ -427,7 +427,7 @@ const Responses = () => {
               </div>
 
               <div className="space-y-2">
-                <Label>System Prompts</Label>
+                <Label className="text-base font-semibold">System Prompt</Label>
                 <Textarea
                   value={selectedResponse.system_prompt}
                   readOnly

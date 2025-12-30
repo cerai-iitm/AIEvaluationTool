@@ -429,8 +429,9 @@ const LanguageList: React.FC = () => {
                             ×
                         </button>
                         <div className="flex items-center justify-center mb-6 md:mb-7 mt-4 md:mt-5">
-                            <label className="font-semibold text-base md:text-lg min-w-[130px] md:min-w-[150px]">Language Name</label>
-                            <Input className="text-sm md:text-base capitalize bg-muted" value={selectedLanguage.lang_name} />
+                            <label className="font-semibold text-base md:text-lg min-w-[130px] md:min-w-[85px] mr-4">Language :</label>
+                            {/* <Input className="text-sm md:text-base capitalize bg-muted" value={selectedLanguage.lang_name} /> */}
+                            <span className='text-lg md:text-base capitalize'>{selectedLanguage.lang_name}</span>
                         </div>
                         <div className="flex gap-4 md:gap-8 justify-center">
                             {hasPermission(currentUserRole, "canDeleteTables") && (
@@ -529,12 +530,13 @@ const LanguageList: React.FC = () => {
                         >
                             ×
                         </button>
-                        <div className="flex flex-col md:flex-row items-center mb-6 md:mb-8 mt-4 md:mt-5 gap-2 md:gap-0">
-                            <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Language Name :</label>
+                        <div className="flex flex-col md:flex-row justify-center items-center mb-6 md:mb-8 mt-4 md:mt-5 gap-2 md:gap-0">
+                            <label className="font-semibold text-base ml-8 p-2">Language :</label>
                             <Input
                                 value={updateName}
                                 onChange={e => setUpdateName(e.target.value)}
-                                className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-lg flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200 capitalize"
+                                maxLength={15}
+                                className="text-sm md:text-[17px] capitalize w-full md:w-1/2 "
                             />
                         </div>
                         <div className="flex justify-center items-center p-4">
@@ -542,6 +544,8 @@ const LanguageList: React.FC = () => {
                             <Input
                                 value={addMessage}
                                 onChange={e => setAddMessage(e.target.value)}
+                                maxLength={15}
+                                placeholder='Required'
                                 className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 focus:outline-none focus:ring focus:ring-blue-200 "
                             />
                             <button
@@ -586,13 +590,13 @@ const LanguageList: React.FC = () => {
                             ×
                         </button>
                         {/* Language Name Row */}
-                        <div className="flex flex-col md:flex-row items-center mb-6 mb:mb-8 mt-4 md:mt-5 gap-2 md:gap-0">
-                            <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Language Name</label>
+                        <div className="flex flex-col md:flex-row justify-center items-center mb-6 mb:mb-8 mt-4 md:mt-5 gap-2 md:gap-0">
+                            <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[115px]">Language :</label>
                             <Input
                                 value={newLanguageName}
                                 onChange={e => setNewLanguageName(e.target.value)}
-                                className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200 capitalize"
-                                maxLength={150}
+                                className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] w-full md:w-1/2 capitalize"
+                                maxLength={15}
                             />
                         </div>
                         {/* Message Row + Submit Button */}
@@ -601,7 +605,9 @@ const LanguageList: React.FC = () => {
                             <Input
                                 value={addMessage}
                                 onChange={e => setAddMessage(e.target.value)}
-                                className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
+                                maxLength={15}
+                                placeholder='Required'
+                                className=" rounded border px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
                             />
                             <button
                                 type="button"

@@ -232,7 +232,7 @@ export function LlmPromptUpdateDialog({
             />
           </div>
           <div className="space-y-1">
-            <Label className="text-base font-semibold">Language Name</Label>
+            <Label className="text-base font-semibold">Language</Label>
             <Select
               value={language || undefined}
               onValueChange={setLanguage}

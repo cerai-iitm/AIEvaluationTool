@@ -455,7 +455,7 @@ const DomainList: React.FC = () => {
               ×
             </button>
             <div className="flex items-center justify-center mb-6 md:mb-7 mt-4 md:mt-5">
-              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Domain Name :</label>
+              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[85px]">Domain :</label>
               <span className="text-sm md:text-base capitalize">{selectedDomain.domain_name}</span>
             </div>
             <div className="flex gap-4 md:gap-8 justify-center">
@@ -557,11 +557,12 @@ const DomainList: React.FC = () => {
               ×
             </button>
             <div className="flex flex-col md:flex-row items-center mb-6 md:mb-8 mt-4 md:mt-5 gap-2 md:gap-0">
-              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Domain Name :</label>
+              {/* <label className="font-semibold text-left md:text-lg min-w-[100px] md:min-w-[165px]">Domain :</label> */}
+              <label className="font-semibold text-lg text-left ml-8 p-2">Domain :</label>
               <Input
                 value={updateName}
                 onChange={e => setUpdateName(e.target.value)}
-                className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-lg flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200 capitalize"
+                className="bg-gray-100 rounded border px-3 md:px-4 py-2 text-sm md:text-lg flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200 capitalize mx-2 mr-8"
               />
             </div>
             <div className="flex justify-center items-center p-4">
@@ -615,11 +616,11 @@ const DomainList: React.FC = () => {
             {/* Domain Name Row */}
             {/* <div className="flex flex-col items-center justify-center flex-1"> */}
             <div className="flex flex-col md:flex-row items-center mb-6 mb:mb-8 mt-4 md:mt-5 gap-2 md:gap-0">
-              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Domain Name</label>
+              <label className="font-semibold text-base md:text-lg ml-8 p-2">Domain :</label>
               <Input
                 value={newDomainName}
                 onChange={e => setNewDomainName(e.target.value)}
-                className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200 capitalize"
+                className="bg-gray-100 rounded border px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 w-full md:w-auto  capitalize mx-2 mr-8"
                 maxLength={150}
               />
             </div>
