@@ -138,9 +138,13 @@ export const ResponseAddDialog = ({
     >,
   ) => {
     setPromptId(selection.promptId ?? null);
-    setUserPrompts(selection.userPrompt ?? "");
-    setSystemPrompts(selection.systemPrompt ?? "");
-    setFocusedField(null);
+    if (selection.type === "userPrompt") {
+      setUserPrompts(selection.userPrompt ?? "");
+    } else if (selection.type === "systemPrompt") {
+      setSystemPrompts(selection.systemPrompt ?? "");
+    }
+    // Keep the focusedField so the search button remains visible
+    // setFocusedField(null);
     setSearchDialogOpen(false);
   };
 
@@ -294,18 +298,33 @@ export const ResponseAddDialog = ({
                 <div className="relative">
                   <Textarea
                     value={userPrompts}
-                    readOnly
+                    style = {{
+                      height: '${height}px',
+                      maxHeight: "120px",
+                      minHeight: "40px",
+                      overflowY: "auto"
+                    }}
+                    // readOnly
+                    onChange = {(e) => setUserPrompts(e.target.value)}
                     className="bg-muted min-h-[100px] pr-10"
                     placeholder="Search for a prompt"
+                    onFocus = {() => {
+                      setFocusedField("userPrompt" );
+                      // setFocusedField("userPrompts" as "userPrompt" | "systemPrompt")
+                    }}
+                    onBlur = {() => setFocusedField(null)}
                   />
-                  <Button
+                  {(focusedField === "userPrompt" || userPrompts) && (
+                    <Button
                     variant="ghost"
                     size="icon"
                     className="absolute right-2 top-2"
+                    onMouseDown = {e => e.preventDefault()}
                     onClick={() => handleSearchClick("userPrompt")}
                   >
                     <Search className="w-4 h-4" />
                   </Button>
+                  )}
                 </div>
               </div>
 
@@ -314,18 +333,31 @@ export const ResponseAddDialog = ({
                 <div className="relative">
                   <Textarea
                     value={systemPrompts}
-                    readOnly
+                    style = {{
+                      height: '${height}px',
+                      maxHeight: "120px",
+                      minHeight: "40px",
+                      overflowY: "auto"
+                    }}
+                    // readOnly
+                    onChange = {(e) => setSystemPrompts(e.target.value)}
                     className="bg-muted min-h-[80px] pr-10"
-                    placeholder="System prompt will be populated from search"
+                    placeholder="Search or Type"
+                    onFocus = {() => setFocusedField("systemPrompt")}
+                    onBlur = {() => setFocusedField(null)}
                   />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-2 top-2"
-                    onClick={() => handleSearchClick("systemPrompt")}
-                  >
-                    <Search className="w-4 h-4" />
-                  </Button>
+                  {(focusedField === "systemPrompt" || systemPrompts) && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-2 top-2"
+                      onMouseDown = {e => e.preventDefault()}
+                      onClick={() => handleSearchClick("systemPrompt")}
+                      tabIndex = {-1}
+                    >
+                      <Search className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>

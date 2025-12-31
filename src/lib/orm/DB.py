@@ -3393,7 +3393,7 @@ class DB:
                         user_prompt_input is not None 
                         and (
                             not response.prompt
-                            or user_prompt_input != response.prompt.user_prompt
+                            or user_prompt_input != (response.prompt.user_prompt or "")
                         )
                     )
 

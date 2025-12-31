@@ -244,7 +244,7 @@ const Responses = () => {
           <div className="flex gap-4 mb-6 flex-wrap">
             <Select 
               defaultValue="responsetext"
-              onValueChange={(value: "responsetext" | "responsetype" | "language") => setSearchField(value)}
+              onValueChange={(value: "responsetext" | "language" | "responsetype") => setSearchField(value)}
             >
               <SelectTrigger className="w-48">
                 <SelectValue />
@@ -368,7 +368,7 @@ const Responses = () => {
             <div className="mt-6 sticky bottom-5">
               <Button
                 className="bg-primary hover:bg-primary/90"
-                // onClick={() => setAddDialogOpen(true)}
+                onClick={() => setAddDialogOpen(true)}
               >
                 + Add Response
               </Button>

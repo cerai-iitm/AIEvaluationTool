@@ -196,14 +196,15 @@ const Prompts = () => {
           <h1 className="text-4xl font-bold mb-8 text-center">Prompts</h1>
 
           <div className="flex gap-4 mb-6 ">
-            <Select defaultValue="promptname"
-              onValueChange={(value: "promptname" | "domain" | "language") => setSearchField(value)}
+            <Select 
+              defaultValue="user_prompt"
+              onValueChange={(value: "user_prompt" | "domain" | "language") => setSearchField(value)}
             >
               <SelectTrigger className="w-48">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="promptname">Prompt Name</SelectItem>
+                <SelectItem value="user_prompt">User Prompt</SelectItem>
                 <SelectItem value="domain">Domain</SelectItem>
                 <SelectItem value="language">Language</SelectItem>
               </SelectContent>

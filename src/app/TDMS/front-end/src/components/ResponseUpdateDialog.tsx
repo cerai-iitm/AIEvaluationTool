@@ -159,12 +159,12 @@ export const ResponseUpdateDialog = ({
   };
 
   const isChanged =
-    responseText !== (responseInitial.response_text || "") ||
-    responseType !== (responseInitial.response_type || "") ||
-    language !== (responseInitial.language || "") ||
-    userPrompts !== (responseInitial.user_prompt || "") ||
-    systemPrompts !== (responseInitial.system_prompt || "") ||
-    notes !== (responseInitial.notes || "");
+    responseText.trim() !== (responseInitial.response_text || "") ||
+    responseType.trim() !== (responseInitial.response_type || "") ||
+    language.trim() !== (responseInitial.language || "") ||
+    userPrompts.trim() !== (responseInitial.user_prompt || "") ||
+    systemPrompts.trim() !== (responseInitial.system_prompt || "") ||
+    notes.trim() !== (responseInitial.notes || "");
 
   const handleSubmit = async () => {
     if (!response?.response_id) {
@@ -318,25 +318,27 @@ export const ResponseUpdateDialog = ({
             </div>
 
             <div className="space-y-2">
-              <Label className="text-base font-semibold">Prompt</Label>
+              {/* <Label className="text-base font-semibold">Prompt</Label> */}
               <div className="space-y-1">
-                <Label className="text-sm font-normal">User Prompts</Label>
+                <Label className="text-sm font-semibold">User Prompts</Label>
                 <div className="relative">
                   <Textarea
                     value={userPrompts}
-                    readOnly
+                    // readOnly
                     className="bg-muted min-h-[100px] pr-10"
+                    onChange={(e) => setUserPrompts(e.target.value)}
                   />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <Label className="text-sm font-normal">System prompts</Label>
+                <Label className="text-sm font-semibold">System prompts</Label>
                 <div className="relative">
                   <Textarea
                     value={systemPrompts}
-                    readOnly
+                    // readOnly
                     className="bg-muted min-h-[80px] pr-10"
+                    onChange={(e) => setSystemPrompts(e.target.value) }
                   />
                 </div>
               </div>
@@ -354,7 +356,7 @@ export const ResponseUpdateDialog = ({
               <Button
                 className="bg-accent hover:bg-accent/90 ml-4 text-accent-foreground px-8"
                 onClick={handleSubmit}
-                disabled={!isChanged || !notes || isLoading}
+                disabled={!isChanged || !notes.trim() || isLoading}
               >
                 {isLoading ? "Updating..." : "Submit"}
               </Button>
