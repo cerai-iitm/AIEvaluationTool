@@ -56,6 +56,7 @@ def list_languages(db: DB = Depends(_get_db)):
                 lang_name=lang.name,
             )
             for lang in languages
+            if lang.name.lower() != "auto"
         ]
     except Exception as e:
         db.logger.error(f"Failed to fetch languages: {e}")
@@ -64,6 +65,27 @@ def list_languages(db: DB = Depends(_get_db)):
             detail="Internal Server Error fetching languages"
         )  
 
+@language_router.get(
+    "/table",
+    response_model=List[LanguageListResponse],
+    summary="List all languages (v2)",
+)
+def list_languages(db: DB = Depends(_get_db)):
+    try:
+        languages = db.languages or []
+        return [
+            LanguageListResponse(
+                lang_id=lang.code,
+                lang_name=lang.name,
+            )
+            for lang in languages
+        ]
+    except Exception as e:
+        db.logger.error(f"Failed to fetch languages: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal Server Error fetching languages"
+        ) 
 
 # @language_router.get(
 #     "",

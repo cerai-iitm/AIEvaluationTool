@@ -1509,6 +1509,57 @@ class DB:
                 domain_id=getattr(result, "domain_id"),
                 digest=result.hash_value,
             )
+    def add_or_update_prompt(self, prompt: Prompt) -> int:
+        """
+        Adds a new prompt to the database or updates it if it already exists.
+        
+        Args:
+            prompt (Prompt): The Prompt object to be added or updated.
+        Returns:
+            int: The ID of the newly added or updated prompt.
+        """
+        try:
+            with self.Session() as session:
+                # check if the prompt already exists in the database.
+                existing_prompt = session.query(Prompts).filter_by(hash_value=prompt.digest).first()
+                if existing_prompt:
+                    self.logger.debug(f"Updating existing prompt ID: {existing_prompt.prompt_id}")
+                    # Update the existing prompt
+                    existing_prompt.user_prompt = prompt.user_prompt
+                    existing_prompt.system_prompt = prompt.system_prompt
+                    existing_prompt.lang_id = prompt.kwargs.get('lang_id', Language.autodetect)
+                    existing_prompt.domain_id = prompt.kwargs.get('domain_id', Domain.general)
+                    existing_prompt.hash_value = prompt.digest
+                    session.commit()
+                    return getattr(existing_prompt, "prompt_id")
+                
+                self.logger.debug(f"Adding new prompt: {prompt.user_prompt}")
+
+                # Default to the default language ID if not provided
+                lang_id = prompt.kwargs.get("lang_id", Language.autodetect)  # Get the language ID from kwargs if provided
+                domain_id = prompt.kwargs.get("domain_id", Domain.general)  # Get the domain ID from kwargs if provided
+
+                # create the orm object for the prompt to insert into the database table.
+                new_prompt = Prompts(user_prompt=prompt.user_prompt, 
+                                    system_prompt=prompt.system_prompt, 
+                                    lang_id=lang_id,
+                                    domain_id=domain_id,
+                                    hash_value=prompt.digest)
+                
+                # Add the new prompt to the session
+                session.add(new_prompt)
+                # Commit the session to save the new prompt
+                session.commit()
+                # Ensure prompt_id is populated
+                session.refresh(new_prompt)  
+
+                self.logger.debug(f"Prompt added successfully: {new_prompt.prompt_id}")
+                
+                # Return the ID of the newly added prompt
+                return getattr(new_prompt, "prompt_id")
+        except IntegrityError as e:
+            self.logger.error(f"Error adding or updating prompt: {prompt} Error: {e}")
+            return -1
 
     def add_or_get_prompt(self, prompt: Prompt) -> int:
         """

@@ -53,7 +53,7 @@ const LanguageList: React.FC = () => {
                 headers["Authorization"] = `Bearer ${token}`;
             }
 
-            const response = await fetch(API_ENDPOINTS.LANGUAGES_V2, {
+            const response = await fetch(API_ENDPOINTS.LANGUAGES_TABLE, {
                 method: "GET",
                 headers,
             });
@@ -289,6 +289,12 @@ const LanguageList: React.FC = () => {
     const handleDeleteClick = () => {
         setShowDeleteConfirm(true);
     };
+
+    const hardcodedLanguage = { lang_id: 1, lang_name: "auto"};
+
+    const mergedLanguages = [
+        hardcodedLanguage, ...paginatedLanguages
+    ]
 
     return (
         <div className="flex min-h-screen">

@@ -52,6 +52,7 @@ export const API_ENDPOINTS = {
     `${API_BASE_URL}/api/v2/domains/delete/${domain_id}`,
 
   LANGUAGES_V2: `${API_BASE_URL}/api/v2/languages`,
+  LANGUAGES_TABLE: `${API_BASE_URL}/api/v2/languages/table`,
   LANGUAGE_BY_ID_V2: (lang_id: number) =>
     `${API_BASE_URL}/api/v2/languages/${lang_id}`,
   LANGUAGE_CREATE_V2: `${API_BASE_URL}/api/v2/languages/create`,
