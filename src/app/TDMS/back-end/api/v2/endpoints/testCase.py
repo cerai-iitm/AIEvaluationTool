@@ -1,8 +1,7 @@
 from typing import List, Optional
-import asyncio
 from config.settings import settings
 from database.fastapi_deps import _get_db
-from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 from jose import JWTError, jwt
 from schemas import (
     TestCaseCreateV2,
@@ -94,99 +93,51 @@ def _process_testcase(testcase, db: DB) -> TestCaseListResponse:
     )
 
 
-async def _process_remaining_testcases_async(
-    db: DB, delay_seconds: float = 2.0
-):
-    """
-    Background task to process remaining test cases after a delay.
-    This runs asynchronously and doesn't block the initial response.
-    Fetches test cases starting from offset 20.
-    """
-    # Wait for the specified delay
-    await asyncio.sleep(delay_seconds)
+def _convert_testcase_row_to_model(testcase_row):
+    """Helper function to convert a database row to TestCase model."""
+    testcase_name = getattr(testcase_row, "testcase_name")
+    testcase_id = getattr(testcase_row, "testcase_id")
     
-    # Fetch and process all remaining test cases (starting from offset 20)
-    # Note: This is a background task, so the results aren't returned to the client
-    # You can add logging or other processing here if needed
-    try:
-        with db.Session() as session:
-            # Get total count first
-            total_count = session.query(TestCases).count()
-            
-            if total_count > 20:
-                # Fetch remaining test cases in batches to avoid memory issues
-                batch_size = 100
-                offset = 20
-                
-                while offset < total_count:
-                    testcase_rows = (
-                        session.query(TestCases)
-                        .offset(offset)
-                        .limit(batch_size)
-                        .all()
-                    )
-                    
-                    if not testcase_rows:
-                        break
-                    
-                    # Process each testcase in this batch
-                    for testcase_row in testcase_rows:
-                        try:
-                            # Convert to TestCase model (similar to how db.testcases does it)
-                            testcase_name = getattr(testcase_row, "testcase_name")
-                            testcase_id = getattr(testcase_row, "testcase_id")
-                            
-                            prompt = Prompt(
-                                system_prompt=getattr(testcase_row.prompt, "system_prompt"),
-                                user_prompt=getattr(testcase_row.prompt, "user_prompt"),
-                                domain_id=getattr(testcase_row.prompt, "domain_id"),
-                                lang_id=getattr(testcase_row.prompt, "lang_id"),
-                            )
-                            
-                            strategy_name = (
-                                testcase_row.strategy.strategy_name
-                                if testcase_row.strategy
-                                else None
-                            )
-                            
-                            response_obj = (
-                                Response(
-                                    response_text=getattr(testcase_row.response, "response_text"),
-                                    response_type=getattr(testcase_row.response, "response_type"),
-                                    lang_id=getattr(testcase_row.response, "lang_id"),
-                                )
-                                if testcase_row.response
-                                else None
-                            )
-                            
-                            judge_prompt_obj = (
-                                LLMJudgePrompt(
-                                    prompt=getattr(testcase_row.judge_prompt, "prompt")
-                                )
-                                if testcase_row.judge_prompt
-                                else None
-                            )
-                            
-                            testcase = TestCaseModel(
-                                name=testcase_name,
-                                metric="Unknown",
-                                prompt=prompt,
-                                strategy=strategy_name,
-                                response=response_obj,
-                                judge_prompt=judge_prompt_obj,
-                                testcase_id=testcase_id,
-                            )
-                            
-                            # Process the testcase (you can add additional processing here)
-                            _process_testcase(testcase, db)
-                        except Exception as e:
-                            # Log errors but don't fail the background task
-                            print(f"Error processing testcase {getattr(testcase_row, 'testcase_id', 'unknown')}: {e}")
-                    
-                    offset += batch_size
-    except Exception as e:
-        # Log errors but don't fail the background task
-        print(f"Error in background task for processing remaining testcases: {e}")
+    prompt = Prompt(
+        system_prompt=getattr(testcase_row.prompt, "system_prompt"),
+        user_prompt=getattr(testcase_row.prompt, "user_prompt"),
+        domain_id=getattr(testcase_row.prompt, "domain_id"),
+        lang_id=getattr(testcase_row.prompt, "lang_id"),
+    )
+    
+    strategy_name = (
+        testcase_row.strategy.strategy_name
+        if testcase_row.strategy
+        else None
+    )
+    
+    response_obj = (
+        Response(
+            response_text=getattr(testcase_row.response, "response_text"),
+            response_type=getattr(testcase_row.response, "response_type"),
+            lang_id=getattr(testcase_row.response, "lang_id"),
+        )
+        if testcase_row.response
+        else None
+    )
+    
+    judge_prompt_obj = (
+        LLMJudgePrompt(
+            prompt=getattr(testcase_row.judge_prompt, "prompt")
+        )
+        if testcase_row.judge_prompt
+        else None
+    )
+    
+    return TestCaseModel(
+        name=testcase_name,
+        metric="Unknown",
+        prompt=prompt,
+        strategy=strategy_name,
+        response=response_obj,
+        judge_prompt=judge_prompt_obj,
+        testcase_id=testcase_id,
+    )
 
 
 @testcase_router.get(
@@ -195,15 +146,17 @@ async def _process_remaining_testcases_async(
     summary="List all test cases (v2)",
 )
 def list_testcases(
-    background_tasks: BackgroundTasks,
     db: DB = Depends(_get_db),
 ):
     """
-    List test cases endpoint that returns the first 20 immediately
-    and processes the remaining test cases in the background after a delay.
+    List test cases endpoint that returns all test cases.
+    The first 20 are returned immediately, and remaining are fetched in batches.
     """
-    # Query only the first 20 test cases immediately for fast response
     with db.Session() as session:
+        # Get total count
+        total_count = session.query(TestCases).count()
+        
+        # Fetch first 20 with eager loading to avoid lazy loading issues
         testcase_rows = (
             session.query(TestCases)
             .options(
@@ -219,66 +172,48 @@ def list_testcases(
         # Convert to TestCase model and process
         results = []
         for testcase_row in testcase_rows:
-            # Convert database row to TestCase model (matching db.testcases conversion)
-            testcase_name = getattr(testcase_row, "testcase_name")
-            testcase_id = getattr(testcase_row, "testcase_id")
-            
-            prompt = Prompt(
-                system_prompt=getattr(testcase_row.prompt, "system_prompt"),
-                user_prompt=getattr(testcase_row.prompt, "user_prompt"),
-                domain_id=getattr(testcase_row.prompt, "domain_id"),
-                lang_id=getattr(testcase_row.prompt, "lang_id"),
-            )
-            
-            strategy_name = (
-                testcase_row.strategy.strategy_name
-                if testcase_row.strategy
-                else None
-            )
-            
-            response_obj = (
-                Response(
-                    response_text=getattr(testcase_row.response, "response_text"),
-                    response_type=getattr(testcase_row.response, "response_type"),
-                    lang_id=getattr(testcase_row.response, "lang_id"),
-                )
-                if testcase_row.response
-                else None
-            )
-            
-            judge_prompt_obj = (
-                LLMJudgePrompt(
-                    prompt=getattr(testcase_row.judge_prompt, "prompt")
-                )
-                if testcase_row.judge_prompt
-                else None
-            )
-            
-            testcase = TestCaseModel(
-                name=testcase_name,
-                metric="Unknown",
-                prompt=prompt,
-                strategy=strategy_name,
-                response=response_obj,
-                judge_prompt=judge_prompt_obj,
-                testcase_id=testcase_id,
-            )
-            
+            testcase = _convert_testcase_row_to_model(testcase_row)
             results.append(_process_testcase(testcase, db))
         
-        # Check if there are more test cases to process in the background
-        total_count = session.query(TestCases).count()
-        
+        # If there are more than 20 test cases, fetch the rest in batches
         if total_count > 20:
-            # Schedule background task to process remaining test cases after a delay
-            # The delay is set to 2 seconds, but you can adjust this value
-            background_tasks.add_task(
-                _process_remaining_testcases_async,
-                db,
-                delay_seconds=2.0,
-            )
+            batch_size = 100
+            offset = 20
+            
+            while offset < total_count:
+                # Use joinedload to eagerly load relationships
+                # This prevents "not bound to a Session" errors
+                remaining_rows = (
+                    session.query(TestCases)
+                    .options(
+                        joinedload(TestCases.prompt),
+                        joinedload(TestCases.response),
+                        joinedload(TestCases.strategy),
+                        joinedload(TestCases.judge_prompt),
+                    )
+                    .offset(offset)
+                    .limit(batch_size)
+                    .all()
+                )
+                
+                if not remaining_rows:
+                    break
+                
+                # Process each testcase in this batch
+                for testcase_row in remaining_rows:
+                    try:
+                        # All relationships are already loaded via joinedload
+                        testcase = _convert_testcase_row_to_model(testcase_row)
+                        results.append(_process_testcase(testcase, db))
+                    except Exception as e:
+                        # Log errors but continue processing
+                        print(f"Error processing testcase {getattr(testcase_row, 'testcase_id', 'unknown')}: {e}")
+                
+                offset += batch_size
 
     return results
+
+
 
 
 # @testcase_router.get(
