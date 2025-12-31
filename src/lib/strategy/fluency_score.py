@@ -72,7 +72,7 @@ class IndianLanguageFluencyScorer(Strategy):
             dist_int = dist(interval) # kde applied to the interval
             probs[k] = np.trapezoid(dist_int, interval)
 
-        self.save_res_as_img(ex_results, os.path.join(os.path.dirname(__file__), f"{os.getenv('IMAGES_DIR')}/{dflt_vals.type}_dist.png"))
+        # self.save_res_as_img(ex_results, os.path.join(os.path.dirname(__file__), f"{os.getenv('IMAGES_DIR')}/{dflt_vals.type}_dist.png"))
         
         probs_as_lst = list(probs.values())
         # if the differnce is positive the value is closer to fluent dist than non fluent

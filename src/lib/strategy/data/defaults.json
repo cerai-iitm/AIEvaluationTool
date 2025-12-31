@@ -11,7 +11,8 @@
     "detect_toxicity_using_perspective_api" : {
         "service" : "commentanalyzer",
         "version" : "v1alpha1",
-        "service_URL" : "https://commentanalyzer.googleapis.com/$discovery/rest?version=v1alpha1" 
+        "service_URL" : "https://commentanalyzer.googleapis.com/$discovery/rest?version=v1alpha1" ,
+        "api_key_name": "PERSPECTIVE_API_KEY"
     },
     "truthfulness_internal": {
         "data_src" : "codah"

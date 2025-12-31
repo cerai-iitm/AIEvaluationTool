@@ -25,6 +25,7 @@ class Robustness_OutOfDomain(Strategy):
     """
 
     def __init__(self,
+                 name:str="robustness_ood",
                  nli_model=dflt_vals.get("nli_model_name", "cross-encoder/nli-deberta-base"),
                  emb_model=dflt_vals.get("embed_model_name", "all-MiniLM-L6-v2"),
                  device=dflt_vals.get("device", "cpu"),
