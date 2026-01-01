@@ -15,6 +15,10 @@ from langchain_chroma import Chroma
 import math
 from collections import Counter
 import hashlib
+from langchain.tools import tool
+from langchain.agents import create_agent
+from langchain_ollama import ChatOllama
+import time
 
 counter = itertools.count()
 
@@ -23,7 +27,7 @@ class TextData(BaseModel):
     title : Optional[str]
     href : Optional[str]
 
-class Cleaner:
+class InfoRetrieve:
     def __init__(self):
         pass
 
@@ -97,7 +101,7 @@ class Cleaner:
         return css_ratio > 0.15 or symb_ratio > 0.02 or id_ratio > 0.2
 
     def evaluate(self):
-        page_info = self.top_links("agriculture in india")
+        page_info = self.top_links("agriculture in tamil nadu")
         html_pages = [requests.get(l.href, timeout=10, headers=self.create_header()) for l in page_info]
         text_strainer = bs4.SoupStrainer(["article", "section", "div", "main", "h1", "h2", "h3"])#, class_=[re.compile("content")])
         
@@ -138,9 +142,9 @@ class Cleaner:
         docs = []
         src_chunk_nums = 20
         sources_cnt = {i.href : src_chunk_nums for i in page_info}
-        print(sources_cnt)
+        # print(sources_cnt)
         seen = set()
-        print(len(candidates))
+        # print(len(candidates))
 
         while len(candidates):
             popped_elem = heapq.heappop(candidates)[2]
@@ -173,7 +177,43 @@ class Cleaner:
         )
 
         document_ids = vector_store.add_documents(documents=docs)
-        print(document_ids[:3])
+        # print(document_ids[:3])
 
-clean = Cleaner()
+        @tool(response_format="content_and_artifact")
+        def retrieve_context(query:str):
+            """Retrieve information to help answer a query."""
+            retrieved_docs = vector_store.similarity_search(query, k=2)
+            serealized = "\n\n".join(
+                (f"Source : {doc.metadata} \n Content:{doc.page_content}")
+                for doc in retrieved_docs
+            )
+            return serealized, retrieved_docs
+        
+        tools = [retrieve_context]
+        prompt = (
+            "You have access to a tool that retrieves context from the internet."
+            "Use the tool to help answer queries."
+        )
+
+        chat_model = ChatOllama(
+            model=os.getenv("LLM_AS_JUDGE_MODEL"),
+            base_url=os.getenv("OLLAMA_URL"),
+            disable_streaming=False
+        )
+
+        agent = create_agent(chat_model, tools=tools, system_prompt=prompt)
+
+        query = (
+            "Give me recent information about agriculture in Rajasthan."
+            "Once you get the answer, lookup some more information on rainwater harvesting in india."
+        )
+
+        for event in agent.stream(
+            {"messages" : [{"role" : "user", "content": query}]},
+            stream_mode="values",
+        ):
+            event["messages"][-1].pretty_print()
+
+
+clean = InfoRetrieve()
 clean.evaluate()
