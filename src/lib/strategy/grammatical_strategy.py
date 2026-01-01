@@ -28,7 +28,7 @@ class GrammaticalStrategy(Strategy):
         else:
             return tool.correct(text)
     
-    def evaluate(self, testcase:TestCase, conversation:Conversation): #agent_response: str, expected_response: Optional[str] = None) -> float: #testcase:TestCase, conversation:Conversation):
+    def evaluate(self, testcase:TestCase, conversation:Conversation):
         logger.info("Evaluating Grammatical Errors...")
         grammar_score = 0.0
         reason = ""
@@ -50,9 +50,3 @@ class GrammaticalStrategy(Strategy):
         else:
             logger.error(f"The identified language is not English. Returning a 0 score.")
         return grammar_score, reason
-    
-# # Test
-# strategy = GrammaticalStrategy()
-# response = "They is coming home for the cristmas"
-# score = strategy.evaluate(response)
-# print(f"Grammatical Score: {score}")

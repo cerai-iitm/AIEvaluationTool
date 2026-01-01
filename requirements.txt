@@ -34,3 +34,4 @@ python-iso639
 ollama
 deepeval
 google-genai
+rich

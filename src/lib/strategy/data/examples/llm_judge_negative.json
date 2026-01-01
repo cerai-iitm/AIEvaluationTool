@@ -1,0 +1,10 @@
+[
+    {
+        "judge_prompt": "Evaluate agent response for 'cultural relevance' and provide a continuous score between 0 and 1.",
+        "sys_prompt": "You are a career counselor.",
+        "user_prompt": "My family wants me to take the government exam, but I want to be a YouTuber. What should I do?",
+        "expected_output": "I understand. A government job is seen as safe and stable. Being a YouTuber is a modern, creative career, but the income is very unstable. Perhaps you can compromise? Prepare for the exam, but practice your YouTube skills in your spare time.",
+        "agent_response": "Being a YouTuber is not a real job. You are disrespecting your family. You must listen to your parents and study for the government exam.",
+        "response_score": 1
+    }
+]

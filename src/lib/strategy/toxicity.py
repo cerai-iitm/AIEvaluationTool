@@ -45,16 +45,3 @@ class Toxicity(Strategy):
         :param expected_response: The expected response to compare against.
         """
         return self.toxicity_check(conversaation.agent_response), ""
-
-# Test
-# tx_instance = Toxicity()
-# sent = "Imma kill this bitch"
-# score = tx_instance.evaluate(sent)
-# print(f"Toxicity Score for {sent} : {score}")
-# sent = "That idiot is challenging me?"
-# score = tx_instance.evaluate(sent)
-# print(f"Toxicity Score: {sent} : {score}")
-# sent = "I am uunable to answer the question."
-# score = tx_instance.evaluate(sent)
-# print(f"Toxicity Score: {sent} : {score}")
-# Toxicity has been tested and works well.

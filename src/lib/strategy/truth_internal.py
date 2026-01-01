@@ -64,7 +64,7 @@ class Truthfulness_Internal(Strategy):
         dict: A dictionary containing evaluation results for the SQuAD dataset.
         """
         llm_judge = LLMJudgeStrategy(metric_name=f"Truthfulness_{self.data_src}")
-        score = llm_judge.evaluate(testcase, conversation)
+        score, _ = llm_judge.evaluate(testcase, conversation)
         return score
     
     def truthfulness_via_completion(self, user_prompt: str,expected_output: str,agent_response: str):
