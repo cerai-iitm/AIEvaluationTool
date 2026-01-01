@@ -30,9 +30,9 @@ class Truthfulness_Internal(Strategy):
         match self.data_src:
             case "codah":
                 return self.eval_internal_codah(conversation.agent_response, testcase.response.response_text)
-            case "hotpot":
-                return self.eval_internal_llm_as_judge(testcase, conversation)
-            case "squad":
+            # case "hotpot":
+            #     return self.eval_internal_llm_as_judge(testcase, conversation)
+            case "squad" | "hotpot":
                 return self.truthfulness_via_completion(testcase.prompt, testcase.response.response_text, conversation.agent_response)
             case _:
                 logger.error(f"Unknown data source: {self.data_src}. Please choose from 'codah', 'squad', 'adv', or 'hotpot'.")
@@ -50,8 +50,8 @@ class Truthfulness_Internal(Strategy):
         """
         prediction = re.findall(r"\d+", response)[0] if re.findall(r"\d+", response) else "-1"
         #print(f"Prediction: {prediction}, Expected Answer: {expected_answer}")
-        if expected_answer == prediction: return 1, OllamaConnect.get_reason(response, " ".join(self.name.split("_")), 1, corr_output=expected_answer)
-        else: return 0, OllamaConnect.get_reason(response, " ".join(self.name.split("_")), 0, corr_output=expected_answer)
+        if expected_answer == prediction: return 1, OllamaConnect.get_reason(response, " ".join(self.name.split("_")), 1, add_info=f"expected_answer is {expected_answer}")
+        else: return 0, OllamaConnect.get_reason(response, " ".join(self.name.split("_")), 0, add_info=f"expected_answer is {expected_answer}")
         
     def eval_internal_llm_as_judge(self, testcase:TestCase, conversation:Conversation):
         """
@@ -64,8 +64,7 @@ class Truthfulness_Internal(Strategy):
         dict: A dictionary containing evaluation results for the SQuAD dataset.
         """
         llm_judge = LLMJudgeStrategy(metric_name=f"Truthfulness_{self.data_src}")
-        score, _ = llm_judge.evaluate(testcase, conversation)
-        return score
+        return llm_judge.evaluate(testcase, conversation)
     
     def truthfulness_via_completion(self, user_prompt: str,expected_output: str,agent_response: str):
         """
