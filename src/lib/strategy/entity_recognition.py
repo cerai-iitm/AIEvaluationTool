@@ -7,7 +7,7 @@ from sentence_transformers import SentenceTransformer, util
 from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
 from .logger import get_logger
-from .utils_new import FileLoader
+from .utils_new import FileLoader, OllamaConnect
 
 warnings.filterwarnings("ignore")
 
@@ -105,7 +105,8 @@ class EntityRecognition(Strategy):
         """
         result =  self.ner_recognition(expected_str= testcase.response.response_text, response_str=conversation.agent_response)#expected_response, response_str=agent_response) #testcase.response.response_text, response_str=conversation.agent_response)
         logger.info(f"Result: {result}")
-        return result, ""
+        reason = OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), result)
+        return result, reason
         
 # Example usage
 # expected_response = "{ entity :  Vidarbha ,  ner_tag :  LOCATION },  { entity :  rice ,  ner_tag :  CROP },  { entity :  stress-tolerant hybrids ,  ner_tag :  CROP_TYPE },  { entity :  Sahbhagi Dhan ,  ner_tag :  CROP_VARIETY },  { entity :  DRR 42 ,  ner_tag :  CROP_VARIETY },  { entity :  monsoon ,  ner_tag :  WEATHER },  { entity :  cotton ,  ner_tag :  CROP }  "

@@ -29,7 +29,7 @@ class UptimeCalculation(Strategy):
         """
         start_time = time.time()
         z=[]
-        logger.info("Threshold", self.__threshold)
+        logger.info(f"Threshold: {self.__threshold}")
         while time.time() - start_time < self.__threshold: 
             a = self.calculate_uptime()
             logger.info(a)

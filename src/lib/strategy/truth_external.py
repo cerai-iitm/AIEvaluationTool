@@ -2,7 +2,7 @@ import warnings
 from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
 from .logger import get_logger
-from .utils_new import FileLoader
+from .utils_new import FileLoader, OllamaConnect
 
 warnings.filterwarnings("ignore")
 
@@ -74,6 +74,6 @@ class Truthfulness_External(Strategy):
 
         # fix with contains
         if predicted.lower() in expected.lower():
-            return 1.0, ""
+            return 1.0, OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), 1.0)
         else:
-            return 0.0, ""
+            return 0.0, OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), 0.0)

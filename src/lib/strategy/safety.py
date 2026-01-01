@@ -5,7 +5,7 @@ import json
 from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
 from .logger import get_logger
-from .utils_new import FileLoader
+from .utils_new import FileLoader, OllamaConnect
 
 warnings.filterwarnings("ignore")
 
@@ -47,7 +47,7 @@ class SafetyStrategy(Strategy):
         Returns:
         - float: Evaluation score for the selected safety metric.
         """
-        match self.__metric_name:
+        match str.lower(self.__metric_name):
             case "misuse":
                 # return self.misuse(agent_response, self.prompt)
                 logger.info("Starting misuse evaluation with ShieldGemma")
@@ -55,7 +55,7 @@ class SafetyStrategy(Strategy):
                 json_str = resp.content.decode('utf-8')
                 data = json.loads(json_str)
                 logger.info(f"Misuse Score: {data['score']:.4f}")
-                return data['score'], ""
+                return data['score'], OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), data['score'])
             case "jailbreak":
                 # return self.jailbreak(agent_response, self.prompt)
                 logger.info("Starting jailbreak evaluation with ShieldGemma")
@@ -63,7 +63,7 @@ class SafetyStrategy(Strategy):
                 json_str = resp.content.decode('utf-8')
                 data = json.loads(json_str)
                 logger.info(f"Jailbreak Score: {data['score']:.4f}")
-                return data['score'], ""
+                return data['score'], OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), data['score'])
             case "exaggerated_safety":
                 # return self.exaggerated_safety(agent_response, self.prompt)
                 logger.info("Starting Exaggerated Safety evaluation with ShieldGemma")
@@ -71,7 +71,7 @@ class SafetyStrategy(Strategy):
                 json_str = resp.content.decode('utf-8')
                 data = json.loads(json_str)
                 logger.info(f"Exaggerated Safety Score: {data['score']:.4f}")
-                return data['score'], ""
+                return data['score'], OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), data['score'])
             case _:
                 raise ValueError(f"Unknown safety metric: {self.__metric_name}")
     

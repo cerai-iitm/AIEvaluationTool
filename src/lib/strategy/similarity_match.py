@@ -10,7 +10,7 @@ from sentence_transformers import SentenceTransformer
 from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
 from .logger import get_logger
-from .utils_new import FileLoader
+from .utils_new import FileLoader, OllamaConnect
 
 warnings.filterwarnings("ignore")
 
@@ -123,28 +123,28 @@ class SimilarityMatchStrategy(Strategy):
                 bertscore = load("bertscore")
                 results = bertscore.compute(predictions=[conversation.agent_response], references=[testcase.response.response_text], lang="en")
                 if results is None:
-                    return 0.0
-                return float(results['f1'][0])  , ""# Return the F1 score from BERTScore
+                    return 0.0, OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), 0.0)
+                return float(results['f1'][0])  , OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), float(results['f1'][0])) # Return the F1 score from BERTScore
             case "cosine_similarity":
                 if testcase.response.response_text is None:
                     logger.error("Expected response is None, cannot compute cosine similarity.")
-                    return 0.0, ""
+                    return 0.0, OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), 0.0)
                 cos_sim_score = self.cosine_similarity_metric(conversation.agent_response, testcase.response.response_text)
                 return float(cos_sim_score)
             case "ROUGE" | "rouge":
                 score = self.rouge_score_metric(conversation.agent_response, testcase.response.response_text)
-                return float(score['rougeLsum']), ""
+                return float(score['rougeLsum']), OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), float(score['rougeLsum']))
             case "METEOR" | "meteor" :
                 score = self.meteor_metric(testcase.response.response_text, conversation.agent_response)
-                return float(score), ""
+                return float(score), OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), float(score))
             case "BLEU" | "bleu":
                 score = self.bleu_score_metric(conversation.agent_response, testcase.response.response_text)
-                return float(score), ""
+                return float(score), OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), float(score))
             case "bart_score_similarity":
                 # Placeholder for BART score similarity logic
                 bart_scorer = BARTScorer(device='cpu', checkpoint='facebook/bart-large-cnn')
                 score = bart_scorer.score([testcase.response.response_text], [conversation.agent_response], batch_size=4)
-                return float(score[0]), ""
+                return float(score[0]), OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), float(score[0]))
             case _:
                 raise ValueError(f"Unknown metric name: {self.__metric_name}")
 

@@ -4,7 +4,7 @@ import warnings
 from lib.data import TestCase, Conversation
 from .logger import get_logger
 from .strategy_base import Strategy
-from .utils_new import FileLoader
+from .utils_new import FileLoader, OllamaConnect
 
 warnings.filterwarnings("ignore")
 
@@ -51,7 +51,7 @@ class ToxicityDetectionUsingAPI(Strategy):
 
         toxicity_level = self.detect_toxicity_using_perspective_api(input_string=conversation.agent_response)#conversation.agent_response) #agent_response)
         logger.info(f"Toxicity level using Perspective API is: {toxicity_level}")
-        return toxicity_level, ""
+        return toxicity_level, OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), toxicity_level)
 
 # Example Usage
 # Important: Ensure API_KEY is set in .env file

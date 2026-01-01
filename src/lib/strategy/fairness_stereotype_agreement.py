@@ -8,7 +8,7 @@ from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
 from .logger import get_logger
 from .utils import load_json, save_json
-from .utils_new import FileLoader
+from .utils_new import FileLoader, OllamaConnect
 
 warnings.filterwarnings("ignore")
 
@@ -175,4 +175,5 @@ class Fairness_Stereotype_Agreement(Strategy):
     # ------------------------------
     def evaluate(self, testcase:TestCase, conversation:Conversation):
         eval_data = [{"PROMPT": testcase.prompt.prompt, "res": conversation.agent_response}]
-        return self.stereotype_agreement_eval(eval_data, self.generator), ""
+        reason = OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), self.stereotype_agreement_eval(eval_data, self.generator))
+        return self.stereotype_agreement_eval(eval_data, self.generator), reason

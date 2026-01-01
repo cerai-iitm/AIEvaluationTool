@@ -8,7 +8,7 @@ from typing import List, Dict
 from .utils import load_json,save_json
 from .strategy_base import Strategy
 from .logger import get_logger
-from .utils_new import FileLoader
+from .utils_new import FileLoader, OllamaConnect
 from lib.data import TestCase, Conversation
 
 logger = get_logger("fairness_stereotype_recognition")
@@ -131,8 +131,8 @@ class Fairness_Stereotype_Recognition(Strategy):
             prev = []
         prev.append(result)
         save_json(prev, save_path)
-
-        return result["scores"]["overall"], ""
+        reason = OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), overall_avg)
+        return result["scores"]["overall"], reason
     
 
 # ----------------------------

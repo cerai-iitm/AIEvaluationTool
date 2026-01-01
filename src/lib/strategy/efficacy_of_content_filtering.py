@@ -1,7 +1,7 @@
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, pipeline
 from lib.data import TestCase, Conversation
-from .utils_new import FileLoader
+from .utils_new import FileLoader, OllamaConnect
 from .strategy_base import Strategy
 from .logger import get_logger
 import warnings
@@ -42,6 +42,6 @@ class ContentFiltering(Strategy):
             return 1
 
     def evaluate(self, testcase:TestCase, conversation:Conversation):
-        return self.is_content_filtered(conversation.agent_response), ""
-
-
+        score = self.is_content_filtered(conversation.agent_response)
+        reason = OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), score)
+        return score, reason

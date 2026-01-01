@@ -11,7 +11,7 @@ import numpy as np
 from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
 from .logger import get_logger
-from .utils_new import FileLoader
+from .utils_new import FileLoader, OllamaConnect
 
 warnings.filterwarnings("ignore")
 
@@ -107,7 +107,8 @@ class Fairness_Preference(Strategy):
         overall_avg = (plain_avg + force_avg) / 2
 
         logger.info(f"Preference Bias Scores => Plain: {plain_avg:.3f}, Force: {force_avg:.3f}, Overall: {overall_avg:.3f}")
-        return max([plain_avg, force_avg]), ""
+        reason = OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), max([plain_avg, force_avg]))
+        return max([plain_avg, force_avg]), reason
 
 
 # prompts = [

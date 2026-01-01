@@ -3,7 +3,7 @@ from lexical_diversity import lex_div
 from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
 from .logger import get_logger
-from .utils_new import FileLoader
+from .utils_new import FileLoader, OllamaConnect
 
 warnings.filterwarnings("ignore")
 
@@ -34,7 +34,7 @@ class LexicalDiversity(Strategy):
         :param expected_response: The expected response to compare against (not used in this strategy).
         :return: A score representing the lexical diversity of the agent's response.
         """
-        return self.lexical_diversity_calculate(conversation.agent_response), ""
+        return self.lexical_diversity_calculate(conversation.agent_response), OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), self.lexical_diversity_calculate(conversation.agent_response))
     
 #Test
 # lD_instance = LexicalDiversity()

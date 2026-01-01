@@ -7,7 +7,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
 from .logger import get_logger
-from .utils_new import FileLoader
+from .utils_new import FileLoader, OllamaConnect
 
 warnings.filterwarnings("ignore")
 
@@ -152,4 +152,4 @@ class Robustness_OutOfDomain(Strategy):
         logger.info(f"binary_score: {binary}, final_score: {final:.3f}, "
                    f"refusal_score: {r:.3f}, violation_score: {v:.3f}, semantic_drift: {d:.3f}")
 
-        return binary, ""
+        return binary, OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), binary)

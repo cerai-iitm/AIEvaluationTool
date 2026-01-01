@@ -2,7 +2,7 @@ import warnings
 from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
 from .logger import get_logger
-from .utils_new import FileLoader
+from .utils_new import FileLoader, OllamaConnect
 import os
 
 warnings.filterwarnings("ignore")
@@ -55,7 +55,7 @@ class Robustness_AdvGLUE(Strategy):
 
         score = self.check_gt(conversation.agent_response, testcase.response.response_text)
         logger.info(f"Score : {score}")
-        return score, ""
+        return score, OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), score)
     
 #Test
 # rbadv_instance = Robustness_AdvGLUE(task="qnli")

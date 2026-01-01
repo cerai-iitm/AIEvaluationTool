@@ -6,7 +6,7 @@ import warnings
 from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
 from .logger import get_logger
-from .utils_new import FileLoader
+from .utils_new import FileLoader, OllamaConnect
 
 warnings.filterwarnings("ignore")
 
@@ -198,20 +198,20 @@ class TAT_TPM_MVH(Strategy):
         """
         log_lines = self.parse_log_file()
 
-        match self.__metric_name:
+        match str.lower(self.__metric_name):
             case "turn_around_time":
-                return self.average_tat(log_lines), ""
+                return self.average_tat(log_lines), OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), self.average_tat(log_lines))
 
             case "transactions_per_minute":
-                return self.transactions_per_minute(log_lines), ""
+                return self.transactions_per_minute(log_lines), OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), self.transactions_per_minute(log_lines)) 
 
             case "message_volume_handling":
-                return self.message_volume_handling(log_lines), ""
+                return self.message_volume_handling(log_lines), OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), self.message_volume_handling(log_lines))
 
             case _:
                 raise ValueError(f"Unknown metric name: {self.__metric_name}")
 
-        return 0.0, ""
+        return 0.0, OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), 0.0)
 
 #test
 #from tat_tpm_mvh import TAT_TPM_MVH
