@@ -63,7 +63,7 @@ const Responses = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   const itemsPerPage = 15;
 
-  const [searchField, setSearchField] = useState("");
+  const [searchField, setSearchField] = useState<"responsetext" | "language" | "responsetype">("responsetext");
   const [currentUserRole, setCurrentUserRole] = useState<string>("");
 
   const [highlightedRowId, setHighlightedRowId] = useState<number | null>(null);
@@ -363,7 +363,7 @@ const Responses = () => {
             </table>
           </div>
 
-          {(hasPermission(currentUserRole, "canCreateTables") ||
+          {/* {(hasPermission(currentUserRole, "canCreateTables") ||
             hasPermission(currentUserRole, "canCreateRecords")) && (
             <div className="mt-6 sticky bottom-5">
               <Button
@@ -373,7 +373,7 @@ const Responses = () => {
                 + Add Response
               </Button>
             </div>
-          )}
+          )} */}
         </div>
       </main>
 
