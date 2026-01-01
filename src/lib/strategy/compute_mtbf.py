@@ -59,7 +59,7 @@ class Compute_MTBF(Strategy):
         logger.info(f"Mean Time Between Failure (MTBF) in hrs: {mtbf}")
         return mtbf, uptimes
 
-    def evaluate(self, testcase:TestCase, conversation:Conversation):#agent_response: Optional[str] = None, expected_response: Optional[str] = None) -> float:
+    def evaluate(self, testcase:TestCase, conversation:Conversation):
         """
         Calculate Mean Time Between Failures (MTBF) using the interaction log file
 
@@ -70,11 +70,9 @@ class Compute_MTBF(Strategy):
             raise ValueError("file_path is not provided in strategy kwargs.")
         timestamps = self.extract_failure_timestamps(self.file_path)
         mtbf_time, uptime = self.calculate_mtbf_from_timestamps(timestamps)
-        return mtbf_time, ""#uptime
+        return mtbf_time, f"Uptime : {uptime}"
 
 # Example usage
 # file_path = "data/whatsapp_driver.log"
 # mtbf = Compute_MTBF(file_path=log_file)
-# mtbf_time = mtbf.evaluate()
-# print(f"Mean time Between Failure (in Hrs): {mtbf_time}")
 

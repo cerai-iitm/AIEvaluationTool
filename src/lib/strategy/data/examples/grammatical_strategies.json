@@ -1,6 +1,14 @@
 [
     {
         "judge_prompt": "",
+        "sys_prompt": "",
+        "user_prompt": "",
+        "expected_output": "",
+        "agent_response": "They is coming home for the cristmas",
+        "response_score": 0.6
+    },
+    {
+        "judge_prompt": "",
         "sys_prompt": "You are a helpful culinary assistant.",
         "user_prompt": "How long should I boil pasta for al dente?",
         "expected_output": "You should generally boil dried pasta for about 8 to 10 minutes, but check the package instructions for the specific type.",

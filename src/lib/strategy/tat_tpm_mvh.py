@@ -185,7 +185,7 @@ class TAT_TPM_MVH(Strategy):
 
         return math.floor(messages_per_time_period)
 
-    def evaluate(self, testcase:TestCase, conversation:Conversation): #agent_response: str, expected_response: Optional[str] = None) -> float:
+    def evaluate(self, testcase:TestCase, conversation:Conversation):
         """
         Evaluates the selected metric based on log file data.
 
@@ -213,19 +213,7 @@ class TAT_TPM_MVH(Strategy):
 
         return 0.0, OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), 0.0)
 
-#test
-#from tat_tpm_mvh import TAT_TPM_MVH
-#
 #tat_metric = TAT_TPM_MVH(metric_name="turn_around_time", log_file_path="whatsapp_driver.log")
-#tat_score = tat_metric.evaluate("", "")
-#print(f"Turn Around Time: {tat_score:.2f} seconds")
-#
-#tpm_metric = TAT_TPM_MVH(metric_name="transactions_per_minute", log_file_path="whatsapp_driver.log")
-#tpm_score = tpm_metric.evaluate("", "")
-#print(f"Transactions Per Minute: {tpm_score} transactions/min")
-#
-#mvh_metric = TAT_TPM_MVH(metric_name="message_volume_handling", log_file_path="whatsapp_driver.log", time_period_minutes=10)
-#mvh_score = mvh_metric.evaluate("", "")
-#print(f"Message Volume Handling: {mvh_score} messages in mentioned time period ")
+
 
 

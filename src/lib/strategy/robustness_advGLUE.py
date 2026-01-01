@@ -48,18 +48,11 @@ class Robustness_AdvGLUE(Strategy):
         else:
             return 0
     
-    def evaluate(self, testcase:TestCase, conversation:Conversation):#agent_response: str, expected_response: str):
+    def evaluate(self, testcase:TestCase, conversation:Conversation):
         """
         Evaluate the agents response for Robustness.
         """
 
         score = self.check_gt(conversation.agent_response, testcase.response.response_text)
         logger.info(f"Score : {score}")
-        return score, OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), score)
-    
-#Test
-# rbadv_instance = Robustness_AdvGLUE(task="qnli")
-# score = rbadv_instance.evaluate("0 because of some reason","0")
-# print(f"Score: {score}")
-# del rbadv_instance
-## Robustness AdvGLUE is working!
+        return score, ""

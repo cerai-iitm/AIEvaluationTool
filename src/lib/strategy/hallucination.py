@@ -152,7 +152,7 @@ class HallucinationStrategy(Strategy):
         logger.info(f"Agent Response: {agent_response} | Prediction: {prediction} | Expected: {expected_response} | Score: {score}")
         return score
 
-    def evaluate(self, testcase:TestCase, conversation:Conversation):#agent_response: str, expected_response: Optional[str] = None) -> float:
+    def evaluate(self, testcase:TestCase, conversation:Conversation):
         """
         Main evaluation entrypoint for hallucination across all task types.
 
@@ -176,90 +176,3 @@ class HallucinationStrategy(Strategy):
         else:
             logger.warning(f"Unsupported source type: {self.source_type}")
             return 0.0, ""
-
-# test_data_points = [
-#     {
-#         "system_prompt": "Answer factually.",
-#         "prompt": "What is the capital of France?",
-#         "agent_response": "The capital of France is Paris.",
-#         "expected_response": None,
-#         "source_type": "halu_qa"
-#     },
-#     {
-#         "system_prompt": "Answer factually.",
-#         "prompt": "What is the capital of Germany?",
-#         "agent_response": "The capital of Germany is Brussels.",
-#         "expected_response": None,
-#         "source_type": "halu_qa"
-#     },
-#     {
-#         "system_prompt": "Summarize the passage concisely.",
-#         "prompt": (
-#             "Albert Einstein was a German-born theoretical physicist who developed "
-#             "the theory of relativity, one of the two pillars of modern physics."
-#         ),
-#         "agent_response": "Albert Einstein was a German scientist who created the theory of relativity.",
-#         "expected_response": None,
-#         "source_type": "halu_summ"
-#     },
-#     {
-#         "system_prompt": "Summarize the passage concisely.",
-#         "prompt": (
-#             "The Nile is a major north-flowing river in northeastern Africa, "
-#             "and is commonly regarded as the longest river in the world."
-#         ),
-#         "agent_response": "The Nile is in South America and is the second-longest river.",
-#         "expected_response": None,
-#         "source_type": "halu_summ"
-#     },
-#     {
-#         "system_prompt": "Choose the correct answer.",
-#         "prompt": (
-#             "Which planet is known as the Red Planet?\n"
-#             "A. Venus\n"
-#             "B. Mars\n"
-#             "C. Jupiter\n"
-#             "D. Saturn"
-#         ),
-#         "agent_response": "B. Mars is the Red Planet.",
-#         "expected_response": "B",
-#         "source_type": "mc"
-#     },
-#     {
-#         "system_prompt": "Choose the correct answer.",
-#         "prompt": (
-#             "Which planet has the most rings?\n"
-#             "A. Earth\n"
-#             "B. Neptune\n"
-#             "C. Mars\n"
-#             "D. Jupiter"
-#         ),
-#         "agent_response": "NA",
-#         "expected_response": "NA",
-#         "source_type": "mc"
-#     }
-# ]
-
-
-# def run_hallucination_tests(test_data_points: List[Dict]):
-#     """
-#     Runs evaluation on all provided hallucination test cases.
-
-#     Parameters:
-#     - test_data_points (List[Dict]): List of test dictionaries containing prompt, response, etc.
-#     """
-#     for idx, data in enumerate(test_data_points, 1):
-#         strategy = HallucinationStrategy(
-#             name="hallucination",
-#             source_type=data["source_type"],
-#             prompt=data["prompt"]
-#         )
-#         score = strategy.evaluate(
-#             agent_response=data["agent_response"],
-#             expected_response=data["expected_response"]
-#         )
-#         print(f"Test {idx}: Source Type = {data['source_type']} | Score = {score}")
-
-
-# # Run the test
-# run_hallucination_tests(test_data_points)

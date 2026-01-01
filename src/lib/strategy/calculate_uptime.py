@@ -23,16 +23,16 @@ class UptimeCalculation(Strategy):
         a = uptime()
         return a
     
-    def evaluate(self, testcase:TestCase, conversation:Conversation): #agent_response: Optional[str] = None, expected_response: Optional[str] = None):
+    def evaluate(self, testcase:TestCase, conversation:Conversation):
         """
         Evaluate the uptime of the application
         """
         start_time = time.time()
         z=[]
-        logger.info(f"Threshold: {self.__threshold}")
+        logger.info(f"Threshold : {self.__threshold}")
         while time.time() - start_time < self.__threshold: 
             a = self.calculate_uptime()
-            logger.info(a)
+            logger.info(str(a))
             time.sleep(10)
             z.append(a)
             if a == "None":
@@ -42,10 +42,3 @@ class UptimeCalculation(Strategy):
         else:
             logger.error("The application broke or uptime cannot be determined.")
             return 0, ""
-    
-# #Test
-# upt_instance = UptimeCalculation(threshold=100)
-# score = upt_instance.evaluate()
-# print(f"Score: {score}")
-# del upt_instance
-# ## Uptime is working!

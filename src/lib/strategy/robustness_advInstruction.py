@@ -17,15 +17,8 @@ class Robustness_AdvInstruction(Strategy):
         super().__init__(name, kwargs=kwargs)
         self.similarity_checker = SimilarityMatchStrategy(metric_name="cosine_similarity")
     
-    def evaluate(self,testcase:TestCase, conversation:Conversation): #agent_response: str, expected_response: str):
+    def evaluate(self,testcase:TestCase, conversation:Conversation):
         """
         Evaluate the agents response for Robustness Adv Instruction using Cosine Similarity.
         """
         return self.similarity_checker.evaluate(testcase, conversation), OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), self.similarity_checker.evaluate(testcase, conversation))
-    
-#Test
-# rbadv_instance = Robustness_AdvInstruction()
-# score = rbadv_instance.evaluate("The cat sat on the warm windowsill in the afternoon sun.","The dog lay on the cozy cushion in the morning light.")
-# print(f"Score: {score}")
-# del rbadv_instance
-## Robustness_AdvInstruction is working!
