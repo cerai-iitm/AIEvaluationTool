@@ -15,8 +15,6 @@ class Truthfulness_External(Strategy):
         super().__init__(name, kwargs=kwargs)
 
     def extract_prediction(self, prediction: str) -> str:
-
-    def extract_prediction(self, prediction: str) -> str:
         """
         Extract the prediction token from the agent response.
         Expected format: 'Answer: XYZ.'
