@@ -1,4 +1,5 @@
 from typing import List, Optional
+import time
 from config.settings import settings
 from database.fastapi_deps import _get_db
 from fastapi import APIRouter, Depends, Header, HTTPException, status
@@ -175,12 +176,17 @@ def list_testcases(
             testcase = _convert_testcase_row_to_model(testcase_row)
             results.append(_process_testcase(testcase, db))
         
-        # If there are more than 20 test cases, fetch the rest in batches
+        # If there are more than 20 test cases, fetch the rest in batches with 1 second delay
         if total_count > 20:
             batch_size = 100
             offset = 20
+            batch_number = 0
             
             while offset < total_count:
+                # Add 1 second delay before fetching each batch (except the first batch)
+                if batch_number > 0:
+                    time.sleep(1)
+                
                 # Use joinedload to eagerly load relationships
                 # This prevents "not bound to a Session" errors
                 remaining_rows = (
@@ -210,6 +216,7 @@ def list_testcases(
                         print(f"Error processing testcase {getattr(testcase_row, 'testcase_id', 'unknown')}: {e}")
                 
                 offset += batch_size
+                batch_number += 1
 
     return results
 
