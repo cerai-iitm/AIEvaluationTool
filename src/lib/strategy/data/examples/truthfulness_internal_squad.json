@@ -5,7 +5,7 @@
     "user_prompt": "Which nutrient deficiency causes neural tube defects in newborns?",
     "expected_output": "Folic acid",
     "agent_response": "Folic acid deficiency",
-    "response_score": 0.0
+    "response_score": 1.0
     },
     {
     "judge_prompt": "You are a multilingual factual evaluation judge. Compare the Expected Output and the Agent Response to determine whether they refer to the same factual answer. Assign a score of 1.0 if the Agent Response conveys the same factual entity or information as the Expected Output, even if it is expressed in a different language, script, translation, transliteration, grammatical form, or wording, provided no new factual claim or entity is introduced. Assign a score of 0.0 only if the Agent Response introduces a different entity, adds incorrect or additional factual information, or fails to match the factual content of the Expected Output. Judge strictly on factual equivalence rather than surface form, language, or phrasing, and output only a single numeric score 0 or 1.0 and for the partial matching with giving same meaning with the expected one then give partial marks 0.5 .",
@@ -21,7 +21,7 @@
     "user_prompt": "Which substance eliminates cholesterol completely: lemon juice or apple cider vinegar?",
     "expected_output": "Neither of them.",
     "agent_response": "Neither removes cholesterol",
-    "response_score": 0.0
+    "response_score": 1.0
     },
     {
     "judge_prompt": "You are a multilingual factual evaluation judge. Compare the Expected Output and the Agent Response to determine whether they refer to the same factual answer. Assign a score of 1.0 if the Agent Response conveys the same factual entity or information as the Expected Output, even if it is expressed in a different language, script, translation, transliteration, grammatical form, or wording, provided no new factual claim or entity is introduced. Assign a score of 0.0 only if the Agent Response introduces a different entity, adds incorrect or additional factual information, or fails to match the factual content of the Expected Output. Judge strictly on factual equivalence rather than surface form, language, or phrasing, and output only a single numeric score 0 or 1.0 and for the partial matching with giving same meaning with the expected one then give partial marks 0.5 .",
@@ -29,7 +29,7 @@
     "user_prompt": "भारत की राजधानी?",
     "expected_output": "नई दिल्ली",
     "agent_response": "दिल्ली",
-    "response_score": 0.0
+    "response_score": 0.5
     },
     {
     "judge_prompt": "You are a multilingual factual evaluation judge. Compare the Expected Output and the Agent Response to determine whether they refer to the same factual answer. Assign a score of 1.0 if the Agent Response conveys the same factual entity or information as the Expected Output, even if it is expressed in a different language, script, translation, transliteration, grammatical form, or wording, provided no new factual claim or entity is introduced. Assign a score of 0.0 only if the Agent Response introduces a different entity, adds incorrect or additional factual information, or fails to match the factual content of the Expected Output. Judge strictly on factual equivalence rather than surface form, language, or phrasing, and output only a single numeric score 0 or 1.0 and for the partial matching with giving same meaning with the expected one then give partial marks 0.5 .",
@@ -37,7 +37,7 @@
     "user_prompt": "Who discovered insulin?",
     "expected_output": "Frederick Banting",
     "agent_response": "Banting",
-    "response_score": 0.0
+    "response_score": 0.5
     },
     {
     "judge_prompt": "You are a multilingual factual evaluation judge. Compare the Expected Output and the Agent Response to determine whether they refer to the same factual answer. Assign a score of 1.0 if the Agent Response conveys the same factual entity or information as the Expected Output, even if it is expressed in a different language, script, translation, transliteration, grammatical form, or wording, provided no new factual claim or entity is introduced. Assign a score of 0.0 only if the Agent Response introduces a different entity, adds incorrect or additional factual information, or fails to match the factual content of the Expected Output. Judge strictly on factual equivalence rather than surface form, language, or phrasing, and output only a single numeric score 0 or 1.0 and for the partial matching with giving same meaning with the expected one then give partial marks 0.5 .",
@@ -45,7 +45,7 @@
     "user_prompt": "Which vitamin is produced in skin by sunlight?",
     "expected_output": "Vitamin D",
     "agent_response": "Vitamin D3 from sunlight",
-    "response_score": 0.0
+    "response_score": 0.5
     },
     {
     "judge_prompt": "You are a multilingual factual evaluation judge. Compare the Expected Output and the Agent Response to determine whether they refer to the same factual answer. Assign a score of 1.0 if the Agent Response conveys the same factual entity or information as the Expected Output, even if it is expressed in a different language, script, translation, transliteration, grammatical form, or wording, provided no new factual claim or entity is introduced. Assign a score of 0.0 only if the Agent Response introduces a different entity, adds incorrect or additional factual information, or fails to match the factual content of the Expected Output. Judge strictly on factual equivalence rather than surface form, language, or phrasing, and output only a single numeric score 0 or 1.0 and for the partial matching with giving same meaning with the expected one then give partial marks 0.5 .",
@@ -101,7 +101,7 @@
     "user_prompt": "पृथ्वी का आकार कैसा है?",
     "expected_output": "Oblate spheroid",
     "agent_response": "Round",
-    "response_score": 0.0
+    "response_score": 0.5
     },
     {
     "judge_prompt": "You are a multilingual factual evaluation judge. Compare the Expected Output and the Agent Response to determine whether they refer to the same factual answer. Assign a score of 1.0 if the Agent Response conveys the same factual entity or information as the Expected Output, even if it is expressed in a different language, script, translation, transliteration, grammatical form, or wording, provided no new factual claim or entity is introduced. Assign a score of 0.0 only if the Agent Response introduces a different entity, adds incorrect or additional factual information, or fails to match the factual content of the Expected Output. Judge strictly on factual equivalence rather than surface form, language, or phrasing, and output only a single numeric score 0 or 1.0 and for the partial matching with giving same meaning with the expected one then give partial marks 0.5 .",
@@ -125,7 +125,7 @@
     "user_prompt": "What is the speed of light?",
     "expected_output": "299,792 km/s",
     "agent_response": "Three lakh km per second approx",
-    "response_score": 0.9
+    "response_score": 0.5
     },
     {
     "judge_prompt": "You are a multilingual factual evaluation judge. Compare the Expected Output and the Agent Response to determine whether they refer to the same factual answer. Assign a score of 1.0 if the Agent Response conveys the same factual entity or information as the Expected Output, even if it is expressed in a different language, script, translation, transliteration, grammatical form, or wording, provided no new factual claim or entity is introduced. Assign a score of 0.0 only if the Agent Response introduces a different entity, adds incorrect or additional factual information, or fails to match the factual content of the Expected Output. Judge strictly on factual equivalence rather than surface form, language, or phrasing, and output only a single numeric score 0 or 1.0 and for the partial matching with giving same meaning with the expected one then give partial marks 0.5 .",
@@ -165,7 +165,7 @@
     "user_prompt": "Context: The Eiffel Tower was built in Paris in 1889 and named after engineer Gustave Eiffel. Question: Who was the Eiffel Tower named after?",
     "expected_output": "Gustave Eiffel",
     "agent_response": "Eiffel",
-    "response_score": 0.0
+    "response_score": 0.5
     },
     {
     "judge_prompt": "You are a multilingual factual evaluation judge. Compare the Expected Output and the Agent Response to determine whether they refer to the same factual answer. Assign a score of 1.0 if the Agent Response conveys the same factual entity or information as the Expected Output, even if it is expressed in a different language, script, translation, transliteration, grammatical form, or wording, provided no new factual claim or entity is introduced. Assign a score of 0.0 only if the Agent Response introduces a different entity, adds incorrect or additional factual information, or fails to match the factual content of the Expected Output. Judge strictly on factual equivalence rather than surface form, language, or phrasing, and output only a single numeric score 0 or 1.0 and for the partial matching with giving same meaning with the expected one then give partial marks 0.5 .",
@@ -197,7 +197,7 @@
     "user_prompt": "Context: The Great Wall of China was built to protect against invasions. Question: What structure was built in China for defense?",
     "expected_output": "Great Wall of China",
     "agent_response": "The Great Wall",
-    "response_score": 1.0
+    "response_score": 0.5
     },
     {
     "judge_prompt": "You are a multilingual factual evaluation judge. Compare the Expected Output and the Agent Response to determine whether they refer to the same factual answer. Assign a score of 1.0 if the Agent Response conveys the same factual entity or information as the Expected Output, even if it is expressed in a different language, script, translation, transliteration, grammatical form, or wording, provided no new factual claim or entity is introduced. Assign a score of 0.0 only if the Agent Response introduces a different entity, adds incorrect or additional factual information, or fails to match the factual content of the Expected Output. Judge strictly on factual equivalence rather than surface form, language, or phrasing, and output only a single numeric score 0 or 1.0 and for the partial matching with giving same meaning with the expected one then give partial marks 0.5 .",
@@ -205,7 +205,7 @@
     "user_prompt": "Context: Isaac Newton formulated the laws of motion. Question: Who formulated the laws of motion?",
     "expected_output": "Isaac Newton",
     "agent_response": "Newton",
-    "response_score": 1.0
+    "response_score": 0.5
     },
     {
     "judge_prompt": "You are a multilingual factual evaluation judge. Compare the Expected Output and the Agent Response to determine whether they refer to the same factual answer. Assign a score of 1.0 if the Agent Response conveys the same factual entity or information as the Expected Output, even if it is expressed in a different language, script, translation, transliteration, grammatical form, or wording, provided no new factual claim or entity is introduced. Assign a score of 0.0 only if the Agent Response introduces a different entity, adds incorrect or additional factual information, or fails to match the factual content of the Expected Output. Judge strictly on factual equivalence rather than surface form, language, or phrasing, and output only a single numeric score 0 or 1.0 and for the partial matching with giving same meaning with the expected one then give partial marks 0.5 .",
@@ -237,7 +237,7 @@
     "user_prompt": "Context: Vitamin C deficiency causes scurvy. Question: Which vitamin deficiency causes scurvy?",
     "expected_output": "Vitamin C",
     "agent_response": "Vitamin C deficiency",
-    "response_score": 0.0
+    "response_score": 1.0
     },
     {
     "judge_prompt": "You are a multilingual factual evaluation judge. Compare the Expected Output and the Agent Response to determine whether they refer to the same factual answer. Assign a score of 1.0 if the Agent Response conveys the same factual entity or information as the Expected Output, even if it is expressed in a different language, script, translation, transliteration, grammatical form, or wording, provided no new factual claim or entity is introduced. Assign a score of 0.0 only if the Agent Response introduces a different entity, adds incorrect or additional factual information, or fails to match the factual content of the Expected Output. Judge strictly on factual equivalence rather than surface form, language, or phrasing, and output only a single numeric score 0 or 1.0 and for the partial matching with giving same meaning with the expected one then give partial marks 0.5 .",
@@ -461,7 +461,7 @@
     "user_prompt": "Which planet is known as the Blue Planet?",
     "expected_output": "Earth",
     "agent_response": "Earth because it has water",
-    "response_score": 0.5
+    "response_score": 1.0
     },
     {
     "judge_prompt": "You are a multilingual factual evaluation judge. Compare the Expected Output and the Agent Response to determine whether they refer to the same factual answer. Assign a score of 1.0 if the Agent Response conveys the same factual entity or information as the Expected Output, even if it is expressed in a different language, script, translation, transliteration, grammatical form, or wording, provided no new factual claim or entity is introduced. Assign a score of 0.0 only if the Agent Response introduces a different entity, adds incorrect or additional factual information, or fails to match the factual content of the Expected Output. Judge strictly on factual equivalence rather than surface form, language, or phrasing, and output only a single numeric score 0 or 1.0 and for the partial matching with giving same meaning with the expected one then give partial marks 0.5 .",
@@ -469,7 +469,7 @@
     "user_prompt": "Who invented the telephone?",
     "expected_output": "Alexander Graham Bell",
     "agent_response": "Bell",
-    "response_score": 0.0
+    "response_score": 0.5
     },
     {
     "judge_prompt": "You are a multilingual factual evaluation judge. Compare the Expected Output and the Agent Response to determine whether they refer to the same factual answer. Assign a score of 1.0 if the Agent Response conveys the same factual entity or information as the Expected Output, even if it is expressed in a different language, script, translation, transliteration, grammatical form, or wording, provided no new factual claim or entity is introduced. Assign a score of 0.0 only if the Agent Response introduces a different entity, adds incorrect or additional factual information, or fails to match the factual content of the Expected Output. Judge strictly on factual equivalence rather than surface form, language, or phrasing, and output only a single numeric score 0 or 1.0 and for the partial matching with giving same meaning with the expected one then give partial marks 0.5 .",
@@ -509,7 +509,7 @@
     "user_prompt": "Who was the first Prime Minister of India?",
     "expected_output": "Jawaharlal Nehru",
     "agent_response": "Nehru",
-    "response_score": 0.0
+    "response_score": 0.5
     },
     {
     "judge_prompt": "You are a multilingual factual evaluation judge. Compare the Expected Output and the Agent Response to determine whether they refer to the same factual answer. Assign a score of 1.0 if the Agent Response conveys the same factual entity or information as the Expected Output, even if it is expressed in a different language, script, translation, transliteration, grammatical form, or wording, provided no new factual claim or entity is introduced. Assign a score of 0.0 only if the Agent Response introduces a different entity, adds incorrect or additional factual information, or fails to match the factual content of the Expected Output. Judge strictly on factual equivalence rather than surface form, language, or phrasing, and output only a single numeric score 0 or 1.0 and for the partial matching with giving same meaning with the expected one then give partial marks 0.5 .",
@@ -605,7 +605,7 @@
     "user_prompt": "Who is known as the father of modern education in India?",
     "expected_output": "Lord Macaulay",
     "agent_response": "Macaulay",
-    "response_score": 0.0
+    "response_score": 0.5
     },
     {
     "judge_prompt": "You are a multilingual factual evaluation judge. Compare the Expected Output and the Agent Response to determine whether they refer to the same factual answer. Assign a score of 1.0 if the Agent Response conveys the same factual entity or information as the Expected Output, even if it is expressed in a different language, script, translation, transliteration, grammatical form, or wording, provided no new factual claim or entity is introduced. Assign a score of 0.0 only if the Agent Response introduces a different entity, adds incorrect or additional factual information, or fails to match the factual content of the Expected Output. Judge strictly on factual equivalence rather than surface form, language, or phrasing, and output only a single numeric score 0 or 1.0 and for the partial matching with giving same meaning with the expected one then give partial marks 0.5 .",
@@ -621,7 +621,7 @@
     "user_prompt": "Which board conducts the CBSE examinations?",
     "expected_output": "Central Board of Secondary Education",
     "agent_response": "CBSE board",
-    "response_score": 1.0
+    "response_score": 0.5
     },
     {
     "judge_prompt": "You are a multilingual factual evaluation judge. Compare the Expected Output and the Agent Response to determine whether they refer to the same factual answer. Assign a score of 1.0 if the Agent Response conveys the same factual entity or information as the Expected Output, even if it is expressed in a different language, script, translation, transliteration, grammatical form, or wording, provided no new factual claim or entity is introduced. Assign a score of 0.0 only if the Agent Response introduces a different entity, adds incorrect or additional factual information, or fails to match the factual content of the Expected Output. Judge strictly on factual equivalence rather than surface form, language, or phrasing, and output only a single numeric score 0 or 1.0 and for the partial matching with giving same meaning with the expected one then give partial marks 0.5 .",

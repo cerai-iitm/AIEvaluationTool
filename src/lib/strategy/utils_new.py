@@ -202,7 +202,7 @@ class OllamaConnect:
                         "messages" : [
                             {
                                 "role" : "user",
-                                "content" : f"{text} /nothink",
+                                "content" : f"{text} /inshort_20-30_words /nothink",
                             }
                         ],
                         "format":"json",
@@ -234,13 +234,19 @@ class OllamaConnect:
         prompt = OllamaConnect.dflt_vals.reason_prompt.format(input_sent=agent_response, metric=strategy_name, score=score, corr_output=kwargs.get("corr_output", ""))
         responses = OllamaConnect.prompt_model(prompt, OllamaConnect.dflt_vals.reqd_flds)
         final_rsn = ""
-        if(len(responses) > 0):
-            reasons = [r["reason"] for r in responses]
-            for i, r in enumerate(reasons):
-                if i == 0:
-                    final_rsn += f"Reason {i} : {r}"
-                else:
-                    final_rsn += f"\n\n Reason {i} : {r}"
-            return final_rsn
-        else:
+        try:
+            if(0 < len(responses) < 2):
+                return f"{responses[0]['reason']}"
+            elif(len(responses) > 1):
+                reasons = [r["reason"] for r in responses]
+                for i, r in enumerate(reasons):
+                    if i == 0:
+                        final_rsn += f"{i+1}. {r}"
+                    else:
+                        final_rsn += f"\n {i+1}. {r}"
+                return final_rsn
+            else:
+                return "Could not get a proper reasoning for the score."
+        except Exception as e:
+            logger.error(f"Error while getting reason for the score : {e}")
             return "Could not get a proper reasoning for the score."
