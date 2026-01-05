@@ -389,11 +389,17 @@ const Responses = () => {
           {selectedResponse && (
             <div className="space-y-4 pt-4">
               <div className="space-y-2">
-                <Label className="text-base font-semibold">Response</Label>
+                <Label className="text-base font-semibold">Responses</Label>
                 <Textarea
                   value={selectedResponse.response_text}
                   readOnly
                   className="bg-muted min-h-[100px]"
+                  style={{
+                    height: '${height}px',
+                    maxHeight: "120px",
+                    minHeight: "75px",
+                    overflowY: "auto"
+                  }}
                 />
               </div>
 
@@ -423,6 +429,12 @@ const Responses = () => {
                   value={selectedResponse.user_prompt}
                   readOnly
                   className="bg-muted min-h-[80px]"
+                  style={{
+                    height: '${height}px',
+                    maxHeight: "120px",
+                    minHeight: "75px",
+                    overflowY: "auto"
+                  }}
                 />
               </div>
 
@@ -432,6 +444,12 @@ const Responses = () => {
                   value={selectedResponse.system_prompt}
                   readOnly
                   className="bg-muted min-h-[80px]"
+                  style={{
+                    height: '${height}px',
+                    maxHeight: "120px",
+                    minHeight: "75px",
+                    overflowY: "auto"
+                  }}
                 />
               </div>
 

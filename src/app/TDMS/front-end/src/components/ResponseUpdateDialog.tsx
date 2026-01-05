@@ -269,6 +269,14 @@ export const ResponseUpdateDialog = ({
                 value={responseText}
                 onChange={(e) => setResponseText(e.target.value)}
                 className="bg-muted min-h-[100px]"
+                style={
+                  {
+                    height: '${height}px',
+                    maxHeight: "120px",
+                    minHeight: "75px",
+                    overflowY: "auto"
+                  }
+                }
               />
             </div>
 
@@ -332,6 +340,14 @@ export const ResponseUpdateDialog = ({
                     // readOnly
                     className="bg-muted min-h-[100px] pr-10"
                     onChange={(e) => setUserPrompts(e.target.value)}
+                    style={
+                      {
+                        height: '${height}px',
+                        maxHeight: "120px",
+                        minHeight: "75px",
+                        overflowY: "auto"
+                      }
+                    }
                   />
                 </div>
               </div>
@@ -344,6 +360,14 @@ export const ResponseUpdateDialog = ({
                     // readOnly
                     className="bg-muted min-h-[80px] pr-10"
                     onChange={(e) => setSystemPrompts(e.target.value) }
+                    style={
+                      {
+                        height: '${height}px',
+                        maxHeight: "120px",
+                        minHeight: "75px",
+                        overflowY: "auto"
+                      }
+                    }
                   />
                 </div>
               </div>

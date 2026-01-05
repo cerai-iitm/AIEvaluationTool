@@ -436,7 +436,8 @@ const DomainList: React.FC = () => {
       </main>
 
       {/* Edit Dialog - Similar to original but with delete confirmation */}
-      {showEditDialog && selectedDomain && (
+      {/* if current user is viewer - no popup for edit dialog */}
+      {showEditDialog && selectedDomain && currentUserRole.toLowerCase() !== "viewer" && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50 p-4" 
           onClick={() => {
             setShowEditDialog(false);

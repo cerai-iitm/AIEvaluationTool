@@ -6,7 +6,7 @@ import  {Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
-import { hasPermission } from '@/utils/permissions';
+import { hasPermission, isUser } from '@/utils/permissions';
 import { HistoryButton } from "@/components/HistoryButton";
 
 
@@ -416,7 +416,8 @@ const LanguageList: React.FC = () => {
             </main>
 
             {/* Edit Dialog - Similar to Domains.tsx */}
-            {showEditDialog && selectedLanguage && (
+            {/* if current user is viewer - no popup for edit dialog */}
+            {showEditDialog && selectedLanguage && currentUserRole.toLowerCase() !== "viewer" && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50 p-4"
                     onClick={ () => {
                         setShowEditDialog(false);
@@ -514,7 +515,8 @@ const LanguageList: React.FC = () => {
             )}
 
             {/* Update Modal */}
-            {showUpdateModal && selectedLanguage && (
+            {/*  if current user is viewer - no popup for update   */}
+            {showUpdateModal && selectedLanguage && currentUserRole.toLowerCase() !== "viewer" && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50 p-4"
                     onClick = {() => {
                         setShowUpdateModal(false);
