@@ -307,7 +307,7 @@ def update_target(
 
     note = f"Target - {updated.target_name} updated"
     if changes:
-        note += f" ({', '.join(changes)})"
+        note += f" : {', '.join(changes)}"
     else:
         note += " (no changes detected)"
     

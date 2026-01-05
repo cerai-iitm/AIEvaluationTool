@@ -683,12 +683,12 @@ def update_testcase(
             changes.append("response updated")
         if "strategy_name" in normalized_updates:
             changes.append("strategy updated")
-        if "llm_judge_prompt" in normalized_updates:
+        if "llm_judge_prompt" in normalized_updates and payload.llm_judge_prompt is not None:
             changes.append("judge prompt updated")
 
         note = f"Test Case - {updated.testcase_name} updated"
         if changes:
-            note += f": {', '.join(changes)}"
+            note += f" : {', '.join(changes)}"
         else:
             note += " (no changes detected)"
 

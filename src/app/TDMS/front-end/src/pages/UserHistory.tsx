@@ -54,6 +54,7 @@ const UserHistory = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   
   // Dialog states
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
@@ -69,6 +70,33 @@ const UserHistory = () => {
     role: "",
     password: "",
   });
+
+  // Fetch current logged-in user data
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const token = localStorage.getItem("access_token");
+        const headers: HeadersInit = {
+          "Content-Type": "application/json",
+        };
+
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(API_ENDPOINTS.CURRENT_USER, { headers });
+        
+        if (response.ok) {
+          const userData: User = await response.json();
+          setCurrentUser(userData);
+        }
+      } catch (error) {
+        console.error("Error fetching current user data:", error);
+      }
+    };
+
+    fetchCurrentUser();
+  }, []);
 
   // Fetch user data
   useEffect(() => {
@@ -253,6 +281,20 @@ const UserHistory = () => {
       return;
     }
 
+    // Prevent admin from deleting their own account
+    if (
+      currentUser?.role?.toLowerCase() === "admin" &&
+      currentUser?.user_name === user?.user_name
+    ) {
+      toast({
+        title: "Error",
+        description: "Admin users cannot delete their own account",
+        variant: "destructive",
+      });
+      setDeleteDialogOpen(false);
+      return;
+    }
+
     setIsDeleting(true);
     try {
       const token = localStorage.getItem("access_token");
@@ -337,21 +379,61 @@ const UserHistory = () => {
             <h1 className="text-4xl font-bold">
               Activity of {username ? decodeURIComponent(username) : "User"}
             </h1>
+
+            {/* if current user is admin and the user is the same as the current user, hide the update and delete buttons */}
             <div className="flex gap-2">
-              <Button
+              {currentUser?.role?.toLowerCase() !== "admin" || currentUser?.user_name !== user?.user_name && (
+                <>
+                  <Button
+                    className="bg-primary hover:bg-primary/90"
+                    onClick={() => setUpdateDialogOpen(true)}
+                    disabled={isLoadingUser || !user}
+                  >
+                    Update
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => setDeleteDialogOpen(true)}
+                    disabled={isLoadingUser || !user}
+                  >
+                    Delete
+                  </Button>
+                </>
+              )}
+              {/* <Button
                 className="bg-primary hover:bg-primary/90"
                 onClick={() => setUpdateDialogOpen(true)}
-                disabled={isLoadingUser || !user}
+                disabled={isLoadingUser || !user ||
+                  (currentUser?.role?.toLowerCase() === "admin" && 
+                   currentUser?.user_name === user?.user_name)
+                }
+                title={
+                  currentUser?.role?.toLowerCase() === "admin" && 
+                  currentUser?.user_name === user?.user_name
+                    ? "Admin users cannot update their own account"
+                    : ""
+                }
               >
                 Update
               </Button>
               <Button
                 variant="destructive"
                 onClick={() => setDeleteDialogOpen(true)}
-                disabled={isLoadingUser || !user}
+                disabled={
+                  isLoadingUser || 
+                  !user || 
+                  (currentUser?.role?.toLowerCase() === "admin" && 
+                   currentUser?.user_name === user?.user_name)
+                }
+                title={
+                  currentUser?.role?.toLowerCase() === "admin" && 
+                  currentUser?.user_name === user?.user_name
+                    ? "Admin users cannot delete their own account"
+                    : ""
+                }
               >
                 Delete
-              </Button>
+              </Button> */}
             </div>
           </div>
         </div>
