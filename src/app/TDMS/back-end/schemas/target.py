@@ -19,7 +19,7 @@ class TargetBase(BaseModel):
 
 
 class TargetCreateV2(TargetBase):
-    pass
+    notes: Optional[str] = Field(None, description="User notes for this operation.")
 
 
 class TargetUpdateV2(BaseModel):
@@ -35,6 +35,7 @@ class TargetUpdateV2(BaseModel):
     lang_list: Optional[List[str]] = Field(
         None, description="The new list of supported languages."
     )
+    notes: Optional[str] = Field(None, description="User notes for this operation.")
 
 
 class TargetListResponse(BaseModel):

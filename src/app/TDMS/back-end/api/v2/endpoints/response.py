@@ -173,6 +173,7 @@ def create_response(
             entity_id=str(response_obj.response_id),
             operation="create",
             note=f"Created prompt with ID:{response_obj.response_id}",
+            user_note=payload.notes,
         )
 
     return ResponseDetailResponse(
@@ -304,6 +305,7 @@ def update_response_v2(
             entity_id=str(updated.response_id),
             operation="update",
             note=note,
+            user_note=payload.notes,
         )
 
     return ResponseDetailResponse(
@@ -344,6 +346,7 @@ def delete_response(
             entity_id=str(existing.response_id),
             operation="delete",
             note=f"Response ID:{existing.response_id} deleted",
+            user_note=None,
         )
 
     return {"message": "Response deleted successfully"}

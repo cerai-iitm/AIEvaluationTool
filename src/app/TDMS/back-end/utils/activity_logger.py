@@ -11,7 +11,8 @@ def log_activity(
     entity_type: str,
     entity_id: str,
     operation: str,
-    note: str
+    note: str,
+    user_note: Optional[str] = None
 ) -> Optional[ActivityLog]:
     """
     Log an activity to the ActivityLog table.
@@ -21,7 +22,8 @@ def log_activity(
         entity_type: Type of entity (e.g., "Test Case", "Target", "Domain")
         entity_id: ID of the entity (as string)
         operation: Type of operation ("create", "update", "delete")
-        note: Description of what was done
+        note: Description of what was done (system-generated)
+        user_note: Optional user-entered notes
     
     Returns:
         ActivityLog object if successful, None if user not found
@@ -41,6 +43,7 @@ def log_activity(
             entity_type=entity_type,
             entity_id=str(entity_id),
             note=note,
+            user_note=user_note or "",
             operation=operation.lower(),
         )
         db.add(activity)

@@ -267,6 +267,7 @@ export default function TargetUpdateDialog({
           selectedLanguages.length > 0
             ? selectedLanguages
             : targetInitial.lang_list || [],
+        notes: notes.trim() || null,
       };
 
       console.log("Updating target with payload:", updatePayload);

@@ -18,8 +18,7 @@ class PromptCreateV2(BaseModel):
     system_prompt: Optional[str]
     language: str
     domain: str
-
-
+    notes: Optional[str] = None
 
 
 class PromptUpdateV2(BaseModel):
@@ -27,6 +26,7 @@ class PromptUpdateV2(BaseModel):
     system_prompt: Optional[str] = Field(None, description="The new system prompt.")
     language: Optional[str] = Field(None, description="The new language of the prompt.")
     domain: Optional[str] = Field(None, description="The new domain of the prompt.")
+    notes: Optional[str] = Field(None, description="User notes for this operation.")
 
 
 class PromptListResponse(BaseModel):

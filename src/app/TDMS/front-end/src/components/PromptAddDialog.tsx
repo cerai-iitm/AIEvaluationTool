@@ -204,6 +204,7 @@ export function PromptAddDialog({
           system_prompt: systemPrompt.trim(),
           language,
           domain,
+          notes: notes.trim() || null,
         }),
       });
 

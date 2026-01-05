@@ -8,11 +8,12 @@ class DomainBase(BaseModel):
 
 
 class DomainCreateV2(DomainBase):
-    pass
+    notes: Optional[str] = Field(None, description="User notes for this operation.")
 
 
 class DomainUpdateV2(BaseModel):
     domain_name: Optional[str] = Field(None, description="The new name of the domain.")
+    notes: Optional[str] = Field(None, description="User notes for this operation.")
 
 
 class DomainListResponse(BaseModel):

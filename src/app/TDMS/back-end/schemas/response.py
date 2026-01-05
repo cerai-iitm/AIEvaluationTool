@@ -13,6 +13,7 @@ class ResponseCreateV2(ResponseBase):
     user_prompt: str = Field(..., description="The user prompt.")
     system_prompt: Optional[str] = Field(None, description="The system prompt.")
     language: Optional[str] = Field(None, description="The language of the response.")
+    notes: Optional[str] = Field(None, description="User notes for this operation.")
 
 
 class ResponseUpdateV2(BaseModel):
@@ -31,6 +32,7 @@ class ResponseUpdateV2(BaseModel):
     system_prompt: Optional[str] = Field(
         None, description="The new system prompt."
     )
+    notes: Optional[str] = Field(None, description="User notes for this operation.")
 
 
 class ResponseListResponse(BaseModel):

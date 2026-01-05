@@ -208,6 +208,11 @@ export const ResponseUpdateDialog = ({
         updatePayload.language = language;
       }
 
+      // Always include notes if provided
+      if (notes && notes.trim()) {
+        updatePayload.notes = notes.trim();
+      }
+
       const response_api = await fetch(
         API_ENDPOINTS.RESPONSE_UPDATE_V2(response.response_id),
         {

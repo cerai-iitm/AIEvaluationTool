@@ -11,7 +11,7 @@ class StrategyBase(BaseModel):
 
 
 class StrategyCreateV2(StrategyBase):
-    pass
+    notes: Optional[str] = Field(None, description="User notes for this operation.")
 
 
 class StrategyUpdateV2(BaseModel):
@@ -21,6 +21,7 @@ class StrategyUpdateV2(BaseModel):
     strategy_description: Optional[str] = Field(
         None, description="The new description of the strategy."
     )
+    notes: Optional[str] = Field(None, description="User notes for this operation.")
 
 
 class StrategyListResponse(BaseModel):

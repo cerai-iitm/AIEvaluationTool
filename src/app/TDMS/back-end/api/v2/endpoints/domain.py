@@ -125,6 +125,7 @@ def create_domain(
                     entity_id=domain_obj.domain_id,
                     operation="create",
                     note=f"Domain {domain_obj.domain_name} created",
+                    user_note=payload.notes,
                 )
             
             return DomainDetailResponse(
@@ -244,6 +245,7 @@ def update_domain_v2(
             entity_id=str(updated['domain_id']),
             operation="update",
             note="Domain name updated",
+            user_note=payload.notes,
         )
 
     return DomainDetailResponse(
@@ -280,6 +282,7 @@ def delete_domain(
             entity_id=str(domain_id),
             operation="delete",
             note=f"Domain '{existing}' deleted",
+            user_note=None,
         )
 
     return {"message": "Domain deleted successfully"}

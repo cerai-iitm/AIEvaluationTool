@@ -8,11 +8,12 @@ class LanguageBase(BaseModel):
 
 
 class LanguageCreateV2(LanguageBase):
-    pass
+    notes: Optional[str] = Field(None, description="User notes for this operation.")
 
 
 class LanguageUpdateV2(BaseModel):
     lang_name: Optional[str] = Field(None, description="The new name of the language.")
+    notes: Optional[str] = Field(None, description="User notes for this operation.")
 
 
 class LanguageListResponse(BaseModel):

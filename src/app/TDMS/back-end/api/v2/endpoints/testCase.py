@@ -521,6 +521,7 @@ def create_testcase(
                     entity_id=str(testcase_full.testcase_id),
                     operation="create",
                     note=f"Test Case - {testcase_full.testcase_name} created",
+                    user_note=payload.notes,
                 )
 
             # Get domain and language names
@@ -698,6 +699,7 @@ def update_testcase(
             entity_id=str(updated.testcase_id),
             operation="update",
             note=note,
+            user_note=payload.notes,
         )
 
     return {
@@ -750,6 +752,7 @@ def delete_testcase(
             entity_id=str(testcase_id),
             operation="delete",
             note=f"Test case - {existing.name} deleted",
+            user_note=None,  # Delete operations don't have user notes from payload
         )
 
     return {"message": "Test case deleted successfully"}

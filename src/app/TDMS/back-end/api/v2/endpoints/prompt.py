@@ -205,6 +205,7 @@ def create_prompt(
                     entity_id = prompt_obj.prompt_id,
                     operation="create",
                     note=f"Created prompt with ID {prompt_obj.prompt_id}",
+                    user_note=payload.notes,
                 )
             
             return PromptDetailResponse(
@@ -322,6 +323,7 @@ def update_prompt_v2(
             entity_id=str(updated.prompt_id),
             operation="update",
             note=note,
+            user_note=payload.notes,
         ) 
 
     return PromptDetailResponse(
@@ -361,6 +363,7 @@ def delete_prompt(
             entity_id=str(existing.prompt_id),
             operation="delete",
             note=f"Prompt ID: {existing.prompt_id} deleted",
+            user_note=None,
         )
 
     return {"message": "Prompt deleted successfully"} 

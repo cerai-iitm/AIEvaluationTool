@@ -207,6 +207,7 @@ export default function TargetAddDialog({
         target_url: url.trim(),
         domain_name: domain,
         target_languages: selectedLanguages,
+        notes: notes.trim() || null,
       };
 
       const response = await fetch(API_ENDPOINTS.TARGET_CREATE_V2, {

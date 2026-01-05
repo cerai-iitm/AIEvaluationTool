@@ -76,6 +76,7 @@ class TestCaseCreateV2(BaseModel):
     response_lang: Optional[str] = None
     strategy_name: str
     llm_judge_prompt: Optional[str] = None
+    notes: Optional[str] = None
 
 
 class TestCaseUpdateV2(BaseModel):
@@ -85,3 +86,4 @@ class TestCaseUpdateV2(BaseModel):
     system_prompt: Optional[str] = None
     response_text: Optional[str] = None
     llm_judge_prompt: Optional[str] = None
+    notes: Optional[str] = None

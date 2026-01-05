@@ -138,6 +138,7 @@ export function LlmPromptAddDialog({
         body: JSON.stringify({
           prompt: prompt.trim(),
           language,
+          notes: notes.trim() || null,
         }),
       });
 

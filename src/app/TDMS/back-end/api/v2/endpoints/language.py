@@ -160,6 +160,7 @@ def create_language_v2(
             entity_id=lang_obj.lang_id,
             operation="created",
             note=f"Language '{lang_obj.lang_name}' created ",
+            user_note=language.notes if hasattr(language, 'notes') else None,
         )
     
     return LanguageDetailResponse(
@@ -228,6 +229,7 @@ def create_language(
                     entity_id=str(created["lang_id"]),
                     operation="create",
                     note=f"Language '{created['lang_name']}' created",
+                    user_note=payload.notes,
                 )
 
             # Return the created language in the expected format
@@ -288,6 +290,7 @@ def update_language_v2(
             entity_id=str(lang_id),
             operation="update",
             note="Language name updated",
+            user_note=payload.notes,
         )
 
     return LanguageDetailResponse(
@@ -324,6 +327,7 @@ def delete_language(
             entity_id=str(lang_id),
             operation="delete",
             note=f"Language '{existing}' deleted ",
+            user_note=None,
         )
 
     return {"message": "Language deleted successfully"}

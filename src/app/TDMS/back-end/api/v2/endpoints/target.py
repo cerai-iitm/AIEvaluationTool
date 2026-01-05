@@ -163,6 +163,7 @@ def create_target(
                     entity_id=str(target_obj.target_id),
                     operation="create",
                     note=f"Target - {target_obj.target_name} created",
+                    user_note=payload.notes,
                 )
             
             # Create response
@@ -318,6 +319,7 @@ def update_target(
         entity_id=str(updated.target_id),
         operation="update",
         note=note,
+        user_note=payload.notes,
     )
 
     return TargetDetailResponse(
@@ -359,6 +361,7 @@ def delete_target(
             entity_id=str(existing.target_id),
             operation="delete",
             note=f"Target - {existing.target_name} deleted",
+            user_note=None,
         )
 
     return {"message": "Target deleted successfully"}

@@ -237,6 +237,7 @@ export function PromptUpdateDialog({
             system_prompt: systemPrompt.trim(),
             language,
             domain,
+            notes: notes.trim() || null,
           }),
         },
       );

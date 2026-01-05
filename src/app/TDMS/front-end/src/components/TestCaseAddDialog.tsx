@@ -584,6 +584,7 @@ export const TestCaseAddDialog = ({
         domain_name: domain.trim(),
         llm_judge_prompt:
           showLLMPrompt && llmPrompt.trim() ? llmPrompt.trim() : null,
+        notes: notes.trim() || null,
       };
 
       console.log("Creating test case:", payload);

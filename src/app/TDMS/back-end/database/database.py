@@ -110,7 +110,7 @@ def seed_users():
                 user.Users(user_name="admin", email="admin@example.com", password=helpers.hash_password("admin123"), role="admin", is_active=True),
                 user.Users(user_name="manager", email="manager@example.com", password=helpers.hash_password("manager123"), role="manager", is_active=True),
                 user.Users(user_name="curator", email="curator@example.com", password=helpers.hash_password("curator123"), role="curator", is_active=True),
-                user.Users(user_name="user", email="user@example.com", password=helpers.hash_password("viewer123"), role="viewer", is_active=True),
+                user.Users(user_name="viewer", email="viewer@example.com", password=helpers.hash_password("viewer123"), role="viewer", is_active=True),
             ]
             db.add_all(users)
             db.commit()

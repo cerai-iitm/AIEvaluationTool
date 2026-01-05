@@ -177,7 +177,8 @@ const StrategyList: React.FC = () => {
         headers,
         body: JSON.stringify({
           strategy_name: newStrategyName.trim(),
-          strategy_description: newStrategyDescription.trim() || null
+          strategy_description: newStrategyDescription.trim() || null,
+          notes: addMessage.trim() || null,
         }),
       });
 
@@ -235,7 +236,8 @@ const StrategyList: React.FC = () => {
         headers,
         body: JSON.stringify({
           strategy_name: updateName.trim(),
-          strategy_description: updateDescription.trim() || null
+          strategy_description: updateDescription.trim() || null,
+          notes: updateMessage.trim()
         }),
       });
 

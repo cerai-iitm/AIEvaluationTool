@@ -165,6 +165,7 @@ def create_strategy(
                 entity_id=str(strategy_obj.strategy_id),
                 operation="create",
                 note=f"Strategy '{payload.strategy_name}' created",
+                user_note=payload.notes
             )
 
         return StrategyDetailResponse(
@@ -254,6 +255,7 @@ def update_strategy(
         entity_id=str(updated['strategy_id']),
         operation="update",
         note=f"Strategy '{updated['strategy_name']}' updated",
+        user_note = payload.user_note
     )
 
     return updated
@@ -287,6 +289,7 @@ def delete_strategy(
             entity_id=str(strategy_id),
             operation="delete",
             note=f"Strategy '{existing.name}' deleted",
+            user_note=None,
         )
 
     return {"message": "Strategy deleted successfully"}

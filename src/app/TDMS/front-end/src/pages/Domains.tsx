@@ -183,7 +183,8 @@ const DomainList: React.FC = () => {
         method: "POST",
         headers,
         body: JSON.stringify({
-          domain_name: newDomainName.trim()
+          domain_name: newDomainName.trim(),
+          notes: addMessage.trim() || null,
         }),
       });
 
@@ -239,7 +240,8 @@ const DomainList: React.FC = () => {
         method: "PUT",
         headers,
         body: JSON.stringify({
-          domain_name: updateName.trim()
+          domain_name: updateName.trim(),
+          notes: addMessage.trim() || null,
         }),
       });
 

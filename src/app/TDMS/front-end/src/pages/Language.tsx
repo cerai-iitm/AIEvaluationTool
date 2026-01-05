@@ -150,7 +150,8 @@ const LanguageList: React.FC = () => {
                 method: "POST",
                 headers,
                 body: JSON.stringify({
-                    lang_name: newLanguageName.trim()
+                    lang_name: newLanguageName.trim(),
+                    notes: addMessage.trim() || null,
                 }),
             });
 
@@ -206,7 +207,8 @@ const LanguageList: React.FC = () => {
                 method: "PUT",
                 headers,
                 body: JSON.stringify({
-                    lang_name: updateName.trim()
+                    lang_name: updateName.trim(),
+                    notes: addMessage.trim() || null,
                 }),
             });
 

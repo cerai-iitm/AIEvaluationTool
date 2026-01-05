@@ -179,6 +179,7 @@ export const ResponseAddDialog = ({
         language: language || undefined,
         user_prompt: userPrompts.trim(),
         system_prompt: systemPrompts.trim() || undefined,
+        notes: notes.trim() || null,
       };
 
       const response = await fetch(API_ENDPOINTS.RESPONSE_CREATE_V2, {

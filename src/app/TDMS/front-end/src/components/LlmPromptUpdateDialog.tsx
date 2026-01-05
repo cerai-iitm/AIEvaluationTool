@@ -172,6 +172,7 @@ export function LlmPromptUpdateDialog({
             llmPromptId: prompt.llmPromptId,
             prompt: promptText.trim(),
             language,
+            notes: notes.trim() || null,
           }),
         },
       );
