@@ -8,24 +8,64 @@ from jose import jwt, JWTError
 from config.settings import settings
 from typing import Optional
 import os
+import json
 
 
-# project root: AIEvaluationTool
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../.."))
 
-# data folder under project root
-db_folder = os.path.join(project_root, "data")
-os.makedirs(db_folder, exist_ok=True)
 
-# DB file in data folder
-db_path = os.path.join(db_folder, "TDMS.db") 
 
-SQLALCHEMY_DATABASE_URL = f"sqlite:///{db_path}"
+config_path = os.path.join(os.path.dirname(__file__), "config.json")
+try:
+    with open(config_path, "r") as f:
+        config = json.load(f)
+except FileNotFoundError:
+    config = {}
 
+# # DB file in data folder
+# db_path = os.path.join(db_folder, "TDMS.db") 
+
+# SQLALCHEMY_DATABASE_URL = f"sqlite:///{db_path}"
+
+db_cfg = config.get("db", {})
+engine_type = db_cfg.get("engine_type", "sqlite").lower()
+
+if engine_type == "sqlite":
+    db_file = db_cfg.get("file", "TDMS.db")
+    
+
+    # project root: AIEvaluationTool
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../.."))
+
+    # data folder under project root
+    db_folder = os.path.join(project_root, "data")
+    os.makedirs(db_folder, exist_ok=True)
+    
+    # DB file inside the data folder
+    db_path = os.path.join(db_folder, db_file)
+    
+    # Update the SQLALCHEMY_DATABASE_URL
+    SQLALCHEMY_DATABASE_URL = f"sqlite:///{db_path}".format(db_path=db_path)
+    
+    # # Re-create the engine with the new URL
+    # engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+    # SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+elif engine_type == "mariadb":
+    SQLALCHEMY_DATABASE_URL = "mariadb+mariadbconnector://{user}:{password}@{host}:{port}/{database}".format(
+        user=db_cfg.get("user"),
+        password=db_cfg.get("password"),
+        host=db_cfg.get("host"),
+        port=db_cfg.get("port"),
+        database=db_cfg.get("database"),
+    )
+else: 
+    raise ValueError("Unsupported database engine: {engine_type}")
+    
+    
 engine = create_engine( 
     SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
 
 
 def get_db():
