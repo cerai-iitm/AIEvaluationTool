@@ -1,5 +1,8 @@
 from sqlalchemy.orm import DeclarativeBase, relationship
-from sqlalchemy import Column, Integer, Text, DateTime, String, Enum, ForeignKey, Float
+from sqlalchemy import Column, Integer, Text, DateTime, String, Enum, ForeignKey, Float, Boolean
+from sqlalchemy_utils import ChoiceType
+from datetime import datetime
+import uuid
 
 class Base(DeclarativeBase):
     """Base class for all ORM models.
@@ -24,6 +27,8 @@ class Prompts(Base):
     hash_value = Column(String(100), nullable=False, unique=True)  # Hash value for the prompt
     test_cases = relationship("TestCases", back_populates="prompt")  # Relationship to TestCases
     domain = relationship("Domains", back_populates="prompts")  # Relationship to Domains
+    lang = relationship("Languages", back_populates="prompts")
+    responses = relationship("Responses", back_populates="prompt")
 
 class LLMJudgePrompts(Base):
     """ORM model for the LLMJudgePrompts table.
@@ -37,6 +42,7 @@ class LLMJudgePrompts(Base):
     lang_id = Column(Integer, ForeignKey('Languages.lang_id'), nullable=False)  # Foreign key to Languages
     hash_value = Column(String(100), nullable=False, unique=True)  # Hash value for the prompt
     test_cases = relationship("TestCases", back_populates="judge_prompt")  # Relationship to TestCases
+    lang = relationship("Languages", back_populates="judge_prompts")
 
 class Strategies(Base):
     """ORM model for the Strategies table.
@@ -58,7 +64,9 @@ class Languages(Base):
     
     lang_id = Column(Integer, primary_key=True)
     lang_name = Column(String(255), nullable=False)
-
+    prompts = relationship("Prompts", back_populates="lang")
+    judge_prompts = relationship("LLMJudgePrompts", back_populates="lang")
+    responses = relationship("Responses", back_populates="lang")
     targets = relationship("Targets", secondary="TargetLanguages", back_populates="langs")
 
 class Domains(Base):
@@ -69,7 +77,7 @@ class Domains(Base):
     
     domain_id = Column(Integer, primary_key=True)   
     domain_name = Column(String(255), nullable=False)
-
+    prompts = relationship("Prompts", back_populates="domain")  # Relationship to Prompts
     targets = relationship("Targets", back_populates="domain")
     prompts = relationship("Prompts", back_populates="domain")
 
@@ -86,6 +94,8 @@ class Responses(Base):
     lang_id = Column(Integer, ForeignKey('Languages.lang_id'), nullable=False) # Foreign key to Languages
     hash_value = Column(String(100), nullable=False, unique=True)  # Hash value for the prompt
     test_cases = relationship("TestCases", back_populates="response")  # Relationship to TestCases
+    prompt = relationship("Prompts", back_populates="responses")
+    lang = relationship("Languages", back_populates="responses")
 
 class TestCases(Base):
     """ORM model for the TestCases table.
