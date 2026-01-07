@@ -132,4 +132,4 @@ class Evaluator:
                     self.save_scores(strategy_name, {"evaluated_score" : avg_score, "human_score" : human_score})
                 
 ev = Evaluator()
-ev.main(strategy_name="llm_judge_positive", metric_name="inclusivity")
+ev.main(strategy_name="hallucination_mc", metric_name="hallucination")

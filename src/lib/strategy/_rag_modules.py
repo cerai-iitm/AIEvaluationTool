@@ -1,6 +1,5 @@
 from ddgs import DDGS
 import bs4
-from langchain_community.document_loaders import WebBaseLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 import re
@@ -20,13 +19,14 @@ from langchain.agents import create_agent
 from langchain_ollama import ChatOllama
 from langchain_core.prompts import ChatPromptTemplate
 from typing import List
+from .logger import get_logger
 
 class TextData(BaseModel):
     text : str
     title : Optional[str]
     href : Optional[str]
 
-
+logger = get_logger("rag_pipeline")
 # this module scrapes information from the web, takes k top answers, cleans the text and returns a list of splitted docs
 class ScrapeCleanStore:
 
@@ -188,10 +188,9 @@ class ScrapeCleanStore:
         page_info, candidates = self.parse_and_score(user_query)
         doc_objects = self.create_docs(page_info, candidates)
         self.store(doc_objects)
+        return doc_objects
 
-# storer = ScrapeCleanStore()
-# storer.main("hormone that controls calcium absorption in kidneys.")
-
+# modules for structured outputs 
 class RAGDecision(BaseModel):
     needs_rag : bool
     reason : str
@@ -286,7 +285,7 @@ class RetrieveSummarize:
             ("system",
             "You are a helpful assistant"
             "Use only the provided context to answer the question."
-            "If the answer is not in the context set answer=N/A"
+            "If the answer is not in the context set answer=NA"
             ),
             ("human",
             "Context:\n{context}\n\nQuestion:\n{question}"
@@ -294,13 +293,19 @@ class RetrieveSummarize:
         ])
         answer_chain = prompt | self.chat_model.with_structured_output(ModelOutput)
         return answer_chain.invoke({"context" : context, "question":question}).answer
+    
+    def make_context(self, docs:List[Document]):
+        return "\n\n".join(
+            (f"Content : {doc.page_content}")
+            for doc in docs
+        )
         
-    def main(self, user_prompt:str, use_agent:bool = False):
+    def main(self, user_prompt:str, use_agent:bool = True, use_db:bool = True):
         if self.search_decision(user_prompt):
-            print("Cannot find the context in the model. So using external sources... \n")
+            logger.info("Cannot generate the ground truth using the model. Using external sources...")
             query = self.gen_search_query(user_prompt)
-            print(f"Generated the search query for web search : {query} \n")
-            self.info_retreiver.main(query)
+            logger.info(f"Generated the search query for web search : {query}")
+            retrieved_docs = self.info_retreiver.main(query)
             if use_agent:
                 prompt = (
                     "You have access to a tool that retrieves context from the internet."
@@ -322,15 +327,20 @@ class RetrieveSummarize:
                 final = result["messages"][-1].content
                 final = re.sub(r"<think>.*?</think>", "", final, re.DOTALL).strip()
             else:
-                retrieve_context = self.make_retrieve_tool(self.vector_store)
-                context = retrieve_context.invoke({"query" : query})
-                final = self.answer_with_context(context, user_prompt)
+                if use_db:
+                    retrieve_context = self.make_retrieve_tool(self.vector_store)
+                    context = retrieve_context.invoke({"query" : query})
+                else:
+                    context = self.make_context(retrieved_docs)
+                final = "NA"
+                tries = 2
+                while(final == "NA" and tries > 0):
+                    final = self.answer_with_context(context, user_prompt)
+                    tries -= 1
             return final
         else:
-            print("Generating a direct response ... \n")
+            logger.info("Generating a direct response...")
             return self.direct_response(user_prompt)
 
-# gen_answer = RetrieveSummarize()
-# print(gen_answer.main("Why is the USA attacking Venezuela in 2026?"))
 
 
