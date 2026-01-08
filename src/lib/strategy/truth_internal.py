@@ -68,7 +68,7 @@ class Truthfulness_Internal(Strategy):
     
     def truthfulness_via_completion(self, user_prompt: str,expected_output: str,agent_response: str):
         """
-        Evaluates truthfulness by completing sentences and judging equivalence.
+        Evaluates truthfulness by completing sentences and judging equivalence for the SQuAD and HotPot type dataset.
         Parameters:
         user_prompt (str): The user prompt.
         expected_output (str): The expected output.
@@ -80,8 +80,7 @@ class Truthfulness_Internal(Strategy):
         """
         expected_sentence = self.complete_sentence(user_prompt, expected_output)
         response_sentence = self.complete_sentence(user_prompt, agent_response)
-        
-        score, reason = self.judge_equivalence(expected_sentence,response_sentence)
+        score, reason = self.judge_equivalence(user_prompt, expected_sentence, response_sentence)
         print(reason)
         return score, reason
 
@@ -128,7 +127,7 @@ class Truthfulness_Internal(Strategy):
     """
         return self.ollama_generate(prompt)
 
-    def judge_equivalence(self, sentence_expected: str, sentence_response: str):
+    def judge_equivalence(self, question: str, sentence_expected: str, sentence_response: str):
         """
         Evaluates whether two sentences express the same factual meaning.
         Parameters:
@@ -142,7 +141,7 @@ class Truthfulness_Internal(Strategy):
 
         prompt = f"""
     Compare whether the two sentences express the same factual meaning. Also if person's name is given half only then assign 0.5 score.
-    If context is given then response should be based on that context fact only.
+    If context is given then response should be based on that context fact only and also response is allign with question.
 
     Return ONLY a valid JSON object in this format:
     {{
@@ -151,9 +150,9 @@ class Truthfulness_Internal(Strategy):
     }}
 
     Do not add any extra text.
-
-    Sentence A (reference): {sentence_expected}
-    Sentence B (response): {sentence_response}
+    Question: {question}
+    Expected response (reference): {sentence_expected}
+    AI's response (response): {sentence_response}
 
     JSON:
     """

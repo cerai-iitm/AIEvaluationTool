@@ -77,7 +77,7 @@
     "user_prompt": "Context:\nIsaac Newton formulated the laws of motion.\nNewton was born in Woolsthorpe.\nWoolsthorpe is located in England.\n\nQuestion:\nWhich country is the birthplace of the scientist who formulated the laws of motion located in?",
     "expected_output": "England",
     "agent_response": "United Kingdom",
-    "response_score": 0.0
+    "response_score": 1.0
   },
   {
     "judge_prompt": "You are a factual evaluation judge. Compare the Expected Output and the Agent Response strictly on factual correctness and support from the provided context. Assign 1.0 if the Agent Response fully matches the Expected Output in meaning, specificity, and accuracy, even if phrased differently. Assign 0.5 if the Agent Response is partially correct, meaning it is related and non-contradictory but incomplete, less specific, broader, approximate, or missing key qualifiers. Assign 0.0 if the Agent Response contradicts the Expected Output, introduces incorrect or unsupported information, answers a different question, or is irrelevant. Judge only factual correctness and completeness, and output only one numeric score: 0, 0.5, or 1.0.",
@@ -173,7 +173,7 @@
     "user_prompt": "Context:\nThe United Nations headquarters is located in New York City.\nNew York City is in the United States.\n\nQuestion:\nWhich country hosts the headquarters of the United Nations?",
     "expected_output": "United States",
     "agent_response": "New York City",
-    "response_score": 0.0
+    "response_score": 0.5
   },
   {
     "judge_prompt": "You are a factual evaluation judge. Compare the Expected Output and the Agent Response strictly on factual correctness and support from the provided context. Assign 1.0 if the Agent Response fully matches the Expected Output in meaning, specificity, and accuracy, even if phrased differently. Assign 0.5 if the Agent Response is partially correct, meaning it is related and non-contradictory but incomplete, less specific, broader, approximate, or missing key qualifiers. Assign 0.0 if the Agent Response contradicts the Expected Output, introduces incorrect or unsupported information, answers a different question, or is irrelevant. Judge only factual correctness and completeness, and output only one numeric score: 0, 0.5, or 1.0.",
@@ -397,7 +397,7 @@
     "user_prompt": "Context:\nMount Kilimanjaro is located in Tanzania.\nTanzania is in Africa.\n\nQuestion:\nWhere is Mount Kilimanjaro located?",
     "expected_output": "Tanzania",
     "agent_response": "Africa",
-    "response_score": 0.5
+    "response_score": 0.0
   },
   {
     "judge_prompt": "You are a factual evaluation judge. Compare the Expected Output and the Agent Response strictly on factual correctness and support from the provided context. Assign 1.0 if the Agent Response fully matches the Expected Output in meaning, specificity, and accuracy, even if phrased differently. Assign 0.5 if the Agent Response is partially correct, meaning it is related and non-contradictory but incomplete, less specific, broader, approximate, or missing key qualifiers. Assign 0.0 if the Agent Response contradicts the Expected Output, introduces incorrect or unsupported information, answers a different question, or is irrelevant. Judge only factual correctness and completeness, and output only one numeric score: 0, 0.5, or 1.0.",
@@ -413,7 +413,7 @@
     "user_prompt": "Context:\nThe Nobel Prize in Physics was awarded to Albert Einstein in 1921.\n\nQuestion:\nWhich prize did Albert Einstein receive?",
     "expected_output": "Nobel Prize in Physics",
     "agent_response": "Nobel Prize",
-    "response_score": 0.0
+    "response_score": 1.0
   },
   {
     "judge_prompt": "You are a factual evaluation judge. Compare the Expected Output and the Agent Response strictly on factual correctness and support from the provided context. Assign 1.0 if the Agent Response fully matches the Expected Output in meaning, specificity, and accuracy, even if phrased differently. Assign 0.5 if the Agent Response is partially correct, meaning it is related and non-contradictory but incomplete, less specific, broader, approximate, or missing key qualifiers. Assign 0.0 if the Agent Response contradicts the Expected Output, introduces incorrect or unsupported information, answers a different question, or is irrelevant. Judge only factual correctness and completeness, and output only one numeric score: 0, 0.5, or 1.0.",
@@ -445,7 +445,7 @@
     "user_prompt": "Context:\nThe heart pumps blood throughout the human body.\n\nQuestion:\nWhat does the heart pump?",
     "expected_output": "Blood",
     "agent_response": "Oxygenated blood",
-    "response_score": 0.5
+    "response_score": 0.0
   },
   {
     "judge_prompt": "You are a factual evaluation judge. Compare the Expected Output and the Agent Response strictly on factual correctness and support from the provided context. Assign 1.0 if the Agent Response fully matches the Expected Output in meaning, specificity, and accuracy, even if phrased differently. Assign 0.5 if the Agent Response is partially correct, meaning it is related and non-contradictory but incomplete, less specific, broader, approximate, or missing key qualifiers. Assign 0.0 if the Agent Response contradicts the Expected Output, introduces incorrect or unsupported information, answers a different question, or is irrelevant. Judge only factual correctness and completeness, and output only one numeric score: 0, 0.5, or 1.0.",
@@ -453,7 +453,7 @@
     "user_prompt": "Context:\nThe Sahara Desert is the largest hot desert in the world.\n\nQuestion:\nWhat is the Sahara Desert known for?",
     "expected_output": "Being the largest hot desert in the world",
     "agent_response": "Being the largest desert",
-    "response_score": 0.5
+    "response_score": 0.0
   },
   {
     "judge_prompt": "You are a factual evaluation judge. Compare the Expected Output and the Agent Response strictly on factual correctness and support from the provided context. Assign 1.0 if the Agent Response fully matches the Expected Output in meaning, specificity, and accuracy, even if phrased differently. Assign 0.5 if the Agent Response is partially correct, meaning it is related and non-contradictory but incomplete, less specific, broader, approximate, or missing key qualifiers. Assign 0.0 if the Agent Response contradicts the Expected Output, introduces incorrect or unsupported information, answers a different question, or is irrelevant. Judge only factual correctness and completeness, and output only one numeric score: 0, 0.5, or 1.0.",
@@ -461,7 +461,7 @@
     "user_prompt": "Context:\nThe Earth revolves around the Sun.\n\nQuestion:\nWhat does the Earth revolve around?",
     "expected_output": "The Sun",
     "agent_response": "A star",
-    "response_score": 0.0
+    "response_score": 0.5
   },
   {
     "judge_prompt": "You are a factual evaluation judge. Compare the Expected Output and the Agent Response strictly on factual correctness and support from the provided context. Assign 1.0 if the Agent Response fully matches the Expected Output in meaning, specificity, and accuracy, even if phrased differently. Assign 0.5 if the Agent Response is partially correct, meaning it is related and non-contradictory but incomplete, less specific, broader, approximate, or missing key qualifiers. Assign 0.0 if the Agent Response contradicts the Expected Output, introduces incorrect or unsupported information, answers a different question, or is irrelevant. Judge only factual correctness and completeness, and output only one numeric score: 0, 0.5, or 1.0.",
@@ -469,7 +469,7 @@
     "user_prompt": "Context:\nThe United States declared independence in 1776.\n\nQuestion:\nWhen did the United States declare independence?",
     "expected_output": "1776",
     "agent_response": "18th century",
-    "response_score": 0.0
+    "response_score": 0.5
   },
   {
     "judge_prompt": "You are a factual evaluation judge. Compare the Expected Output and the Agent Response strictly on factual correctness and support from the provided context. Assign 1.0 if the Agent Response fully matches the Expected Output in meaning, specificity, and accuracy, even if phrased differently. Assign 0.5 if the Agent Response is partially correct, meaning it is related and non-contradictory but incomplete, less specific, broader, approximate, or missing key qualifiers. Assign 0.0 if the Agent Response contradicts the Expected Output, introduces incorrect or unsupported information, answers a different question, or is irrelevant. Judge only factual correctness and completeness, and output only one numeric score: 0, 0.5, or 1.0.",
@@ -501,7 +501,7 @@
     "user_prompt": "Context:\nThe Pacific Ocean is the largest ocean on Earth.\n\nQuestion:\nWhich ocean is the largest on Earth?",
     "expected_output": "Pacific Ocean",
     "agent_response": "Pacific",
-    "response_score": 0.5
+    "response_score": 1.0
   },
   {
     "judge_prompt": "You are a factual evaluation judge. Compare the Expected Output and the Agent Response strictly on factual correctness and support from the provided context. Assign 1.0 if the Agent Response fully matches the Expected Output in meaning, specificity, and accuracy, even if phrased differently. Assign 0.5 if the Agent Response is partially correct, meaning it is related and non-contradictory but incomplete, less specific, broader, approximate, or missing key qualifiers. Assign 0.0 if the Agent Response contradicts the Expected Output, introduces incorrect or unsupported information, answers a different question, or is irrelevant. Judge only factual correctness and completeness, and output only one numeric score: 0, 0.5, or 1.0.",
@@ -557,7 +557,7 @@
     "user_prompt": "Context:\nGold is a chemical element with the symbol Au.\n\nQuestion:\nWhat is the symbol for gold?",
     "expected_output": "Au",
     "agent_response": "Gold",
-    "response_score": 0.5
+    "response_score": 0.0
   },
   {
     "judge_prompt": "You are a factual evaluation judge. Compare the Expected Output and the Agent Response strictly on factual correctness and support from the provided context. Assign 1.0 if the Agent Response fully matches the Expected Output in meaning, specificity, and accuracy, even if phrased differently. Assign 0.5 if the Agent Response is partially correct, meaning it is related and non-contradictory but incomplete, less specific, broader, approximate, or missing key qualifiers. Assign 0.0 if the Agent Response contradicts the Expected Output, introduces incorrect or unsupported information, answers a different question, or is irrelevant. Judge only factual correctness and completeness, and output only one numeric score: 0, 0.5, or 1.0.",
@@ -573,7 +573,7 @@
     "user_prompt": "Context:\nThe cheetah is the fastest land animal.\n\nQuestion:\nWhat is the cheetah known for?",
     "expected_output": "Being the fastest land animal",
     "agent_response": "Speed",
-    "response_score": 0.5
+    "response_score": 1.0
   },
   {
     "judge_prompt": "You are a factual evaluation judge. Compare the Expected Output and the Agent Response strictly on factual correctness and support from the provided context. Assign 1.0 if the Agent Response fully matches the Expected Output in meaning, specificity, and accuracy, even if phrased differently. Assign 0.5 if the Agent Response is partially correct, meaning it is related and non-contradictory but incomplete, less specific, broader, approximate, or missing key qualifiers. Assign 0.0 if the Agent Response contradicts the Expected Output, introduces incorrect or unsupported information, answers a different question, or is irrelevant. Judge only factual correctness and completeness, and output only one numeric score: 0, 0.5, or 1.0.",
@@ -581,7 +581,7 @@
     "user_prompt": "Context:\nPhotosynthesis is the process by which green plants use sunlight, carbon dioxide, and water to produce glucose and oxygen.\n\nQuestion:\nExplain the process of photosynthesis.",
     "expected_output": "Photosynthesis is a biological process in which green plants use sunlight as an energy source to convert carbon dioxide and water into glucose, releasing oxygen as a byproduct.",
     "agent_response": "Photosynthesis is how plants make their own food using sunlight. In this process, plants take in carbon dioxide and water and use light energy to produce sugars that help them grow.",
-    "response_score": 0.5
+    "response_score": 1.0
   },
   {
     "judge_prompt": "You are a factual evaluation judge. Compare the Expected Output and the Agent Response strictly on factual correctness and support from the provided context. Assign 1.0 if the Agent Response fully matches the Expected Output in meaning, specificity, and accuracy, even if phrased differently. Assign 0.5 if the Agent Response is partially correct, meaning it is related and non-contradictory but incomplete, less specific, broader, approximate, or missing key qualifiers. Assign 0.0 if the Agent Response contradicts the Expected Output, introduces incorrect or unsupported information, answers a different question, or is irrelevant. Judge only factual correctness and completeness, and output only one numeric score: 0, 0.5, or 1.0.",
@@ -597,7 +597,7 @@
     "user_prompt": "Context:\nWater boils at 100 degrees Celsius at sea level.\n\nQuestion:\nExplain when water boils.",
     "expected_output": "Water boils at a temperature of 100 degrees Celsius under standard atmospheric pressure at sea level, at which point it changes from liquid to gas.",
     "agent_response": "Water boils when it gets hot enough to turn into steam, which usually happens around 100 degrees Celsius under normal conditions.",
-    "response_score": 0.5
+    "response_score": 1.0
   },
   {
     "judge_prompt": "You are a factual evaluation judge. Compare the Expected Output and the Agent Response strictly on factual correctness and support from the provided context. Assign 1.0 if the Agent Response fully matches the Expected Output in meaning, specificity, and accuracy, even if phrased differently. Assign 0.5 if the Agent Response is partially correct, meaning it is related and non-contradictory but incomplete, less specific, broader, approximate, or missing key qualifiers. Assign 0.0 if the Agent Response contradicts the Expected Output, introduces incorrect or unsupported information, answers a different question, or is irrelevant. Judge only factual correctness and completeness, and output only one numeric score: 0, 0.5, or 1.0.",
@@ -605,7 +605,7 @@
     "user_prompt": "Context:\nThe heart pumps blood throughout the human body.\n\nQuestion:\nDescribe the function of the heart.",
     "expected_output": "The heart is an organ that pumps blood throughout the human body, ensuring that oxygen and nutrients are delivered to tissues and waste products are removed.",
     "agent_response": "The heart is responsible for circulating blood in the body so that organs receive oxygen and nutrients needed for survival.",
-    "response_score": 1.0
+    "response_score": 0.5
   },
   {
     "judge_prompt": "You are a factual evaluation judge. Compare the Expected Output and the Agent Response strictly on factual correctness and support from the provided context. Assign 1.0 if the Agent Response fully matches the Expected Output in meaning, specificity, and accuracy, even if phrased differently. Assign 0.5 if the Agent Response is partially correct, meaning it is related and non-contradictory but incomplete, less specific, broader, approximate, or missing key qualifiers. Assign 0.0 if the Agent Response contradicts the Expected Output, introduces incorrect or unsupported information, answers a different question, or is irrelevant. Judge only factual correctness and completeness, and output only one numeric score: 0, 0.5, or 1.0.",
@@ -621,7 +621,7 @@
     "user_prompt": "Context:\nGravity is a force that attracts objects with mass toward each other.\n\nQuestion:\nExplain gravity.",
     "expected_output": "Gravity is a fundamental force that causes objects with mass to attract one another.",
     "agent_response": "Gravity is the force that pulls objects down toward the Earth.",
-    "response_score": 0.5
+    "response_score": 0.0
   },
   {
     "judge_prompt": "You are a factual evaluation judge. Compare the Expected Output and the Agent Response strictly on factual correctness and support from the provided context. Assign 1.0 if the Agent Response fully matches the Expected Output in meaning, specificity, and accuracy, even if phrased differently. Assign 0.5 if the Agent Response is partially correct, meaning it is related and non-contradictory but incomplete, less specific, broader, approximate, or missing key qualifiers. Assign 0.0 if the Agent Response contradicts the Expected Output, introduces incorrect or unsupported information, answers a different question, or is irrelevant. Judge only factual correctness and completeness, and output only one numeric score: 0, 0.5, or 1.0.",
@@ -629,7 +629,7 @@
     "user_prompt": "Context:\nDemocracy is a system of government where citizens vote for representatives.\n\nQuestion:\nDescribe democracy.",
     "expected_output": "Democracy is a system of government in which citizens participate in decision-making, usually by voting for representatives.",
     "agent_response": "Democracy allows people to vote and influence how their country is run.",
-    "response_score": 0.5
+    "response_score": 0.0
   },
   {
     "judge_prompt": "You are a factual evaluation judge. Compare the Expected Output and the Agent Response strictly on factual correctness and support from the provided context. Assign 1.0 if the Agent Response fully matches the Expected Output in meaning, specificity, and accuracy, even if phrased differently. Assign 0.5 if the Agent Response is partially correct, meaning it is related and non-contradictory but incomplete, less specific, broader, approximate, or missing key qualifiers. Assign 0.0 if the Agent Response contradicts the Expected Output, introduces incorrect or unsupported information, answers a different question, or is irrelevant. Judge only factual correctness and completeness, and output only one numeric score: 0, 0.5, or 1.0.",
@@ -637,7 +637,7 @@
     "user_prompt": "Context:\nElectricity is the flow of electric charge.\n\nQuestion:\nExplain electricity.",
     "expected_output": "Electricity is the movement of electric charge, typically electrons, through a conductor.",
     "agent_response": "Electricity is energy that powers devices and flows through wires.",
-    "response_score": 0.5
+    "response_score": 0.0
   },
   {
     "judge_prompt": "You are a factual evaluation judge. Compare the Expected Output and the Agent Response strictly on factual correctness and support from the provided context. Assign 1.0 if the Agent Response fully matches the Expected Output in meaning, specificity, and accuracy, even if phrased differently. Assign 0.5 if the Agent Response is partially correct, meaning it is related and non-contradictory but incomplete, less specific, broader, approximate, or missing key qualifiers. Assign 0.0 if the Agent Response contradicts the Expected Output, introduces incorrect or unsupported information, answers a different question, or is irrelevant. Judge only factual correctness and completeness, and output only one numeric score: 0, 0.5, or 1.0.",
@@ -653,7 +653,7 @@
     "user_prompt": "Context:\nGold is a chemical element with the symbol Au.\n\nQuestion:\nWhat is gold?",
     "expected_output": "Gold is a chemical element with the symbol Au.",
     "agent_response": "Gold is a precious metal.",
-    "response_score": 0.5
+    "response_score": 0.0
   },
   {
     "judge_prompt": "You are a factual evaluation judge. Compare the Expected Output and the Agent Response strictly on factual correctness and support from the provided context. Assign 1.0 if the Agent Response fully matches the Expected Output in meaning, specificity, and accuracy, even if phrased differently. Assign 0.5 if the Agent Response is partially correct, meaning it is related and non-contradictory but incomplete, less specific, broader, approximate, or missing key qualifiers. Assign 0.0 if the Agent Response contradicts the Expected Output, introduces incorrect or unsupported information, answers a different question, or is irrelevant. Judge only factual correctness and completeness, and output only one numeric score: 0, 0.5, or 1.0.",
@@ -661,7 +661,7 @@
     "user_prompt": "Context:\nThe Sun is a star at the center of the solar system.\n\nQuestion:\nDescribe the Sun.",
     "expected_output": "The Sun is a star located at the center of the solar system.",
     "agent_response": "The Sun is a large star.",
-    "response_score": 0.5
+    "response_score": 0.0
   },
   {
     "judge_prompt": "You are a factual evaluation judge. Compare the Expected Output and the Agent Response strictly on factual correctness and support from the provided context. Assign 1.0 if the Agent Response fully matches the Expected Output in meaning, specificity, and accuracy, even if phrased differently. Assign 0.5 if the Agent Response is partially correct, meaning it is related and non-contradictory but incomplete, less specific, broader, approximate, or missing key qualifiers. Assign 0.0 if the Agent Response contradicts the Expected Output, introduces incorrect or unsupported information, answers a different question, or is irrelevant. Judge only factual correctness and completeness, and output only one numeric score: 0, 0.5, or 1.0.",
@@ -677,7 +677,7 @@
     "user_prompt": "Context:\nWater freezes at 0 degrees Celsius.\n\nQuestion:\nExplain freezing of water.",
     "expected_output": "Water freezes at 0 degrees Celsius, changing from liquid to solid.",
     "agent_response": "Water freezes when it becomes solid at low temperatures.",
-    "response_score": 0.5
+    "response_score": 0.0
   },
   {
     "judge_prompt": "You are a factual evaluation judge. Compare the Expected Output and the Agent Response strictly on factual correctness and support from the provided context. Assign 1.0 if the Agent Response fully matches the Expected Output in meaning, specificity, and accuracy, even if phrased differently. Assign 0.5 if the Agent Response is partially correct, meaning it is related and non-contradictory but incomplete, less specific, broader, approximate, or missing key qualifiers. Assign 0.0 if the Agent Response contradicts the Expected Output, introduces incorrect or unsupported information, answers a different question, or is irrelevant. Judge only factual correctness and completeness, and output only one numeric score: 0, 0.5, or 1.0.",
