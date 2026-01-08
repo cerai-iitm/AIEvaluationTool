@@ -377,6 +377,49 @@ class DB:
                 runs.append(r)
             return runs
 
+    def get_prompt_language_statistics(self) -> dict:
+        """
+        Fetches statistics of language distribution in prompts.
+        
+        Returns:
+            dict: A dictionary containing language ID and its corresponding prompt count.
+        """
+    with self.Session() as session:
+        self.logger.debug("Fetching prompt language statistics ..")
+        sql = select(Prompts.lang_id, func.count(Prompts.prompt_id).label('prompt_count')).group_by(Prompts.lang_id)
+        result = session.execute(sql).all()
+        stats = {row.lang_id : row.prompt_count for row in result}
+        return stats
+        
+    def get_response_language_statistics(self) -> dict:
+        """
+        Fetches statistics of language distribution in responses.
+        
+        Returns:
+            dict: A dictionary containing language ID and its corresponding response count.
+        """
+        with self.Session() as session:
+            self.logger.debug("Fetching response language statistics ..")
+            sql = select(Responses.lang_id, func.count(Responses.response_id).label('response_count')).group_by(Responses.lang_id)
+            result = session.execute(sql).all()
+            stats = {row.lang_id : row.response_count for row in result}
+            return stats
+        
+    def get_llm_judge_prompt_language_statistics(self) -> dict:
+        """
+        Fetches statistics of language distribution in LLM judge prompts.
+        
+        Returns:
+            dict: A dictionary containing language ID and its corresponding judge prompt count.
+        """
+        with self.Session() as session:
+            self.logger.debug("Fetching LLM judge prompt language statistics ..")
+            sql = select(LLMJudgePrompts.lang_id, func.count(LLMJudgePrompts.prompt_id).label('judge_prompt_count')).group_by(LLMJudgePrompts.lang_id)
+            result = session.execute(sql).all()
+            stats = {row.lang_id : row.judge_prompt_count for row in result}
+            return stats
+    
+
     def add_or_get_strategy_id(self, strategy_name: str) -> int:
         """
         Fetches the ID of a strategy by its name.
@@ -655,6 +698,23 @@ class DB:
         except IntegrityError as e:
             self.logger.error(f"Domain '{domain_name}' already exists or domain_id conflict. Error: {e}")
             return None
+
+    def get_domain_id(self, domain_name: str) -> Optional[int]:
+        """
+        Fetches the ID of a domain by its name.
+        
+        Args:
+            domain_name (str): The name of the domain to fetch.
+        
+        Returns:
+            Optional[int]: The ID of the domain if found, otherwise None.
+        """
+        with self.Session() as session:
+            sql = select(Domains).where(Domains.domain_name == domain_name)
+            result = session.execute(sql).scalar_one_or_none()
+            #return result.domain_id if result else None
+            return getattr(result, 'domain_id', None) if result else None
+
 
     def get_domain_name(self, domain_id: int) -> Optional[str]:
         """
@@ -1753,22 +1813,37 @@ class DB:
             # If n is 0, we return all test cases, otherwise we return a random sample of n test cases
             return all_testcases
 
-    def get_testcases_by_metric(
-        self,
-        metric_name: str,
-        n: int = 0,
-        lang_name: Optional[str] = None,
-        domain_name: Optional[str] = None,
-    ) -> List[TestCase]:
+    def is_metric_in_testplan(self, metric_name: str, plan_name: str) -> bool:
         """
-        Fetches test cases based on the metric name, language name, and domain name.
+        Checks if a metric is associated with a specific test plan.
+        
+        Args:
+            metric_name (str): The name of the metric to check.
+            plan_name (str): The name of the test plan to check.
 
+        Returns:
+            bool: True if the metric is associated with the test plan, False otherwise.
+        """
+        with self.Session() as session:
+            sql = select(Metrics).join(TestPlanMetricMapping).join(TestPlans).where(
+                Metrics.metric_name == metric_name,
+                TestPlans.plan_name == plan_name,
+                TestPlanMetricMapping.metric_id == Metrics.metric_id,
+                TestPlanMetricMapping.plan_id == TestPlans.plan_id
+            )
+            result = session.execute(sql).scalars().first()
+            return result is not None
+
+    def get_testcases_by_metric(self, metric_name:str, n:int = 0, lang_names:Optional[List[str]] = None, domain_name:Optional[str] = None) -> List[TestCase]:
+        """
+        Fetches test cases based on the metric name, language names, and domain name.
+        
         Args:
             metric_name (str): The name of the metric to filter test cases.
             n (int): The number of test cases to fetch. If 0, fetches all matching test cases.
             lang_names (Optional[List[str]]): The names of the languages to filter test cases.
             domain_name (Optional[str]): The name of the domain to filter test cases.
-
+        
         Returns:
             List[TestCase]: A list of TestCase objects that match the criteria.
         """
@@ -1777,54 +1852,36 @@ class DB:
             domain_id = self.get_domain_id(domain_name)
 
         with self.Session() as session:
-            self.logger.debug(
-                f"Fetching test cases for metric '{metric_name}' with limit {n} .."
-            )
-            sql = (
-                select(TestCases)
-                .join(Metrics, TestCases.metrics)
-                .where(Metrics.metric_name == metric_name)
-            )
+            self.logger.debug(f"Fetching test cases for metric '{metric_name}' with limit {n} ..")
+            sql = select(TestCases).join(Metrics, TestCases.metrics).where(Metrics.metric_name == metric_name)
 
-            if lang_name:
-                sql = sql.join(Languages, Languages.lang_name == lang_name)
+            if lang_names:
+                self.logger.debug(f"Filtering test cases by languages: {lang_names}")
+                sql = sql.join(Prompts, TestCases.prompt).join(Languages, Prompts.lang_id == Languages.lang_id).where(Languages.lang_name.in_(lang_names))
             if domain_name:
                 self.logger.debug(f"Filtering test cases by domain: {domain_name} (ID: {domain_id})")
                 sql = sql.join(Prompts, TestCases.prompt).where((Prompts.domain_id == domain_id) | (Prompts.domain_id == 1))  # include prompts with domain_id = 1 (general) as well.
             if n > 0:
                 # If n is specified, we order them randomly and limit the number of test cases returned
                 sql = sql.order_by(func.random()).limit(n)
-
+            
             result = session.execute(sql).scalars().all()
-            testcases = [
-                TestCase(
-                    name=getattr(tc, "testcase_name"),
-                    metric=metric_name,
-                    testcase_id=getattr(tc, "testcase_id"),
-                    prompt=Prompt(
-                        prompt_id=getattr(tc.prompt, "prompt_id"),
-                        user_prompt=str(tc.prompt.user_prompt),
-                        system_prompt=str(tc.prompt.system_prompt),
-                        lang_id=getattr(tc.prompt, "lang_id"),
-                    ),
-                    response=Response(
-                        response_text=str(tc.response.response_text),
-                        response_type=tc.response.response_type,
-                        response_id=getattr(tc.response, "response_id"),
-                        prompt_id=tc.response.prompt_id,
-                        lang_id=tc.response.lang_id,
-                        digest=tc.response.hash_value,
-                    )
-                    if tc.response
-                    else None,
-                    strategy=tc.strategy.strategy_name,
-                )
-                for tc in result
-            ]
-
-            self.logger.debug(
-                f"Fetched {len(testcases)} test cases for metric '{metric_name}'."
-            )
+            testcases = [  TestCase(name=getattr(tc, 'testcase_name'),
+                                    metric=metric_name,
+                                    testcase_id=getattr(tc, 'testcase_id'),
+                                    prompt=Prompt(prompt_id=getattr(tc.prompt, 'prompt_id'),
+                                                user_prompt=str(tc.prompt.user_prompt),
+                                                system_prompt=str(tc.prompt.system_prompt),
+                                                lang_id=getattr(tc.prompt, 'lang_id')),
+                                    response=Response(response_text=str(tc.response.response_text),
+                                                    response_type=tc.response.response_type,
+                                                    response_id=getattr(tc.response, 'response_id'),
+                                                    prompt_id=tc.response.prompt_id,
+                                                    lang_id=tc.response.lang_id,
+                                                    digest=tc.response.hash_value) if tc.response else None,
+                                    strategy=tc.strategy.strategy_name) for tc in result]
+            
+            self.logger.debug(f"Fetched {len(testcases)} test cases for metric '{metric_name}'.")
             return testcases
 
     def _serialize_testcase(self, testcase: TestCases) -> dict:
@@ -2298,6 +2355,31 @@ class DB:
                 target_languages=[lang.lang_name for lang in result.langs],
             )
 
+    def get_target_by_name(self, target_name: str) -> Optional[Target]:
+        """
+        Fetches a target by its name.
+        
+        Args:
+            target_name (str): The name of the target to fetch.
+        
+        Returns:
+            Optional[Target]: The Target object if found, otherwise None.
+        """
+        with self.Session() as session:
+            sql = select(Targets).where(Targets.target_name == target_name)
+            result = session.execute(sql).scalar_one_or_none()
+            if result is None:
+                self.logger.error(f"Target with name '{target_name}' does not exist.")
+                return None
+            # Return a Target object with the fetched data
+            return Target(target_id=getattr(result, 'target_id'),
+                          target_name=str(result.target_name),
+                          target_type=str(result.target_type),
+                          target_description=str(result.target_description),
+                          target_url=str(result.target_url),
+                          target_domain=result.domain.domain_name,
+                          target_languages=[lang.lang_name for lang in result.langs])
+
     def add_or_get_target(self, target: Target) -> int:
         """
         Adds a new target to the database or fetches its ID if it already exists.
@@ -2661,6 +2743,16 @@ class DB:
                 run_id=getattr(result, "run_id"),
             )
 
+    def _ensure_datetime(self, value):
+        if value is None:
+            return None
+        if isinstance(value, datetime):
+            return value
+        try:
+            return datetime.fromisoformat(value)
+        except Exception:
+            return None
+
     def add_or_update_testrun(self, run: Run, override: bool = False) -> int:
         """
         Adds a new test run to the database or fetches its ID if it already exists.
@@ -2794,11 +2886,6 @@ class DB:
                 )
                 return None
             return result
-
-    def get_testcase_by_name(self, testcase_name: str) -> Optional[TestCase]:
-        """
-        Fetches a test case by its name.
-        """
 
     def _serialize_domain(self, domain: Domains) -> dict:
         return {"domain_id": domain.domain_id, "domain_name": domain.domain_name}
@@ -4156,40 +4243,22 @@ class DB:
                 self.logger.error(f"TestCase with ID '{testcase_id}' does not exist.")
                 return None
             # Return a TestCase object with the fetched data
-            # Handle case where metrics list might be empty
-            metric_name = (
-                result.metrics[0].metric_name
-                if result.metrics and len(result.metrics) > 0
-                else "N/A"
-            )
-            return TestCase(
-                name=getattr(result, "testcase_name"),
-                metric=metric_name,  # use the first metric associated with the test case, or "N/A" if none
-                testcase_id=getattr(result, "testcase_id"),
-                prompt=Prompt(
-                    prompt_id=getattr(result.prompt, "prompt_id"),
-                    user_prompt=str(result.prompt.user_prompt),
-                    system_prompt=str(result.prompt.system_prompt),
-                    lang_id=getattr(result.prompt, "lang_id"),
-                ),
-                response=Response(
-                    response_text=str(result.response.response_text),
-                    response_type=result.response.response_type,
-                    response_id=getattr(result.response, "response_id"),
-                    prompt_id=result.response.prompt_id,
-                    lang_id=result.response.lang_id,
-                    digest=result.response.hash_value,
-                )
-                if result.response
-                else None,
-                judge_prompt=LLMJudgePrompt(
-                    prompt=str(result.judge_prompt.prompt),
-                    lang_id=getattr(result.judge_prompt, "lang_id"),
-                )
-                if result.judge_prompt
-                else None,
-                strategy=result.strategy.strategy_name,
-            )
+            return TestCase(name=getattr(result, 'testcase_name'),
+                metric=result.metrics[0].metric_name,  # use the first metric associated with the test case
+                testcase_id=getattr(result, 'testcase_id'),
+                prompt=Prompt(prompt_id=getattr(result.prompt, 'prompt_id'),
+                                user_prompt=str(result.prompt.user_prompt),
+                                system_prompt=str(result.prompt.system_prompt),
+                                lang_id=getattr(result.prompt, 'lang_id')),
+                response=Response(response_text=str(result.response.response_text),
+                                    response_type=result.response.response_type,
+                                    response_id=getattr(result.response, 'response_id'),
+                                    prompt_id=result.response.prompt_id,
+                                    lang_id=result.response.lang_id,
+                                    digest=result.response.hash_value) if result.response else None,
+                judge_prompt=LLMJudgePrompt(prompt=str(result.judge_prompt.prompt),
+                                            lang_id=getattr(result.judge_prompt, 'lang_id')) if result.judge_prompt else None,
+                strategy=result.strategy.strategy_name)
 
     def get_testcase_name(self, testcase_id: int) -> Optional[str]:
         """
@@ -4599,166 +4668,100 @@ class DB:
                 return None
             return getattr(result, "testcase_status")
 
-    def add_or_update_conversation(
-        self, conversation: Conversation, override: bool = False
-    ) -> int:
+    def add_or_update_conversation(self, conversation: Conversation, override:bool = False) -> int:
         """
         Adds a new conversation to the database or fetches its ID if it already exists.
         Updates the conversation with the agent response and time stamps, if it already exists.
-
+        
         Args:
             conversation (Conversation): The Conversation object to be added.
-
+        
         Returns:
             int: The ID of the newly added conversation, or -1 if it already exists.
         """
         try:
-            target_id = (
-                self.get_target_id(conversation.target) if conversation.target else None
-            )
+            target_id = self.get_target_id(conversation.target) if conversation.target else None
             if target_id is None:
-                self.logger.error(
-                    f"Target '{conversation.target}' does not exist. Cannot add conversation."
-                )
+                self.logger.error(f"Target '{conversation.target}' does not exist. Cannot add conversation.")
                 return -1
-
+            
             with self.Session() as session:
                 # Check if the conversation already exists in the database
-                existing_conversation = (
-                    session.query(Conversations)
-                    .filter_by(detail_id=conversation.run_detail_id)
-                    .first()
-                )
+                existing_conversation = session.query(Conversations).filter_by(detail_id=conversation.run_detail_id).first()
                 if existing_conversation:
                     # update the evaluation details
-                    if (
-                        existing_conversation.evaluation_ts is None or override
-                    ) and conversation.evaluation_ts is not None:
+                    if (existing_conversation.evaluation_ts is None or override) and conversation.evaluation_ts is not None:
                         if existing_conversation.agent_response is None:
-                            self.logger.error(
-                                f"Cannot update evaluation details for Conversation (RunDetailId:{conversation.run_detail_id}) as the agent response is not yet recorded."
-                            )
+                            self.logger.error(f"Cannot update evaluation details for Conversation (RunDetailId:{conversation.run_detail_id}) as the agent response is not yet recorded.")
                             return -1
-
+                        
                         if not override:
-                            self.logger.debug(
-                                f"Updating existing conversation details (Evaluation score: {conversation.evaluation_score}, reason and timestamp: {conversation.evaluation_ts}) .."
-                            )
+                            self.logger.debug(f"Updating existing conversation details (Evaluation score: {conversation.evaluation_score}, reason and timestamp: {conversation.evaluation_ts}) ..")
                         else:
-                            self.logger.debug(
-                                f"Overwriting existing conversation details (Evaluation score: {conversation.evaluation_score}, reason and timestamp: {conversation.evaluation_ts}) .."
-                            )
-
+                            self.logger.debug(f"Overwriting existing conversation details (Evaluation score: {conversation.evaluation_score}, reason and timestamp: {conversation.evaluation_ts}) ..")                            
+                            
                         # Update the existing conversation with the new details
-                        setattr(
-                            existing_conversation,
-                            "evaluation_score",
-                            conversation.evaluation_score,
-                        )
-                        setattr(
-                            existing_conversation,
-                            "evaluation_reason",
-                            conversation.evaluation_reason,
-                        )
-                        setattr(
-                            existing_conversation,
-                            "evaluation_ts",
-                            conversation.evaluation_ts,
-                        )
+                        setattr(existing_conversation, "evaluation_score", conversation.evaluation_score)
+                        setattr(existing_conversation, "evaluation_reason", conversation.evaluation_reason)
+                        setattr(existing_conversation, "evaluation_ts", self._ensure_datetime(conversation.evaluation_ts))
                     # update the agent response details.
                     else:
-                        if (
-                            existing_conversation.prompt_ts is None
-                            and conversation.prompt_ts is not None
-                        ):
-                            self.logger.debug(
-                                f"Updating existing conversation details (Prompt timestamp: {conversation.prompt_ts}) .."
-                            )
-                        elif (
-                            existing_conversation.agent_response is None
-                            and conversation.agent_response is not None
-                        ):
-                            self.logger.debug(
-                                f"Updating existing conversation details (Agent response text and Response timestamp: {conversation.response_ts}) .."
-                            )
-                        elif (
-                            existing_conversation.response_ts is None
-                            and conversation.response_ts is not None
-                        ):
-                            self.logger.debug(
-                                f"Updating existing conversation details (Agent response text and Response timestamp: {conversation.response_ts}) .."
-                            )
+                        if existing_conversation.prompt_ts is None and conversation.prompt_ts is not None:
+                            self.logger.debug(f"Updating existing conversation details (Prompt timestamp: {conversation.prompt_ts}) ..")
+                        elif existing_conversation.agent_response is None and conversation.agent_response is not None:
+                            self.logger.debug(f"Updating existing conversation details (Agent response text and Response timestamp: {conversation.response_ts}) ..")
+                        elif existing_conversation.response_ts is None and conversation.response_ts is not None:
+                            self.logger.debug(f"Updating existing conversation details (Agent response text and Response timestamp: {conversation.response_ts}) ..")
                         elif override:
-                            self.logger.debug(
-                                f"Updating existing conversation details with the supplied 'override' information. (RunDetailId:{conversation.run_detail_id}) .."
-                            )
+                            self.logger.debug(f"Updating existing conversation details with the supplied 'override' information. (RunDetailId:{conversation.run_detail_id}) ..")
                         else:
-                            self.logger.debug(
-                                f"Existing conversation (RunDetailId:{conversation.run_detail_id}) will not be updated. Returning conversation ID: {existing_conversation.conversation_id}"
-                            )
+                            self.logger.debug(f"Existing conversation (RunDetailId:{conversation.run_detail_id}) will not be updated. Returning conversation ID: {existing_conversation.conversation_id}")
                             # Return the ID of the existing conversation if it already exists
                             return getattr(existing_conversation, "conversation_id")
 
                         # Update the existing conversation with the new details
-                        setattr(
-                            existing_conversation,
-                            "agent_response",
-                            conversation.agent_response,
-                        )
-                        setattr(
-                            existing_conversation, "prompt_ts", conversation.prompt_ts
-                        )
-                        setattr(
-                            existing_conversation,
-                            "response_ts",
-                            conversation.response_ts,
-                        )
-
+                        setattr(existing_conversation, "agent_response", conversation.agent_response)
+                        setattr(existing_conversation, "prompt_ts", self._ensure_datetime(conversation.prompt_ts))
+                        setattr(existing_conversation, "response_ts", self._ensure_datetime(conversation.response_ts))
+                    
                     # Commit the session to save the updated conversation
                     session.commit()
                     # Ensure conversation_id is populated
-                    session.refresh(existing_conversation)
+                    session.refresh(existing_conversation)   
                     # Log the existing conversation ID
-                    self.logger.debug(
-                        f"Returning the ID of the updated conversation: {existing_conversation.conversation_id}"
-                    )
+                    self.logger.debug(f"Returning the ID of the updated conversation: {existing_conversation.conversation_id}")
                     # Return the ID of the existing conversation
                     return getattr(existing_conversation, "conversation_id")
-
-                self.logger.debug(
-                    f"Adding a new conversation with run detail ID: {conversation.run_detail_id}"
-                )
+                
+                self.logger.debug(f"Adding a new conversation with run detail ID: {conversation.run_detail_id}")
 
                 # Create the Conversations object
                 new_conversation = Conversations(
-                    target_id=target_id,
-                    detail_id=conversation.run_detail_id,
-                    agent_response=conversation.agent_response,
-                    prompt_ts=conversation.prompt_ts,
-                    response_ts=conversation.response_ts,
-                    evaluation_score=conversation.evaluation_score,
-                    evaluation_reason=conversation.evaluation_reason,
-                    evaluation_ts=conversation.evaluation_ts,
-                )
+                                                target_id=target_id,
+                                                detail_id=conversation.run_detail_id,
+                                                agent_response=conversation.agent_response,
+                                                prompt_ts=self._ensure_datetime(conversation.prompt_ts),
+                                                response_ts=self._ensure_datetime(conversation.response_ts),
+                                                evaluation_score=conversation.evaluation_score,
+                                                evaluation_reason=conversation.evaluation_reason,
+                                                evaluation_ts=self._ensure_datetime(conversation.evaluation_ts)
+                                            )
+
 
                 # Add the new conversation to the session
                 session.add(new_conversation)
                 # Commit the session to save the new conversation
                 session.commit()
                 # Ensure conversation_id is populated
-                session.refresh(new_conversation)
+                session.refresh(new_conversation)  
 
-                self.logger.debug(
-                    f"Conversation added successfully: {new_conversation.conversation_id}"
-                )
-
+                self.logger.debug(f"Conversation added successfully: {new_conversation.conversation_id}")
+                
                 # Return the ID of the newly added conversation
                 return getattr(new_conversation, "conversation_id")
         except IntegrityError as e:
             # Handle the case where the conversation already exists
-            self.logger.error(
-                f"Conversation already exists: {conversation}. Error: {e}"
-            )
+            self.logger.error(f"Conversation already exists: {conversation}. Error: {e}")
             return -1
 
     def get_conversation_by_id(self, conversation_id: int) -> Optional[Conversation]:

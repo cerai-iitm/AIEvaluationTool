@@ -338,7 +338,7 @@ const Targets = () => {
             </div>
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto">
-            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[67vh] max-w-[120vh] overflow-y-auto">
+            <div className="bg-white rounded-lg shadow overflow-hidden max-w-7xl mx-left max-h-[67vh] overflow-y-auto">
               <table className="w-full">
                 <thead className="border-b-2">
                   <tr>
@@ -415,7 +415,7 @@ const Targets = () => {
           </div>
           {(hasPermission(currentUserRole, "canCreateTables") ||
             hasPermission(currentUserRole, "canCreateRecords")) && (
-            <div className="mt-6 sticky bottom-5">
+            <div className="mt-1 sticky bottom-5">
               <Button
                 className="bg-primary hover:bg-primary/90"
                 onClick={() => setAddDialogOpen(true)}

@@ -307,14 +307,14 @@ const Responses = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow overflow-hidden max-h-[70vh] w-full overflow-y-auto">
+          <div className="bg-white rounded-lg shadow overflow-hidden max-h-[72vh] w-full max-w-[100%] mx-left overflow-y-auto">
             <table className="w-full">
               <thead className="border-b-2">
                 <tr>
-                  <th className="text-left p-4 font-semibold">Response ID</th>
-                  <th className="text-left p-4 font-semibold">Response Text</th>
-                  <th className="text-left p-4 font-semibold">Language</th>
-                  <th className="text-left p-4 font-semibold">Response Type</th>
+                  <th className="sticky top-0 bg-white text-left p-4 font-semibold">Response ID</th>
+                  <th className="sticky top-0 bg-white text-left p-4 font-semibold">Response Text</th>
+                  <th className="sticky top-0 bg-white text-left p-4 font-semibold">Language</th>
+                  <th className="sticky top-0 bg-white text-left p-4 font-semibold">Response Type</th>
                 </tr>
               </thead>
               <tbody>
@@ -365,7 +365,7 @@ const Responses = () => {
 
           {/* {(hasPermission(currentUserRole, "canCreateTables") ||
             hasPermission(currentUserRole, "canCreateRecords")) && (
-            <div className="mt-6 sticky bottom-5">
+            <div className="mt-1 sticky bottom-5">
               <Button
                 className="bg-primary hover:bg-primary/90"
                 onClick={() => setAddDialogOpen(true)}
