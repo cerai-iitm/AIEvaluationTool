@@ -28,6 +28,5 @@ sentencepiece
 sarvamai
 openpyxl
 randomname
-mariadb
 gliner
 python-iso639
