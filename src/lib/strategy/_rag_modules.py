@@ -21,12 +21,13 @@ from langchain_core.prompts import ChatPromptTemplate
 from typing import List
 from .logger import get_logger
 
+logger = get_logger("rag_pipeline")
+
 class TextData(BaseModel):
     text : str
     title : Optional[str]
     href : Optional[str]
 
-logger = get_logger("rag_pipeline")
 # this module scrapes information from the web, takes k top answers, cleans the text and returns a list of splitted docs
 class ScrapeCleanStore:
 

@@ -40,7 +40,6 @@ class HallucinationStrategy(Strategy):
                     testcase.response.response_text = grounded_truth
             score, reason = self.llm_judge.evaluate(testcase, conversation)
         else:
-            print(f"I am here. {self.eval_type}")
             prediction = self.extract_prediction(conversation.agent_response).strip()
             score = 1.0 if prediction == testcase.response.response_text.upper() else 0.0
         return score, reason
