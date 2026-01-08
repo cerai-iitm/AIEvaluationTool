@@ -377,7 +377,7 @@ const StrategyList: React.FC = () => {
           </div>
           
           <div className="flex-1 min-h-0 overflow-y-auto">
-            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[70vh] max-w-[120vh] overflow-y-auto">
+            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[73vh] max-w-[70%] mx-left overflow-y-auto">
               {isLoading ? (
                 <div className="flex items-center justify-center p-8">
                   <span>Loading...</span>
@@ -425,7 +425,7 @@ const StrategyList: React.FC = () => {
           
           {(hasPermission(currentUserRole, "canCreateTables") ||
             hasPermission(currentUserRole, "canCreateRecords")) && (
-            <div className="mt-4 md:mt-6 sticky bottom-5">
+            <div className="mt-2 md:mt-1 sticky bottom-5">
               <button 
                 className="bg-primary hover:bg-primary/90 text-white py-2 px-4 rounded text-sm md:text-base transition-colors" 
                 onClick={() => setAddOpen(true)}

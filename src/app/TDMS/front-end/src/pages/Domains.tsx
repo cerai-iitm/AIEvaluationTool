@@ -378,7 +378,7 @@ const DomainList: React.FC = () => {
             </div>
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto">
-            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[69vh] max-w-[50vh] overflow-y-auto">
+            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[72vh] max-w-1/2 md:max-w-[30%] overflow-y-auto">
               {isLoading ? (
                 <div className="flex items-center justify-center p-8">
                   <span>Loading...</span>
@@ -423,7 +423,7 @@ const DomainList: React.FC = () => {
           </div>
           {(hasPermission(currentUserRole, "canCreateTables") ||
             hasPermission(currentUserRole, "canCreateRecords")) && (
-            <div className="mt-4 md:mt-6 sticky bottom-5">
+            <div className="mt-1 sticky bottom-5">
               <button 
                 className="bg-primary hover:bg-primary/90 text-white py-2 px-4 rounded text-sm md:text-base transition-colors" 
                 onClick={() => setAddOpen(true)}

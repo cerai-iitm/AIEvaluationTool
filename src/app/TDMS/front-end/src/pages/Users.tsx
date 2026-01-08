@@ -244,9 +244,9 @@ const Users = () => {
               <table className="w-full">
                 <thead className="border-b-2">
                   <tr>
-                    <th className="text-left p-6 font-semibold text-lg">User Name</th>
-                    <th className="text-left p-6 font-semibold text-lg">Email Address</th>
-                    <th className="text-left p-6 font-semibold text-lg">Role</th>
+                    <th className="sticky top-0 z-10 bg-white text-left p-6 font-semibold text-lg">User Name</th>
+                    <th className="sticky top-0 z-10 bg-white text-left p-6 font-semibold text-lg">Email Address</th>
+                    <th className="sticky top-0 z-10 bg-white text-left p-6 font-semibold text-lg">Role</th>
                   </tr>
                 </thead>
                 <tbody>
