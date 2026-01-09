@@ -9,7 +9,7 @@ import hashlib
 from deepeval.metrics.g_eval.schema import Steps, ReasonScore
 from ollama import Client, AsyncClient
 from deepeval.models.base_model import DeepEvalBaseLLM
-
+from typing import Optional, List
 
 logger = get_logger("utils_new")
 
@@ -37,17 +37,18 @@ class FileLoader:
         else:
             strat = kwargs.get("strategy_name")
             if not strat:
-                logger.error("strategy_name was not inilialized.")
+                logger.error("Strategy_name was not inilialized.")
                 return file_content
             else:
                 prefixes = [os.path.commonprefix([strat, f]) for f in file_names]
                 longest = max(prefixes, key=len, default=None)
-                files = [f for f in file_names if f.startswith(longest)]
+                files = [f for f in file_names if f.startswith(longest) and len(longest) >= len(strat.split("_")[0])] #the length of the prefix should be at least as long as the first word in the strategy name so that longest is not empty, if its empty it matches with all the names
                 if len(files) > 0:
                     for f in files:
+                        logger.info(f"Using file {f} to load the examples and evaluate the strategy.")
                         file_content = FileLoader._fill_values(file_content, data_dir, f)
                 else:
-                    logger.error("None of the files in the directory match the strategy name.")
+                    logger.error("None of the files in the data/examples directory match the strategy name.")
         return file_content
 
     @staticmethod
@@ -90,7 +91,6 @@ class FileLoader:
         else:
             return d
 
-
     @staticmethod
     def _to_dot_dict(run_file_path:str, dir_file_path:str, **kwargs):
         full_path = os.path.join(os.path.dirname(run_file_path), dir_file_path)
@@ -98,7 +98,12 @@ class FileLoader:
             with open(full_path, "r") as f:
                 data = json.load(f)
             if kwargs.get("simple"):
-                return json.loads(json.dumps(data[kwargs.get("strat_name")]), object_hook=lambda d: SimpleNamespace(**d))
+                def hook(obj):
+                    if obj.get("__as_dict__") is True:
+                        obj.pop("__as_dict__", None)
+                        return obj
+                    return SimpleNamespace(**obj)
+                return json.loads(json.dumps(data[kwargs.get("strat_name")]), object_hook=hook)
             else:
                 return FileLoader.dot_dict(data)
         else:
@@ -112,7 +117,7 @@ class FileLoader:
             os.mkdir(folder_path)
         file_path = os.path.join(folder_path, f"{kwargs.get('strat_name')}.csv")
         file_exists = os.path.isfile(file_path)
-        hash = hashlib.sha256(df.get("id").encode('utf-8')).hexdigest()
+        hash = hashlib.sha256(df.get("id").encode('utf-8')).hexdigest()[:20]
 
         if file_exists:
             with open(file_path, newline='', encoding='utf-8') as f:
@@ -175,10 +180,68 @@ class CustomOllamaModel(DeepEvalBaseLLM):
         return schema_
     
     def get_model_name(self, *args, **kwargs):
-         return self.model_name
+        return self.model_name
 
 
+class OllamaConnect:
+    
+    FileLoader._load_env_vars(__file__)
+    ollama_url = os.getenv("OLLAMA_URL")
+    dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), simple=True, strat_name="ollama_comms")
 
-
-
-        
+    @staticmethod
+    def prompt_model(text:str, fields:List[str], model_names:List[str] = None, options:dict = None) -> List[dict]:
+        ollama_client = Client(host=OllamaConnect.ollama_url)
+        tries = OllamaConnect.dflt_vals.n_tries
+        resp_in_format = []
+        models = OllamaConnect.dflt_vals.model_names if model_names is None else model_names
+        while(resp_in_format == [] and tries > 0):
+            for model in models:
+                try:
+                    inputs = {
+                        "model" : model,
+                        "messages" : [
+                            {
+                                "role" : "user",
+                                "content" : f"{text} /nothink",
+                            }
+                        ],
+                        "format":"json",
+                    }
+                    if options is not None:
+                        inputs.update({"options": options})
+                    response = ollama_client.chat(**inputs)
+                    try:
+                        final = json.loads(response.message.content)
+                    except:
+                        final = {}
+                except Exception as e:
+                    logger.error(f"Did not receive any response from the model : {model}.")
+                    final = {}
+                if(OllamaConnect.has_correct_format(final, fields)):
+                    resp_in_format.append(final)
+            tries -= 1
+        return resp_in_format
+    
+    @staticmethod
+    def has_correct_format(obj : Optional[dict], fields: List[str]):
+        correct = isinstance(obj, dict) 
+        for fld in fields:
+            correct = correct and fld in fields and isinstance(obj.get(fld), str) 
+        return correct
+    
+    @staticmethod
+    def get_reason(agent_response:str, strategy_name:str, score:float, **kwargs):
+        prompt = OllamaConnect.dflt_vals.reason_prompt.format(input_sent=agent_response, metric=strategy_name, score=score, add_info=kwargs.get("add_info", ""))
+        responses = OllamaConnect.prompt_model(prompt, OllamaConnect.dflt_vals.reqd_flds)
+        final_rsn = ""
+        if(len(responses) > 0):
+            reasons = [r["reason"] for r in responses]
+            for i, r in enumerate(reasons):
+                if i == 0:
+                    final_rsn += f"Reason {i} : {r}"
+                else:
+                    final_rsn += f"\n\n Reason {i} : {r}"
+            return final_rsn
+        else:
+            return "Could not get a proper reasoning for the score."

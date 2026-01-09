@@ -2,17 +2,26 @@ from nltk.corpus import wordnet as wn
 from nltk.stem import WordNetLemmatizer
 import re
 import warnings
+import os
+import nltk
 from typing import List, Tuple
 from sentence_transformers import SentenceTransformer, util
 from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
 from .logger import get_logger
-from .utils_new import FileLoader
+from .utils_new import FileLoader, OllamaConnect
+
+try:
+    from nltk.corpus import wordnet
+    wordnet.synsets("tree")
+except LookupError:
+    nltk.download("wordnet")
 
 warnings.filterwarnings("ignore")
 
 FileLoader._load_env_vars(__file__)
 logger = get_logger("entity_recognition")
+dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), simple=True, strat_name="entity_recognition")
 
 class EntityRecognition(Strategy):
     def __init__(self, name: str = "entity_recognition", **kwargs) -> None:
@@ -62,7 +71,6 @@ class EntityRecognition(Strategy):
             syn_score = self.synonym_score(self.lemm.lemmatize(en1[1]), self.lemm.lemmatize(en2[1]))
             vec_score = self.vec_similarity(self.lemm.lemmatize(en1[1]), self.lemm.lemmatize(en2[1])) if vec_model else 0
             total_score = (syn_score + vec_score)/2 if vec_model else syn_score
-            # print(f"ex_entity : {en1}, pr_entity : {en2}, syn_score : {syn_score}, vec_score : {vec_score}")
             if(total_score > 0.7):
                 tp.append(en1)
             else:
@@ -98,26 +106,29 @@ class EntityRecognition(Strategy):
         recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
         f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
         return round(f1, 4)
+    
+    def reason_for_score(self, agent_response:str, score:float, **kwargs):
+        if(dflt_vals.model_reason):
+            try:
+                return OllamaConnect.get_reason(agent_response, " ".join(self.name.split("_")), score, add_info=kwargs.get("corr_output", ""))
+            except:
+                logger.error(f"Could not fetch the reason for score. \n Make sure Ollama is running with the specified model, OR change the model_reason to false for {self.name} in data/defaults.json")
+                return ""
+        else:
+            match score:
+                case s if s < 0.3:
+                    return "Majorly incorrect entity recognition."
+                case s if 0.3 <= s <= 0.6:
+                    return "Partially accurate entity recognition."
+                case s if 0.6 < s <= 1.0:
+                    return "Highly accurate entity recognition."
+                case s if s < 0 or s > 1.0:
+                    return ""
 
-    def evaluate(self, testcase:TestCase, conversation:Conversation) -> float: #, expected_response, agent_response):
+    def evaluate(self, testcase:TestCase, conversation:Conversation):
         """
         Evaluates the agent response against expected and returns only the F1 score.
         """
-        result =  self.ner_recognition(expected_str= testcase.response.response_text, response_str=conversation.agent_response)#expected_response, response_str=agent_response) #testcase.response.response_text, response_str=conversation.agent_response)
-        logger.info(f"Result: {result}")
-        return result, ""
-        
-# Example usage
-# expected_response = "{ entity :  Vidarbha ,  ner_tag :  LOCATION },  { entity :  rice ,  ner_tag :  CROP },  { entity :  stress-tolerant hybrids ,  ner_tag :  CROP_TYPE },  { entity :  Sahbhagi Dhan ,  ner_tag :  CROP_VARIETY },  { entity :  DRR 42 ,  ner_tag :  CROP_VARIETY },  { entity :  monsoon ,  ner_tag :  WEATHER },  { entity :  cotton ,  ner_tag :  CROP }  "
-# agent_response = """
-# [
-#   {'entity': 'rice', 'ner_tag': 'Crop'},
-#   {'entity': 'Sahbhagi Dhan', 'ner_tag': 'Crop'},
-#   {'entity': 'DRR 42', 'ner_tag': 'Crop'},
-#   {'entity': 'cotton', 'ner_tag': 'Crop'}
-# ]
-# """
-# ner_eval = EntityRecognition()
-# res = ner_eval.ner_recognition(expected_response, agent_response)
-# pprint(f"expected_resp : {expected_response}, agent_resp : {agent_response}")
-# print(f"current_score: {res}") #{res[0]}, prev_score : {res[1]}")
+        score =  self.ner_recognition(expected_str= testcase.response.response_text, response_str=conversation.agent_response)
+        logger.info(f"Result: {score}")
+        return score, self.reason_for_score(conversation.agent_response, score, corr_output=f"Expected Output : \n {testcase.response.response_text}")

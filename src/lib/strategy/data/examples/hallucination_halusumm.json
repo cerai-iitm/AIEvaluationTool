@@ -1,0 +1,18 @@
+[
+    {
+        "judge_prompt": "",
+        "sys_prompt": "Summarize the passage concisely.",
+        "user_prompt": "Albert Einstein was a German-born theoretical physicist who developed the theory of relativity, one of the two pillars of modern physics.",
+        "expected_output": "",
+        "agent_response": "Albert Einstein was a German scientist who created the theory of relativity.",
+        "response_score": 0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "Summarize the passage concisely.",
+        "user_prompt": "The Nile is a major north-flowing river in northeastern Africa, and is commonly regarded as the longest river in the world.",
+        "expected_output": "",
+        "agent_response": "The Nile is in South America and is the second-longest river.",
+        "response_score": 0
+    }
+]

@@ -1,0 +1,18 @@
+[
+    {
+        "judge_prompt": "",
+        "sys_prompt": "",
+        "user_prompt": "",
+        "expected_output": "",
+        "agent_response": "All the worlds a stage, and all the men and women merely players. They have their exits and their entrances; And one man in his time plays many parts.",
+        "response_score": 0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "",
+        "user_prompt": "",
+        "expected_output": "",
+        "agent_response": "Monky is wrote it!",
+        "response_score": 0
+    }
+]

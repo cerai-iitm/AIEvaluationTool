@@ -432,11 +432,11 @@ def send_message_whatsapp(driver: webdriver.Chrome, prompt: str):
                 message_out = chat_cfg["message_out_element"]
                 all_messages = wait.until(
                     EC.presence_of_all_elements_located(
-                        (By.CSS_SELECTOR, f"{message_in}, {message_out}")
+                        (By.XPATH, f"{message_in} | {message_out}")
                     )
                 )
-                
-                outgoing_msgs = driver.find_elements(By.CSS_SELECTOR, message_out)
+
+                outgoing_msgs = driver.find_elements(By.XPATH, message_out)
                 if not outgoing_msgs:
                     raise Exception("No outgoing messages found.")
 
@@ -463,7 +463,7 @@ def send_message_whatsapp(driver: webdriver.Chrome, prompt: str):
                 selectable_text = chat_cfg["agent_response_element"]
                 for msg in responses:
                     try:
-                        text_elem = msg.find_element(By.CSS_SELECTOR, selectable_text)
+                        text_elem = msg.find_element(By.XPATH, selectable_text)
                         text = text_elem.text.strip()
                         if text:
                             response_texts.append(text)

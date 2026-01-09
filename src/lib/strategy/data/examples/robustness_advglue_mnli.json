@@ -1,0 +1,10 @@
+[
+    {
+        "judge_prompt": "",
+        "sys_prompt": "",
+        "user_prompt": "",
+        "expected_output": "0",
+        "agent_response": "0 because of some reason",
+        "response_score": 0
+    }
+]

@@ -7,6 +7,7 @@ import os
 from .logger import get_logger
 import numpy as np
 import json
+import random
 
 logger = get_logger("evaluator")
 FileLoader._load_env_vars(__file__)
@@ -76,7 +77,7 @@ class Evaluator:
             score_data[strat_name] = score
             FileLoader._save_values(__file__, score_data, self.data_dir, f"{dflt_vals.score_file}.json")
         else:
-            concatted = "\n".join(list(kwargs.get("ex").values())[:3]) # basically we are joing first three values of the example, ie judge, sys and user prompts
+            concatted = "\n".join([str(a) for a in kwargs.get("ex").values()]) # we are joining all the values of the example
             FileLoader._save_to_csv(__file__, {"id" : concatted, "score" : score}, strat_name=strat_name, data_dir="data", save_dir="scores_csv")
     
     def main(self, strategy_name:str = "", metric_name:str = ""):
@@ -95,25 +96,29 @@ class Evaluator:
             "response_score" : ,
         }
 
-        The example files must start with the same name as the value of the "name" inside the strategy file.
-        e.g. for llm_judge_poitive or negative, the example file should be llm_judge (file that contains the strat)
+        The example files must start with the same name as the strategy name mentioned inside the strategy file.
+        e.g. If I want to evaluate one of the two llm_judge strategies, i would name the example file llm_judge_<positive/negative>.
+        A strategy can have multiple example files.
+        e.g. for fluency_score, we might need fluency_score_fluent and fluency_score_non_fluent to include exmples of both kinds.
 
         """
         self.set_strategy(strategy_name, metric_name)
         examples = FileLoader._load_file_content(__file__, os.getenv("EXAMPLES_DIR"), strategy_name=strategy_name)
         if len(examples) < 1:
-            logger.error("Could not find files for the specified strategy.")
-            return examples
+            logger.error(f"Could not find files with example data for {strategy_name} strategy in data/examples/.")
+            return
         combined = self.combine_examples(examples)
         assigned_scores, human_scores = [], []
         for ex_list in combined.values():
-            for i, example in enumerate(ex_list[:]):
+            random.shuffle(ex_list)
+            for i, example in enumerate(ex_list[:5]):
                 self.runner.set_metric_strategy(strategy_name, metric_name)
                 try:
-                    human_scores.append(example["response_score"])
                     objects = self.get_testcase_obj(example)
                     curr_score, reason = self.runner.execute(*objects)
+                    logger.info(f"Score : {curr_score}, Reasoning : {reason}")
                     assigned_scores.append(curr_score)
+                    human_scores.append(example["response_score"])
                 except Exception as e:
                     logger.error(f"Could not find the specified strategy name or the metric name. Additional info : {e}")
                 self.save_scores(strategy_name, 
@@ -127,4 +132,4 @@ class Evaluator:
                     self.save_scores(strategy_name, {"evaluated_score" : avg_score, "human_score" : human_score})
                 
 ev = Evaluator()
-ev.main(strategy_name="fairness_preference_plain", metric_name="")
+ev.main(strategy_name="uptime_calculation", metric_name="bart_score_similarity")

@@ -1,0 +1,10 @@
+[
+    {
+        "judge_prompt": "",
+        "sys_prompt": "",
+        "user_prompt": "",
+        "expected_output": "The dog lay on the cozy cushion in the morning light.",
+        "agent_response": "The cat sat on the warm windowsill in the afternoon sun.",
+        "response_score": 0
+    }
+]

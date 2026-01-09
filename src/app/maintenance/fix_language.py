@@ -47,7 +47,39 @@ def main():
         return
 
     # setting up the database connection
-    db_url = f"mariadb+mariadbconnector://{config['database']['user']}:{config['database']['password']}@{config['database']['host']}:{config['database']['port']}/{config['database']['database']}"
+    # db_url = f"mariadb+mariadbconnector://{config['database']['user']}:{config['database']['password']}@{config['database']['host']}:{config['database']['port']}/{config['database']['database']}"
+
+    # Build DB URL based on engine type
+    engine = config['db'].get('engine', 'sqlite').lower()
+
+    if engine == "sqlite":
+        sqlite_file = config['db'].get('file', 'AIEvaluationData.db')
+
+        # project_root = src/app/importer/../../../
+        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
+
+        # Put DB in project_root/data
+        db_folder = os.path.join(base_dir, "data")
+        os.makedirs(db_folder, exist_ok=True)
+
+        db_path = os.path.join(db_folder, sqlite_file)
+        db_url = f"sqlite:///{db_path}"
+
+    elif engine == "mariadb":
+        db_url = (
+            "mariadb+mariadbconnector://{user}:{password}@{host}:{port}/{database}"
+            .format(
+                user=config['db']['user'],
+                password=config['db']['password'],
+                host=config['db']['host'],
+                port=config['db']['port'],
+                database=config['db']['database']
+            )
+        )
+
+    else:
+        raise ValueError(f"Unsupported database engine: {engine}")
+
     try:
         logger.info(f"Database URL: {db_url}")
         db = DB(db_url=db_url, debug=False, loglevel=loglevel)
@@ -132,5 +164,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-
 

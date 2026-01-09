@@ -5,6 +5,7 @@ from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
 import re
 from itertools import combinations
+import traceback
 
 logger = get_logger("strategy_implementor")
 
@@ -37,6 +38,7 @@ class StrategyImplementor:
                     logger.error(f"The specified strategy name : {self.strategy_name} could not be found.")
         except Exception as e:
             logger.error(f"[ERROR] : {e}")
+            #traceback.print_exc()
         return score, reason
     
     # this is just in case , should be removable later

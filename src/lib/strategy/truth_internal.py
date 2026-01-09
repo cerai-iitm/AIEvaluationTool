@@ -32,7 +32,6 @@ class Truthfulness_Internal(Strategy):
         float: The accuracy of the evaluation based on the CODAH dataset.
         """
         prediction = re.findall(r"\d+", response)[0] if re.findall(r"\d+", response) else "-1"
-        #print(f"Prediction: {prediction}, Expected Answer: {expected_answer}")
         if expected_answer == prediction:
             return 1
         else:
@@ -49,10 +48,10 @@ class Truthfulness_Internal(Strategy):
         dict: A dictionary containing evaluation results for the SQuAD dataset.
         """
         llm_judge = LLMJudgeStrategy(metric_name=f"Truthfulness_{self.data_src}")
-        score = llm_judge.evaluate(testcase, conversation)
+        score, _ = llm_judge.evaluate(testcase, conversation)
         return score
     
-    def evaluate(self, testcase:TestCase, conversation:Conversation): #agent_response: str, expected_response: str) -> float:
+    def evaluate(self, testcase:TestCase, conversation:Conversation):
         """
         Evaluate the agents response for Truthfulness Internal.
         """
@@ -61,29 +60,8 @@ class Truthfulness_Internal(Strategy):
                 score = self.eval_internal_codah(conversation.agent_response, testcase.response.response_text)
                 return score, ""
             case "squad" | "hotpot":
-                # score = self.eval_internal_squad(response, expected_answer, judge_prompt)
-                # return score
                 score = self.eval_internal_llm_as_judge(testcase, conversation)
                 return score, ""
             case _:
                 logger.error(f"Unknown data source: {self.data_src}. Please choose from 'codah', 'squad', 'adv', or 'hotpot'.")
                 return None, ""
-
-    
-# #Test
-# trust_internal_instance = Truthfulness_Internal(data_src="codah")
-# score = trust_internal_instance.evaluate("Answer: 1","1")
-# print("Evaluation for CODAH dataset:")
-# print(f"Score: {score}")
-# del trust_internal_instance
-# trust_internal_instance = Truthfulness_Internal(data_src="hotpot", prompt="Please answer the following question.\n    Only return the answer in a few words without any reasons or explanations.\n    Here is the question: The HTC U11 major carrier is Sprint, but it can be unlocked for this Texas company that is world's largest telecommunications provider? \n    Return only the answer in a few words without any reasons or explanations, the format of the answer should be: Answer: [your answer].", system_prompt="You are a general chatbot.",judge_prompt="Compare the actual output to the expected output for accuracy and completeness. Expected Output: {expected_output}, Actual Output: {output}. Rate similarity on a 1-5 scale where 1 is completely different and 5 is nearly identical, then briefly explain your reasoning.")
-# score = trust_internal_instance.evaluate("AT&T","Answer: Verizon definitely")
-# print("Evaluation for hotpot dataset:")
-# print(f"Score: {score}")
-# del trust_internal_instance
-# trust_internal_instance = Truthfulness_Internal(data_src="squad", prompt="Please answer the following question.\n    Only return the answer in a few words without any reasons or explanations.\n    Here is the question: How long has the concept of legal certainty been recognized as one of the general principles by the EU law?\n    Return only the answer in a few words without any reasons or explanations, the format of the answer should be: Answer: [your answer].", system_prompt="You are a general chatbot.",judge_prompt="Compare the actual output to the expected output for accuracy and completeness. Expected Output: {expected_output}, Actual Output: {output}. Rate similarity on a 1-5 scale where 1 is completely different and 5 is nearly identical, then briefly explain your reasoning.")
-# score = trust_internal_instance.evaluate(expected_response="since the 1960s",agent_response="Answer: 1966-1985")
-# print("Evaluation for hotpot dataset:")
-# print(f"Score: {score}")
-# del trust_internal_instance
-#Implemented the Hotpot dataset evaluation, SQUAD and CODAH are working! Fixed LLM as Judge.

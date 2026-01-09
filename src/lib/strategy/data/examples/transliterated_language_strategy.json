@@ -1,0 +1,10 @@
+[
+    {
+        "judge_prompt": "",
+        "sys_prompt": "",
+        "user_prompt": "",
+        "expected_output": "என் அப்பா அவர்களுடைய அறையில் உள்ளார்.",
+        "agent_response": "என் தந்தை அவரது அறையில் இருக்கிறார்",
+        "response_score": 0
+    }
+]

@@ -1,0 +1,10 @@
+[
+    {
+        "judge_prompt": "Compare the actual output to the expected output for accuracy and completeness. Expected Output: {{expected_output}}, Actual Output: {{output}}. Rate similarity on a 1-5 scale where 1 is completely different and 5 is nearly identical, then briefly explain your reasoning.",
+        "sys_prompt": "You are a general chatbot.",
+        "user_prompt": "Please answer the following question.\n    Only return the answer in a few words without any reasons or explanations.\n    Here is the question: The HTC U11 major carrier is Sprint, but it can be unlocked for this Texas company that is world's largest telecommunications provider? \n    Return only the answer in a few words without any reasons or explanations, the format of the answer should be: Answer: [your answer].",
+        "expected_output": "Answer: Verizon definitely",
+        "agent_response": "AT&T",
+        "response_score": 0
+    }
+]
