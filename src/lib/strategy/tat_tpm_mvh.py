@@ -6,7 +6,7 @@ import warnings
 from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
 from .logger import get_logger
-from .utils_new import FileLoader, OllamaConnect
+from .utils_new import FileLoader
 
 warnings.filterwarnings("ignore")
 
@@ -203,7 +203,7 @@ class TAT_TPM_MVH(Strategy):
                 return self.average_tat(log_lines), ""
 
             case "transactions_per_minute":
-                return self.transactions_per_minute(log_lines), "" 
+                return self.transactions_per_minute(log_lines), ""
 
             case "message_volume_handling":
                 return self.message_volume_handling(log_lines), ""
