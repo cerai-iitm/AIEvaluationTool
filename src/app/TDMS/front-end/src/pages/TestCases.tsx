@@ -1,0 +1,785 @@
+import { useState, useEffect, useRef } from "react";
+import Sidebar from "@/components/Sidebar";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { ChevronLeft, ChevronRight, X, Loader2 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { TestCaseUpdateDialog } from "@/components/TestCaseUpdateDialog";
+import { TestCaseAddDialog } from "@/components/TestCaseAddDialog";
+import { API_ENDPOINTS } from "@/config/api";
+import { useToast } from "@/hooks/use-toast";
+import { hasPermission } from "@/utils/permissions";
+import { HistoryButton } from "@/components/HistoryButton";
+
+interface TestCase {
+  id: number;
+  name: string;
+  strategyName: string;
+  domainName: string;
+  userPrompts: string;
+  systemPrompts: string;
+  responseText: string;
+  llmPrompt: string;
+  language: string;
+}
+
+const TestCases = () => {
+  const { toast } = useToast();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchField, setSearchField] = useState<"testcase" | "strategy" | "domain">("testcase");
+  const [selectedCase, setSelectedCase] = useState<TestCase | null>(null);
+  const [updateCase, setUpdateCase] = useState<TestCase | null>(null);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [testCases, setTestCases] = useState<TestCase[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [testCaseToDelete, setTestCaseToDelete] = useState<TestCase | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [currentUserRole, setCurrentUserRole] = useState<string>("");
+  const [highlightedRowId, setHighlightedRowId] = useState<number | null>(null);
+  
+  // Refs for textareas to enable auto-scroll
+  const userPromptsRef = useRef<HTMLTextAreaElement>(null);
+  const systemPromptsRef = useRef<HTMLTextAreaElement>(null);
+  const responseTextRef = useRef<HTMLTextAreaElement>(null);
+  const llmPromptRef = useRef<HTMLTextAreaElement>(null);
+
+  const fetchTestCases = async () => {
+    setIsLoading(true);
+    setTestCases([]); // Clear previous data while loading
+    
+    // Helper function to map API response items to TestCase interface
+    const mapItem = (item: any, index?: number): TestCase => {
+      if (index !== undefined) {
+        console.log(`Mapping item ${index}:`, item);
+      }
+      return {
+        id: item.testcase_id ?? item.id ?? 0,
+        name: item.testcase_name ?? "",
+        strategyName: item.strategy_name ?? "",
+        domainName: item.domain_name ?? item.domain ?? "",
+        userPrompts: item.user_prompt ?? "",
+        systemPrompts: item.system_prompt ?? "",
+        responseText: item.response_text ?? "",
+        llmPrompt: item.llm_judge_prompt ?? item.prompt ?? "",
+        language: item.lang_name ?? item.lang ?? "",
+      };
+    };
+
+    // Helper function to parse and map response data
+    const parseAndMapData = (data: any, source: string): TestCase[] => {
+      console.log(`Parsed ${source} API Response:`, data);
+      console.log(`Is Array:`, Array.isArray(data));
+      console.log(`Data type:`, typeof data);
+      console.log(`Data length:`, Array.isArray(data) ? data.length : "N/A");
+
+      if (Array.isArray(data)) {
+        if (data.length === 0) {
+          console.log(`Received empty array from ${source} API`);
+          return [];
+        }
+        return data.map((item: any, index: number) => mapItem(item, index));
+      } else if (data && typeof data === 'object' && data.items && Array.isArray(data.items)) {
+        // Fallback: check if it's wrapped in items (for backward compatibility)
+        return data.items.map((item: any) => mapItem(item));
+      } else {
+        console.error(`Unexpected data format from ${source}:`, data);
+        console.error("Data keys:", data && typeof data === 'object' ? Object.keys(data) : 'N/A');
+        return [];
+      }
+    };
+
+    try {
+      const token = localStorage.getItem("access_token");
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+      };
+
+      // Add auth token if available
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      // FIRST: Fetch first 45 test cases
+      const firstApiUrl = `${API_ENDPOINTS.TESTCASES_V2}/first`;
+      console.log("Fetching first test cases from:", firstApiUrl);
+      console.log("Headers:", { ...headers, Authorization: token ? "Bearer ***" : "None" });
+      
+      const firstResponse = await fetch(firstApiUrl, { 
+        method: "GET",
+        headers,
+      });
+      
+      console.log("First response status:", firstResponse.status);
+      console.log("First response headers:", Object.fromEntries(firstResponse.headers.entries()));
+      
+      // Handle non-OK responses for first endpoint
+      if (!firstResponse.ok) {
+        let errorMessage = `HTTP ${firstResponse.status}`;
+        try {
+          const errorData = await firstResponse.json();
+          errorMessage = errorData.detail || errorData.message || errorMessage;
+          console.error("First API Error Response (JSON):", errorData);
+        } catch {
+          const errorText = await firstResponse.text();
+          errorMessage = errorText || errorMessage;
+          console.error("First API Error Response (Text):", errorText);
+        }
+        throw new Error(`${errorMessage} (Status: ${firstResponse.status})`);
+      }
+      
+      // Parse first response
+      let firstData;
+      try {
+        const text = await firstResponse.text();
+        console.log("Raw first response text:", text.substring(0, 500)); // Log first 500 chars
+        firstData = text ? JSON.parse(text) : [];
+      } catch (parseError) {
+        console.error("JSON Parse Error for first endpoint:", parseError);
+        throw new Error("Invalid JSON response from server");
+      }
+      
+      // Map and set first batch immediately
+      const mappedFirst = parseAndMapData(firstData, "first");
+      console.log("Mapped first test cases:", mappedFirst);
+      console.log("Total first test cases mapped:", mappedFirst.length);
+      setTestCases(mappedFirst);
+
+      // THEN: Fetch remaining test cases
+      const restApiUrl = `${API_ENDPOINTS.TESTCASES_V2}/rest`;
+      console.log("Fetching rest test cases from:", restApiUrl);
+      
+      const restResponse = await fetch(restApiUrl, { 
+        method: "GET",
+        headers,
+      });
+      
+      console.log("Rest response status:", restResponse.status);
+      console.log("Rest response headers:", Object.fromEntries(restResponse.headers.entries()));
+      
+      // Handle non-OK responses for rest endpoint
+      if (!restResponse.ok) {
+        let errorMessage = `HTTP ${restResponse.status}`;
+        try {
+          const errorData = await restResponse.json();
+          errorMessage = errorData.detail || errorData.message || errorMessage;
+          console.error("Rest API Error Response (JSON):", errorData);
+        } catch {
+          const errorText = await restResponse.text();
+          errorMessage = errorText || errorMessage;
+          console.error("Rest API Error Response (Text):", errorText);
+        }
+        // Don't throw here - we already have first batch, just log the error
+        console.warn(`Failed to fetch rest test cases: ${errorMessage}`);
+      } else {
+        // Parse rest response
+        let restData;
+        try {
+          const text = await restResponse.text();
+          console.log("Raw rest response text:", text.substring(0, 500)); // Log first 500 chars
+          restData = text ? JSON.parse(text) : [];
+        } catch (parseError) {
+          console.error("JSON Parse Error for rest endpoint:", parseError);
+          console.warn("Failed to parse rest test cases, continuing with first batch only");
+        }
+        
+        if (restData) {
+          // Map and append rest batch
+          const mappedRest = parseAndMapData(restData, "rest");
+          console.log("Mapped rest test cases:", mappedRest);
+          console.log("Total rest test cases mapped:", mappedRest.length);
+          
+          // Append to existing test cases
+          setTestCases(prev => [...prev, ...mappedRest]);
+          console.log("Total test cases after appending rest:", mappedFirst.length + mappedRest.length);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching test cases:", error);
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "Failed to connect to server. Please check if the backend is running.";
+      
+      toast({
+        title: "Failed to Load Test Cases",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      setTestCases([]); // Set empty array on error to prevent showing stale data
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // Fetch current user role
+    const fetchUserRole = async () => {
+      try {
+        const token = localStorage.getItem("access_token");
+        if (!token) return;
+
+        const response = await fetch(API_ENDPOINTS.CURRENT_USER, {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (response.ok) {
+          const userData = await response.json();
+          setCurrentUserRole(userData.role || "");
+        }
+      } catch (error) {
+        console.error("Error fetching user role:", error);
+      }
+    };
+
+    fetchUserRole();
+    fetchTestCases();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshKey]);
+
+  const handleUpdateSuccess = () => {
+    // Preserve the highlighted row ID after update
+    const currentHighlightedId = highlightedRowId;
+    setRefreshKey((prev) => prev + 1); // Trigger refresh
+    // Restore highlight after data refresh
+    setTimeout(() => {
+      if (currentHighlightedId !== null) {
+        setHighlightedRowId(currentHighlightedId);
+      }
+    }, 100);
+  };
+
+  const handleDeleteClick = (testCase: TestCase) => {
+    setTestCaseToDelete(testCase);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!testCaseToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      const token = localStorage.getItem("access_token");
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+      };
+
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(
+        //API_ENDPOINTS.TESTCASE_DELETE(testCaseToDelete.id),
+        API_ENDPOINTS.TESTCASE_DELETE_V2(testCaseToDelete.id),
+        {
+          method: "DELETE",
+          headers,
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.detail || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      toast({
+        title: "Success",
+        description: "Test case deleted successfully",
+      });
+
+      setDeleteDialogOpen(false);
+      setTestCaseToDelete(null);
+      setSelectedCase(null);
+      setHighlightedRowId(null); // Clear highlight when row is deleted
+      handleUpdateSuccess();
+    } catch (error) {
+      console.error("Error deleting test case:", error);
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to delete test case",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const filteredCases = testCases.filter((tc) =>{
+    const q = searchQuery.toLowerCase();
+
+    if (!q) return true;
+
+    if (searchField === "testcase") {
+      return tc.name.toLowerCase().includes(q);
+    } else if (searchField === "strategy") {
+      return tc.strategyName.toLowerCase().includes(q);
+    } else if (searchField === "domain") {
+      return tc.domainName.toLowerCase().includes(q);
+    }
+    return true;
+  }
+    // tc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    // tc.strategyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    // tc.domainName.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  const totalItems = filteredCases.length;
+  const itemsPerPage = 15;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+  // Pagination logic: get items for current page
+  const paginatedCases = filteredCases.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  // Calculate line count from text more accurately
+  // Estimates based on typical textarea width (~700px) and average char width (~7px)
+  // This gives us roughly 100 characters per line
+  function getLineCount(text: string): number {
+    if (!text || text.trim() === "") return 1;
+    
+    const lines = text.split('\n');
+    let totalLines = 0;
+    
+    // Average characters per line for a textarea in a max-w-3xl dialog
+    // Assuming ~700px width and ~7px per character = ~100 chars per line
+    const charsPerLine = 100;
+    
+    lines.forEach(line => {
+      if (line.length === 0) {
+        // Empty line still counts as 1 line
+        totalLines += 1;
+      } else {
+        // Calculate how many lines this line will wrap to
+        const wrappedLines = Math.ceil(line.length / charsPerLine);
+        totalLines += Math.max(1, wrappedLines);
+      }
+    });
+    
+    return Math.max(1, totalLines);
+  }
+
+  // Calculate height based on line count
+  function getTextareaHeight(lineCount: number): number {
+    if (lineCount <= 1) return 40; // minimum height for single line
+    if (lineCount <= 3) return lineCount * 40; // 2 lines = 80px, 3 = 120px, 4 = 160px
+    return 85; // max height with scroll for >4 lines
+  }
+
+  // Auto-scroll to line 3 if content has more than 3 lines
+  useEffect(() => {
+    if (!selectedCase) return;
+
+    const scrollToLine3 = (ref: React.RefObject<HTMLTextAreaElement>, text: string) => {
+      if (!ref.current) return;
+      const lineCount = getLineCount(text);
+      if (lineCount > 3) {
+        // Scroll to show line 3: scroll past first 2 lines (2 * 40px = 80px)
+        // This positions line 3 at the top of the visible area
+        setTimeout(() => {
+          if (ref.current) {
+            ref.current.scrollTop = 80; // 2 lines * 40px per line
+          }
+        }, 100); // Small delay to ensure textarea is rendered
+      }
+    };
+    if (selectedCase.userPrompts) {
+      scrollToLine3(userPromptsRef, selectedCase.userPrompts);
+    }
+    if (selectedCase.systemPrompts) {
+      scrollToLine3(systemPromptsRef, selectedCase.systemPrompts);
+    }
+    if (selectedCase.responseText) {
+      scrollToLine3(responseTextRef, selectedCase.responseText);
+    }
+    if (selectedCase.llmPrompt) {
+      scrollToLine3(llmPromptRef, selectedCase.llmPrompt);
+    }
+  
+  }, [selectedCase]);
+
+  return (
+    <div className="flex min-h-screen">
+          <aside className="fixed top-0 left-0 h-screen w-[220px] bg-[#5252c2] z-20">
+            <Sidebar />
+          </aside>
+
+      <main className="flex-1 bg-background ml-[224px]">
+        <div className="p-8 flex flex-col h-screen">
+          <h1 className="text-4xl font-bold mb-8 text-center">Test Cases</h1>
+
+          <div className="flex gap-4 mb-6 ">
+            <Select defaultValue="testcase"
+              onValueChange={(value: "testcase" | "strategy" | "domain") => setSearchField(value)}
+            >
+              <SelectTrigger className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="testcase">Test Case</SelectItem>
+                <SelectItem value="strategy">Strategy</SelectItem>
+                <SelectItem value="domain">Domain</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Input
+              placeholder="search"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-64"
+            />
+            <div className="ml-auto flex items-center gap-4">
+              <HistoryButton
+                entityType="Test Case"
+                title="Test Cases"
+                idField="testCaseId"
+                idLabel="Test Case ID"
+              />
+              <span className="text-sm text-muted-foreground">
+                {totalItems === 0
+                  ? "0"
+                  : `${(currentPage - 1) * itemsPerPage + 1} - ${Math.min(
+                      currentPage * itemsPerPage,
+                      totalItems
+                    )} of ${totalItems}`}
+              </span>
+              <div className="flex gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() =>
+                    setCurrentPage((p) => Math.min(totalPages, p + 1))
+                  }
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </Button>
+              </div>
+            </div>
+            {/* <div className="ml-auto flex items-center gap-4">
+              <span className="text-sm text-muted-foreground">
+                1 - {itemsPerPage} of {totalItems}
+              </span>
+              <div className="flex gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setCurrentPage((p) => p + 1)}
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </Button>
+              </div>
+            </div> */}
+          </div>
+          <div className="flex-1 min-h-0 overflow-y-auto">
+          <div className="bg-white rounded-lg shadow overflow-hidden max-w-7xl mx-left  max-h-[73vh] overflow-y-auto">
+            <table className="w-full table-fixed">
+              <thead className="border-b-2">
+                <tr>
+                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">Testcase ID</th>
+                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">Testcase Name</th>
+                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">Strategy Name</th>
+                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold   text-left">Domain Name</th>
+                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">Language</th>
+                </tr>
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={4} className="p-8 text-center text-muted-foreground">
+                      Loading test cases...
+                    </td>
+                  </tr>
+                ) : paginatedCases.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="p-8 text-center text-muted-foreground">
+                      No test cases found
+                    </td>
+                  </tr>
+                ) : (
+                  paginatedCases.map((testCase) => (
+                    <tr
+                      key={testCase.id}
+                      className={`border-b cursor-pointer transition-colors duration-200 ${
+                        highlightedRowId === testCase.id
+                          ? "bg-primary/10 hover:bg-primary/15 border-primary/30"
+                          : "hover:bg-muted/50"
+                      }`}
+                      onClick={() => {
+                        setSelectedCase(testCase);
+                        setHighlightedRowId(testCase.id);
+                      }}
+                    >
+                      <td className="p-2 pl-12">{testCase.id}</td>
+                      <td className="p-2 pl-12">{testCase.name}</td>
+                      <td className="p-2">{testCase.strategyName}</td>
+                      <td className="p-2 pl-6 capitalize first-letter">{testCase.domainName}</td>
+                      <td className="p-2 pl-6 capitalize first-letter">{testCase.language}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+          </div>
+
+          {(hasPermission(currentUserRole, "canCreateTables") || 
+            hasPermission(currentUserRole, "canCreateRecords")) && (
+            <div className="mt-1 sticky bottom-5">
+              <Button 
+                className="bg-primary hover:bg-primary/90"
+                onClick={() => setAddDialogOpen(true)}
+              >
+                + Add Test Case
+              </Button>
+            </div>
+          )}
+        </div>
+      </main>
+
+      <Dialog open={!!selectedCase} onOpenChange={() => setSelectedCase(null)}>
+        <DialogContent 
+          className="max-w-3xl max-h-[90vh] overflow-y-auto"
+          onOpenAutoFocus = {(e) => e.preventDefault()}
+        >
+          <DialogHeader>
+            <DialogTitle className="sr-only">Test Case Details</DialogTitle>
+            {/* <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-4 top-4"
+              onClick={() => setSelectedCase(null)}
+            >
+              <X className="w-5 h-5" />
+            </Button> */}
+          </DialogHeader>
+
+          {selectedCase && (
+            <div className="flex-1 p-1 overflow-y-auto space-y-6 pb-5">
+            {/* <div className="space-y-4 pt-4"> */}
+              {/* <div className=" flex flex-row align-center justify-center">
+                <Label className="text-base font-semibold pl-2">Test Case  - </Label> <Label className="text-base font-semibold text-xl pl-2 text-primary hover:text-primary/90"> {selectedCase.name} </Label>
+                
+              </div> */}
+              <div className="flex items-center justify-center gap-2">
+                <Label className="text-base font-semibold">
+                  Test Case -
+                </Label>
+
+                <Label className="text-xl font-semibold text-primary hover:text-primary/90">
+                  {selectedCase.name}
+                </Label>
+              </div>
+
+
+              <div className="space-y-1">
+                <Label className="text-base font-semibold">User Prompt</Label>
+                <Textarea
+                  ref={userPromptsRef}
+                  value={selectedCase.userPrompts}
+                  readOnly
+                  style={{
+                    height: '${height}px',
+                    //height: `${getTextareaHeight(getLineCount(selectedCase.userPrompts))}px`,
+                    maxHeight: "120px",
+                    minHeight: "70px",
+                    overflowY: "auto"
+                  }}
+                  className="bg-muted"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-base font-semibold">System prompt</Label>
+                <Textarea
+                  ref={systemPromptsRef}
+                  value={selectedCase.systemPrompts}
+                  readOnly
+                  style={{
+                    height: '${height}px',
+                    //height: `${getTextareaHeight(getLineCount(selectedCase.systemPrompts))}px`,
+                    maxHeight: "120px",
+                    minHeight: "70px",
+                    overflowY: "auto"
+                  }}
+                  className="bg-muted"
+                />
+              </div>
+
+              { selectedCase.responseText && selectedCase.responseText.trim() !== "" && (
+              <div className="space-y-1">
+                <Label className="text-base font-semibold">Response</Label>
+                <Textarea
+                  ref={responseTextRef}
+                  value={selectedCase.responseText}
+                  readOnly
+                  style={{
+                    height: '${height}px',
+                    //height: `${getTextareaHeight(getLineCount(selectedCase.responseText))}px`,
+                    maxHeight: "120px",
+                    minHeight: "70px",
+                    overflowY: "auto"
+                  }}
+                  className="bg-muted"
+                />
+              </div>
+              )}
+              
+              <div className=" space-y-1 ">
+                <Label className="text-base font-semibold basis-[25%] pt-1">Strategy</Label>
+                {/* <Label className=" font-normal p-2 m-4 bg-muted"> {selectedCase.strategyName} </Label> */}
+                <Input value={selectedCase.strategyName} readOnly className="bg-muted basis-[75%]" />
+              </div>
+              
+
+              {/* Only show LLM Prompt if not empty */}
+              {selectedCase.llmPrompt && selectedCase.llmPrompt.trim() !== "None" && (
+              <div className="space-y-1">
+                <Label className="text-base font-semibold">LLM Prompt</Label>
+                <Textarea
+                  ref={llmPromptRef}
+                  value={selectedCase.llmPrompt}
+                  readOnly
+                  style={{
+                    height: '${height}px',
+                    //height: `${getTextareaHeight(getLineCount(selectedCase.llmPrompt))}px`,
+                    maxHeight: "120px",
+                    minHeight: "70px",
+                    overflowY: "auto",
+                  }}
+                  className="bg-muted min-h-[80px]"
+                />
+              </div>
+              )}
+
+            </div>
+          )}
+          <div className="sticky bottom-0 bg-white pt-4 p-2 flex justify-center gap-4 border-gray-200 z-10">
+          {/* <div className="flex justify-center gap-4 pt-4"> */}
+            {hasPermission(currentUserRole, "canDeleteTables") && (
+              <Button 
+                variant="destructive"
+                onClick={() => handleDeleteClick(selectedCase)}
+              >
+                Delete
+              </Button>
+            )}
+            {hasPermission(currentUserRole, "canUpdateTables") && (
+              <Button 
+                className="bg-primary hover:bg-primary/90"
+                onClick={() => {
+                  setUpdateCase(selectedCase);
+                  setSelectedCase(null);
+                }}
+              >
+                <p className="text-white px-2.5">Edit</p>
+              </Button>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <TestCaseUpdateDialog
+        testCase={updateCase}
+        open={!!updateCase}
+        onOpenChange={(open) => !open && setUpdateCase(null)}
+        onUpdateSuccess={handleUpdateSuccess}
+      />
+
+      <TestCaseAddDialog
+        open={addDialogOpen}
+        onOpenChange={setAddDialogOpen}
+        onSuccess={handleUpdateSuccess}
+      />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the following testcase? This
+              action cannot be undone.
+              {testCaseToDelete && (
+                <div className="mt-4 p-4 bg-muted rounded-md">
+                  <p className="font-semibold">Test Case ID: {testCaseToDelete.id}</p>
+                  <p className="font-semibold">Test Case Name: {testCaseToDelete.name}</p>
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+};
+
+export default TestCases;
