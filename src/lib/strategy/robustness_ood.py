@@ -3,9 +3,6 @@ import os
 from sentence_transformers import SentenceTransformer, CrossEncoder
 import numpy as np
 import re
-from sentence_transformers import SentenceTransformer, CrossEncoder
-import numpy as np
-import re
 from sklearn.metrics.pairwise import cosine_similarity
 from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
