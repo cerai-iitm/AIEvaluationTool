@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine, select
-from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.orm import sessionmaker, scoped_session, joinedload
 from sqlalchemy.exc import IntegrityError
 from typing import List, Optional, Union
 from  sqlalchemy.sql.expression import func
@@ -2400,7 +2400,16 @@ class DB:
                 domain.domain_name = updates["domain_name"]
             session.commit()
             session.refresh(domain)
-            return self._serialize_domain(domain)
+            
+            # No need for joinedload on a column property
+            domain_updated = (
+                session.query(Domains)
+                    .options(joinedload(Domains.domain_name))
+                    .filter(Domains.domain_id == domain_id)
+                    .first()
+            )
+            
+            return domain_updated
 
     def delete_domain_record(self, domain_id: int) -> bool:
         with self.Session() as session:
@@ -2453,7 +2462,16 @@ class DB:
                 language.lang_name = updates["lang_name"]
             session.commit()
             session.refresh(language)
-            return self._serialize_language(language)
+            
+            # No need for joinedload on a column property
+            language_updated = (
+                session.query(Languages)
+                    .filter(Languages.lang_id == lang_id)
+                    .first()
+            )
+            
+            
+            return language_updated
 
     def delete_language_record(self, lang_id: int) -> bool:
         with self.Session() as session:

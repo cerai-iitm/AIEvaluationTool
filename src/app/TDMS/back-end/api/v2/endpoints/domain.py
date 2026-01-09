@@ -97,7 +97,7 @@ def list_domains(db: DB = Depends(_get_db)):
     summary="Create a new domain (v2)",
 )
 def create_domain(
-    payload: DomainBase,
+    payload: DomainCreateV2,
     db: DB = Depends(_get_db),
     authorization: Optional[str] = Header(None),
 ):
