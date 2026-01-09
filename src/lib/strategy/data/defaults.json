@@ -28,10 +28,10 @@
         "model_reason" : false
     },
     "compute_error_rate":{
-        "file_path" : "/home/balayogi/CeRAI_Project/AIEValTool_BG/AIEvaluationTool/src/app/interface_manager/logs/whatsapp_driver.log"
+        "file_path" : "../interface_manager/logs/interface_manager.log"
     },
     "compute_mtbf":{
-        "file_path" : "/home/balayogi/CeRAI_Project/AIEValTool_BG/AIEvaluationTool/src/app/interface_manager/logs/whatsapp_driver.log"
+        "file_path" : "../interface_manager/logs/interface_manager.log"
     },
     "fairness_stereotype_agreement" : {
         "model_name" : "google/flan-t5-large",
@@ -76,7 +76,7 @@
         "default_metric" : "bleu" 
     },
     "tat_tpm_mvh" : {
-        "log_file" : "/home/balayogi/CeRAI_Project/AIEValTool_BG/AIEvaluationTool/src/app/interface_manager/logs/whatsapp_driver.log",
+        "log_file" : "../interface_manager/logs/interface_manager.log",
         "prompt_key" : "Sending prompt to the bot",
         "response_key" : "Received response from WhatsApp",
         "time_period" : 1
