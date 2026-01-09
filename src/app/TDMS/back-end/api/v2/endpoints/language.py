@@ -221,12 +221,12 @@ def create_language(
 
             
             # Get the created language
-            created = db.get_language_with_metadata(lang_id)
-            if created is None:
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="Language created but could not be loaded.",
-                )
+            # created = db.get_language_with_metadata(lang_id)
+            # if created is None:
+            #     raise HTTPException(
+            #         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            #         detail="Language created but could not be loaded.",
+            #     )
 
             # Log the activity
             username = _get_username_from_token(authorization)
@@ -242,8 +242,8 @@ def create_language(
 
             # Return the created language in the expected format
             return LanguageDetailResponse(
-                lang_id=created["lang_id"],
-                lang_name=created["lang_name"]
+                lang_id=lang_obj.lang_id,
+                lang_name=lang_obj.lang_name
             )
             
         except IntegrityError:
@@ -302,8 +302,8 @@ def update_language_v2(
         )
 
     return LanguageDetailResponse(
-        lang_id=updated["lang_id"],
-        lang_name=updated["lang_name"],
+        lang_id=updated.lang_id,
+        lang_name=updated.lang_name,
     )
 
 

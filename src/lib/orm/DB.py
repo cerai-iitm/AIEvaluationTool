@@ -2401,15 +2401,11 @@ class DB:
             session.commit()
             session.refresh(domain)
             
-            # No need for joinedload on a column property
-            domain_updated = (
-                session.query(Domains)
-                    .options(joinedload(Domains.domain_name))
-                    .filter(Domains.domain_id == domain_id)
-                    .first()
-            )
-            
-            return domain_updated
+            # Return the updated domain as a dict (domain_name is a column, not a relationship)
+            return {
+                "domain_id": domain.domain_id,
+                "domain_name": domain.domain_name
+            }
 
     def delete_domain_record(self, domain_id: int) -> bool:
         with self.Session() as session:
