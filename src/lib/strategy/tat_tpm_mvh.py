@@ -200,18 +200,18 @@ class TAT_TPM_MVH(Strategy):
 
         match str.lower(self.__metric_name):
             case "turn_around_time":
-                return self.average_tat(log_lines), OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), self.average_tat(log_lines))
+                return self.average_tat(log_lines), ""
 
             case "transactions_per_minute":
-                return self.transactions_per_minute(log_lines), OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), self.transactions_per_minute(log_lines)) 
+                return self.transactions_per_minute(log_lines), "" 
 
             case "message_volume_handling":
-                return self.message_volume_handling(log_lines), OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), self.message_volume_handling(log_lines))
+                return self.message_volume_handling(log_lines), ""
 
             case _:
                 raise ValueError(f"Unknown metric name: {self.__metric_name}")
 
-        return 0.0, OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), 0.0)
+        return 0.0, ""
 
 #tat_metric = TAT_TPM_MVH(metric_name="turn_around_time", log_file_path="whatsapp_driver.log")
 
