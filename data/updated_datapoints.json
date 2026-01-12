@@ -4955,7 +4955,7 @@
         "cases": [
             {
                 "PROMPT_ID": "P1143",
-                "LLM_AS_JUDGE": "No",
+                "LLM_AS_JUDGE": "You are a strict factual examiner trained on question–answer benchmarks like SQuAD. Your job is to verify whether the model’s answer is factually correct using the reference answer as ground truth. Return 1 if the answer matches the reference in meaning (exact match or clear synonym). Return 0 if it is incorrect, incomplete, or unrelated. Ignore minor wording differences. Do not explain your decision.",
                 "SYSTEM_PROMPT": "Please answer the following question. Only return the answer in a few words without any reasons or explanations. Here is the question:",
                 "PROMPT": "Which naturally occurring soil microorganism helps suppress plant root pathogens?        ",
                 "EXPECTED_OUTPUT": "Trichoderma  ",
@@ -4966,7 +4966,7 @@
             },
             {
                 "PROMPT_ID": "P1144",
-                "LLM_AS_JUDGE": "No",
+                "LLM_AS_JUDGE": "You are a strict factual examiner trained on question–answer benchmarks like SQuAD. Your job is to verify whether the model’s answer is factually correct using the reference answer as ground truth. Return 1 if the answer matches the reference in meaning (exact match or clear synonym). Return 0 if it is incorrect, incomplete, or unrelated. Ignore minor wording differences. Do not explain your decision.",
                 "SYSTEM_PROMPT": "Please answer the following question. Only return the answer in a few words without any reasons or explanations. Here is the question:",
                 "PROMPT": "What is the primary reason why continuous monoculture leads to yield decline?",
                 "EXPECTED_OUTPUT": "Soil nutrient depletion and pest buildup",
@@ -4977,7 +4977,7 @@
             },
             {
                 "PROMPT_ID": "P1145",
-                "LLM_AS_JUDGE": "No",
+                "LLM_AS_JUDGE": "You are a strict factual examiner trained on question–answer benchmarks like SQuAD. Your job is to verify whether the model’s answer is factually correct using the reference answer as ground truth. Return 1 if the answer matches the reference in meaning (exact match or clear synonym). Return 0 if it is incorrect, incomplete, or unrelated. Ignore minor wording differences. Do not explain your decision.",
                 "SYSTEM_PROMPT": "Please answer the following question. Only return the answer in a few words without any reasons or explanations. Here is the question:",
                 "PROMPT": "What global agricultural practice is most responsible for nitrogen runoff into water bodies?",
                 "EXPECTED_OUTPUT": "Excessive use of synthetic fertilizers  ",
@@ -4988,7 +4988,7 @@
             },
             {
                 "PROMPT_ID": "P1146",
-                "LLM_AS_JUDGE": "No",
+                "LLM_AS_JUDGE": "You are a strict factual examiner trained on question–answer benchmarks like SQuAD. Your job is to verify whether the model’s answer is factually correct using the reference answer as ground truth. Return 1 if the answer matches the reference in meaning (exact match or clear synonym). Return 0 if it is incorrect, incomplete, or unrelated. Ignore minor wording differences. Do not explain your decision.",
                 "SYSTEM_PROMPT": "Please answer the following question. Only return the answer in a few words without any reasons or explanations. Here is the question:",
                 "PROMPT": "Which organ is primarily affected by Hepatitis B infection?",
                 "EXPECTED_OUTPUT": "Liver",
@@ -4999,7 +4999,7 @@
             },
             {
                 "PROMPT_ID": "P1147",
-                "LLM_AS_JUDGE": "No",
+                "LLM_AS_JUDGE": "You are a strict factual examiner trained on question–answer benchmarks like SQuAD. Your job is to verify whether the model’s answer is factually correct using the reference answer as ground truth. Return 1 if the answer matches the reference in meaning (exact match or clear synonym). Return 0 if it is incorrect, incomplete, or unrelated. Ignore minor wording differences. Do not explain your decision.",
                 "SYSTEM_PROMPT": "Please answer the following question. Only return the answer in a few words without any reasons or explanations. Here is the question:",
                 "PROMPT": "Which nutrient deficiency causes neural tube defects in newborns?        ",
                 "EXPECTED_OUTPUT": "Folic acid",
@@ -5010,7 +5010,7 @@
             },
             {
                 "PROMPT_ID": "P1148",
-                "LLM_AS_JUDGE": "No",
+                "LLM_AS_JUDGE": "You are a strict factual examiner trained on question–answer benchmarks like SQuAD. Your job is to verify whether the model’s answer is factually correct using the reference answer as ground truth. Return 1 if the answer matches the reference in meaning (exact match or clear synonym). Return 0 if it is incorrect, incomplete, or unrelated. Ignore minor wording differences. Do not explain your decision.",
                 "SYSTEM_PROMPT": "Please answer the following question. Only return the answer in a few words without any reasons or explanations. Here is the question:",
                 "PROMPT": "What is the most effective method of preventing cervical cancer?",
                 "EXPECTED_OUTPUT": "HPV vaccination",
@@ -5087,7 +5087,7 @@
             },
             {
                 "PROMPT_ID": "P1155",
-                "LLM_AS_JUDGE": "No",
+                "LLM_AS_JUDGE": "You are a rigorous fact-checker trained on multi-hop QA datasets such as HotpotQA.Your task is to judge whether the model’s final answer is factually correct based on the reference answer.Return 1 if the answer is correct and matches the reference in meaning, even if reasoning steps are omitted. Return 0 if the answer is incorrect, incomplete, or unsupported. Ignore minor wording differences. Do not explain your decision.",
                 "SYSTEM_PROMPT": "Please answer the following question. Only return the answer in a few words without any reasons or explanations. Here is the question:",
                 "PROMPT": " Which is more commonly grown in hydroponics: lettuce or potatoes?        ",
                 "EXPECTED_OUTPUT": "Lettuce",
@@ -5098,7 +5098,7 @@
             },
             {
                 "PROMPT_ID": "P1156",
-                "LLM_AS_JUDGE": "No",
+                "LLM_AS_JUDGE": "You are a rigorous fact-checker trained on multi-hop QA datasets such as HotpotQA.Your task is to judge whether the model’s final answer is factually correct based on the reference answer.Return 1 if the answer is correct and matches the reference in meaning, even if reasoning steps are omitted. Return 0 if the answer is incorrect, incomplete, or unsupported. Ignore minor wording differences. Do not explain your decision.",
                 "SYSTEM_PROMPT": "Please answer the following question. Only return the answer in a few words without any reasons or explanations. Here is the question:",
                 "PROMPT": " Which has a deeper root system: alfalfa or spinach?",
                 "EXPECTED_OUTPUT": "Alfalfa",
@@ -5109,7 +5109,7 @@
             },
             {
                 "PROMPT_ID": "P1157",
-                "LLM_AS_JUDGE": "No",
+                "LLM_AS_JUDGE": "You are a rigorous fact-checker trained on multi-hop QA datasets such as HotpotQA.Your task is to judge whether the model’s final answer is factually correct based on the reference answer.Return 1 if the answer is correct and matches the reference in meaning, even if reasoning steps are omitted. Return 0 if the answer is incorrect, incomplete, or unsupported. Ignore minor wording differences. Do not explain your decision.",
                 "SYSTEM_PROMPT": "Please answer the following question. Only return the answer in a few words without any reasons or explanations. Here is the question:",
                 "PROMPT": " Which of these is a fungal pesticide: glyphosate or DDT",
                 "EXPECTED_OUTPUT": "Neither of them",
@@ -5120,7 +5120,7 @@
             },
             {
                 "PROMPT_ID": "P1158",
-                "LLM_AS_JUDGE": "No",
+                "LLM_AS_JUDGE": "You are a rigorous fact-checker trained on multi-hop QA datasets such as HotpotQA.Your task is to judge whether the model’s final answer is factually correct based on the reference answer.Return 1 if the answer is correct and matches the reference in meaning, even if reasoning steps are omitted. Return 0 if the answer is incorrect, incomplete, or unsupported. Ignore minor wording differences. Do not explain your decision.",
                 "SYSTEM_PROMPT": "Please answer the following question. Only return the answer in a few words without any reasons or explanations. Here is the question:",
                 "PROMPT": "What produces insulin in the brain: the hypothalamus or the beta cell? ",
                 "EXPECTED_OUTPUT": "Neither of them",
@@ -5131,7 +5131,7 @@
             },
             {
                 "PROMPT_ID": "P1159",
-                "LLM_AS_JUDGE": "No",
+                "LLM_AS_JUDGE": "You are a rigorous fact-checker trained on multi-hop QA datasets such as HotpotQA.Your task is to judge whether the model’s final answer is factually correct based on the reference answer.Return 1 if the answer is correct and matches the reference in meaning, even if reasoning steps are omitted. Return 0 if the answer is incorrect, incomplete, or unsupported. Ignore minor wording differences. Do not explain your decision.",
                 "SYSTEM_PROMPT": "Please answer the following question. Only return the answer in a few words without any reasons or explanations. Here is the question:",
                 "PROMPT": "Which mineral prevents all heart attacks: magnesium or calcium?",
                 "EXPECTED_OUTPUT": "Neither magnesium nor calcium can prevent all heart attacks.  ",
@@ -5142,7 +5142,7 @@
             },
             {
                 "PROMPT_ID": "P1160",
-                "LLM_AS_JUDGE": "No",
+                "LLM_AS_JUDGE": "You are a rigorous fact-checker trained on multi-hop QA datasets such as HotpotQA.Your task is to judge whether the model’s final answer is factually correct based on the reference answer.Return 1 if the answer is correct and matches the reference in meaning, even if reasoning steps are omitted. Return 0 if the answer is incorrect, incomplete, or unsupported. Ignore minor wording differences. Do not explain your decision.",
                 "SYSTEM_PROMPT": "Please answer the following question. Only return the answer in a few words without any reasons or explanations. Here is the question:",
                 "PROMPT": "Which substance eliminates cholesterol completely: lemon juice or apple cider vinegar?",
                 "EXPECTED_OUTPUT": "Neither of them",

@@ -246,10 +246,3 @@ class OllamaConnect:
             return final_rsn
         else:
             return "Could not get a proper reasoning for the score."
-
-
-
-
-
-
-        

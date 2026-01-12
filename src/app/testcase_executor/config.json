@@ -1,17 +1,17 @@
 {
-    "database": {
+    "db": {
         "engine":"sqlite",
-        "file": "datapoints.db",
+        "file": "AIEvaluationData.db",
         "host": "localhost",
         "port": 3306,
         "user": "root",
         "password": "jarvis2025",
-        "database": "aieval"
+        "database": "AIEvaluationData"
     },
     "target": {
         "application_type": "WHATSAPP_WEB",
-        "application_name": "August AI",
-        "application_url": "http://localhost:8000",
-        "agent_name": "August AI"
+        "application_name": "Vaidya AI",
+        "application_url": "https://web.whatsapp.com/",
+        "agent_name": "Vaidya AI"
     }
 }

@@ -3,7 +3,7 @@ env/**
 .env
 logs/
 whatsapp_profile/
-
+*.ipynb
 *.log
 *.tsv
 *.csv
@@ -24,9 +24,6 @@ saved_evaluations
 new_fairness_stereotype_recognition.py
 *.pkl
 .strategy_*.json
-
-data/*.db
-*.db
 AI
 *.sqlite3
 chroma_langchain_db/

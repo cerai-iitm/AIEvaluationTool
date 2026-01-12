@@ -78,7 +78,7 @@ def main():
             "database": "db name",
         },
         "target": {
-            "application_type": "WHATSAPP_WEB | WEBAPP",
+            "application_type": "WHATSAPP_WEB | WEBAPP | API",
             "application_name": "Name of the target application",
             "application_url": "http://localhost:8000",  # URL of the target application
             "agent_name": "Name of the AI agent",
@@ -112,8 +112,8 @@ def main():
     # db_url = f"mariadb+mariadbconnector://{config['database']['user']}:{config['database']['password']}@{config['database']['host']}:{config['database']['port']}/{config['database']['database']}"
 
     # setting up the database connection
-    if config["database"]["engine"] == "sqlite":
-        db_file = config["database"].get("file", "app.db")
+    if config["db"]["engine"] == "sqlite":
+        db_file = config["db"].get("file", "app.db")
 
         # Resolve project root (this file → importer → app → src → project_root)
         project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
@@ -132,9 +132,9 @@ def main():
         # Original MariaDB path (fallback)
         db_url = (
             f"mariadb+mariadbconnector://"
-            f"{config['database']['user']}:{config['database']['password']}"
-            f"@{config['database']['host']}:{config['database']['port']}/"
-            f"{config['database']['database']}"
+            f"{config['db']['user']}:{config['db']['password']}"
+            f"@{config['db']['host']}:{config['db']['port']}/"
+            f"{config['db']['database']}"
         )
 
     try:
@@ -421,13 +421,14 @@ def main():
                     db.add_or_update_testrun_detail(rundetail)
 
                     # Initialize the InterfaceManagerClient with the provided configuration
-                    client = InterfaceManagerClient(base_url="http://localhost:8000" ,application_type=application_type)
+                    client = InterfaceManagerClient(base_url="http://localhost:8000" ,application_type=application_type, agent_name=agent_name)
                     client.sync_config({
                         "application_name": application_name,
                         "application_type": application_type,
                         "agent_name": agent_name,
                         "application_url": application_url
                     })
+                    client.apply_server_config()
 
                     try:
                         conv.prompt_ts = datetime.now().isoformat()
@@ -505,13 +506,14 @@ def main():
                 db.add_or_update_testrun(run=run)
 
                 # Initialize the InterfaceManagerClient with the provided configuration
-                client = InterfaceManagerClient(base_url="http://localhost:8000" ,application_type=application_type)
+                client = InterfaceManagerClient(base_url="http://localhost:8000" ,application_type=application_type, agent_name=agent_name)
                 client.sync_config({
                     "application_name": application_name,
                     "application_type": application_type,
                     "agent_name": agent_name,
                     "application_url": application_url
                 })
+                client.apply_server_config()
 
                 # iterate through the test cases and execute
                 for testcase in testcases:
@@ -600,13 +602,14 @@ def main():
                 db.add_or_update_testrun(run=run)
 
                 # Initialize the InterfaceManagerClient with the provided configuration
-                client = InterfaceManagerClient(base_url="http://localhost:8000" ,application_type=application_type)
+                client = InterfaceManagerClient(base_url="http://localhost:8000" ,application_type=application_type, agent_name=agent_name)
                 client.sync_config({
                     "application_name": application_name,
                     "application_type": application_type,
                     "agent_name": agent_name,
                     "application_url": application_url
                 })
+                client.apply_server_config()
 
                 # iterate through the test cases and execute
                 for testcase in testcases:

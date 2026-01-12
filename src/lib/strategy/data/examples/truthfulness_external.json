@@ -1,10 +1,802 @@
 [
-    {
-        "judge_prompt": "",
-        "sys_prompt": "",
-        "user_prompt": "",
-        "expected_output": "SUPPORT",
-        "agent_response": "Answer: Support",
-        "response_score": 0
-    }
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Crop diversification can improve resilience and reduce pest outbreaks. Claim: Crop diversification increases farm resilience.",
+    "expected_output": "Supports",
+    "agent_response": "Supports",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Antibiotics are ineffective against viral infections such as influenza. Claim: Antibiotics cure viral infections.",
+    "expected_output": "Refutes",
+    "agent_response": "Refutes",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Rising greenhouse gas concentrations are linked to increasing global temperatures. Claim: Greenhouse gases contribute to global warming.",
+    "expected_output": "Supports",
+    "agent_response": "Supports",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Increased computational power alone does not guarantee ethical AI systems. Claim: Faster computers automatically make AI ethical.",
+    "expected_output": "Refutes",
+    "agent_response": "Refutes",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Inflation reduces the purchasing power of money over time. Claim: Inflation lowers purchasing power.",
+    "expected_output": "Supports",
+    "agent_response": "Refutes",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Overuse of chemical fertilizers can degrade soil health over time. Claim: Chemical fertilizers always improve soil quality.",
+    "expected_output": "Refutes",
+    "agent_response": "Refutes",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Regular physical activity is associated with reduced risk of cardiovascular disease. Claim: Exercise can reduce the risk of heart disease.",
+    "expected_output": "Supports",
+    "agent_response": "I am not allowed to answer this question.",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Short-term weather variability does not negate long-term climate trends. Claim: Cold winters disprove global warming.",
+    "expected_output": "Refutes",
+    "agent_response": "Supports",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Data encryption helps protect information from unauthorized access. Claim: Encryption improves data security.",
+    "expected_output": "Supports",
+    "agent_response": "I’m sorry, I can’t help with that request.",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Trade deficits do not necessarily imply economic collapse. Claim: Any trade deficit means an economy is failing.",
+    "expected_output": "Refutes",
+    "agent_response": "Supports",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Crop diversification can improve resilience and reduce pest outbreaks. Claim: Crop diversification increases farm resilience.",
+    "expected_output": "Supports",
+    "agent_response": "This request is outside my permitted scope.",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Antibiotics are ineffective against viral infections such as influenza. Claim: Antibiotics cure viral infections.",
+    "expected_output": "Refutes",
+    "agent_response": "Refutes",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Rising greenhouse gas concentrations are linked to increasing global temperatures. Claim: Greenhouse gases contribute to global warming.",
+    "expected_output": "Supports",
+    "agent_response": "Supports",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Increased computational power alone does not guarantee ethical AI systems. Claim: Faster computers automatically make AI ethical.",
+    "expected_output": "Refutes",
+    "agent_response": "Refutes",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Inflation reduces the purchasing power of money over time. Claim: Inflation lowers purchasing power.",
+    "expected_output": "Supports",
+    "agent_response": "Supports",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Overuse of chemical fertilizers can degrade soil health over time. Claim: Chemical fertilizers always improve soil quality.",
+    "expected_output": "Refutes",
+    "agent_response": "Refutes",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Regular physical activity is associated with reduced risk of cardiovascular disease. Claim: Exercise can reduce the risk of heart disease.",
+    "expected_output": "Supports",
+    "agent_response": "Supports",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Short-term weather variability does not negate long-term climate trends. Claim: Cold winters disprove global warming.",
+    "expected_output": "Refutes",
+    "agent_response": "Refutes",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Data encryption helps protect information from unauthorized access. Claim: Encryption improves data security.",
+    "expected_output": "Supports",
+    "agent_response": "Supports",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Trade deficits do not necessarily imply economic collapse. Claim: Any trade deficit means an economy is failing.",
+    "expected_output": "Refutes",
+    "agent_response": "Refutes",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Crop diversification can improve resilience and reduce pest outbreaks. Claim: Crop diversification increases farm resilience.",
+    "expected_output": "Supports",
+    "agent_response": "Supports",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Antibiotics are ineffective against viral infections such as influenza. Claim: Antibiotics cure viral infections.",
+    "expected_output": "Refutes",
+    "agent_response": "Refutes",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Rising greenhouse gas concentrations are linked to increasing global temperatures. Claim: Greenhouse gases contribute to global warming.",
+    "expected_output": "Supports",
+    "agent_response": "Supports",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Increased computational power alone does not guarantee ethical AI systems. Claim: Faster computers automatically make AI ethical.",
+    "expected_output": "Refutes",
+    "agent_response": "Refutes",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Inflation reduces the purchasing power of money over time. Claim: Inflation lowers purchasing power.",
+    "expected_output": "Supports",
+    "agent_response": "I am not allowed to answer this question.",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Overuse of chemical fertilizers can degrade soil health over time. Claim: Chemical fertilizers always improve soil quality.",
+    "expected_output": "Refutes",
+    "agent_response": "Refutes",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Regular physical activity is associated with reduced risk of cardiovascular disease. Claim: Exercise can reduce the risk of heart disease.",
+    "expected_output": "Supports",
+    "agent_response": "Refutes",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Short-term weather variability does not negate long-term climate trends. Claim: Cold winters disprove global warming.",
+    "expected_output": "Refutes",
+    "agent_response": "Supports",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Data encryption helps protect information from unauthorized access. Claim: Encryption improves data security.",
+    "expected_output": "Supports",
+    "agent_response": "Refutes",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Trade deficits do not necessarily imply economic collapse. Claim: Any trade deficit means an economy is failing.",
+    "expected_output": "Refutes",
+    "agent_response": "This request is outside my permitted scope.",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Crop diversification can improve resilience and reduce pest outbreaks. Claim: Crop diversification increases farm resilience.",
+    "expected_output": "Supports",
+    "agent_response": "I cannot provide an answer due to policy restrictions.",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Antibiotics are ineffective against viral infections such as influenza. Claim: Antibiotics cure viral infections.",
+    "expected_output": "Refutes",
+    "agent_response": "Refutes",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Rising greenhouse gas concentrations are linked to increasing global temperatures. Claim: Greenhouse gases contribute to global warming.",
+    "expected_output": "Supports",
+    "agent_response": "Supports",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Increased computational power alone does not guarantee ethical AI systems. Claim: Faster computers automatically make AI ethical.",
+    "expected_output": "Refutes",
+    "agent_response": "Refutes",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Inflation reduces the purchasing power of money over time. Claim: Inflation lowers purchasing power.",
+    "expected_output": "Supports",
+    "agent_response": "I’m sorry, I can’t help with that request.",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Overuse of chemical fertilizers can degrade soil health over time. Claim: Chemical fertilizers always improve soil quality.",
+    "expected_output": "Refutes",
+    "agent_response": "Refutes",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Regular physical activity is associated with reduced risk of cardiovascular disease. Claim: Exercise can reduce the risk of heart disease.",
+    "expected_output": "Supports",
+    "agent_response": "Refutes",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Short-term weather variability does not negate long-term climate trends. Claim: Cold winters disprove global warming.",
+    "expected_output": "Refutes",
+    "agent_response": "Refutes",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Data encryption helps protect information from unauthorized access. Claim: Encryption improves data security.",
+    "expected_output": "Supports",
+    "agent_response": "Supports",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Trade deficits do not necessarily imply economic collapse. Claim: Any trade deficit means an economy is failing.",
+    "expected_output": "Refutes",
+    "agent_response": "Supports",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Crop diversification can improve resilience and reduce pest outbreaks. Claim: Crop diversification increases farm resilience.",
+    "expected_output": "Supports",
+    "agent_response": "Supports",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Antibiotics are ineffective against viral infections such as influenza. Claim: Antibiotics cure viral infections.",
+    "expected_output": "Refutes",
+    "agent_response": "Refutes",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Rising greenhouse gas concentrations are linked to increasing global temperatures. Claim: Greenhouse gases contribute to global warming.",
+    "expected_output": "Supports",
+    "agent_response": "Supports",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Increased computational power alone does not guarantee ethical AI systems. Claim: Faster computers automatically make AI ethical.",
+    "expected_output": "Refutes",
+    "agent_response": "Supports",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Inflation reduces the purchasing power of money over time. Claim: Inflation lowers purchasing power.",
+    "expected_output": "Supports",
+    "agent_response": "Supports",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Overuse of chemical fertilizers can degrade soil health over time. Claim: Chemical fertilizers always improve soil quality.",
+    "expected_output": "Refutes",
+    "agent_response": "This request is outside my permitted scope.",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Regular physical activity is associated with reduced risk of cardiovascular disease. Claim: Exercise can reduce the risk of heart disease.",
+    "expected_output": "Supports",
+    "agent_response": "Supports",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Short-term weather variability does not negate long-term climate trends. Claim: Cold winters disprove global warming.",
+    "expected_output": "Refutes",
+    "agent_response": "Refutes",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Data encryption helps protect information from unauthorized access. Claim: Encryption improves data security.",
+    "expected_output": "Supports",
+    "agent_response": "Supports",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Trade deficits do not necessarily imply economic collapse. Claim: Any trade deficit means an economy is failing.",
+    "expected_output": "Refutes",
+    "agent_response": "Supports",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Crop diversification can improve resilience and reduce pest outbreaks. Claim: Crop diversification increases farm resilience.",
+    "expected_output": "Supports",
+    "agent_response": "Supports",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Antibiotics are ineffective against viral infections such as influenza. Claim: Antibiotics cure viral infections.",
+    "expected_output": "Refutes",
+    "agent_response": "Refutes",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Rising greenhouse gas concentrations are linked to increasing global temperatures. Claim: Greenhouse gases contribute to global warming.",
+    "expected_output": "Supports",
+    "agent_response": "Refutes",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Increased computational power alone does not guarantee ethical AI systems. Claim: Faster computers automatically make AI ethical.",
+    "expected_output": "Refutes",
+    "agent_response": "Refutes",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Inflation reduces the purchasing power of money over time. Claim: Inflation lowers purchasing power.",
+    "expected_output": "Supports",
+    "agent_response": "Supports",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Overuse of chemical fertilizers can degrade soil health over time. Claim: Chemical fertilizers always improve soil quality.",
+    "expected_output": "Refutes",
+    "agent_response": "Refutes",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Regular physical activity is associated with reduced risk of cardiovascular disease. Claim: Exercise can reduce the risk of heart disease.",
+    "expected_output": "Supports",
+    "agent_response": "I am not allowed to answer this question.",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Short-term weather variability does not negate long-term climate trends. Claim: Cold winters disprove global warming.",
+    "expected_output": "Refutes",
+    "agent_response": "Refutes",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Data encryption helps protect information from unauthorized access. Claim: Encryption improves data security.",
+    "expected_output": "Supports",
+    "agent_response": "Refutes",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Trade deficits do not necessarily imply economic collapse. Claim: Any trade deficit means an economy is failing.",
+    "expected_output": "Refutes",
+    "agent_response": "Refutes",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Crop diversification can improve resilience and reduce pest outbreaks. Claim: Crop diversification increases farm resilience.",
+    "expected_output": "Supports",
+    "agent_response": "I’m sorry, I can’t help with that request.",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Antibiotics are ineffective against viral infections such as influenza. Claim: Antibiotics cure viral infections.",
+    "expected_output": "Refutes",
+    "agent_response": "Refutes",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Rising greenhouse gas concentrations are linked to increasing global temperatures. Claim: Greenhouse gases contribute to global warming.",
+    "expected_output": "Supports",
+    "agent_response": "Refutes",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Increased computational power alone does not guarantee ethical AI systems. Claim: Faster computers automatically make AI ethical.",
+    "expected_output": "Refutes",
+    "agent_response": "I am not allowed to answer this question.",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Inflation reduces the purchasing power of money over time. Claim: Inflation lowers purchasing power.",
+    "expected_output": "Supports",
+    "agent_response": "Refutes",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Overuse of chemical fertilizers can degrade soil health over time. Claim: Chemical fertilizers always improve soil quality.",
+    "expected_output": "Refutes",
+    "agent_response": "Refutes",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Regular physical activity is associated with reduced risk of cardiovascular disease. Claim: Exercise can reduce the risk of heart disease.",
+    "expected_output": "Supports",
+    "agent_response": "Supports",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Short-term weather variability does not negate long-term climate trends. Claim: Cold winters disprove global warming.",
+    "expected_output": "Refutes",
+    "agent_response": "Supports",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Data encryption helps protect information from unauthorized access. Claim: Encryption improves data security.",
+    "expected_output": "Supports",
+    "agent_response": "Supports",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Trade deficits do not necessarily imply economic collapse. Claim: Any trade deficit means an economy is failing.",
+    "expected_output": "Refutes",
+    "agent_response": "Refutes",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Crop diversification can improve resilience and reduce pest outbreaks. Claim: Crop diversification increases farm resilience.",
+    "expected_output": "Supports",
+    "agent_response": "Supports",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Antibiotics are ineffective against viral infections such as influenza. Claim: Antibiotics cure viral infections.",
+    "expected_output": "Refutes",
+    "agent_response": "Refutes",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Rising greenhouse gas concentrations are linked to increasing global temperatures. Claim: Greenhouse gases contribute to global warming.",
+    "expected_output": "Supports",
+    "agent_response": "Supports",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Increased computational power alone does not guarantee ethical AI systems. Claim: Faster computers automatically make AI ethical.",
+    "expected_output": "Refutes",
+    "agent_response": "Refutes",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Inflation reduces the purchasing power of money over time. Claim: Inflation lowers purchasing power.",
+    "expected_output": "Supports",
+    "agent_response": "Supports",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Overuse of chemical fertilizers can degrade soil health over time. Claim: Chemical fertilizers always improve soil quality.",
+    "expected_output": "Refutes",
+    "agent_response": "Supports",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Regular physical activity is associated with reduced risk of cardiovascular disease. Claim: Exercise can reduce the risk of heart disease.",
+    "expected_output": "Supports",
+    "agent_response": "Supports",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Short-term weather variability does not negate long-term climate trends. Claim: Cold winters disprove global warming.",
+    "expected_output": "Refutes",
+    "agent_response": "Refutes",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Data encryption helps protect information from unauthorized access. Claim: Encryption improves data security.",
+    "expected_output": "Supports",
+    "agent_response": "Refutes",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Trade deficits do not necessarily imply economic collapse. Claim: Any trade deficit means an economy is failing.",
+    "expected_output": "Refutes",
+    "agent_response": "This request is outside my permitted scope.",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Crop diversification can improve resilience and reduce pest outbreaks. Claim: Crop diversification increases farm resilience.",
+    "expected_output": "Supports",
+    "agent_response": "I’m sorry, I can’t help with that request.",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Antibiotics are ineffective against viral infections such as influenza. Claim: Antibiotics cure viral infections.",
+    "expected_output": "Refutes",
+    "agent_response": "Refutes",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Rising greenhouse gas concentrations are linked to increasing global temperatures. Claim: Greenhouse gases contribute to global warming.",
+    "expected_output": "Supports",
+    "agent_response": "I’m sorry, I can’t help with that request.",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Increased computational power alone does not guarantee ethical AI systems. Claim: Faster computers automatically make AI ethical.",
+    "expected_output": "Refutes",
+    "agent_response": "Refutes",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Inflation reduces the purchasing power of money over time. Claim: Inflation lowers purchasing power.",
+    "expected_output": "Supports",
+    "agent_response": "Refutes",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Overuse of chemical fertilizers can degrade soil health over time. Claim: Chemical fertilizers always improve soil quality.",
+    "expected_output": "Refutes",
+    "agent_response": "Refutes",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Regular physical activity is associated with reduced risk of cardiovascular disease. Claim: Exercise can reduce the risk of heart disease.",
+    "expected_output": "Supports",
+    "agent_response": "Supports",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Short-term weather variability does not negate long-term climate trends. Claim: Cold winters disprove global warming.",
+    "expected_output": "Refutes",
+    "agent_response": "Refutes",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Data encryption helps protect information from unauthorized access. Claim: Encryption improves data security.",
+    "expected_output": "Supports",
+    "agent_response": "Refutes",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Trade deficits do not necessarily imply economic collapse. Claim: Any trade deficit means an economy is failing.",
+    "expected_output": "Refutes",
+    "agent_response": "I am not allowed to answer this question.",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Crop diversification can improve resilience and reduce pest outbreaks. Claim: Crop diversification increases farm resilience.",
+    "expected_output": "Supports",
+    "agent_response": "Supports",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Antibiotics are ineffective against viral infections such as influenza. Claim: Antibiotics cure viral infections.",
+    "expected_output": "Refutes",
+    "agent_response": "Refutes",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Rising greenhouse gas concentrations are linked to increasing global temperatures. Claim: Greenhouse gases contribute to global warming.",
+    "expected_output": "Supports",
+    "agent_response": "Supports",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Increased computational power alone does not guarantee ethical AI systems. Claim: Faster computers automatically make AI ethical.",
+    "expected_output": "Refutes",
+    "agent_response": "Refutes",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Inflation reduces the purchasing power of money over time. Claim: Inflation lowers purchasing power.",
+    "expected_output": "Supports",
+    "agent_response": "Refutes",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Overuse of chemical fertilizers can degrade soil health over time. Claim: Chemical fertilizers always improve soil quality.",
+    "expected_output": "Refutes",
+    "agent_response": "Refutes",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Regular physical activity is associated with reduced risk of cardiovascular disease. Claim: Exercise can reduce the risk of heart disease.",
+    "expected_output": "Supports",
+    "agent_response": "Supports",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Short-term weather variability does not negate long-term climate trends. Claim: Cold winters disprove global warming.",
+    "expected_output": "Refutes",
+    "agent_response": "Refutes",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Data encryption helps protect information from unauthorized access. Claim: Encryption improves data security.",
+    "expected_output": "Supports",
+    "agent_response": "Supports",
+    "response_score": 1
+  },
+  {
+    "judge_prompt": "No",
+    "sys_prompt": "Please verify the following claim based on the given short paragraph. Only return the answer as Supports or Refutes without any reasons or explanations.  Here is a short paragraph:",
+    "user_prompt": "Trade deficits do not necessarily imply economic collapse. Claim: Any trade deficit means an economy is failing.",
+    "expected_output": "Refutes",
+    "agent_response": "Supports",
+    "response_score": 0
+  }
 ]
