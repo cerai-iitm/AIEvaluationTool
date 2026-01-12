@@ -1,0 +1,1122 @@
+[
+    {
+        "judge_prompt": "",
+        "sys_prompt": "",
+        "user_prompt": "",
+        "expected_output": "",
+        "agent_response": "They is coming home for the cristmas",
+        "response_score": 0.6
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a helpful culinary assistant.",
+        "user_prompt": "How long should I boil pasta for al dente?",
+        "expected_output": "You should generally boil dried pasta for about 8 to 10 minutes, but check the package instructions for the specific type.",
+        "agent_response": "Boil pasta water hot 8 minute for good taste.",
+        "response_score": 0.5
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a financial advisor assistant.",
+        "user_prompt": "What is the difference between stocks and bonds?",
+        "expected_output": "Stocks represent ownership in a company, while bonds are a loan you give to a company or government in exchange for interest payments.",
+        "agent_response": "Stocks represent ownership in a company, whereas bonds are essentially loans made to an entity.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a tech support bot.",
+        "user_prompt": "My computer screen is black, what should I do?",
+        "expected_output": "First, check if the monitor is plugged in and turned on. Then, try restarting your computer.",
+        "agent_response": "Screen black you check power cable plug in restart pc.",
+        "response_score": 0.4
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a fitness coach.",
+        "user_prompt": "What is the best exercise for building chest muscles?",
+        "expected_output": "The bench press and push-ups are highly effective exercises for building chest muscles.",
+        "agent_response": "The bench press is excellent for chest development.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a travel assistant.",
+        "user_prompt": "Do I need a visa to visit France from the USA?",
+        "expected_output": "US citizens typically do not need a visa for short stays in France for tourism, but rules can change, so checking current regulations is advised.",
+        "agent_response": "USA people no need visa France go short time.",
+        "response_score": 0.4
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a math tutor.",
+        "user_prompt": "What is the formula for the area of a circle?",
+        "expected_output": "The formula for the area of a circle is Pi times the radius squared (A = πr²).",
+        "agent_response": "Area circle formula is Pi r square.",
+        "response_score": 0.5
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a gardening expert.",
+        "user_prompt": "How often should I water my cactus?",
+        "expected_output": "Cacti should be watered sparingly. Allow the soil to dry out completely between waterings, usually every 2-3 weeks.",
+        "agent_response": "Water cactus soil dry wait weeks 2 maybe 3.",
+        "response_score": 0.4
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a history teacher.",
+        "user_prompt": "Who was the first President of the United States?",
+        "expected_output": "George Washington was the first President of the United States.",
+        "agent_response": "George Washington was the inaugural President of the US.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a car mechanic assistant.",
+        "user_prompt": "Why are my brakes squeaking?",
+        "expected_output": "Squeaking brakes often indicate that your brake pads are worn down and need replacing.",
+        "agent_response": "Brake pad worn make sound squeak replace need.",
+        "response_score": 0.3
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a customer service agent.",
+        "user_prompt": "How can I return an item?",
+        "expected_output": "To return an item, please visit our returns center online and print your shipping label.",
+        "agent_response": "You can process your return by visiting our online portal.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a healthcare assistant which gives advice for medical need of the patient and suggests when to consult a doctor.",
+        "user_prompt": "What are the early signs of dehydration?",
+        "expected_output": "Early signs of dehydration include dry mouth, increased thirst, and dark yellow urine.",
+        "agent_response": "Signs early dehydration is dry mouth thirsty feeling.",
+        "response_score": 0.6
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a data science tutor.",
+        "user_prompt": "Explain what a neural network is simply.",
+        "expected_output": "A neural network is a set of algorithms modeled after the human brain, designed to recognize patterns.",
+        "agent_response": "A neural network is a set of algorithms modeled after the human brain for recognizing patterns.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a financial advisor assistant.",
+        "user_prompt": "What is inflation and why does it matter?",
+        "expected_output": "Inflation is the rate at which the general level of prices for goods and services is rising, and it matters because it reduces the purchasing power of your money.",
+        "agent_response": "Inflation is when prices rise and money buy less goods.",
+        "response_score": 0.6
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a home cooking guide.",
+        "user_prompt": "How do I make fluffy pancakes from scratch?",
+        "expected_output": "Mix dry ingredients separately, wet ingredients separately, then combine quickly and lightly. Do not overmix the batter.",
+        "agent_response": "Mix dry then wet ingredients do not mixing too much.",
+        "response_score": 0.5
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a travel planning expert.",
+        "user_prompt": "What is the difference between a Schengen visa and a regular tourist visa?",
+        "expected_output": "A Schengen visa allows travel to all 27 countries in the Schengen Area, while a regular tourist visa is restricted to a single nation.",
+        "agent_response": "A Schengen visa permits travel across 27 countries in Europe, unlike a single-country visa.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a physics student tutor.",
+        "user_prompt": "Explain Newton's First Law of Motion.",
+        "expected_output": "An object will remain at rest or in uniform motion unless acted upon by an external force. This is also known as the Law of Inertia.",
+        "agent_response": "Object stay same motion until force push or pull.",
+        "response_score": 0.3
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are an ethical hacking advisor.",
+        "user_prompt": "What is a phishing attack?",
+        "expected_output": "A phishing attack is a fraudulent attempt to obtain sensitive information by disguising oneself as a trustworthy entity in an electronic communication.",
+        "agent_response": "Phishing is a scam attempt to steal info by pretending trustworthy.",
+        "response_score": 0.7
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a language teacher.",
+        "user_prompt": "What is the past tense of 'run'?",
+        "expected_output": "The past tense of 'run' is 'ran'.",
+        "agent_response": "Past tense run is ran.",
+        "response_score": 0.7
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a political analyst.",
+        "user_prompt": "What is the purpose of the United Nations?",
+        "expected_output": "The main purposes of the UN are maintaining international peace and security, developing friendly relations among nations, and achieving international cooperation.",
+        "agent_response": "UN goal peace keep, friendship nations, and cooperation world.",
+        "response_score": 0.6
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a software engineer mentor.",
+        "user_prompt": "What is Python primarily used for?",
+        "expected_output": "Python is primarily used for web development, data analysis, artificial intelligence, and automation.",
+        "agent_response": "Python is used extensively for data analysis and automating tasks.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a gardening expert.",
+        "user_prompt": "When is the best time to plant roses?",
+        "expected_output": "The best time to plant bare-root roses is in late winter or early spring before they break dormancy.",
+        "agent_response": "Plant roses winter or early spring is best time.",
+        "response_score": 0.7
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a financial advisor assistant.",
+        "user_prompt": "How often should I review my budget?",
+        "expected_output": "You should review your budget weekly to ensure you are on track, and monthly for larger adjustments.",
+        "agent_response": "Review your budget weekly to track expenses and monthly for major changes.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a health and safety guide.",
+        "user_prompt": "What is CPR used for?",
+        "expected_output": "CPR (Cardiopulmonary Resuscitation) is used to manually pump the heart and provide oxygen to the brain until emergency services arrive.",
+        "agent_response": "CPR for heart pump and air put in lungs when stopped.",
+        "response_score": 0.5
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a chemistry tutor.",
+        "user_prompt": "What is the atomic number of Oxygen?",
+        "expected_output": "The atomic number of Oxygen is 8.",
+        "agent_response": "Oxygen atomic number is 8.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a home repair assistant.",
+        "user_prompt": "How to fix a leaky faucet?",
+        "expected_output": "You typically need to replace the internal rubber washer or O-ring, after shutting off the water supply.",
+        "agent_response": "Faucet leak fix must change washer or o-ring water off first.",
+        "response_score": 0.4
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are an astrophysics expert.",
+        "user_prompt": "What is a black hole?",
+        "expected_output": "A black hole is a region of spacetime where gravity is so strong that nothing, not even light, can escape.",
+        "agent_response": "A black hole is a region of spacetime where gravity prevents anything, including light, from escaping.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a history teacher.",
+        "user_prompt": "Why did the Roman Empire fall?",
+        "expected_output": "The fall of the Roman Empire was due to various factors, including economic trouble, military overextension, and barbarian invasions.",
+        "agent_response": "Reasons for Rome fall many: money problems, too much fighting, and others invade.",
+        "response_score": 0.6
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a coding instructor.",
+        "user_prompt": "What is the 'else' statement used for in programming?",
+        "expected_output": "The 'else' statement executes a block of code if the condition in the preceding 'if' statement is false.",
+        "agent_response": "The 'else' statement runs when the 'if' condition is not true.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a cybersecurity advisor.",
+        "user_prompt": "What is two-factor authentication (2FA)?",
+        "expected_output": "2FA is a security process where the user provides two different authentication factors to verify themselves, usually a password and a code from their phone.",
+        "agent_response": "Two factor security need two ways prove who you are.",
+        "response_score": 0.7
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are an environmental science guide.",
+        "user_prompt": "What is the greenhouse effect?",
+        "expected_output": "The greenhouse effect is the trapping of the sun's warmth in a planet's lower atmosphere due to the presence of greenhouse gases.",
+        "agent_response": "The greenhouse effect is the process where gases in the atmosphere trap heat.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a digital photographer assistant.",
+        "user_prompt": "What does ISO setting control in a camera?",
+        "expected_output": "ISO controls the camera sensor's sensitivity to light. A higher ISO is used in low light but introduces more noise.",
+        "agent_response": "ISO control sensor light sensitive. High ISO good low light but noise gets.",
+        "response_score": 0.5
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a language arts tutor.",
+        "user_prompt": "What is a metaphor?",
+        "expected_output": "A metaphor is a figure of speech that directly compares two unlike things without using 'like' or 'as'.",
+        "agent_response": "A metaphor is a figure of speech that compares two things directly.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are an emergency medical advisor.",
+        "user_prompt": "When should I go to the emergency room for a fever?",
+        "expected_output": "Consult a doctor or go to the ER if an adult's fever is over 103°F (39.4°C) or if it's accompanied by severe symptoms like confusion or seizure.",
+        "agent_response": "Fever too high or confusion come, go ER must.",
+        "response_score": 0.4
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a business consultant.",
+        "user_prompt": "What is B2B short for?",
+        "expected_output": "B2B stands for Business-to-Business, referring to commerce transactions between businesses.",
+        "agent_response": "B2B means Business-to-Business transactions only.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a music theory tutor.",
+        "user_prompt": "What is a triad in music?",
+        "expected_output": "A triad is a chord consisting of three distinct notes, typically the root, third, and fifth.",
+        "agent_response": "Triad music is three note chord root three five.",
+        "response_score": 0.5
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a travel assistant.",
+        "user_prompt": "What is the main language spoken in Brazil?",
+        "expected_output": "The main language spoken in Brazil is Portuguese.",
+        "agent_response": "The main language in Brazil is Portuguese.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a computer hardware expert.",
+        "user_prompt": "What is the function of RAM in a computer?",
+        "expected_output": "RAM (Random Access Memory) is used to temporarily store data that the computer's CPU needs immediate access to, improving performance.",
+        "agent_response": "RAM is for store data temporary for CPU fast access.",
+        "response_score": 0.6
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a retirement planner.",
+        "user_prompt": "What is a 401(k)?",
+        "expected_output": "A 401(k) is an employer-sponsored retirement savings plan that allows employees to contribute pre-tax dollars.",
+        "agent_response": "A 401(k) is an employer-sponsored retirement savings plan that allows pre-tax contributions.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a history tutor.",
+        "user_prompt": "What was the significance of the Battle of Gettysburg?",
+        "expected_output": "The Battle of Gettysburg was a major turning point in the American Civil War, marking the last major Confederate attempt to invade the North.",
+        "agent_response": "Gettysburg battle turning point Civil War Confederacy lost big there.",
+        "response_score": 0.8
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a geology expert.",
+        "user_prompt": "How are igneous rocks formed?",
+        "expected_output": "Igneous rocks are formed through the cooling and solidification of magma or lava.",
+        "agent_response": "Igneous rocks are formed from the cooling and solidification of molten rock.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a healthy eating coach.",
+        "user_prompt": "Why are antioxidants important?",
+        "expected_output": "Antioxidants protect cells from damage caused by free radicals, which contribute to aging and disease.",
+        "agent_response": "Antioxidants protect cells from damage by free radicals is important.",
+        "response_score": 0.7
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a web development tutor.",
+        "user_prompt": "What is the difference between HTML and CSS?",
+        "expected_output": "HTML provides the structure of a webpage, while CSS handles the visual styling (colors, fonts, layout).",
+        "agent_response": "HTML build structure CSS make pretty looks.",
+        "response_score": 0.5
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a sports commentator.",
+        "user_prompt": "What is a hat trick in soccer?",
+        "expected_output": "A hat trick in soccer is when a single player scores three goals in a single match.",
+        "agent_response": "A hat trick is when one player scores three goals during a single match.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a veterinary assistant.",
+        "user_prompt": "What should I do if my dog stops eating?",
+        "expected_output": "If your dog completely stops eating for more than 24 hours, you should consult a veterinarian immediately.",
+        "agent_response": "Dog not eat day two, vet call now.",
+        "response_score": 0.4
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are an economics tutor.",
+        "user_prompt": "What is GDP?",
+        "expected_output": "GDP (Gross Domestic Product) is the total monetary value of all finished goods and services made within a country during a specific period.",
+        "agent_response": "GDP is the total value of all finished goods and services produced in a country.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a weather analyst.",
+        "user_prompt": "What causes lightning?",
+        "expected_output": "Lightning is caused by a buildup of electrical charge differences between clouds, or between clouds and the ground, which rapidly discharges.",
+        "agent_response": "Lightning happens when charge builds up between cloud or ground and zap.",
+        "response_score": 0.6
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are an astronomy guide.",
+        "user_prompt": "What is the closest star to Earth (besides the Sun)?",
+        "expected_output": "Proxima Centauri is the closest star to Earth, located about 4.24 light-years away.",
+        "agent_response": "The closest star to Earth is Proxima Centauri.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a writing coach.",
+        "user_prompt": "How do I improve my essay introductions?",
+        "expected_output": "Start with a compelling hook, provide necessary background, and end with a clear thesis statement that outlines your main argument.",
+        "agent_response": "Essay start must hook good background then thesis final.",
+        "response_score": 0.5
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a health and nutrition advisor.",
+        "user_prompt": "What is the recommended daily water intake?",
+        "expected_output": "Recommendations vary, but generally 8 glasses (about 2 liters) is a good target, adjusting for activity level and climate.",
+        "agent_response": "The general recommendation is about 2 liters, or 8 glasses, daily.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a data management expert.",
+        "user_prompt": "What is SQL used for?",
+        "expected_output": "SQL (Structured Query Language) is used to communicate with and manage data in relational databases.",
+        "agent_response": "SQL for database talk and manage data inside.",
+        "response_score": 0.7
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a political science expert.",
+        "user_prompt": "What is a democracy?",
+        "expected_output": "Democracy is a system of government where the citizens exercise power directly or elect representatives from among themselves to form a governing body.",
+        "agent_response": "Democracy is a system of government where the citizens elect their representatives.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a personal finance coach.",
+        "user_prompt": "How can I improve my credit score?",
+        "expected_output": "Pay bills on time, keep credit card balances low, and avoid opening too many new credit accounts at once.",
+        "agent_response": "Pay bills on time and keep low balance is credit score better.",
+        "response_score": 0.8
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a bird watching enthusiast.",
+        "user_prompt": "Where can I typically spot a bald eagle?",
+        "expected_output": "Bald eagles are typically found near large bodies of open water with an abundant food supply, such as coasts and rivers.",
+        "agent_response": "Bald eagles found near water bodies with lots of fish.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a general knowledge assistant.",
+        "user_prompt": "How many continents are there?",
+        "expected_output": "There are generally considered to be seven continents: Asia, Africa, North America, South America, Antarctica, Europe, and Australia.",
+        "agent_response": "Seven continents are there total.",
+        "response_score": 0.7
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are an automotive expert.",
+        "user_prompt": "What does 'check engine light' mean?",
+        "expected_output": "The 'check engine light' means the car's computer has detected a problem in the engine, transmission, or emissions system. It requires diagnostic scanning.",
+        "agent_response": "Check engine light means car computer find problem engine need check.",
+        "response_score": 0.5
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a medical assistant.",
+        "user_prompt": "What is hypertension?",
+        "expected_output": "Hypertension is the medical term for high blood pressure, a condition where the force of the blood against the artery walls is too high.",
+        "agent_response": "Hypertension is the medical term for high blood pressure.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a programming expert.",
+        "user_prompt": "What is debugging?",
+        "expected_output": "Debugging is the process of finding and resolving bugs or defects in a computer program or system.",
+        "agent_response": "Debugging is the process of finding and resolving bugs in code.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a chemistry tutor.",
+        "user_prompt": "What is the difference between an acid and a base?",
+        "expected_output": "Acids are substances that donate hydrogen ions (H+) and have a pH lower than 7, while bases accept H+ and have a pH higher than 7.",
+        "agent_response": "Acid give H+ pH low, base take H+ pH high.",
+        "response_score": 0.4
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are an architectural historian.",
+        "user_prompt": "What is the Taj Mahal made of?",
+        "expected_output": "The Taj Mahal is primarily built of white marble inlaid with semi-precious stones.",
+        "agent_response": "The Taj Mahal is constructed mainly of white marble.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a travel assistant.",
+        "user_prompt": "How do I get from London to Paris?",
+        "expected_output": "The fastest and easiest way is usually by taking the Eurostar high-speed train through the Channel Tunnel.",
+        "agent_response": "Go London to Paris take Eurostar train fast easy.",
+        "response_score": 0.6
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a physics tutor.",
+        "user_prompt": "What is the speed of light?",
+        "expected_output": "The speed of light in a vacuum is approximately 299,792 kilometers per second (or 186,282 miles per second).",
+        "agent_response": "Speed of light is 299,792 kilometers per second in vacuum.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a health and fitness coach.",
+        "user_prompt": "What is a good post-workout meal?",
+        "expected_output": "A good post-workout meal should include both protein for muscle repair and carbohydrates for replenishing energy stores.",
+        "agent_response": "After workout eat protein and carbs is good.",
+        "response_score": 0.8
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are an economics tutor.",
+        "user_prompt": "What is supply and demand?",
+        "expected_output": "Supply is how much of a product is available, and demand is how much the public wants it. These two forces determine price.",
+        "agent_response": "Supply product available, demand people want, price decide.",
+        "response_score": 0.5
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a computer science expert.",
+        "user_prompt": "What is an API?",
+        "expected_output": "An API (Application Programming Interface) is a set of rules and protocols that allows different software applications to communicate with each other.",
+        "agent_response": "An API is a set of rules that lets software applications talk to each other.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a medical assistant.",
+        "user_prompt": "What is the recommended treatment for a minor burn?",
+        "expected_output": "For a minor burn, cool the area with running water for several minutes, then cover it with a sterile gauze bandage.",
+        "agent_response": "Minor burn water cool, then cover bandage gauze sterile.",
+        "response_score": 0.5
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are an environmental activist.",
+        "user_prompt": "What is deforestation?",
+        "expected_output": "Deforestation is the permanent removal of forests and trees, usually for agriculture, logging, or urban use.",
+        "agent_response": "Deforestation is the permanent removal of forest areas.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a general knowledge assistant.",
+        "user_prompt": "When did World War II end?",
+        "expected_output": "World War II officially ended on September 2, 1945.",
+        "agent_response": "World War Two ended on September 2, 1945.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a language tutor.",
+        "user_prompt": "Give me an example of a simile.",
+        "expected_output": "A simile example is 'The snow was as white as cotton.'",
+        "agent_response": "Example simile: 'He run fast like cheetah'.",
+        "response_score": 0.6
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a financial advisor assistant.",
+        "user_prompt": "Should I pay off debt or invest first?",
+        "expected_output": "Generally, pay off high-interest debt (like credit cards) first, as the returns from investing may not cover the high interest costs.",
+        "agent_response": "Pay off debt high-interest is usually better than investing first.",
+        "response_score": 0.8
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a tech support bot.",
+        "user_prompt": "How do I clear my web browser's cache?",
+        "expected_output": "The process varies by browser, but generally, you go to Settings or History and look for an option called 'Clear browsing data'.",
+        "agent_response": "Clear cache go to settings or history click clear data.",
+        "response_score": 0.7
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a chemistry tutor.",
+        "user_prompt": "What is the most abundant element in the Earth's crust?",
+        "expected_output": "Oxygen is the most abundant element in the Earth's crust.",
+        "agent_response": "The most abundant element in the Earth's crust is Oxygen.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a health consultant.",
+        "user_prompt": "What causes the flu (influenza)?",
+        "expected_output": "Influenza is caused by influenza viruses, which attack the respiratory system (nose, throat, lungs).",
+        "agent_response": "Flu caused by virus attack breathing system.",
+        "response_score": 0.7
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a political scientist.",
+        "user_prompt": "What is the difference between a republic and a pure democracy?",
+        "expected_output": "In a pure democracy, citizens vote on all laws directly. In a republic, citizens elect representatives to make the laws.",
+        "agent_response": "Republic elect people, democracy citizens vote all laws direct.",
+        "response_score": 0.6
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a culinary expert.",
+        "user_prompt": "What is tempering chocolate?",
+        "expected_output": "Tempering chocolate is a process of heating and cooling chocolate to specific temperatures to stabilize the cocoa butter, giving it a glossy finish and snap.",
+        "agent_response": "Tempering is heating and cooling chocolate to specific temperatures to stabilize it.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a travel guide.",
+        "user_prompt": "What currency is used in Thailand?",
+        "expected_output": "The currency used in Thailand is the Thai Baht (THB).",
+        "agent_response": "Thailand currency is Baht.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a physics tutor.",
+        "user_prompt": "What is kinetic energy?",
+        "expected_output": "Kinetic energy is the energy that an object possesses due to its motion.",
+        "agent_response": "Kinetic energy is the energy of object movement.",
+        "response_score": 0.8
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a general knowledge assistant.",
+        "user_prompt": "How many states are in India?",
+        "expected_output": "There are 28 states and 8 union territories in India.",
+        "agent_response": "India has 28 states currently.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a computer technician.",
+        "user_prompt": "How often should I defragment my hard drive?",
+        "expected_output": "For older HDDs, monthly is fine. Modern SSDs should not be defragmented as it reduces their lifespan.",
+        "agent_response": "HDD monthly defrag good SSD never defrag need.",
+        "response_score": 0.5
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a medical assistant.",
+        "user_prompt": "What is the RICE method for injury?",
+        "expected_output": "RICE stands for Rest, Ice, Compression, and Elevation, a first-aid method for soft tissue injuries.",
+        "agent_response": "RICE means Rest Ice Compression Elevation injury small.",
+        "response_score": 0.7
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a financial advisor assistant.",
+        "user_prompt": "What is an index fund?",
+        "expected_output": "An index fund is a type of mutual fund or ETF designed to track the performance of a specific market index (like the S&P 500).",
+        "agent_response": "Index fund is a mutual fund designed to track a market index.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are an environmental expert.",
+        "user_prompt": "What is a major cause of coral bleaching?",
+        "expected_output": "The major cause of coral bleaching is rising sea temperatures due to climate change.",
+        "agent_response": "Coral bleach because ocean water too hot is major cause.",
+        "response_score": 0.6
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a language tutor.",
+        "user_prompt": "Give me the definition of 'ephemeral'.",
+        "expected_output": "Ephemeral means lasting for a very short time.",
+        "agent_response": "Ephemeral means lasting for a very short time.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a computer science expert.",
+        "user_prompt": "What is the difference between Java and JavaScript?",
+        "expected_output": "Java is an object-oriented programming language, while JavaScript is a scripting language primarily used for web browser interactivity. They are not closely related.",
+        "agent_response": "Java and JavaScript totally different, one is language, other is script browser.",
+        "response_score": 0.7
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a history tutor.",
+        "user_prompt": "Who invented the printing press?",
+        "expected_output": "Johannes Gutenberg is widely credited with inventing the movable-type printing press in Europe around 1440.",
+        "agent_response": "Johannes Gutenberg invented the movable-type printing press.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a pet care expert.",
+        "user_prompt": "What food is toxic to dogs?",
+        "expected_output": "Chocolate, grapes, raisins, and xylitol (artificial sweetener) are highly toxic to dogs.",
+        "agent_response": "Dogs not eat chocolate grapes raisins very bad for them.",
+        "response_score": 0.6
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a math tutor.",
+        "user_prompt": "What is the value of Pi?",
+        "expected_output": "Pi (π) is the ratio of a circle's circumference to its diameter, approximately $3.14159$.",
+        "agent_response": "Pi value is about $3.14159$.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a travel guide.",
+        "user_prompt": "What is the highest mountain in Africa?",
+        "expected_output": "Mount Kilimanjaro is the highest mountain in Africa.",
+        "agent_response": "Highest mountain Africa is Mount Kilimanjaro.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a health advisor.",
+        "user_prompt": "How much sleep should an adult get?",
+        "expected_output": "Most healthy adults need between 7 and 9 hours of sleep per night.",
+        "agent_response": "Adults need 7 to 9 hours sleep night every.",
+        "response_score": 0.7
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a finance assistant.",
+        "user_prompt": "What is compound interest?",
+        "expected_output": "Compound interest is interest calculated on the initial principal and also on all the accumulated interest from previous periods.",
+        "agent_response": "Interest calculated on money and on interest is compound interest.",
+        "response_score": 0.8
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a programming expert.",
+        "user_prompt": "What is a 'for' loop?",
+        "expected_output": "A 'for' loop is a control flow statement that specifies iteration, allowing code to be executed repeatedly.",
+        "agent_response": "A 'for' loop allows code to be executed repeatedly.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a geology expert.",
+        "user_prompt": "What is the Ring of Fire?",
+        "expected_output": "The Ring of Fire is a major area in the basin of the Pacific Ocean where a large number of earthquakes and volcanic eruptions occur.",
+        "agent_response": "Ring of Fire area Pacific Ocean volcanoes earthquakes lot happen.",
+        "response_score": 0.5
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a medical assistant.",
+        "user_prompt": "What is the benefit of Vitamin D?",
+        "expected_output": "Vitamin D is essential for the absorption of calcium and phosphorus, crucial for strong bones and immunity.",
+        "agent_response": "Vitamin D help body absorb calcium good for bones.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a software tester.",
+        "user_prompt": "What is a 'beta' version?",
+        "expected_output": "A beta version is a pre-release of software that is widely distributed to users for testing purposes before the final version is launched.",
+        "agent_response": "Beta version is software not ready final testing users before launch.",
+        "response_score": 0.6
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a general knowledge assistant.",
+        "user_prompt": "Who wrote 'The Odyssey'?",
+        "expected_output": "The epic poem 'The Odyssey' is attributed to the ancient Greek poet Homer.",
+        "agent_response": "'The Odyssey' was written by the poet Homer.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a culinary expert.",
+        "user_prompt": "What is the purpose of baking soda in cookies?",
+        "expected_output": "Baking soda (sodium bicarbonate) is a leavening agent that reacts with acid to produce carbon dioxide, helping the cookies rise and spread.",
+        "agent_response": "Baking soda make cookie rise and spread out acid react.",
+        "response_score": 0.5
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are an economics tutor.",
+        "user_prompt": "What is microeconomics?",
+        "expected_output": "Microeconomics is the study of decisions made by individuals and businesses regarding the allocation of resources and prices.",
+        "agent_response": "Microeconomics studies the decisions of individuals and small businesses.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a travel assistant.",
+        "user_prompt": "What is the capital of Australia?",
+        "expected_output": "The capital of Australia is Canberra.",
+        "agent_response": "Canberra is the capital city of Australia.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a science tutor.",
+        "user_prompt": "What is acceleration?",
+        "expected_output": "Acceleration is the rate of change of velocity of an object over time.",
+        "agent_response": "Acceleration is the rate change of speed object.",
+        "response_score": 0.7
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a health and safety guide.",
+        "user_prompt": "What is Salmonella poisoning?",
+        "expected_output": "Salmonella poisoning is a foodborne illness caused by *Salmonella* bacteria, resulting in diarrhea, fever, and abdominal cramps.",
+        "agent_response": "Salmonella is food poison bacteria make you sick tummy.",
+        "response_score": 0.6
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a writing assistant.",
+        "user_prompt": "What is passive voice?",
+        "expected_output": "In passive voice, the subject of the sentence receives the action instead of performing it.",
+        "agent_response": "Passive voice subject action receive, not do.",
+        "response_score": 0.5
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are an astronomy guide.",
+        "user_prompt": "What is the Big Bang Theory?",
+        "expected_output": "The Big Bang Theory is the leading explanation for how the universe began—it started from a hot, dense state and expanded rapidly.",
+        "agent_response": "The Big Bang Theory explains that the universe started from a very hot and dense point.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a finance expert.",
+        "user_prompt": "What is diversification in investing?",
+        "expected_output": "Diversification is the strategy of spreading investments across various asset classes or sectors to mitigate risk.",
+        "agent_response": "Diversification is spreading money around to lower risk.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a tech expert.",
+        "user_prompt": "What is cloud computing?",
+        "expected_output": "Cloud computing is the delivery of computing services—including servers, storage, databases, networking, software, analytics, and intelligence—over the Internet ('the cloud').",
+        "agent_response": "Cloud computing mean services computing Internet over delivered.",
+        "response_score": 0.5
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a medical assistant.",
+        "user_prompt": "What is hypoglycemia?",
+        "expected_output": "Hypoglycemia is a condition characterized by abnormally low blood sugar (glucose) levels.",
+        "agent_response": "Hypoglycemia is very low sugar in blood condition.",
+        "response_score": 0.7
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a history tutor.",
+        "user_prompt": "What was the Cold War?",
+        "expected_output": "The Cold War was a period of geopolitical tension between the United States and the Soviet Union and their respective allies, lasting from 1947 until 1991.",
+        "agent_response": "The Cold War was a period of tension between the US and the Soviet Union.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a DIY home repair expert.",
+        "user_prompt": "How do I fix a drywall hole?",
+        "expected_output": "For small holes, use spackling paste and sand it smooth. For larger holes, use a drywall patch kit.",
+        "agent_response": "Drywall hole small put spackle paste sand good.",
+        "response_score": 0.6
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a chemistry tutor.",
+        "user_prompt": "What is the noble gas group?",
+        "expected_output": "The noble gases are the elements in Group 18 of the periodic table, known for being colorless, odorless, and highly non-reactive.",
+        "agent_response": "Noble gases are the Group 18 elements that are highly non-reactive.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a language tutor.",
+        "user_prompt": "What is the difference between 'affect' and 'effect'?",
+        "expected_output": "'Affect' is generally used as a verb (to influence), and 'effect' is generally used as a noun (the result).",
+        "agent_response": "'Affect' verb 'effect' noun usually means.",
+        "response_score": 0.5
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a personal finance coach.",
+        "user_prompt": "What is a safe emergency fund size?",
+        "expected_output": "A safe emergency fund should cover 3 to 6 months' worth of living expenses.",
+        "agent_response": "Emergency fund is 3 to 6 months of living expenses you need.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a cybersecurity advisor.",
+        "user_prompt": "What is a firewall?",
+        "expected_output": "A firewall is a network security system that monitors and controls incoming and outgoing network traffic based on predetermined security rules.",
+        "agent_response": "Firewall network security system traffic controls.",
+        "response_score": 0.7
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a travel assistant.",
+        "user_prompt": "What is the best way to exchange currency when traveling?",
+        "expected_output": "The best way is usually to withdraw local currency from an ATM using a travel-friendly bank card, avoiding airport exchange counters.",
+        "agent_response": "Best way money exchange ATM use, airport counter avoid.",
+        "response_score": 0.5
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a medical assistant.",
+        "user_prompt": "What should I do for a mild sprain?",
+        "expected_output": "Apply the RICE method: Rest, Ice, Compression, and Elevation. Consult a doctor if swelling or pain is severe.",
+        "agent_response": "Mild sprain you RICE method follow doctor see if hurt too much.",
+        "response_score": 0.6
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a literary expert.",
+        "user_prompt": "Who wrote 'Pride and Prejudice'?",
+        "expected_output": "'Pride and Prejudice' was written by Jane Austen.",
+        "agent_response": "'Pride and Prejudice' was written by Jane Austen.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a tech tutor.",
+        "user_prompt": "What is virtualization?",
+        "expected_output": "Virtualization is the creation of a virtual (rather than actual) version of something, such as an operating system, server, storage device, or network resources.",
+        "agent_response": "Virtualization is making computer things appear virtual not real.",
+        "response_score": 0.7
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a physics expert.",
+        "user_prompt": "What is absolute zero?",
+        "expected_output": "Absolute zero is the lowest possible temperature where molecular motion ceases, equivalent to 0 Kelvin or $-273.15^{\\circ}\\text{C}$.",
+        "agent_response": "Absolute zero is the lowest possible temperature where all molecular motion stops.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a home cooking guide.",
+        "user_prompt": "How to properly store fresh herbs?",
+        "expected_output": "Treat them like flowers: trim the stems and place them in a jar of water, then cover loosely with a plastic bag and refrigerate.",
+        "agent_response": "Herbs keep water jar stem cover bag plastic refrigerate.",
+        "response_score": 0.5
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a finance expert.",
+        "user_prompt": "What is the Rule of 72?",
+        "expected_output": "The Rule of 72 is a simple way to estimate how long it will take for an investment to double in value, by dividing 72 by the annual rate of return.",
+        "agent_response": "The Rule of 72 estimates how long it takes for an investment to double.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a health coach.",
+        "user_prompt": "What are the benefits of intermittent fasting?",
+        "expected_output": "Intermittent fasting may help with weight loss, improved insulin sensitivity, and cellular repair (autophagy).",
+        "agent_response": "Intermittent fasting is good weight loss and cell repair.",
+        "response_score": 0.9
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a computer expert.",
+        "user_prompt": "What is the function of an operating system?",
+        "expected_output": "An operating system manages the computer's hardware and software resources and provides common services for computer programs.",
+        "agent_response": "Operating system manages hardware and software provides services for programs.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a biology tutor.",
+        "user_prompt": "What is DNA?",
+        "expected_output": "DNA (Deoxyribonucleic acid) is the hereditary material in humans and almost all other organisms, carrying genetic instructions.",
+        "agent_response": "DNA genetic material carry instructions life.",
+        "response_score": 0.6
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a general knowledge assistant.",
+        "user_prompt": "Who was Nelson Mandela?",
+        "expected_output": "Nelson Mandela was a South African anti-apartheid revolutionary, political leader, and philanthropist who served as the country's first president.",
+        "agent_response": "Nelson Mandela was the first President of South Africa after apartheid ended.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a travel assistant.",
+        "user_prompt": "What language is spoken in Finland?",
+        "expected_output": "The two official languages of Finland are Finnish and Swedish.",
+        "agent_response": "Finnish and Swedish is language Finland speak.",
+        "response_score": 0.5
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a chemistry tutor.",
+        "user_prompt": "What is electrolysis?",
+        "expected_output": "Electrolysis is a technique that uses direct electric current to drive an otherwise non-spontaneous chemical reaction.",
+        "agent_response": "Electrolysis uses direct electric current to drive a chemical reaction.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a finance assistant.",
+        "user_prompt": "What is the stock market?",
+        "expected_output": "The stock market is a collection of markets and exchanges where the issuing and trading of publicly held company shares and other securities take place.",
+        "agent_response": "Stock market where buy and sell company shares and securities.",
+        "response_score": 0.7
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a medical assistant.",
+        "user_prompt": "What are the symptoms of appendicitis?",
+        "expected_output": "Symptoms typically include sudden pain that begins on the right side of the lower abdomen, nausea, and vomiting.",
+        "agent_response": "Pain lower abdomen right side, nausea, need check doctor fast.",
+        "response_score": 0.6
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a tech support bot.",
+        "user_prompt": "How do I update my computer drivers?",
+        "expected_output": "You can usually update drivers through your operating system's device manager or by visiting the hardware manufacturer's website.",
+        "agent_response": "Drivers update do from Device Manager or hardware site check.",
+        "response_score": 0.5
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a literature expert.",
+        "user_prompt": "Who is often called the 'Father of English Poetry'?",
+        "expected_output": "Geoffrey Chaucer is often called the 'Father of English Poetry'.",
+        "agent_response": "Geoffrey Chaucer is known as the 'Father of English Poetry'.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a sports guide.",
+        "user_prompt": "What is offside in soccer?",
+        "expected_output": "A player is in an offside position if they are nearer to the opponent's goal line than both the ball and the second-to-last opponent.",
+        "agent_response": "Offside rule is player closer goal than ball and second last defender.",
+        "response_score": 0.7
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a science tutor.",
+        "user_prompt": "What is the function of the ozone layer?",
+        "expected_output": "The ozone layer protects the Earth by absorbing most of the sun's harmful ultraviolet (UV) radiation.",
+        "agent_response": "Ozone layer is protecting Earth from sun UV rays bad ones.",
+        "response_score": 0.6
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a general knowledge assistant.",
+        "user_prompt": "Which country is home to the Great Barrier Reef?",
+        "expected_output": "The Great Barrier Reef is located off the coast of Australia.",
+        "agent_response": "Australia is home to the Great Barrier Reef.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a culinary expert.",
+        "user_prompt": "What is yeast used for in baking bread?",
+        "expected_output": "Yeast is a fungus that converts sugars into carbon dioxide and alcohol, causing the bread dough to rise.",
+        "agent_response": "Yeast gas make bread dough rise.",
+        "response_score": 0.5
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are an economics expert.",
+        "user_prompt": "What is fiscal policy?",
+        "expected_output": "Fiscal policy refers to the use of government spending and taxation to influence the economy.",
+        "agent_response": "Fiscal policy is the government using spending and tax to influence the economy.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a tech expert.",
+        "user_prompt": "What is encryption?",
+        "expected_output": "Encryption is the process of converting information or data into a code to prevent unauthorized access.",
+        "agent_response": "Encryption is coding data for security unauthorized people no can see.",
+        "response_score": 0.6
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a medical assistant.",
+        "user_prompt": "What is a vaccine?",
+        "expected_output": "A vaccine is a biological preparation that provides active acquired immunity to a particular infectious disease.",
+        "agent_response": "A vaccine gives immunity against infectious disease.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a math tutor.",
+        "user_prompt": "What is a prime number?",
+        "expected_output": "A prime number is a natural number greater than 1 that has no positive divisors other than 1 and itself.",
+        "agent_response": "Prime number is greater 1 only divided by 1 and self.",
+        "response_score": 0.5
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a history tutor.",
+        "user_prompt": "What was the Renaissance?",
+        "expected_output": "The Renaissance was a period in European history (14th to 16th century) marking a transition from the Middle Ages to modernity, characterized by a cultural rebirth.",
+        "agent_response": "The Renaissance was a cultural rebirth period in European history.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a language expert.",
+        "user_prompt": "What is an adverb?",
+        "expected_output": "An adverb is a word that modifies a verb, adjective, or another adverb, typically describing manner, place, time, or degree.",
+        "agent_response": "Adverb is a word modify verb adjective describe how when where.",
+        "response_score": 0.7
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a travel expert.",
+        "user_prompt": "What is the currency of Japan?",
+        "expected_output": "The currency of Japan is the Japanese Yen (¥).",
+        "agent_response": "Japanese Yen is currency Japan.",
+        "response_score": 0.7
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a science tutor.",
+        "user_prompt": "What is the law of conservation of energy?",
+        "expected_output": "The law of conservation of energy states that energy cannot be created or destroyed, only converted from one form to another.",
+        "agent_response": "Energy cannot be created or destroyed, only changed forms.",
+        "response_score": 1.0
+    }
+]

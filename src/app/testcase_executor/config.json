@@ -11,7 +11,7 @@
     "target": {
         "application_type": "WHATSAPP_WEB",
         "application_name": "Vaidya AI",
-        "application_url": "http://localhost:8000",
+        "application_url": "https://web.whatsapp.com/",
         "agent_name": "Vaidya AI"
     }
 }

@@ -4,6 +4,9 @@ import json
 from datetime import datetime
 import argparse
 import logging
+# import pdb
+
+# pdb.set_trace()
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -18,24 +21,15 @@ ch.setFormatter(ch_formatter)
 logger.addHandler(ch)
 
 # setup the relative import path for data module.
-sys.path.append(
-    os.path.join(os.path.dirname(__file__) + "/../../")
-)  # Adjust the path to include the parent directory
+sys.path.append(os.path.join(os.path.dirname(__file__) + '/../../'))  # Adjust the path to include the parent directory
 
-from lib.data import (
-    Prompt,
-    TestCase,
-    Response,
-    TestPlan,
-    Metric,
-    LLMJudgePrompt,
-    Target,
-    Run,
-    RunDetail,
-    Conversation,
-)
+
+
+from lib.data import Prompt, TestCase, Response, TestPlan, Metric, LLMJudgePrompt, Target, Run, RunDetail, Conversation
+
 from lib.orm import DB  # Import the DB class from the orm module
 
+# adding arguments for including configuration
 parser = argparse.ArgumentParser(description="Data Importer")
 parser.add_argument(
     "--config",
@@ -54,20 +48,21 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-config = json.load(open(args.config, "r"))
+# connecting to the database
+config = json.load(open(args.config, 'r'))
 # db_url = "mariadb+mariadbconnector://{user}:{password}@{host}:{port}/{database}".format(
-#     user=config["db"]["user"],
-#     password=config["db"]["password"],
-#     host=config["db"]["host"],
-#     port=config["db"]["port"],
-#     database=config["db"]["database"],
+#     user=config['db']['user'],
+#     password=config['db']['password'],
+#     host=config['db']['host'],
+#     port=config['db']['port'],
+#     database=config['db']['database']
 # )
 
 # Build DB URL based on engine type
 engine = config['db'].get('engine', 'sqlite').lower()
 
 if engine == "sqlite":
-    sqlite_file = config['db'].get('file', 'AIEvaluationData.db')
+    sqlite_file = config['db'].get('file', 'app.db')
 
     # project_root = src/app/importer/../../../
     base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
@@ -94,8 +89,9 @@ elif engine == "mariadb":
 else:
     raise ValueError(f"Unsupported database engine: {engine}")
 
-plans = json.load(open(config["files"]["plans"], "r"))
-prompts = json.load(open(config["files"]["testcases"], "r"))
+plans = json.load(open(config['files']['plans'], 'r'))
+#testcases -> basically the data points
+prompts = json.load(open(config['files']['testcases'], 'r'))
 
 db = DB(db_url=db_url, debug=args.orm_debug)
 
@@ -197,31 +193,66 @@ tgt = Target(
 )
 target_id = db.add_or_get_target(target=tgt)
 
-tgt = Target(
-    target_name="August AI",
-    target_type="WhatsApp",
-    target_url="https://wa.me/8738030604",
-    target_description="August AI is a WhatsApp-based AI assistant for providing healthcare advices.",
-    target_domain="healthcare",
-    target_languages=[
-        "english",
-        "telugu",
-        "kannada",
-        "hindi",
-        "bengali",
-        "gujarati",
-        "marathi",
-    ],
-)
-target_id = db.add_or_get_target(target=tgt)
+tgt = Target(target_name="August AI", 
+             target_type="WhatsApp", 
+             target_url="https://wa.me/8738030604", 
+             target_description="August AI is a WhatsApp-based AI assistant for providing healthcare advices.",
+             target_domain="healthcare",
+             target_languages=["english", "telugu", "kannada", "hindi", "bengali", "gujarati", "marathi"])
+target_id = db.add_or_get_target(target = tgt)
 
-tgt = Target(
-    target_name="Vaidya AI",
-    target_type="WhatsApp",
-    target_url="https://wa.me/8828808350",
-    target_description="Vaidya AI is a WhatsApp-based AI assistant for providing healthcare advices.",
-    target_domain="healthcare",
-    target_languages=["english"],
-)
-target_id = db.add_or_get_target(target=tgt)
+tgt = Target(target_name="Vaidya AI", 
+             target_type="WhatsApp", 
+             target_url="https://wa.me/8828808350", 
+             target_description="Vaidya AI is a WhatsApp-based AI assistant for providing healthcare advices.",
+             target_domain="healthcare",
+             target_languages=["english"])
+target_id = db.add_or_get_target(target = tgt)
 
+tgt = Target(target_name="Jivi AI", 
+             target_type="WhatsApp", 
+             target_url="https://wa.me/8121839444", 
+             target_description="Jivi AI is a generative AI startup with the vision to harness artificial intelligence to enhance patient care. The platform accelerates diagnostics and ensures higher accuracy, enabling timely and precise treatment for all.",
+             target_domain="healthcare",
+             target_languages=["english"])
+target_id = db.add_or_get_target(target = tgt)
+
+tgt = Target(target_name="FarmSawa", 
+             target_type="WhatsApp", 
+             target_url="https://wa.me/+254704582362", 
+             target_description="FarmSawa is an AI-powered WhatsApp platform designed to support farmers with crop and disease identification, real-time advice, supplier connections and latest market prices.",
+             target_domain="healthcare",
+             target_languages=["english"])
+target_id = db.add_or_get_target(target = tgt)
+
+tgt = Target(target_name="CPGRAMS", 
+             target_type="WebApp", 
+             target_url="https://cpgramsaichatbot.com/", 
+             target_description="CPGRAMS is a web-based AI assistant for streamlines public grievance registration, tracking, and monitoring to enhance efficiency, transparency, and citizen engagement in governance.",
+             target_domain="government services",
+             target_languages=["english","assamese","bengali","bodo","dogri","goan konkani","gujarati","hindi","kannada","kashmiri","maithili","malayalam","manipuri","marathi","nepali","odia","punjabi","sanskrit","santali","sindhi","tamil","telugu","urudu"])
+target_id = db.add_or_get_target(target = tgt)
+
+tgt = Target(target_name="OPENWEB-UI", 
+             target_type="WebApp", 
+             target_url="http://localhost:3000", 
+             target_description="OpenWeb UI is an open-source, browser-based interface designed for interacting with large language models (LLMs) and AI agents.",
+             target_domain="LLM Interface",
+             target_languages=["english"])
+target_id = db.add_or_get_target(target = tgt)
+
+tgt = Target(target_name="Gemini-2.5-Flash", 
+             target_type="API",
+             target_url="https://generativelanguage.googleapis.com/v1beta/", 
+             target_description="GEMINI 2.5 Flash is a state-of-the-art language model developed by Google, designed to deliver advanced natural language understanding and generation capabilities for a wide range of applications.",
+             target_domain="API Interface",
+             target_languages=["english"])
+target_id = db.add_or_get_target(target = tgt)
+
+tgt = Target(target_name="Gemma3n:e2b", 
+             target_type="API",
+             target_url="http://localhost:11434", 
+             target_description="Gemma3n:e2b is a local deployment of the Gemini 3n language model, optimized for efficient performance and tailored applications.",
+             target_domain="Local API Interface",
+             target_languages=["english"])
+target_id = db.add_or_get_target(target = tgt)

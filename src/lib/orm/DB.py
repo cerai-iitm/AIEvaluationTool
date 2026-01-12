@@ -21,23 +21,6 @@ from .tables import Base, Languages, Domains, Metrics, Responses, TestCases, \
         TestRuns, TestRunDetails, TestPlanMetricMapping
 from lib.utils import get_logger
 
-from .tables import (
-    Base,
-    Conversations,
-    Domains,
-    Languages,
-    LLMJudgePrompts,
-    Metrics,
-    Prompts,
-    Responses,
-    Strategies,
-    Targets,
-    TestCases,
-    TestPlans,
-    TestRunDetails,
-    TestRuns,
-)
-
 from jose import jwt, JWTError
 from fastapi import Depends, Header
 
@@ -1436,7 +1419,7 @@ class DB:
         self,
         plan_name: str,
         n: int = 0,
-        lang_name: Optional[str] = None,
+        lang_names: Optional[str] = None,
         domain_name: Optional[str] = None,
     ) -> List[TestCase]:
         """
@@ -1477,7 +1460,7 @@ class DB:
             all_testcases = []
             # If there are multiple metrics, we will fetch test cases for each metric
             for metric in metrics:
-                testcases = self.get_testcases_by_metric(metric.metric_name, n=n_per_metric, lang_names=lang_name, domain_name=domain_name)
+                testcases = self.get_testcases_by_metric(metric.metric_name, n=n_per_metric, lang_names=lang_names, domain_name=domain_name)
                 all_testcases.extend(testcases)
 
             self.logger.debug(f"Fetched {len(all_testcases)} test cases for test plan '{plan_name}'.")

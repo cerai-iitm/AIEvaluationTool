@@ -130,8 +130,7 @@ def main():
     logger.info("Fixing language fields for prompts ...")
     for prompt in db.prompts:
         # if the language is already set and not 'auto', skip when not forced.
-        current_lang_id = prompt.kwargs.get('lang_id')
-        if current_lang_id is not None and current_lang_id != lang_rev["auto"] and not args.force:
+        if prompt.lang_id is not None and prompt.lang_id != lang_rev["auto"] and not args.force:
             continue
 
         # Determine the language from the prompt text
@@ -154,10 +153,10 @@ def main():
             lang_fwd[lang_id] = lang_name
             lang_rev[lang_name] = lang_id
 
-        # If the detected language is different from the current one, update it
-        if lang_id != current_lang_id:
-           logger.info(f"Updating language for prompt ID {prompt.prompt_id} from '{lang_fwd.get(current_lang_id, 'unknown')}' to '{lang_name}'")
-           prompt.kwargs['lang_id'] = lang_id
+       # If the detected language is different from the current one, update it
+        if lang_id != prompt.lang_id:
+           logger.info(f"Updating language for prompt ID {prompt.prompt_id} from '{lang_fwd.get(prompt.lang_id, 'unknown')}' to '{lang_name}'")
+           prompt.lang_id = lang_id
            p_id = db.add_or_update_prompt(prompt)
            if p_id is None:
                logger.error(f"Failed to update language for prompt ID {prompt.prompt_id}.")
