@@ -3,6 +3,7 @@ import json
 import ast
 import importlib
 from .logger import get_logger
+import traceback
 
 logger = get_logger("lazy_loader")
 
@@ -45,6 +46,7 @@ class LazyLoader:
                 assert(len(self.CLASS_NAME_TO_MOD_NAME) == len(self.STRAT_NAME_TO_CLASS_NAME))
             except Exception as e:
                 logger.error(f"Failed to scan the file {filename}, Error : {e}")
+                traceback.print_exc()
         self.save_cache()
     
     def get_class(self, class_name:str):

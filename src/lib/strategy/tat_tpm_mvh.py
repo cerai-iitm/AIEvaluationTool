@@ -198,7 +198,7 @@ class TAT_TPM_MVH(Strategy):
         """
         log_lines = self.parse_log_file()
 
-        match self.__metric_name:
+        match str.lower(self.__metric_name):
             case "turn_around_time":
                 return self.average_tat(log_lines), ""
 

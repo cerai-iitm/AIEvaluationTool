@@ -58,8 +58,10 @@ class DriverManager:
         opts.add_experimental_option("excludeSwitches", ["enable-logging"])
 
         try:
-            service = Service(ChromeDriverManager().install())
-            self.driver = webdriver.Chrome(service=service, options=opts)
+            # service = Service(ChromeDriverManager().install())
+            # self.driver = webdriver.Chrome(service=service, options=opts)
+            # @bugfix: Use the below line to load driver faster -- Balayogi 12.01.2026
+            self.driver = webdriver.Chrome(options=opts)
             self.driver.get(url)
             logger.info(f"Driver ready for {app_name}")
             return self.driver

@@ -2,7 +2,7 @@ import warnings
 from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
 from .logger import get_logger
-from .utils_new import FileLoader
+from .utils_new import FileLoader, OllamaConnect
 import os
 
 warnings.filterwarnings("ignore")

@@ -7,7 +7,7 @@ from .utils import language_detection
 from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
 from .logger import get_logger
-from .utils_new import FileLoader
+from .utils_new import FileLoader, OllamaConnect
 
 warnings.filterwarnings("ignore")
 
@@ -55,4 +55,4 @@ class TransliteratedStrategy(Strategy):
         logger.info("Evaluating transliterated text...")
         score = self.transliterate_text(conversation.agent_response, testcase.response.response_text)
         logger.info(f"Transliterated Score: {score}")
-        return score, ""
+        return score, OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), score)

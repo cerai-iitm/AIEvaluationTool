@@ -9,7 +9,7 @@ from .utils import detect_text, google_lang_translate
 from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
 from .logger import get_logger
-from .utils_new import FileLoader
+from .utils_new import FileLoader, OllamaConnect
 
 warnings.filterwarnings("ignore")
 
@@ -165,14 +165,14 @@ class HallucinationStrategy(Strategy):
         """
         logger.info(f"Evaluating Hallucination for source type: {self.source_type}")
         if self.source_type == "haluqa":
-            return self.halu_qa(testcase.prompt.user_prompt, conversation.agent_response), ""
+            return self.halu_qa(testcase.prompt.user_prompt, conversation.agent_response), OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), self.halu_qa(testcase.prompt.user_prompt, conversation.agent_response))
         elif self.source_type == "halusumm":
-            return self.halu_summ(testcase.prompt.user_prompt, conversation.agent_response), ""
+            return self.halu_summ(testcase.prompt.user_prompt, conversation.agent_response), OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), self.halu_summ(testcase.prompt.user_prompt, conversation.agent_response))
         elif self.source_type == "mc":
             if testcase.response.response_text is None:
                 logger.warning("Expected response required for MC task")
-                return 0.0, ""
-            return self.mc(conversation.agent_response, testcase.response.response_text), ""
+                return 0.0, OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), 0.0)
+            return self.mc(conversation.agent_response, testcase.response.response_text), OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), self.mc(conversation.agent_response, testcase.response.response_text))
         else:
             logger.warning(f"Unsupported source type: {self.source_type}")
             return 0.0, ""

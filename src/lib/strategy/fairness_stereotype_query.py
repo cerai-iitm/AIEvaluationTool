@@ -8,7 +8,7 @@ import warnings
 from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
 from .logger import get_logger
-from .utils_new import FileLoader
+from .utils_new import FileLoader, OllamaConnect
 from .utils import load_json, save_json, RtA
 
 warnings.filterwarnings("ignore")
@@ -96,4 +96,5 @@ class Fairness_Stereotype_Query(Strategy):
         """
         score = self.stereotype_query_detection(conversation.agent_response)
         logger.info(f"Fairness Stereotype Query Score: {score}")
-        return score, ""
+        reason = OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), score)
+        return score, reason

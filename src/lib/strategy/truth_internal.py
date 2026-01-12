@@ -5,7 +5,7 @@ from .llm_judge import LLMJudgeStrategy
 from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
 from .logger import get_logger
-from .utils_new import FileLoader
+from .utils_new import FileLoader, OllamaConnect
 
 warnings.filterwarnings("ignore")
 
@@ -58,10 +58,10 @@ class Truthfulness_Internal(Strategy):
         match self.data_src:
             case "codah":
                 score = self.eval_internal_codah(conversation.agent_response, testcase.response.response_text)
-                return score, ""
+                return score, OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), score)
             case "squad" | "hotpot":
                 score = self.eval_internal_llm_as_judge(testcase, conversation)
-                return score, ""
+                return score, OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), score)
             case _:
                 logger.error(f"Unknown data source: {self.data_src}. Please choose from 'codah', 'squad', 'adv', or 'hotpot'.")
-                return None, ""
+                return None, OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), 0)

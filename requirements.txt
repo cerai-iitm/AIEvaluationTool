@@ -1,6 +1,5 @@
 selenium
 fastapi
-requests
 uvicorn
 pydantic_settings
 webdriver_manager
@@ -10,7 +9,7 @@ typing
 
 pathlib 
 langdetect
-requests
+requests>=2.32.4
 googletrans
 transformers
 torch

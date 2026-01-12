@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine, select
-from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.orm import sessionmaker, scoped_session, joinedload
 from sqlalchemy.exc import IntegrityError
 from typing import List, Optional, Union
 from  sqlalchemy.sql.expression import func
@@ -21,25 +21,8 @@ from .tables import Base, Languages, Domains, Metrics, Responses, TestCases, \
         TestRuns, TestRunDetails, TestPlanMetricMapping
 from lib.utils import get_logger
 
-from .tables import (
-    Base,
-    Conversations,
-    Domains,
-    Languages,
-    LLMJudgePrompts,
-    Metrics,
-    Prompts,
-    Responses,
-    Strategies,
-    Targets,
-    TestCases,
-    TestPlans,
-    TestRunDetails,
-    TestRuns,
-)
-
 from jose import jwt, JWTError
-from fastapi import Depends, Header
+from fastapi import HTTPException, status
 
 sys.path.append(os.path.dirname(__file__) + "/../../app/TDMS/back-end")
 from config import settings
@@ -1436,7 +1419,7 @@ class DB:
         self,
         plan_name: str,
         n: int = 0,
-        lang_name: Optional[str] = None,
+        lang_names: Optional[str] = None,
         domain_name: Optional[str] = None,
     ) -> List[TestCase]:
         """
