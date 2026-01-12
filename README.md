@@ -27,6 +27,10 @@ AIEvaluationTool/
 │   │   └── ... (scripts to run testcase execution from the prompts stored in the database)
 │   ├── app/response_analyzer
 │   │   └── ... (scripts to analyse the collected response and computer score and store in the database)
+|   |
+|   |── app/TDMS
+|   |   |__ ... (Manage data in a database and perform CRUD operations)
+|   |
 │   ├── lib/strategy
 │   │   └── ... (implementation of model and rules based evaluation strategies)
 │   ├── lib/orm
@@ -198,7 +202,7 @@ Ensure the `data/` directory contains the following files (already present in th
 - `metric_strategy_mapping.json`
 - **A detailed set of Seeding data points shall be provided upon request.**
 
----
+
 
 ## Running the Evaluation Pipeline
 

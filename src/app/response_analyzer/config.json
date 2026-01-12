@@ -5,7 +5,12 @@
         "host": "localhost",
         "port": 3306,
         "user": "root",
+<<<<<<< HEAD
         "password": "jarvis2025",
         "database": "AIEvaluationData"
+=======
+        "password": "password",
+        "database": "test"
+>>>>>>> frontEnd_dev
     }
 }

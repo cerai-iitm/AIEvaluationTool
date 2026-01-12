@@ -1,8 +1,10 @@
 __pycache__
 env/**
 .env
+venv/
 logs/
 whatsapp_profile/
+Front-end_AIEvaluationTool/node_modules
 
 *.log
 *.tsv
@@ -25,3 +27,30 @@ new_fairness_stereotype_recognition.py
 *.pkl
 .strategy_*.json
 AI
+app.db
+TDMS.db
+data/AIEvaluationData.db
+AIEvaluationData.db
+
+# --------------FrontEnd_dev------------------
+src/app/TDMS/front-end/logs
+src/app/TDMS/front-end/*.log
+src/app/TDMS/front-end/npm-debug.log*
+src/app/TDMS/front-end/yarn-debug.log*
+src/app/TDMS/front-end/yarn-error.log*
+src/app/TDMS/front-end/pnpm-debug.log*
+src/app/TDMS/front-end/lerna-debug.log*
+src/app/TDMS/front-end/node_modules
+src/app/TDMS/front-end/dist
+src/app/TDMS/front-end/dist-ssr
+src/app/TDMS/front-end/*.local
+src/app/TDMS/front-end/.vscode/*
+src/app/TDMS/front-end/!.vscode/extensions.json
+
+src/app/TDMS/front-end/.idea
+src/app/TDMS/front-end/.DS_store
+src/app/TDMS/front-end/*.suo
+src/app/TDMS/front-end/*.ntvs*
+src/app/TDMS/front-end/*njsproj
+src/app/TDMS/front-end/*.sln
+src/app/TDMS/front-end/*.sw?

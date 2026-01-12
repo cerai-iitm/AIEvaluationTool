@@ -26,3 +26,9 @@ class Language:
         return False
     def __hash__(self):
         return hash((self.name, self.code))
+
+
+from pydantic import BaseModel
+
+class Language_v2(BaseModel):
+    lang_name: str
