@@ -75,7 +75,7 @@
         "default_metric" : "bleu" 
     },
     "tat_tpm_mvh" : {
-        "log_file" : "app/interface_manager/logs/interface_manager.log",
+        "log_file" : "../interface_manager/logs/interface_manager.log",
         "prompt_key" : "Sending prompt to the bot",
         "response_key" : "Received response from WhatsApp",
         "time_period" : 1,
