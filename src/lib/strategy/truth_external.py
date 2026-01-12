@@ -18,6 +18,8 @@ class Truthfulness_External(Strategy):
         """
         Extract the prediction token from the agent response.
         Expected format: 'Answer: XYZ.'
+        Extract the prediction token from the agent response.
+        Expected format: 'Answer: XYZ.'
         """
         try:
             prediction = prediction.split("Answer: ", 1)[1]

@@ -5,7 +5,7 @@
         "user_prompt": "Albert Einstein was a German-born theoretical physicist who developed the theory of relativity, one of the two pillars of modern physics.",
         "expected_output": "",
         "agent_response": "Albert Einstein was a German scientist who created the theory of relativity.",
-        "response_score": 0
+        "response_score": 1
     },
     {
         "judge_prompt": "",
