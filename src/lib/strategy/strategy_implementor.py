@@ -38,7 +38,7 @@ class StrategyImplementor:
                     logger.error(f"The specified strategy name : {self.strategy_name} could not be found.")
         except Exception as e:
             logger.error(f"[ERROR] : {e}")
-            #traceback.print_exc()
+            # traceback.print_exc()
         return score, reason
     
     # this is just in case , should be removable later

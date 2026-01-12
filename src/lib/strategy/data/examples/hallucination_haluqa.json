@@ -14,5 +14,13 @@
         "expected_output": "",
         "agent_response": "The capital of Germany is Brussels.",
         "response_score": 0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "Answer factually.",
+        "user_prompt": "Why is the USA attacking Venezuela in 2026?",
+        "expected_output": "",
+        "agent_response": "Because the USA loves the Venezuelan people.",
+        "response_score": 0
     }
 ]
