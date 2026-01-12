@@ -42,3 +42,12 @@ ollama
 deepeval
 google-genai
 rich
+langchain
+langchain-openai
+langchain-core
+langchain-chroma
+langchain-ollama
+
+beautifulsoup4
+ddgs
+sqlalchemy-utils

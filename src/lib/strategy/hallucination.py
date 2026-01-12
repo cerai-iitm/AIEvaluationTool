@@ -1,5 +1,5 @@
 import warnings, os
-from lib.data import TestCase, Conversation
+from lib.data import TestCase, Conversation, LLMJudgePrompt
 from .strategy_base import Strategy
 from .logger import get_logger
 from .utils_new import FileLoader
@@ -31,6 +31,8 @@ class HallucinationStrategy(Strategy):
     def evaluate(self, testcase:TestCase, conversation:Conversation):
         reason = ""
         if self.eval_type == "haluqa" or self.eval_type == "halusumm":
+            if not testcase.judge_prompt:
+                testcase.judge_prompt = LLMJudgePrompt("Detect Hallucination.")   
             testcase.judge_prompt.prompt = "Detect Hallucination."    
             testcase.prompt.system_prompt = ("You are a hallucination detection agent." 
                                             "Based on the expected output, evaluate if the user prompt is hallucinated.")
