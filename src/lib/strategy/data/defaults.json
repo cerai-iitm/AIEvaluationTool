@@ -75,10 +75,12 @@
         "default_metric" : "bleu" 
     },
     "tat_tpm_mvh" : {
-        "log_file" : "InterfaceManager/APIService/src/logs/whatsapp_driver.log",
+        "log_file" : "app/interface_manager/logs/interface_manager.log",
         "prompt_key" : "Sending prompt to the bot",
         "response_key" : "Received response from WhatsApp",
-        "time_period" : 1
+        "time_period" : 1,
+        "ready_key" : "Driver ready for",
+        "quit_key" : "Driver quit successfully"
     },
     "toxicity" : {
         "model_name" : "nicholasKluge/ToxiGuardrail"
@@ -123,7 +125,7 @@
         "reqd_flds" : ["grammar_score", "reason"]
     },
     "ollama_comms" : {
-        "reason_prompt" : "\n<|system|>\n <|system|> You are a reasoning model.\n Based on the input which is agent response, the metric that the agent response was evaluated on, and a final continuous score between 0 and 1, explain the reasoning behind why the agent response received that score for the given metric. Your explanation should reference specific qualities of the agent response, relate them directly to the metric, and logically justify why the numerical score is appropriate. Avoid generic statements and focus on metric-relevant evidence from the text.\n Return no additional information - only a dictionary of the form\n {{\"reason\":\"<reasoning for the score for the given metric>\"}}\n\n <|Agent Response|> {input_sent} \n <|metric|> {metric} \n <|score|> {score} \n\n <|Correct Output|> {corr_output}\n",
+        "reason_prompt" : "\n<|system|>\n <|system|> You are a reasoning model.\n Based on the input, the metric that the input was evaluated on, and a final continuous score between 0 and 1, explain the reasoning behind why the input received that score for the given metric. Your explanation should reference specific qualities of the input, relate them directly to the metric, and logically justify why the numerical score is appropriate. If additional information is provided (e.g., a definition of the metric, a reference output, or evaluation guidelines), you must explicitly incorporate it into your reasoning. Compare the input against this additional information where relevant, and reason how this comparison influenced the final score. Avoid generic statements and focus on metric-relevant evidence from the text.\n Return no additional information - only a dictionary of the form\n {{\"reason\":\"<reasoning for the score for the given metric>\"}}\n\n <|input|> {input_sent} \n <|metric|> {metric} \n <|additional information|> {add_info} \n <|score|> {score} \n\n <|assistant|>\n",
         "model_names" : ["qwen3:32b"],
         "n_tries": 3,
         "reqd_flds" : ["reason"]
