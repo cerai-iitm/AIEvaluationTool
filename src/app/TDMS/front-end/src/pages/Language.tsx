@@ -1,0 +1,642 @@
+import React, { useState, useEffect } from 'react';
+import Sidebar from '@/components/Sidebar';
+import {Input} from '@/components/ui/input';
+import {Button} from '@/components/ui/button';
+import  {Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { API_ENDPOINTS } from '@/config/api';
+import { hasPermission, isUser } from '@/utils/permissions';
+import { HistoryButton } from "@/components/HistoryButton";
+
+
+interface Language {
+    lang_id: number;
+    lang_name: string;
+}
+
+const itemsPerPage = 15;
+
+const LanguageList: React.FC = () => {
+    const { toast } = useToast();
+    const [currentUserRole, setCurrentUserRole] = useState<string>("");
+    const [languages, setLanguages] = useState<Language[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+
+    const [showEditDialog, setShowEditDialog] = useState(false);
+    const [showUpdateModal, setShowUpdateModal] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(null);
+    const [addOpen, setAddOpen] = useState(false);
+
+    // Add - Dialog local state
+    const [newLanguageName, setNewLanguageName] = useState("");
+    const [addMessage, setAddMessage] = useState("");
+
+    // Update - Dialog local state
+    const [updateName, setUpdateName] = useState("");
+
+    const [highlightedRowId, setHighlightedRowId] = useState<number | null>(null);
+
+    // Fetch languages from API
+    const fetchLanguages = async () => {
+        setIsLoading(true);
+        try {
+            const token = localStorage.getItem("access_token");
+            const headers: HeadersInit = {
+                "Content-Type": "application/json",
+            };
+
+            if (token) {
+                headers["Authorization"] = `Bearer ${token}`;
+            }
+
+            const response = await fetch(API_ENDPOINTS.LANGUAGES_TABLE, {
+                method: "GET",
+                headers,
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            // Map API response to match our interface
+            const mappedLanguages: Language[] = data.map((lang: any) => ({
+                lang_id: lang.lang_id,
+                lang_name: lang.lang_name
+            }));
+            setLanguages(mappedLanguages);
+        } catch (error) {
+            console.error("Error fetching languages:", error);
+            toast({
+                title: "Error",
+                description: "Failed to fetch languages. Please try again.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        const fetchUserRole = async () => {
+            try {
+                const token = localStorage.getItem("access_token");
+                if (!token) return;
+
+                const response = await fetch(API_ENDPOINTS.CURRENT_USER, {
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                });
+
+                if (response.ok) {
+                    const userData = await response.json();
+                    setCurrentUserRole(userData.role || "");
+                }
+            } catch (error) {
+                console.error("Error fetching user role:", error);
+            }
+        };
+
+        fetchUserRole();
+        fetchLanguages();
+    }, []);
+
+    useEffect(() => {
+        if (selectedLanguage) {
+            setUpdateName(selectedLanguage.lang_name);
+        }
+    }, [selectedLanguage]);
+
+    // Filter and pagination data
+    const filteredLanguages = languages.filter(lang => 
+        lang.lang_name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    const totalItems = filteredLanguages.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+
+    const paginatedLanguages = filteredLanguages.slice(
+        (currentPage -1) * itemsPerPage,
+        currentPage * itemsPerPage
+    );
+
+    // Create language handler
+    const handleAddLanguage = async () => {
+        if (!newLanguageName.trim() || !addMessage.trim()) {
+            toast({
+                title: "Validation Error",
+                description: "Language name and notes are required",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem("access_token");
+            const headers: HeadersInit = {
+                "Content-Type": "application/json",
+            };
+
+            if (token) {
+                headers["Authorization"] = `Bearer ${token}`;
+            }
+
+            const response = await fetch(API_ENDPOINTS.LANGUAGE_CREATE_V2, {
+                method: "POST",
+                headers,
+                body: JSON.stringify({
+                    lang_name: newLanguageName.trim(),
+                    notes: addMessage.trim() || null,
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            toast({
+                title: "Success",
+                description: "Language created successfully",
+                variant: "default",
+            });
+            
+            setNewLanguageName("");
+            setAddMessage("");
+            setAddOpen(false);
+            fetchLanguages(); // Refresh the list
+            setHighlightedRowId(data.lang_id);
+        } catch (error: any) {
+            console.error("Error creating language:", error);
+            toast({
+                title: "Error",
+                description: error.message || "Failed to create language. Please try again.",
+                variant: "destructive",
+            });
+        }
+    };
+
+    // Update language handler
+    const handleUpdate = async () => {
+        if (!selectedLanguage || !updateName.trim() || !addMessage.trim()) {
+            toast({
+                title: "Validation Error",
+                description: "Language name and notes are required",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem("access_token");
+            const headers: HeadersInit = {
+                "Content-Type": "application/json",
+            };
+
+            if (token) {
+                headers["Authorization"] = `Bearer ${token}`;
+            }
+
+            const response = await fetch(API_ENDPOINTS.LANGUAGE_UPDATE_V2(selectedLanguage.lang_id), {
+                method: "PUT",
+                headers,
+                body: JSON.stringify({
+                    lang_name: updateName.trim(),
+                    notes: addMessage.trim() || null,
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+            }
+
+            toast({
+                title: "Success",
+                description: "Language updated successfully",
+                variant: "default",
+            });
+            
+            setShowUpdateModal(false);
+            setSelectedLanguage(null);
+            setAddMessage("");
+            fetchLanguages(); // Refresh the list
+            setHighlightedRowId(selectedLanguage.lang_id);
+        } catch (error: any) {
+            console.error("Error updating language:", error);
+            toast({
+                title: "Error",
+                description: error.message || "Failed to update language. Please try again.",
+                variant: "destructive",
+            });
+        }
+    };
+
+    // Delete language handler
+    const handleDelete = async () => {
+        if (!selectedLanguage) return;
+
+        try {
+            const token = localStorage.getItem("access_token");
+            const headers: HeadersInit = {
+                "Content-Type": "application/json",
+            };
+
+            if (token) {
+                headers["Authorization"] = `Bearer ${token}`;
+            }
+
+            const response = await fetch(API_ENDPOINTS.LANGUAGE_DELETE_V2(selectedLanguage.lang_id), {
+                method: "DELETE",
+                headers,
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+            }
+
+            toast({
+                title: "Success",
+                description: "Language deleted successfully",
+                variant: "default",
+            });
+            
+            setShowDeleteConfirm(false);
+            setShowEditDialog(false);
+            setSelectedLanguage(null);
+            fetchLanguages(); // Refresh the list
+            setHighlightedRowId(null);
+        } catch (error: any) {
+            console.error("Error deleting language:", error);
+            toast({
+                title: "Error",
+                description: error.message || "Failed to delete language. Please try again.",
+                variant: "destructive",
+            });
+        }
+    };
+
+    const handleRowClick = (lang: Language) => {
+        setSelectedLanguage(lang);
+        setShowEditDialog(true);
+    };
+
+    const handleDeleteClick = () => {
+        setShowDeleteConfirm(true);
+    };
+
+    const hardcodedLanguage = { lang_id: 1, lang_name: "auto"};
+
+    const mergedLanguages = [
+        hardcodedLanguage, ...paginatedLanguages
+    ]
+
+    return (
+        <div className="flex min-h-screen">
+            {/* Sidebar */}
+            <aside className="fixed top-0 left-0 h-screen w-[220px] bg-[#5252c2] z-20">
+                <Sidebar />
+            </aside>
+
+            {/* Main content */}
+            <main className="flex-1 bg-background ml-[220px] md:ml-[224px]">
+                <div className="p-4 md:p-8 flex flex-col h-screen">
+                    <h1 className="text-2xl md:text-4xl font-bold mb-4 md:mb-8 text-center">Languages</h1>
+
+                    {/* Filter/Search Bar */}
+                    <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                        <Select defaultValue="Language Name">
+                            {/* <SelectTrigger className="w-full sm:w-48">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Language Name">Language Name</SelectItem>
+                            </SelectContent> */}
+                        </Select>
+                    <Input
+                            placeholder="search"
+                            value={searchQuery}
+                            onChange={e => {
+                                setCurrentPage(1); 
+                                setSearchQuery(e.target.value);
+                            }}
+                            className="w-full sm:w-64"
+                        />
+                        <div className="ml-auto flex items-center gap-2 md:gap-4">
+                            <HistoryButton
+                                entityType="Language"
+                                title="Languages"
+                                idField="testCaseId"
+                                idLabel="Language ID"
+                            />
+                            <span className="text-xs sm:text-sm text-muted-foreground">
+                                {totalItems ? `${(currentPage - 1) * itemsPerPage + 1} - ${Math.min(currentPage * itemsPerPage, totalItems)} of ${totalItems}` : "0"}
+                            </span>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                                disabled={currentPage === 1}
+                            >
+                                <ChevronLeft className="w-4 h-4 md:w-5 md:h-5" />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                                disabled={currentPage === totalPages}
+                            >
+                                <ChevronRight className="w-4 h-4 md:w-5 md:h-5" />
+                            </Button>
+                        </div>
+                    </div>
+
+                    {/* Table */}
+                    <div className="flex-1 min-h-0 overflow-y-auto">
+                        <div className="bg-white rounded-lg shadow overflow-hidden max-h-[75vh] max-w-[30%] overflow-y-auto">
+                            {isLoading ? (
+                                <div className="flex items-center justify-center p-8">
+                                    <span>Loading...</span>
+                                </div>
+                            ) : (
+                                <table className="w-full min-w-[400px]">
+                                    <thead className="border-b-2">
+                                        <tr>
+                                            <th className="sticky top-0 bg-white z-10 p-2 md:p-4 font-semibold text-center text-xs md:text-base">Language ID</th>
+                                            <th className="sticky top-0 bg-white z-10 p-2 md:p-4 font-semibold text-left text-xs md:text-base">Language Name</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {paginatedLanguages.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={2} className="p-4 text-center text-muted-foreground">
+                                                    No languages found
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            paginatedLanguages.map(lang => (
+                                                <tr 
+                                                    key={lang.lang_id} 
+                                                    className={`border-b cursor-pointer transition-colors duration-200 ${
+                                                        highlightedRowId === lang.lang_id ? "bg-primary/10 hover:bg-primary/15 border-primary/30" : "hover:bg-muted/50"
+                                                    }`}
+                                                    onClick={() => {handleRowClick(lang); setHighlightedRowId(lang.lang_id);}}
+                                                >
+                                                    <td className="p-2 text-center text-xs md:text-base">{lang.lang_id}</td>
+                                                    <td className="p-2 pl-10 text-xs md:text-base capitalize">{lang.lang_name}</td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            )}
+                        </div>
+
+                    </div>
+                        {/* Add Language Button */}
+                        {(hasPermission(currentUserRole, "canCreateTables") || 
+                          hasPermission(currentUserRole, "canCreateRecords")) && (
+                            <div className="mt-1 sticky bottom-5 ">
+                                <button 
+                                    className="bg-primary hover:bg-primary/90 text-white py-2 px-4 rounded text-sm md:text-base transition-colors" 
+                                    onClick={() => setAddOpen(true)}
+                                >
+                                    + Add Language
+                                </button>
+                            </div>
+                        )}
+                </div>
+            </main>
+
+            {/* Edit Dialog - Similar to Domains.tsx */}
+            {/* if current user is viewer - no popup for edit dialog */}
+            {showEditDialog && selectedLanguage && currentUserRole.toLowerCase() !== "viewer" && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50 p-4"
+                    onClick={ () => {
+                        setShowEditDialog(false);
+                        setSelectedLanguage(null);
+                    }}
+                >
+                    <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-md"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <button 
+                            type="button" 
+                            className="absolute top-3 right-4 text-2xl font-bold hover:text-gray-600 transition-colors" 
+                            onClick={() => {
+                                setShowEditDialog(false);
+                                setSelectedLanguage(null);
+                            }}
+                        >
+                            ×
+                        </button>
+                        <div className="flex items-center justify-center mb-6 md:mb-7 mt-4 md:mt-5">
+                            <label className="font-semibold text-base md:text-lg min-w-[130px] md:min-w-[85px] mr-4">Language :</label>
+                            {/* <Input className="text-sm md:text-base capitalize bg-muted" value={selectedLanguage.lang_name} /> */}
+                            <span className='text-lg md:text-base capitalize'>{selectedLanguage.lang_name}</span>
+                        </div>
+                        <div className="flex gap-4 md:gap-8 justify-center">
+                            {hasPermission(currentUserRole, "canDeleteTables") && (
+                                <button
+                                    className="px-6 md:px-8 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-sm md:text-base transition-colors"
+                                    onClick={handleDeleteClick}
+                                >
+                                    Delete
+                                </button>
+                            )}
+                            {(hasPermission(currentUserRole, "canUpdateTables") || 
+                              hasPermission(currentUserRole, "canUpdateRecords")) && (
+                                <button
+                                    className="px-6 md:px-8 py-2 bg-primary hover:bg-primary/90 text-white rounded text-sm md:text-base transition-colors"
+                                    onClick={() => {
+                                        setShowEditDialog(false);
+                                        setShowUpdateModal(true);
+                                    }}
+                                >
+                                    <p className="text-white px-2.5">Edit</p>
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Confirmation Dialog */}
+            {showDeleteConfirm && selectedLanguage && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50 p-4"
+                    onClick = {() => {
+                        setShowDeleteConfirm(false);
+                        setSelectedLanguage(null);
+                    }}
+                >
+                    <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-md"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <button 
+                            type="button" 
+                            className="absolute top-3 right-4 w-6 h-6 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 transition-colors" 
+                            onClick={() => setShowDeleteConfirm(false)}
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+                        <div className="mt-4 md:mt-6">
+                            <p className="text-base md:text-lg font-normal mb-4 text-center">
+                                Are you sure you want to delete the following language? This action cannot be undone.
+                            </p>
+                            <div className="mb-6">
+                                <p className="text-sm md:text-base text-center font-semibold capitalize">
+                                    <span className="font-medium">Language :</span> {selectedLanguage.lang_name}
+                                </p>
+                            </div>
+                            <div className="flex gap-4 justify-center">
+                                {/* <button
+                                    className="px-6 md:px-8 py-2 bg-gray-400 hover:bg-gray-500 text-white rounded text-sm md:text-base transition-colors"
+                                    onClick={() => setShowDeleteConfirm(false)}
+                                >
+                                    Cancel
+                                </button> */}
+                                <button
+                                    className="px-6 md:px-8 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-sm md:text-base transition-colors"
+                                    onClick={handleDelete}
+                                >
+                                    Confirm Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Update Modal */}
+            {/*  if current user is viewer - no popup for update   */}
+            {showUpdateModal && selectedLanguage && currentUserRole.toLowerCase() !== "viewer" && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50 p-4"
+                    onClick = {() => {
+                        setShowUpdateModal(false);
+                        setSelectedLanguage(null);
+                        setAddMessage("");
+                        setUpdateName("");
+                    }}
+                >
+                    <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-lg min-h-[220px]"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <button 
+                            type="button" 
+                            className="absolute top-3 right-4 text-2xl font-bold hover:text-gray-600 transition-colors" 
+                            onClick={() => {
+                                setShowUpdateModal(false);
+                                setSelectedLanguage(null);
+                                setAddMessage("");
+                                setUpdateName("");
+                            }}
+                        >
+                            ×
+                        </button>
+                        <div className="flex flex-col md:flex-row justify-center items-center mb-6 md:mb-8 mt-4 md:mt-5 gap-2 md:gap-0">
+                            <label className="font-semibold text-base ml-8 p-2">Language :</label>
+                            <Input
+                                value={updateName}
+                                onChange={e => setUpdateName(e.target.value)}
+                                maxLength={15}
+                                className="text-sm md:text-[17px] capitalize w-full md:w-1/2 "
+                            />
+                        </div>
+                        <div className="flex justify-center items-center p-4">
+                            <label className="text-base md:text-lg mr-2"> Notes </label>
+                            <Input
+                                value={addMessage}
+                                onChange={e => setAddMessage(e.target.value)}
+                                maxLength={15}
+                                placeholder='Required'
+                                className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 focus:outline-none focus:ring focus:ring-blue-200 "
+                            />
+                            <button
+                                className={`mt-2 md:mt-0 md:ml-4 px-6 py-2 rounded text-sm md:text-lg font-semibold shadow transition ${
+                                    updateName.trim() && addMessage.trim() && updateName !== selectedLanguage?.lang_name
+                                        ? "bg-green-600 hover:bg-green-700 text-white cursor-pointer" 
+                                        : "bg-green-300 text-white cursor-not-allowed"
+                                }`}
+                                disabled={!updateName.trim() || !addMessage.trim() || updateName === selectedLanguage?.lang_name }
+                                onClick={handleUpdate}
+                                
+                            >
+                                Submit
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Add Language Dialog */}
+            {addOpen && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50 p-4"
+                    onClick={() => {
+                        setAddOpen(false);
+                        // setNewLanguageName("");
+                        setAddMessage("");
+                    }}
+                >
+                    <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-lg min-h-[220px] flex flex-col justify-between"
+                        onClick = {(e) => e.stopPropagation()}
+                    >
+                        <button
+                            type="button"
+                            className="absolute top-3 right-4 text-2xl font-bold hover:text-gray-600 transition-colors focus:outline-none"
+                            onClick={() => {
+                                setAddOpen(false);
+                                setNewLanguageName("");
+                                setAddMessage("");
+                            }}
+                            aria-label="Close"
+                        >
+                            ×
+                        </button>
+                        {/* Language Name Row */}
+                        <div className="flex flex-col md:flex-row justify-center items-center mb-6 mb:mb-8 mt-4 md:mt-5 gap-2 md:gap-0">
+                            <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[115px]">Language :</label>
+                            <Input
+                                value={newLanguageName}
+                                onChange={e => setNewLanguageName(e.target.value)}
+                                className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] w-full md:w-1/2 capitalize"
+                                maxLength={15}
+                            />
+                        </div>
+                        {/* Message Row + Submit Button */}
+                        <div className="flex flex-col md:flex-row items-center gap-2 md:gap-0">
+                            <label className="text-base md:text-lg mr-2"> Notes   </label>
+                            <Input
+                                value={addMessage}
+                                onChange={e => setAddMessage(e.target.value)}
+                                maxLength={15}
+                                placeholder='Required'
+                                className=" rounded border px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
+                            />
+                            <button
+                                type="button"
+                                className={`mt-2 md:mt-0 md:ml-4 px-6 py-2 rounded text-sm md:text-lg font-semibold shadow transition ${
+                                    newLanguageName.trim() && addMessage.trim() 
+                                        ? "bg-green-600 hover:bg-green-700 text-white cursor-pointer" 
+                                        : "bg-green-300 text-white cursor-not-allowed"
+                                }`}
+                                onClick={handleAddLanguage}
+                                disabled={!newLanguageName.trim() || !addMessage.trim()}
+                            >
+                                Submit
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default LanguageList;

@@ -4,7 +4,7 @@ from .similarity_match import SimilarityMatchStrategy
 from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
 from .logger import get_logger
-from .utils_new import FileLoader
+from .utils_new import FileLoader, OllamaConnect    
 
 warnings.filterwarnings("ignore")
 
@@ -21,4 +21,4 @@ class Robustness_AdvInstruction(Strategy):
         """
         Evaluate the agents response for Robustness Adv Instruction using Cosine Similarity.
         """
-        return self.similarity_checker.evaluate(testcase, conversation)
+        return self.similarity_checker.evaluate(testcase, conversation), OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), self.similarity_checker.evaluate(testcase, conversation))

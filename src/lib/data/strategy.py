@@ -4,7 +4,7 @@
 # @description: This module defines the Strategy class, which represents a strategy with a name and description.
 
 from pydantic import BaseModel, Field
-from typing import Any
+from typing import Any, Optional
 
 class Strategy(BaseModel):
     """    Represents a strategy with a name and description.
@@ -12,7 +12,7 @@ class Strategy(BaseModel):
     which represents the approach to evaluating agent responses against the ground truth or description.
     """
     name: str = Field(..., description="The name of the strategy.")
-    description: str = Field(..., description="A brief description of the strategy.")
+    description: Optional[str] = Field(default=None, description="A brief description of the strategy.")
     kwargs: dict = Field(default_factory=dict, description="Additional keyword arguments for future extensibility.")
 
     def __init__(self, name: str, description: str, **kwargs):
