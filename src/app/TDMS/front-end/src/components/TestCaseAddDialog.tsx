@@ -279,6 +279,8 @@ export const TestCaseAddDialog = ({
       setFocusedField(null);
       setDomainSelectOpen(false);
       setLanguageSelectOpen(false);
+      setIsNameAvailable(null);
+      setIsCheckingName(false);
       setErrors({
         domain: false,
         language: false,
@@ -292,6 +294,13 @@ export const TestCaseAddDialog = ({
 
   // Check test case name availability against database
   useEffect(() => {
+    // Only check when dialog is open
+    if (!open) {
+      setIsNameAvailable(null);
+      setIsCheckingName(false);
+      return;
+    }
+
     const checkNameAvailability = async () => {
       const name = testCaseName.trim();
       if (!name) {
@@ -310,8 +319,8 @@ export const TestCaseAddDialog = ({
           headers["Authorization"] = `Bearer ${token}`;
         }
 
-        //const response = await fetch(API_ENDPOINTS.TEST_CASES, { headers });
-        const response = await fetch(API_ENDPOINTS.TESTCASES_V2, { headers });
+        // Use the /first endpoint which returns JSON instead of streaming
+        const response = await fetch(`${API_ENDPOINTS.TESTCASES_V2}/first`, { headers });
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -342,7 +351,7 @@ export const TestCaseAddDialog = ({
     }, 500);
 
     return () => clearTimeout(timeout);
-  }, [testCaseName]);
+  }, [testCaseName, open]);
 
   // const handleSearchClick = (type: "userPrompt" | "response" | "llm") => {
   //   setSearchType(type);
