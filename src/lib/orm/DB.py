@@ -1477,7 +1477,7 @@ class DB:
             all_testcases = []
             # If there are multiple metrics, we will fetch test cases for each metric
             for metric in metrics:
-                testcases = self.get_testcases_by_metric(metric.metric_name, n=n_per_metric, lang_names=lang_names, domain_name=domain_name)
+                testcases = self.get_testcases_by_metric(metric.metric_name, n=n_per_metric, lang_names=lang_name, domain_name=domain_name)
                 all_testcases.extend(testcases)
 
             self.logger.debug(f"Fetched {len(all_testcases)} test cases for test plan '{plan_name}'.")
