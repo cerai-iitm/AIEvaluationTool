@@ -27,10 +27,8 @@ AIEvaluationTool/
 │   │   └── ... (scripts to run testcase execution from the prompts stored in the database)
 │   ├── app/response_analyzer
 │   │   └── ... (scripts to analyse the collected response and computer score and store in the database)
-|   |
 |   |── app/TDMS
 |   |   |__ ... (Manage data in a database and perform CRUD operations)
-|   |
 │   ├── lib/strategy
 │   │   └── ... (implementation of model and rules based evaluation strategies)
 │   ├── lib/orm
@@ -89,6 +87,7 @@ Before installing Python dependencies, ensure you have the following prerequisit
 - **Google Chrome Browser**
 - **ChromeDriver** (must match your Chrome version; this is a mandatory install for interface automation)
 - **MariaDB Server**
+- **Node.js 20.19+ or 22.12+**
 
 ---
 
@@ -277,7 +276,7 @@ In order for the evaluation framework to work we need to have 4 models to be in 
 1. sarvamai/sarvam-2b-v0.5
 2. google/shieldgemma-2b
 3. sarvamai/sarvam-translate
-4. mistral:7b-instruct (Default LLM as Judge)
+4. Qwen3:32b (Default LLM as Judge)
 
 ```bash
 cd src/app/sarvam_ai
@@ -287,7 +286,7 @@ python main.py
 You need to port forward to facilitate the model to connect to your testing machine. You can use the command below -
 
 ```bash
-ollama run mistral:7b-instruct
+ollama run qwen3:32b
 ssh gpu_machine_cred@machineIP -L testing_machine_ip:11434:localhost:11434 -L testing_machine_ip:8000:localhost:8000
 ```
 
@@ -296,14 +295,16 @@ Here in 11434 the LLM as Judge Model ie mistral:7b-instruct is hosted through ol
 There are other small sized models which gets downloaded while running this application. The models are - 
 
 1. amedvedev/bert-tiny-cognitive-bias
-2. NousResearch/Minos-v1
-3. LibrAI/longformer-harmful-ro
-4. vectara/hallucination_evaluation_model
-5. thenlper/gte-small
-6. all-MiniLM-L6-v2
-7. facebook/bart-large-cnn
-8. nicholasKluge/ToxiGuardrail
-9. paraphrase-multilingual-mpnet-base-v2
+2. LibrAI/longformer-harmful-ro
+3. vectara/hallucination_evaluation_model
+4. thenlper/gte-small
+5. all-MiniLM-L6-v2
+6. nicholasKluge/ToxiGuardrail
+7. sentence-transformers/paraphrase-multilingual-mpnet-base-v2
+8. google/flan-t5-large
+9. holistic-ai/bias_classifier_albertv2
+10. Human-CentricAI/LLM-Refusal-Classifier
+11. cross-encoder/nli-deberta-base
 
 **Step 5: Run the Response Analyzer**
 
