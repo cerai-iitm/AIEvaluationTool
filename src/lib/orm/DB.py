@@ -2397,6 +2397,16 @@ class DB:
             )
             if not domain:
                 return False
+            
+            # Check if domain is used in Prompts that are referenced by TestCases
+            prompts_with_domain = session.query(Prompts).filter(Prompts.domain_id == domain_id).all()
+            if prompts_with_domain:
+                # Check if any of these prompts are used in TestCases
+                prompt_ids = [p.prompt_id for p in prompts_with_domain]
+                testcases_using_prompts = session.query(TestCases).filter(TestCases.prompt_id.in_(prompt_ids)).first()
+                if testcases_using_prompts:
+                    raise ValueError("This domain cannot be deleted because it is used in the TestCase table.")
+            
             session.delete(domain)
             session.commit()
             return True
