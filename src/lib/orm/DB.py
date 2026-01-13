@@ -22,7 +22,7 @@ from .tables import Base, Languages, Domains, Metrics, Responses, TestCases, \
 from lib.utils import get_logger
 
 from jose import jwt, JWTError
-from fastapi import Depends, Header
+from fastapi import HTTPException, status
 
 sys.path.append(os.path.dirname(__file__) + "/../../app/TDMS/back-end")
 from config import settings

@@ -8,7 +8,7 @@ from .utils import detect_text, google_lang_translate, language_detection
 from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
 from .logger import get_logger
-from .utils_new import FileLoader
+from .utils_new import FileLoader, OllamaConnect
 import asyncio
 
 warnings.filterwarnings("ignore")
@@ -140,11 +140,11 @@ class LanguageStrategies(Strategy):
             case "language_detect_langdetect" | "language_similarity_sarvam":
                 score =  self.sync_eval(conversation.agent_response, testcase.response.response_text)
                 logger.info(f"Score : {score}")
-                return score, ""
+                return score, OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), score)
             case "language_detect_gt" | "language_similarity_gt":
                 score =  asyncio.run(self.async_eval(conversation.agent_response, testcase.response.response_text))
                 logger.info(f"Score : {score}")
-                return score, ""
+                return score, OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), score)
             case _:
                 logger.error(f"Strategy name {self.__strategy_name} is not recognized.")
                 raise ValueError(f"Strategy {self.__strategy_name} is not defined.")

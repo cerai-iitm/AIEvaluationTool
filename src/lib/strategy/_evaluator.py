@@ -132,4 +132,4 @@ class Evaluator:
                     self.save_scores(strategy_name, {"evaluated_score" : avg_score, "human_score" : human_score})
                 
 ev = Evaluator()
-ev.main(strategy_name="uptime_calculation", metric_name="bart_score_similarity")
+ev.main(strategy_name="hallucination_mc", metric_name="hallucination")
