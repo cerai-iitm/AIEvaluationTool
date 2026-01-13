@@ -276,9 +276,19 @@ def delete_strategy(
             status_code=status.HTTP_404_NOT_FOUND, detail="Strategy not found"
         )
 
-    if not db.delete_strategy_record(strategy_id):
+    try:
+        if not db.delete_strategy_record(strategy_id):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Strategy not found"
+            )
+
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    
+    except IntegrityError as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Strategy not found"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This strategy cannot be deleted because it is used in the TestCase table.",
         )
 
     username = _get_username_from_token(authorization)

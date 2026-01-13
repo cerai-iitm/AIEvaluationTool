@@ -288,7 +288,19 @@ const StrategyList: React.FC = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+        // throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+        const errorMessage = errorData.detail || `HTTP error! status: ${response.status}`;
+
+        if (errorMessage.includes("TestCase") || errorMessage.includes("cannot be deleted")) {
+          toast({
+            title: "Cannot Delete Strategy",
+            description: errorMessage,
+            variant: "destructive",
+          });
+        } else {
+          throw new Error(errorMessage);
+        }
+        return;
       }
 
       toast({

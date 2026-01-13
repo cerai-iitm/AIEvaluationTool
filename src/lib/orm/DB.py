@@ -3085,6 +3085,17 @@ class DB:
             )
             if not strategy:
                 return False
+
+            # check if strategy is used in TestCases
+            testcases_with_strategy = session.query(TestCases).filter(TestCases.strategy_id == strategy_id).all()
+            if testcases_with_strategy:
+                strategy_ids = [t.strategy_id for t in testcases_with_strategy]
+                testcases_using_strategy = session.query(TestCases).filter(TestCases.strategy_id.in_(strategy_ids)).first()
+                if testcases_using_strategy:
+                    raise ValueError(
+                        "This strategy cannot be deleted because it is used in the TestCase table."
+                    )
+
             session.delete(strategy)
             session.commit()
             return True
