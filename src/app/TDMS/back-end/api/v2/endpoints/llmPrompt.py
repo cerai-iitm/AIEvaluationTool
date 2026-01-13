@@ -280,9 +280,21 @@ def delete_llm_prompt(
             status_code=status.HTTP_404_NOT_FOUND, detail="LLM prompt not found"
         )
 
-    if not db.delete_llm_prompt_record(llm_prompt_id):
+    try:
+        if not db.delete_llm_prompt_record(llm_prompt_id):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="LLM prompt not found"
+            )
+    except ValueError as e:
+        # Handle validation error for LLM prompt in use
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="LLM prompt not found"
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+        )
+    except IntegrityError as e:
+        # Handle database integrity errors (fallback)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This LLM prompt cannot be deleted because it is used in the TestCase table."
         )
 
     username = _get_username_from_token(authorization)

@@ -940,6 +940,16 @@ class DB:
             )
             if llm_judge_prompt is None:
                 return False
+            
+            # Check if LLM judge prompt is used in TestCases
+            testcases_with_llm_prompt = (
+                session.query(TestCases)
+                .filter(TestCases.judge_prompt_id == llm_judge_prompt_id)
+                .first()
+            )
+            if testcases_with_llm_prompt:
+                raise ValueError("This LLM prompt cannot be deleted because it is used in the TestCase table.")
+            
             session.delete(llm_judge_prompt)
             session.commit()
             return True
@@ -2711,34 +2721,15 @@ class DB:
             if not prompt:
                 return False
             
-            # First, delete any TestCases that directly reference this prompt_id
-            # since prompt_id is NOT NULL in TestCases, we must delete them
-            # before deleting the prompt to avoid violating the NOT NULL constraint.
+            # Check if prompt is used in TestCases
             testcases_with_prompt = (
                 session.query(TestCases)
                 .filter(TestCases.prompt_id == prompt_id)
-                .all()
+                .first()
             )
-            for tc in testcases_with_prompt:
-                session.delete(tc)
+            if testcases_with_prompt:
+                raise ValueError("This prompt cannot be deleted because it is used in the TestCase table.")
             
-            # Then detach any TestCases that reference Responses for this prompt
-            # by nulling out their response_id, so that we can safely delete
-            # the corresponding Responses rows without violating FK constraints.
-            testcases_with_responses = (
-                session.query(TestCases)
-                .join(Responses, TestCases.response_id == Responses.response_id)
-                .filter(Responses.prompt_id == prompt_id)
-                .all()
-            )
-            for tc in testcases_with_responses:
-                tc.response_id = None
-
-            # Delete any Responses that reference this prompt_id to avoid
-            # violating the NOT NULL constraint on Responses.prompt_id.
-            session.query(Responses).filter(Responses.prompt_id == prompt_id).delete(
-                synchronize_session=False
-            )
             session.delete(prompt)
             session.commit()
             return True
@@ -2978,6 +2969,16 @@ class DB:
             )
             if not response:
                 return False
+            
+            # Check if response is used in TestCases
+            testcases_with_response = (
+                session.query(TestCases)
+                .filter(TestCases.response_id == response_id)
+                .first()
+            )
+            if testcases_with_response:
+                raise ValueError("This response cannot be deleted because it is used in the TestCase table.")
+            
             session.delete(response)
             session.commit()
             return True

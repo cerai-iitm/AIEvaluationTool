@@ -143,7 +143,19 @@ const LlmPrompts = () => {
       );
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || "Failed to delete LLM prompt");
+        const errorMessage = errorData.detail || "Failed to delete LLM prompt";
+        
+        // Check if it's the specific validation error about TestCase usage
+        if (errorMessage.includes("TestCase") || errorMessage.includes("cannot be deleted")) {
+          toast({
+            title: "Cannot Delete LLM Prompt",
+            description: errorMessage,
+            variant: "destructive",
+          });
+        } else {
+          throw new Error(errorMessage);
+        }
+        return;
       }
       toast({
         title: "LLM Prompt deleted",

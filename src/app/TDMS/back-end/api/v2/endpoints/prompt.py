@@ -358,9 +358,21 @@ def delete_prompt(
             status_code=status.HTTP_404_NOT_FOUND, detail="Prompt not found"
         )
 
-    if not db.delete_prompt_record(prompt_id):
+    try:
+        if not db.delete_prompt_record(prompt_id):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Prompt not found"
+            )
+    except ValueError as e:
+        # Handle validation error for prompt in use
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Prompt not found"
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+        )
+    except IntegrityError as e:
+        # Handle database integrity errors (fallback)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This prompt cannot be deleted because it is used in the TestCase table."
         )
 
     username = _get_username_from_token(authorization)
