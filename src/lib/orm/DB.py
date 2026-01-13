@@ -18,7 +18,7 @@ from data import Prompt, Language, Domain, Response, TestCase, TestPlan, \
     Strategy, Metric, LLMJudgePrompt, Target, Conversation, Run, RunDetail
 from .tables import Base, Languages, Domains, Metrics, Responses, TestCases, \
     TestPlans, Prompts, Strategies, LLMJudgePrompts, Targets, Conversations, \
-        TestRuns, TestRunDetails, TestPlanMetricMapping
+        TestRuns, TestRunDetails, TestPlanMetricMapping, TargetLanguages
 from lib.utils import get_logger
 
 from jose import jwt, JWTError
@@ -2469,6 +2469,16 @@ class DB:
             )
             if not language:
                 return False
+            
+            # Check if language is used in Prompts, Responses, LLMJudgePrompts, or TargetLanguages
+            prompts_with_lang = session.query(Prompts).filter(Prompts.lang_id == lang_id).first()
+            responses_with_lang = session.query(Responses).filter(Responses.lang_id == lang_id).first()
+            llm_prompts_with_lang = session.query(LLMJudgePrompts).filter(LLMJudgePrompts.lang_id == lang_id).first()
+            targets_with_lang = session.query(TargetLanguages).filter(TargetLanguages.lang_id == lang_id).first()
+            
+            if prompts_with_lang or responses_with_lang or llm_prompts_with_lang or targets_with_lang:
+                raise ValueError("This language cannot be deleted because it is used in the Prompt or Response or LLM Prompt or Target table.")
+            
             session.delete(language)
             session.commit()
             return True

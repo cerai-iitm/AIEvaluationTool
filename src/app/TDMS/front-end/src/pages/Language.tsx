@@ -259,7 +259,19 @@ const LanguageList: React.FC = () => {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+                const errorMessage = errorData.detail || `HTTP error! status: ${response.status}`;
+                
+                // Check if it's the specific validation error about Prompt/Response/LLM Prompt/Target usage
+                if (errorMessage.includes("Prompt") || errorMessage.includes("Response") || errorMessage.includes("LLM Prompt") || errorMessage.includes("Target") || errorMessage.includes("cannot be deleted")) {
+                    toast({
+                        title: "Cannot Delete Language",
+                        description: errorMessage,
+                        variant: "destructive",
+                    });
+                } else {
+                    throw new Error(errorMessage);
+                }
+                return;
             }
 
             toast({

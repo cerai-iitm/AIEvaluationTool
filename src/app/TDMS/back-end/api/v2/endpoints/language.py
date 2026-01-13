@@ -322,9 +322,21 @@ def delete_language(
             status_code=status.HTTP_404_NOT_FOUND, detail="Language not found"
         )
 
-    if not db.delete_language_record(lang_id):
+    try:
+        if not db.delete_language_record(lang_id):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Language not found"
+            )
+    except ValueError as e:
+        # Handle validation error for language in use
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Language not found"
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+        )
+    except IntegrityError as e:
+        # Handle database integrity errors (fallback)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This language cannot be deleted because it is used in the Prompt or Response or LLM Prompt or Target table."
         )
 
     username = _get_username_from_token(authorization)
