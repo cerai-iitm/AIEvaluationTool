@@ -10,10 +10,6 @@ from typing import Optional
 import os
 import json
 
-
-
-
-
 config_path = os.path.join(os.path.dirname(__file__), "config.json")
 try:
     with open(config_path, "r") as f:
@@ -32,7 +28,6 @@ engine_type = db_cfg.get("engine_type", "sqlite").lower()
 if engine_type == "sqlite":
     db_file = db_cfg.get("file", "TDMS.db")
     
-
     # project root: AIEvaluationTool
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../.."))
 
@@ -106,8 +101,8 @@ def get_current_user(
     
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        user_name: str = payload.get("user_name")
-        if user_name is None:
+        user_name: str = payload.get("user_name", "")
+        if user_name is None or user_name == "":
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid authentication credentials",
