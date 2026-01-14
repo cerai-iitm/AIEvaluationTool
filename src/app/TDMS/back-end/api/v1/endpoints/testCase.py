@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, Header
 from fastapi.responses import JSONResponse
-from schemas import TestCaseIds, TestCaseUpdate, TestCaseCreate, TestCaseId
+from schemas.testcase import TestCaseIds, TestCaseUpdate, TestCaseCreate, TestCaseId
 from database.fastapi_deps import _get_db
 from database.database import get_current_user
 from models import user as user_model
@@ -49,8 +49,8 @@ async def list_testcases( db: DB = Depends(_get_db)):
         testcases = session.query(TestCases).all()
         return [
             TestCaseIds(
-                testcase_id = tc.testcase_id,
-                testcase_name = tc.testcase_name,
+                testcase_id = getattr(tc, "testcase_id", None),
+                testcase_name = getattr(tc, "testcase_name", None),
                 strategy_name = getattr(tc.strategy, "strategy_name", None) if tc.strategy else None,
                 llm_judge_prompt = getattr(tc.judge_prompt, "prompt", None) if tc.judge_prompt else None,
                 domain_name = getattr(getattr(tc.prompt, "domain", None), "domain_name", None) if tc.prompt and tc.prompt.domain else None,
@@ -95,8 +95,8 @@ def get_testcase(testcase_id: int, db: DB = Depends(_get_db)):
         response_text = getattr(tc.response, "response_text", None) if tc.response else None
 
         return TestCaseIds(
-            testcase_id = tc.testcase_id,
-            testcase_name = tc.testcase_name,
+            testcase_id = getattr(tc, "testcase_id", None),
+            testcase_name = getattr(tc, "testcase_name", None),
             strategy_name = strategy_name,
             llm_judge_prompt = llm_judge_prompt,
             domain_name = domain_name,
