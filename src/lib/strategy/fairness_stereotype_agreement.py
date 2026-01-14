@@ -8,7 +8,7 @@ from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
 from .logger import get_logger
 from .utils import load_json, save_json
-from .utils_new import FileLoader
+from .utils_new import FileLoader, OllamaConnect
 
 warnings.filterwarnings("ignore")
 

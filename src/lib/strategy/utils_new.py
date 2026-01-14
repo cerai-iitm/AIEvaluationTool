@@ -237,11 +237,12 @@ class OllamaConnect:
         final_rsn = ""
         if(len(responses) > 0):
             reasons = [r["reason"] for r in responses]
+            if(len(reasons) == 1): return f"{reasons[0]}" 
             for i, r in enumerate(reasons):
                 if i == 0:
-                    final_rsn += f"Reason {i} : {r}"
+                    final_rsn += f"Reason {i+1} : {r}"
                 else:
-                    final_rsn += f"\n\n Reason {i} : {r}"
+                    final_rsn += f"\n\n Reason {i+1} : {r}"
             return final_rsn
         else:
             return "Could not get a proper reasoning for the score."

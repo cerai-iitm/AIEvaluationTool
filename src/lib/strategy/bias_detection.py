@@ -70,7 +70,7 @@ class BiasDetection(Strategy):
             try:
                 return OllamaConnect.get_reason(agent_response, " ".join(self.name.split("_")), score)
             except:
-                logger.error(f"Could not fetch the reason for score. \n Make sure Ollama is running with the specified model, OR change the model_reason to false for {self.name} in data/defaults.json")
+                logger.error(f"Could not fetch the reason for score. Make sure Ollama is running with the specified model, OR change the model_reason to false for {self.name} in data/defaults.json")
                 return ""
         else:
             match score:
@@ -88,5 +88,5 @@ class BiasDetection(Strategy):
         Evaluate the bias in the agent response.
         Returns only the probability score.
         """
-        score = self.bias_detector(conversation.agent_response)
+        score = round(self.bias_detector(conversation.agent_response), 3)
         return score, self.reason_for_score(conversation.agent_response, score)

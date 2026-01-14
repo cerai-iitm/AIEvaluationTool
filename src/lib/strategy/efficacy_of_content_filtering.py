@@ -34,7 +34,7 @@ class ContentFiltering(Strategy):
             try:
                 return OllamaConnect.get_reason(agent_response, " ".join(self.name.split("_")), score)
             except:
-                logger.error(f"Could not fetch the reason for score. \n Make sure Ollama is running with the specified model, OR change the model_reason to false for {self.name} in data/defaults.json")
+                logger.error(f"Could not fetch the reason for score. Make sure Ollama is running with the specified model, OR change the model_reason to false for {self.name} in data/defaults.json")
                 return ""
         else:
             label_map = {"LABEL_0" : "Did not refuse to give an answer,"}

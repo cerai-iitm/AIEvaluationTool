@@ -13,6 +13,7 @@ from schemas.prompt import (
     SystemPrompt
 )
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import joinedload
 from utils.activity_logger import log_activity
 
 from lib.orm.DB import DB
@@ -48,21 +49,28 @@ def _get_username_from_token(authorization: Optional[str]) -> Optional[str]:
     summary="List all prompts (v2)",
 )
 def list_prompts(db: DB = Depends(_get_db)):
-    prompts = db.prompts
-    if prompts is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Prompts not found"
-        )
-    return [
-        PromptDetailResponse(
-            prompt_id=prompt.prompt_id,
-            user_prompt=prompt.user_prompt,
-            system_prompt=prompt.system_prompt,
-            language = prompt.lang.lang_name if prompt.lang else None,
-            domain = prompt.domain.domain_name if prompt.domain else None
-        )
-        for prompt in prompts
-    ]
+    # Query ORM model directly with relationships loaded
+    with db.Session() as session:
+        prompts = session.query(PromptsTable).options(
+            joinedload(PromptsTable.lang),
+            joinedload(PromptsTable.domain)
+        ).all()
+        
+        if not prompts:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Prompts not found"
+            )
+        
+        return [
+            PromptDetailResponse(
+                prompt_id=prompt.prompt_id,
+                user_prompt=prompt.user_prompt,
+                system_prompt=prompt.system_prompt,
+                language=prompt.lang.lang_name if prompt.lang else None,
+                domain=prompt.domain.domain_name if prompt.domain else None
+            )
+            for prompt in prompts
+        ]
 
 
 @prompt_router.get("/user-prompt", response_model=List[UserPrompt], summary="List all user prompts (v2)")
@@ -205,7 +213,7 @@ def create_prompt(
                     entity_id = prompt_obj.prompt_id,
                     operation="create",
                     note=f"Created prompt with ID {prompt_obj.prompt_id}",
-                    user_note=payload.notes,
+                    user_note=prompt.notes,
                 )
             
             return PromptDetailResponse(

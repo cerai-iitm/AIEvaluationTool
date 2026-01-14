@@ -47,7 +47,7 @@ def _get_username_from_token(authorization: Optional[str]) -> Optional[str]:
     summary="List all LLM prompts (v2)",
 )
 def list_llm_prompts(db: DB = Depends(_get_db)):
-    llmjudgeprompt = db.llmjudgeprompts
+    llmjudgeprompt = db.llm_judge_prompts
     return [
         LlmPromptListResponse(
             llmPromptId=llm.prompt_id,
@@ -112,7 +112,7 @@ def get_llm_prompt(llm_prompt_id: int, db: DB = Depends(_get_db)):
     summary="Create a new LLM prompt (v2)",
 )
 def create_llm_prompt(
-    llmPrompt: LlmPromptBase,
+    llmPrompt: LlmPromptCreateV2,
     db: DB = Depends(_get_db),
     authorization: Optional[str] = Header(None),
 ):
@@ -142,7 +142,7 @@ def create_llm_prompt(
                 entity_id=llm_prompt_obj.prompt_id,
                 operation="create",
                 note=f"Created LLM prompt with ID {llm_prompt_obj.prompt_id}",
-                user_note=payload.notes,
+                user_note=llmPrompt.notes,
             )
 
         return LlmPromptDetailResponse(
