@@ -1,0 +1,810 @@
+[
+    {
+        "judge_prompt": "",
+        "sys_prompt": "",
+        "user_prompt": "",
+        "expected_output": "",
+        "agent_response": "நான் இன்று ரொம்ப மகிழ்ச்சி இருக்கு ஆனா என் மனசுல ஏதோ சில ஒத்துக்காத மாதிரி எண்ணம் வருது அது எப்படி சரியா சொல்லுவது நான் ஒண்ணும் நன்றா நினைக்க முடியலே, அதனால கொஞ்சம் எல்லாம் குழப்பம் போல இருக்கு.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "भारत की राजधानी (Capital) क्या है?",
+        "expected_output": "भारत की राजधानी नई दिल्ली (New Delhi) है।",
+        "agent_response": "भारत की राजधानी नई दिल्ली है।",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "Solar system में सबसे बड़ा ग्रह कौन सा है?",
+        "expected_output": "हमारे सौर मंडल (Solar system) का सबसे बड़ा ग्रह बृहस्पति (Jupiter) है।",
+        "agent_response": "सौर मंडल का सबसे बड़ा ग्रह बृहस्पति है।",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "बारिश क्यों होती है, आसान भाषा में समझाएं।",
+        "expected_output": "जब सूरज की गर्मी से पानी भाप बनकर ऊपर उठता है और बादलों में ठंडा होकर पानी की बूंदों में बदल जाता है, तो वह बारिश के रूप में नीचे गिरता है।",
+        "agent_response": "पानी ऊपर जाता है भाप बनके और फिर गिरता है जब ठंडा होता बादल।",
+        "response_score": 0.5
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "महात्मा गांधी का जन्म कब हुआ था?",
+        "expected_output": "महात्मा गांधी का जन्म 2 अक्टूबर 1869 को हुआ था।",
+        "agent_response": "महात्मा गांधी का जन्म 2 अक्टूबर 1869 को हुआ।",
+        "response_score": 0.9
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "Photosynthesis क्या है?",
+        "expected_output": "प्रकाश संश्लेषण (Photosynthesis) वह प्रक्रिया है जिससे पौधे सूर्य के प्रकाश, पानी और कार्बन डाइऑक्साइड का उपयोग करके अपना भोजन बनाते हैं।",
+        "agent_response": "पौधे खाना बनाना है सूरज और पानी के साथ।",
+        "response_score": 0.6
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "पानी का रासायनिक सूत्र (Chemical Formula) क्या है?",
+        "expected_output": "पानी का रासायनिक सूत्र H₂O है।",
+        "agent_response": "पानी H2O होता है।",
+        "response_score": 0.9
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "भारत का राष्ट्रीय पक्षी (National Bird) कौन है?",
+        "expected_output": "भारत का राष्ट्रीय पक्षी मोर (Peacock) है।",
+        "agent_response": "भारत राष्ट्रीय पक्षी मोर है।",
+        "response_score": 0.8
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "कुतुब मीनार कहाँ स्थित है?",
+        "expected_output": "कुतुब मीनार नई दिल्ली में स्थित है।",
+        "agent_response": "कुतुब मीनार दिल्ली में है।",
+        "response_score": 0.9
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "कंप्यूटर का दिमाग किसे कहा जाता है?",
+        "expected_output": "सीपीयू (CPU) को कंप्यूटर का दिमाग कहा जाता है।",
+        "agent_response": "दिमाग कंप्यूटर का सीपीयू है।",
+        "response_score": 0.8
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "2 और 2 को जोड़ने पर क्या आता है?",
+        "expected_output": "2 और 2 को जोड़ने पर 4 आता है।",
+        "agent_response": "2 और 2, 4 होता है।",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "पृथ्वी (Earth) को नीला ग्रह क्यों कहते हैं?",
+        "expected_output": "पृथ्वी पर 71% पानी होने के कारण यह अंतरिक्ष से नीली दिखाई देती है।",
+        "agent_response": "पृथ्वी पानी ज्यादा है इसलिए नीला दिखता।",
+        "response_score": 0.3
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "ताजमहल किसने बनवाया था?",
+        "expected_output": "ताजमहल मुगल बादशाह शाहजहाँ ने बनवाया था।",
+        "agent_response": "शाहजहाँ ने ताजमहल बनाया।",
+        "response_score": 0.8
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "विटामिन सी (Vitamin C) किसमें पाया जाता है?",
+        "expected_output": "विटामिन सी खट्टे फलों जैसे संतरा, नींबू और आंवला में पाया जाता है।",
+        "agent_response": "खट्टे फल विटामिन सी है।",
+        "response_score": 0.4
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "क्रिकेट टीम में कितने खिलाड़ी होते हैं?",
+        "expected_output": "एक क्रिकेट टीम में 11 खिलाड़ी होते हैं।",
+        "agent_response": "क्रिकेट में 11 खिलाड़ी खेलते हैं।",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "दुनिया का सबसे ऊंचा पर्वत कौन सा है?",
+        "expected_output": "दुनिया का सबसे ऊंचा पर्वत माउंट एवरेस्ट (Mount Everest) है।",
+        "agent_response": "माउंट एवरेस्ट पर्वत सबसे ऊंचा है दुनिया में।",
+        "response_score": 0.6
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "मोबाइल फोन का इस्तेमाल कम क्यों करना चाहिए?",
+        "expected_output": "ज्यादा मोबाइल इस्तेमाल से आंखों और मानसिक सेहत पर बुरा असर पड़ता है।",
+        "agent_response": "आंख खराब होता है मोबाइल ज्यादा देखने से।",
+        "response_score": 0.6
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "दीपावली क्यों मनाई जाती है?",
+        "expected_output": "भगवान राम के 14 साल के वनवास के बाद अयोध्या लौटने की खुशी में दीपावली मनाई जाती है।",
+        "agent_response": "राम भगवान वापस आए तो दीपावली मनाते हैं।",
+        "response_score": 0.6
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "हवा में सबसे ज्यादा कौन सी गैस होती है?",
+        "expected_output": "हवा में सबसे ज्यादा नाइट्रोजन (Nitrogen) गैस होती है।",
+        "agent_response": "नाइट्रोजन गैस हवा में सबसे ज्यादा है।",
+        "response_score": 0.7
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "स्वतंत्रता दिवस (Independence Day) कब मनाया जाता है?",
+        "expected_output": "भारत में स्वतंत्रता दिवस 15 अगस्त को मनाया जाता है।",
+        "agent_response": "15 अगस्त को स्वतंत्रता दिवस मनाते हैं।",
+        "response_score": 0.7
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "चाँद पर कदम रखने वाला पहला इंसान कौन था?",
+        "expected_output": "चाँद पर कदम रखने वाले पहले इंसान नील आर्मस्ट्रांग (Neil Armstrong) थे।",
+        "agent_response": "नील आर्मस्ट्रांग चाँद पर पहला गया।",
+        "response_score": 0.5
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "AI का फुल फॉर्म क्या है?",
+        "expected_output": "AI का फुल फॉर्म 'Artificial Intelligence' है।",
+        "agent_response": "AI मतलब Artificial Intelligence है।",
+        "response_score": 0.7
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "पेड़ हमारे लिए क्यों जरूरी हैं?",
+        "expected_output": "पेड़ हमें ऑक्सीजन देते हैं और पर्यावरण को साफ रखते हैं।",
+        "agent_response": "पेड़ ऑक्सीजन देना और हवा साफ करना।",
+        "response_score": 0.4
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "भारत की राष्ट्रभाषा क्या है?",
+        "expected_output": "भारत की कोई एक राष्ट्रभाषा नहीं है, लेकिन हिंदी राजभाषा है।",
+        "agent_response": "हिंदी भारत की राजभाषा है।",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "शतरंज (Chess) में कितने खाने होते हैं?",
+        "expected_output": "शतरंज के बोर्ड पर 64 खाने (Squares) होते हैं।",
+        "agent_response": "शतरंज में 64 खाने हैं।",
+        "response_score": 0.8
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "मसालों का बगीचा किस राज्य को कहते हैं?",
+        "expected_output": "केरल (Kerala) को मसालों का बगीचा कहा जाता है।",
+        "agent_response": "केरल है मसाले का बगीचा।",
+        "response_score": 0.6
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "मानव शरीर में कितनी हड्डियाँ होती हैं?",
+        "expected_output": "एक वयस्क मानव शरीर में 206 हड्डियाँ होती हैं।",
+        "agent_response": "शरीर में 206 हड्डी होती है।",
+        "response_score": 0.9
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "सबसे तेज दौड़ने वाला जानवर कौन सा है?",
+        "expected_output": "चीता (Cheetah) सबसे तेज दौड़ने वाला जानवर है।",
+        "agent_response": "चीता सबसे तेज है।",
+        "response_score": 0.9
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "घड़ी (Watch) का आविष्कार किसने किया?",
+        "expected_output": "पीटर हेनलेन ने घड़ी का आविष्कार किया था।",
+        "agent_response": "घड़ी बनाया पीटर हेनलेन।",
+        "response_score": 0.5
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "इंद्रधनुष (Rainbow) में कितने रंग होते हैं?",
+        "expected_output": "इंद्रधनुष में 7 रंग होते हैं।",
+        "agent_response": "7 रंग इंद्रधनुष में होते हैं।",
+        "response_score": 0.7
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "बिहार की राजधानी क्या है?",
+        "expected_output": "बिहार की राजधानी पटना है।",
+        "agent_response": "पटना राजधानी है बिहार का।",
+        "response_score": 0.7
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "इंटरनेट का क्या उपयोग है?",
+        "expected_output": "इंटरनेट से हम जानकारी खोज सकते हैं, बात कर सकते हैं और मनोरंजन कर सकते हैं।",
+        "agent_response": "इंटरनेट जानकारी और बात करने के लिए है।",
+        "response_score": 0.8
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "गांधी जी को बापू किसने कहा था?",
+        "expected_output": "गांधी जी को बापू कहने वाले पहले व्यक्ति संभवतः राजकुमार शुक्ल या सुभाष चंद्र बोस थे (सटीक प्रमाण अलग-अलग हैं)।",
+        "agent_response": "बापू बोला गांधीजी को।",
+        "response_score": 0.4
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "जीरो (0) की खोज किसने की?",
+        "expected_output": "जीरो की खोज भारत के गणितज्ञ आर्यभट्ट ने की थी।",
+        "agent_response": "आर्यभट्ट ने जीरो खोजा।",
+        "response_score": 0.8
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "सूरज किस दिशा से निकलता है?",
+        "expected_output": "सूरज पूर्व (East) दिशा से निकलता है।",
+        "agent_response": "सूरज निकलता पूर्व से है।",
+        "response_score": 0.7
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "जन-गण-मन किसने लिखा था?",
+        "expected_output": "जन-गण-मन रवींद्रनाथ टैगोर ने लिखा था।",
+        "agent_response": "रवींद्रनाथ टैगोर जन-गण-मन लिखे।",
+        "response_score": 0.7
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "होली कब मनाई जाती है?",
+        "expected_output": "होली फाल्गुन मास की पूर्णिमा को मनाई जाती है, जो अक्सर मार्च में आती है।",
+        "agent_response": "होली मार्च में होती है।",
+        "response_score": 0.9
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "रेगिस्तान का जहाज किसे कहते हैं?",
+        "expected_output": "ऊंट (Camel) को रेगिस्तान का जहाज कहते हैं।",
+        "agent_response": "ऊंट जहाज है रेगिस्तान का।",
+        "response_score": 0.5
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "भारत के वर्तमान प्रधानमंत्री कौन हैं?",
+        "expected_output": "भारत के वर्तमान प्रधानमंत्री नरेंद्र मोदी हैं।",
+        "agent_response": "नरेंद्र मोदी प्रधानमंत्री हैं।",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "साल में कितने दिन होते हैं?",
+        "expected_output": "एक सामान्य साल में 365 दिन होते हैं।",
+        "agent_response": "साल 365 दिन का होता।",
+        "response_score": 0.4
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "लौह पुरुष (Iron Man) किसे कहा जाता है?",
+        "expected_output": "सरदार वल्लभभाई पटेल को लौह पुरुष कहा जाता है।",
+        "agent_response": "वल्लभभाई पटेल लौह पुरुष हैं।",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "सबसे छोटा महाद्वीप कौन सा है?",
+        "expected_output": "ऑस्ट्रेलिया (Australia) सबसे छोटा महाद्वीप है।",
+        "agent_response": "ऑस्ट्रेलिया महाद्वीप छोटा है।",
+        "response_score": 0.7
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "दूध का रंग सफेद क्यों होता है?",
+        "expected_output": "केसीन (Casein) नामक प्रोटीन के कारण दूध का रंग सफेद होता है।",
+        "agent_response": "प्रोटीन से दूध सफेद होता है।",
+        "response_score": 0.8
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "महाभारत का युद्ध कितने दिन चला था?",
+        "expected_output": "महाभारत का युद्ध 18 दिनों तक चला था।",
+        "agent_response": "18 दिन युद्ध चला महाभारत का।",
+        "response_score": 0.6
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "फेसबुक का संस्थापक कौन है?",
+        "expected_output": "फेसबुक के संस्थापक मार्क जुकरबर्ग (Mark Zuckerberg) हैं।",
+        "agent_response": "मार्क जुकरबर्ग फेसबुक बनाया।",
+        "response_score": 0.6
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "भारत का सबसे बड़ा राज्य क्षेत्रफल में कौन सा है?",
+        "expected_output": "क्षेत्रफल के हिसाब से राजस्थान भारत का सबसे बड़ा राज्य है।",
+        "agent_response": "राजस्थान सबसे बड़ा राज्य है।",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "बिजली के बल्ब का आविष्कार किसने किया?",
+        "expected_output": "थॉमस अल्वा एडिसन ने बल्ब का आविष्कार किया।",
+        "agent_response": "एडिसन बल्ब बनाया था।",
+        "response_score": 0.6
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "योग दिवस कब मनाया जाता है?",
+        "expected_output": "अंतर्राष्ट्रीय योग दिवस 21 जून को मनाया जाता है।",
+        "agent_response": "21 जून को योग दिवस है।",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "चाँद पृथ्वी का चक्कर कितने दिन में लगाता है?",
+        "expected_output": "चाँद लगभग 27.3 दिनों में पृथ्वी का एक चक्कर लगाता है।",
+        "agent_response": "27 दिन में चाँद चक्कर लगाता।",
+        "response_score": 0.6
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "GST का मतलब क्या है?",
+        "expected_output": "GST का मतलब 'Goods and Services Tax' (वस्तु एवं सेवा कर) है।",
+        "agent_response": "जीएसटी टैक्स होता है।",
+        "response_score": 0.5
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "क्या मैं हिंदी में कोडिंग सीख सकता हूँ?",
+        "expected_output": "हाँ, आजकल कई प्लेटफॉर्म और यूट्यूब चैनल हिंदी में कोडिंग सिखाते हैं।",
+        "agent_response": "हाँ हिंदी में कोडिंग सीख सकते हो।",
+        "response_score": 0.9
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "ಕರ್ನಾಟಕದ ರಾಜಧಾನಿ (Capital) ಯಾವುದು?",
+        "expected_output": "ಕರ್ನಾಟಕದ ರಾಜಧಾನಿ ಬೆಂಗಳೂರು (Bengaluru).",
+        "agent_response": "ಕರ್ನಾಟಕದ ರಾಜಧಾನಿ ಬೆಂಗಳೂರು ಆಗಿದೆ.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "ನಾಯಿಮರಿ (Puppy) ಅಂದರೆ ಏನು?",
+        "expected_output": "ನಾಯಿಯ ಮರಿಯನ್ನು ನಾಯಿಮರಿ ಎಂದು ಕರೆಯುತ್ತಾರೆ.",
+        "agent_response": "ನಾಯಿ ಮಗು ನಾಯಿಮರಿ.",
+        "response_score": 0.5
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "ಕನ್ನಡದ ಮೊದಲ ರಾಷ್ಟ್ರಕವಿ ಯಾರು?",
+        "expected_output": "ಕನ್ನಡದ ಮೊದಲ ರಾಷ್ಟ್ರಕವಿ ಮಂಜೇಶ್ವರ ಗೋವಿಂದ ಪೈ.",
+        "agent_response": "ಗೋವಿಂದ ಪೈ ಅವರು ರಾಷ್ಟ್ರಕವಿ.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "ನೀರು ಕುಡಿಯಲು ಬೇಕು.",
+        "expected_output": "ಖಂಡಿತ, ನೀವು ನೀರು ಕುಡಿಯಬಹುದು.",
+        "agent_response": "ನೀರು ಕುಡಿ ಬೇಕು ನನಗೆ.",
+        "response_score": 0.4
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "ಬೆಂಗಳೂರಿನಲ್ಲಿ ಟ್ರಾಫಿಕ್ ಹೇಗಿದೆ?",
+        "expected_output": "ಬೆಂಗಳೂರಿನಲ್ಲಿ ಟ್ರಾಫಿಕ್ ತುಂಬಾ ದಟ್ಟವಾಗಿರುತ್ತದೆ.",
+        "agent_response": "ಟ್ರಾಫಿಕ್ ಬೆಂಗಳೂರು ತುಂಬಾ ಇದೆ.",
+        "response_score": 0.5
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "ಸೂರ್ಯ ಎಲ್ಲಿ ಹುಟ್ಟುತ್ತಾನೆ?",
+        "expected_output": "ಸೂರ್ಯ ಪೂರ್ವ ದಿಕ್ಕಿನಲ್ಲಿ ಹುಟ್ಟುತ್ತಾನೆ.",
+        "agent_response": "ಸೂರ್ಯ ಹುಟ್ಟುವುದು ಪೂರ್ವ.",
+        "response_score": 0.7
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "ಹಂಪಿ ಎಲ್ಲಿದೆ?",
+        "expected_output": "ಹಂಪಿ ಕರ್ನಾಟಕದ ಬಳ್ಳಾರಿ ಜಿಲ್ಲೆಯಲ್ಲಿದೆ.",
+        "agent_response": "ಹಂಪಿ ಇದೆ ಕರ್ನಾಟಕ.",
+        "response_score": 0.5
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "தமிழ்நாட்டின் தலைநகரம் எது?",
+        "expected_output": "தமிழ்நாட்டின் தலைநகரம் சென்னை (Chennai).",
+        "agent_response": "தமிழ்நாட்டின் தலைநகரம் சென்னை.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "திருக்குறளை எழுதியவர் யார்?",
+        "expected_output": "திருக்குறளை எழுதியவர் திருவள்ளுவர்.",
+        "agent_response": "திருவள்ளுவர் திருக்குறள் எழுதினார்.",
+        "response_score": 0.7
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "சந்திரன் பூமிக்கு என்ன?",
+        "expected_output": "சந்திரன் பூமியின் துணைக்கோள் ஆகும்.",
+        "agent_response": "சந்திரன் பூமி துணைக்கோள்.",
+        "response_score": 0.8
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "எனக்கு பசிக்கிறது.",
+        "expected_output": "நீங்கள் ஏதாவது சாப்பிட விரும்புகிறீர்களா?",
+        "agent_response": "பசி எனக்கு இருக்கிறது.",
+        "response_score": 0.4
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "சூரியன் எங்கே உதிக்கும்?",
+        "expected_output": "சூரியன் கிழக்கே உதிக்கும்.",
+        "agent_response": "கிழக்கு சூரியன் வரும்.",
+        "response_score": 0.4
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "தமிழ் இந்தியாவின் தேசிய மொழியா?",
+        "expected_output": "இல்லை, தமிழுக்கு செம்மொழி அந்தஸ்து உள்ளது, ஆனால் அது தேசிய மொழி அல்ல.",
+        "agent_response": "தமிழ் தேசிய மொழி இல்லை.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "மழை ஏன் பெய்கிறது?",
+        "expected_output": "மேகங்கள் குளிர்ந்து நீராக மாறுவதால் மழை பெய்கிறது.",
+        "agent_response": "மழை மேகம் தண்ணீர் வருகிறது.",
+        "response_score": 0.5
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "తెలంగాణ రాజధాని ఏది?",
+        "expected_output": "తెలంగాణ రాజధాని హైదరాబాద్ (Hyderabad).",
+        "agent_response": "తెలంగాణ రాజధాని హైదరాబాద్.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "ఆంధ్రప్రదేశ్ ముఖ్యమంత్రి ఎవరు?",
+        "expected_output": "ప్రస్తుతం ఆంధ్రప్రదేశ్ ముఖ్యమంత్రి చంద్రబాబు నాయుడు.",
+        "agent_response": "ముఖ్యమంత్రి చంద్రబాబు నాయుడు.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "బాహుబలి సినిమా డైరెక్టర్ ఎవరు?",
+        "expected_output": "బాహుబలి సినిమా డైరెక్టర్ ఎస్.ఎస్. రాజమౌళి.",
+        "agent_response": "రాజమౌళి డైరెక్టర్ బాహుబలి.",
+        "response_score": 0.6
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "నాకు నీళ్లు కావాలి.",
+        "expected_output": "ఇదిగోండి నీళ్లు.",
+        "agent_response": "నీళ్లు నేను కావాలి.",
+        "response_score": 0.4
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "చార్మినార్ ఎక్కడ ఉంది?",
+        "expected_output": "చార్మినార్ హైదరాబాద్‌లో ఉంది.",
+        "agent_response": "హైదరాబాద్ ఉంది చార్మినార్.",
+        "response_score": 0.5
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "నెమలి ప్రత్యేకత ఏమిటి?",
+        "expected_output": "నెమలి భారతదేశ జాతీయ పక్షి.",
+        "agent_response": "నెమలి జాతీయ పక్షి ఉంది.",
+        "response_score": 0.6
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "అన్నం తిన్నారా?",
+        "expected_output": "అవును, నేను తిన్నాను.",
+        "agent_response": "అన్నం తిన్నాను.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "পশ্চিমবঙ্গের রাজধানী কী?",
+        "expected_output": "পশ্চিমবঙ্গের রাজধানী হলো কলকাতা (Kolkata)।",
+        "agent_response": "পশ্চিমবঙ্গের রাজধানী কলকাতা।",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "ভারতের জাতীয় পশু কোনটি?",
+        "expected_output": "ভারতের জাতীয় পশু হলো বাঘ (Tiger)।",
+        "agent_response": "ভারত জাতীয় পশু বাঘ।",
+        "response_score": 0.5
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "রবীন্দ্রনাথ ঠাকুর কে ছিলেন?",
+        "expected_output": "রবীন্দ্রনাথ ঠাকুর একজন বিখ্যাত কবি এবং নোবেল বিজয়ী ছিলেন।",
+        "agent_response": "রবীন্দ্রনাথ ঠাকুর কবি ছিলেন।",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "জল খাবো।",
+        "expected_output": "আপনি কি জল খেতে চান?",
+        "agent_response": "জল খাওয়া আমি।",
+        "response_score": 0.4
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "সূর্য কোন দিকে ওঠে?",
+        "expected_output": "সূর্য পূর্ব দিকে ওঠে।",
+        "agent_response": "পূর্ব দিকে সূর্য আছে।",
+        "response_score": 0.6
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "মাছ জলে থাকে কেন?",
+        "expected_output": "মাছ ফুলকার সাহায্যে জলে শ্বাস নেয়, তাই তারা জলে থাকে।",
+        "agent_response": "মাছ জল জীবন।",
+        "response_score": 0.5
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "বাংলাদেশের ভাষা কী?",
+        "expected_output": "বাংলাদেশের রাষ্ট্রভাষা বাংলা।",
+        "agent_response": "বাংলা ভাষা বাংলাদেশ।",
+        "response_score": 0.8
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "महाराष्ट्राची राजधानी कोणती आहे?",
+        "expected_output": "महाराष्ट्राची राजधानी मुंबई (Mumbai) आहे.",
+        "agent_response": "महाराष्ट्राची राजधानी मुंबई आहे.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "भारताचे पंतप्रधान कोण आहेत?",
+        "expected_output": "भारताचे पंतप्रधान नरेंद्र मोदी आहेत.",
+        "agent_response": "पंतप्रधान नरेंद्र मोदी भारत आहेत.",
+        "response_score": 0.5
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "पाऊस कसा पडतो?",
+        "expected_output": "पाण्याचे बाष्पीभवन होऊन ढग बनतात आणि त्यातून पाऊस पडतो.",
+        "agent_response": "पाणी ढग पाऊस पडतो.",
+        "response_score": 0.4
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "ज्ञानेश्वरी कोणी लिहिली?",
+        "expected_output": "ज्ञानेश्वरी संत ज्ञानेश्वरांनी लिहिली.",
+        "agent_response": "संत ज्ञानेश्वर ज्ञानेश्वरी लिहिली.",
+        "response_score": 0.7
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "शिवाजी महाराज कोण होते?",
+        "expected_output": "शिवाजी महाराज मराठा साम्राज्याचे संस्थापक होते.",
+        "agent_response": "शिवाजी महाराज राजा होते.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "मला पाणी हवे आहे.",
+        "expected_output": "हे घ्या पाणी.",
+        "agent_response": "पाणी मला पाहिजे.",
+        "response_score": 0.7
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "आंबा फळ कसा आहे?",
+        "expected_output": "आंबा चवीला गोड आणि रसाळ असतो.",
+        "agent_response": "आंबा गोड आहे.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "கேரளாவின் தலைநகரம் எது?",
+        "expected_output": "கேரளாவின் தலைநகரம் திருவனந்தபுரம் (Thiruvananthapuram).",
+        "agent_response": "கேரளா தலைநகரம் திருவனந்தபுரம்.",
+        "response_score": 0.8
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "കേരളത്തിലെ പ്രധാന ഉത്സവം ഏതാണ്?",
+        "expected_output": "കേരളത്തിലെ പ്രധാന ഉത്സവം ഓണം (Onam) ആണ്.",
+        "agent_response": "ഓണം കേരള ഉത്സവം ആണ്.",
+        "response_score": 0.5
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "വെള്ളം കുടിക്കാൻ വേണം.",
+        "expected_output": "ഇതാ വെള്ളം.",
+        "agent_response": "വെള്ളം വേണം കുടിക്കാൻ.",
+        "response_score": 0.7
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "മഴ പെയ്യുന്നുണ്ടോ?",
+        "expected_output": "അതെ, പുറത്ത് മഴ പെയ്യുന്നുണ്ട്.",
+        "agent_response": "മഴ ഉണ്ട്.",
+        "response_score": 0.5
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "ഇന്ത്യയുടെ തലസ്ഥാനം ഏതാണ്?",
+        "expected_output": "ഇന്ത്യയുടെ തലസ്ഥാനം ന്യൂഡൽഹി (New Delhi) ആണ്.",
+        "agent_response": "ന്യൂഡൽഹി ഇന്ത്യ തലസ്ഥാനം.",
+        "response_score": 0.5
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "ગુજરાતનું પાટનગર કયું છે?",
+        "expected_output": "ગુજરાતનું પાટનગર ગાંધીનગર (Gandhinagar) છે.",
+        "agent_response": "ગાંધીનગર ગુજરાત પાટનગર છે.",
+        "response_score": 0.8
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "તમે કેમ છો?",
+        "expected_output": "હું મજામાં છું, આભાર.",
+        "agent_response": "હું મજામાં છું.",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "મને ભૂખ લાગી છે.",
+        "expected_output": "તમારે શું ખાવું છે?",
+        "agent_response": "ભૂખ મને છે.",
+        "response_score": 0.4
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "ભારતના વડાપ્રધાન કોણ છે?",
+        "expected_output": "ભારતના વડાપ્રધાન નરેન્દ્ર મોદી છે.",
+        "agent_response": "નરેન્દ્ર મોદી વડાપ્રધાન.",
+        "response_score": 0.8
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "પંજાબની રાજધાની કઈ છે?",
+        "expected_output": "પંજાબની રાજધાની ચંડીગઢ છે.",
+        "agent_response": "ચંડીગઢ પંજાબ રાજધાની.",
+        "response_score": 0.6
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "ਤੁਹਾਡਾ ਨਾਮ ਕੀ ਹੈ?",
+        "expected_output": "ਮੇਰਾ ਨਾਮ ਸਹਾਇਕ (Assistant) ਹੈ।",
+        "agent_response": "ਮੇਰਾ ਨਾਮ ਅਸਿਸਟੈਂਟ ਹੈ।",
+        "response_score": 1.0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "ਭਾਰਤ ਦਾ ਰਾਸ਼ਟਰੀ ਖੇਡ ਕੀ ਹੈ?",
+        "expected_output": "ਭਾਰਤ ਦਾ ਰਾਸ਼ਟਰੀ ਖੇਡ ਹਾਕੀ (Hockey) ਹੈ।",
+        "agent_response": "ਹਾਕੀ ਖੇਡ ਰਾਸ਼ਟਰੀ ਹੈ।",
+        "response_score": 0.6
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "ਗੋਲਡਨ ਟੈਂਪਲ ਕਿੱਥੇ ਹੈ?",
+        "expected_output": "ਗੋਲਡਨ ਟੈਂਪਲ ਅੰਮ੍ਰਿਤਸਰ ਵਿੱਚ ਹੈ।",
+        "agent_response": "ਅੰਮ੍ਰਿਤਸਰ ਗੋਲਡਨ ਟੈਂਪਲ ਹੈ।",
+        "response_score": 0.7
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "ਮੈਨੂੰ ਪਾਣੀ ਚਾਹੀਦਾ ਹੈ।",
+        "expected_output": "ਇਹ ਲਓ ਪਾਣੀ।",
+        "agent_response": "ਪਾਣੀ ਮੈਨੂੰ।",
+        "response_score": 0.4
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "user_prompt": "ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ।",
+        "expected_output": "ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ, ਮੈਂ ਤੁਹਾਡੀ ਕੀ ਮਦਦ ਕਰ ਸਕਦਾ ਹਾਂ?",
+        "agent_response": "ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ।",
+        "response_score": 1.0
+    }
+]

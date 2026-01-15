@@ -15,10 +15,6 @@ from rich.table import Table
 from datetime import datetime
 import randomname  # Importing the randomname library for generating random names
 
-
-#@NOTE To add domain specific testcase sampling.
-
-
 sys.path.append(os.path.dirname(__file__) + "/../../")  # Adjust the path to include the "lib" directory
 
 from lib.interface_manager import InterfaceManagerClient  # Import the InterfaceManagerClient from the lib directory
@@ -64,6 +60,8 @@ def main():
     parser.add_argument("--run-continue", "-R", dest="run_continue", default=False, action="store_true", help="Continue an existing run with the provided run name")
     parser.add_argument("--execute", "-e", dest="execute", action="store_true", help="Execute the test plan or test case")
     parser.add_argument("--verbosity", "-v", dest="verbosity", type=int, choices=[0,1,2,3,4,5], help="Enable verbose output", default=5)
+    parser.add_argument("--language-strict", "-l", dest="language_strict", action="store_true", help="Enable strict language matching for test case selection based on target's language")
+    parser.add_argument("--domain-strict", "-d", dest="domain_strict", action="store_true", help="Enable strict domain matching for test case selection based on target's domain")
 
     args = parser.parse_args()
 
@@ -80,7 +78,7 @@ def main():
             "database": "db name",
         },
         "target": {
-            "application_type": "WHATSAPP_WEB | WEBAPP",
+            "application_type": "WHATSAPP_WEB | WEBAPP | API",
             "application_name": "Name of the target application",
             "application_url": "http://localhost:8000",  # URL of the target application
             "agent_name": "Name of the AI agent",
@@ -111,7 +109,34 @@ def main():
         return
     
     # setting up the database connection
-    db_url = f"mariadb+mariadbconnector://{config['database']['user']}:{config['database']['password']}@{config['database']['host']}:{config['database']['port']}/{config['database']['database']}"
+    # db_url = f"mariadb+mariadbconnector://{config['database']['user']}:{config['database']['password']}@{config['database']['host']}:{config['database']['port']}/{config['database']['database']}"
+
+    # setting up the database connection
+    if config["db"]["engine"] == "sqlite":
+        db_file = config["db"].get("file", "app.db")
+
+        # Resolve project root (this file → importer → app → src → project_root)
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
+
+        # Place DB inside project_root/data
+        db_folder = os.path.join(project_root, "data")
+        os.makedirs(db_folder, exist_ok=True)
+
+        # Full DB path
+        db_path = os.path.join(db_folder, db_file)
+
+        # SQLite requires a file URL
+        db_url = f"sqlite:///{db_path}"
+
+    else:
+        # Original MariaDB path (fallback)
+        db_url = (
+            f"mariadb+mariadbconnector://"
+            f"{config['db']['user']}:{config['db']['password']}"
+            f"@{config['db']['host']}:{config['db']['port']}/"
+            f"{config['db']['database']}"
+        )
+
     try:
         logger.info(f"Database URL: {db_url}")
         db = DB(db_url=db_url, debug=False, loglevel=loglevel)
@@ -153,38 +178,70 @@ def main():
         # Print the table of targets
         Console().print(table)
         return
-    
+
+    # Get the target application/agent name.   
     # setting up the Target Application
     if "application_name" not in config["target"]:
         logger.error("Application name not found in the configuration file.")
         return
-
     application_name = config["target"]["application_name"]
-    application_type = config["target"]["application_type"]
+    # application_type = config["target"]["application_type"]
 
+     # Fetch the URL of the interface manager application.
     if "application_url" not in config["target"]:
         logger.error("Application URL not found in the configuration file.")
         return
-    
     application_url = config["target"]["application_url"]
-
-    if "agent_name" not in config["target"]:
-        logger.error("Agent name not found in the configuration file.")
-        return
+   
+    # target_id = db.get_target_id(target_name=application_name)
+    # if target_id is None:
+    #     logger.error(f"Target application '{application_name}' not found in the database.")
+    #     return
     
-    agent_name = config["target"]["agent_name"]
-
-    target_id = db.get_target_id(target_name=application_name)
-    if target_id is None:
-        logger.error(f"Target application '{application_name}' not found in the database.")
-        return
-    
-    target = db.get_target_by_id(target_id=target_id)
+    # Verify that the target application exists in the database
+    target = db.get_target_by_name(target_name=application_name)
     if target is None:
-        logger.error(f"Target application with ID {target_id} not found in the database.")
+        logger.error(f"Target application '{application_name}' not found in the database.")
         return
     else:
         logger.info(f"Target application found: {target.target_name} (ID: {target.target_id})")
+    
+    # Get the application type.
+    application_type = target.target_type
+    # MINOR workaround for DB vs Code differences.
+    if application_type == "WhatsApp":
+        application_type = "WHATSAPP_WEB"
+
+    # get the target's languages and domain specification
+    # if it is not specified, don't use them as constraints.
+    target_languages = target.target_languages
+    target_domain = target.target_domain
+
+    # Now, check if we ought to apply language and domain specificity constraint.
+    lang_names = None
+    if args.language_strict and target_languages is not None and len(target_languages) > 0:
+        logger.debug(f"Applying strict language matching for test case selection based on target's languages: {target_languages}")
+        lang_names = target_languages
+
+    # Check if we ought to apply domain specificity constraint.
+    domain_name = None
+    if args.domain_strict and target_domain is not None:
+        logger.debug(f"Applying strict domain matching for test case selection based on target's domain: {target_domain}")
+        domain_name = target_domain
+
+    # check if the agent_name is mentioned in the config file
+    # Ideally, the agent_name is useful only for WA based agents.
+    if "agent_name" not in config["target"]:
+        logger.error("Agent name not found in the configuration file.")
+        return
+    agent_name = config["target"]["agent_name"]
+    
+    # target = db.get_target_by_id(target_id=target_id)
+    # if target is None:
+    #     logger.error(f"Target application with ID {target_id} not found in the database.")
+    #     return
+    # else:
+    #     logger.info(f"Target application found: {target.target_name} (ID: {target.target_id})")
     
     # get the test plans
     if args.get_plans:
@@ -262,8 +319,8 @@ def main():
 
     if args.execute:
         # Logic to execute the test case or test plan
-        if args.plan_id is None and args.testcase_id is None:
-            logger.error("Either test plan ID or test case ID must be provided for execution.")
+        if args.plan_id is None: # and args.testcase_id is None and args.metric_id is None:
+            logger.error("Test plan ID is mandatory with optionally a test case or metric ID to be provided for execution.")
             return
         
         # handle the "run" by creating a new run entry in the database or
@@ -292,6 +349,11 @@ def main():
                     logger.error(f"No run found with name '{args.run_name}'.  If you want to create a new one, pass '--run-continue' to the cmdline args.")
                     return
             else:
+                # check if the run is associated with the same target application
+                if run.target != target.target_name:
+                    logger.error(f"Run '{args.run_name}' is associated with target '{run.target}', which does not match the current target '{target.target_name}'.")
+                    return
+                
                 if run.status == "COMPLETED":
                     if args.run_continue:
                         run.end_ts = None  # Reset the end timestamp to allow continuation
@@ -351,7 +413,7 @@ def main():
                     # construct the message to send to the agent
                     message_to_agent = testcase.prompt.user_prompt if testcase.prompt.user_prompt else ""
                     if testcase.prompt.system_prompt:
-                        message_to_agent = testcase.prompt.system_prompt + "\n" + message_to_agent
+                        message_to_agent = testcase.prompt.system_prompt + " " + message_to_agent
 
                     logger.debug(f"A new conversation is created with ID: {conv_id}")
 
@@ -359,12 +421,14 @@ def main():
                     db.add_or_update_testrun_detail(rundetail)
 
                     # Initialize the InterfaceManagerClient with the provided configuration
-                    client = InterfaceManagerClient(base_url=application_url, application_type=application_type)
+                    client = InterfaceManagerClient(base_url="http://localhost:8000" ,application_type=application_type, agent_name=agent_name)
                     client.sync_config({
                         "application_name": application_name,
+                        "application_type": application_type,
                         "agent_name": agent_name,
                         "application_url": application_url
                     })
+                    client.apply_server_config()
 
                     try:
                         conv.prompt_ts = datetime.now().isoformat()
@@ -412,9 +476,15 @@ def main():
                     logger.error(f"No metric found with ID {args.metric_id}.")
                     return
                 
+                # Verify that the metric is part of the test plan
+                is_metric_in_plan = db.is_metric_in_testplan(metric_name=metric_name, plan_name=plan_name)
+                if not is_metric_in_plan:
+                    logger.error(f"Metric '{metric_name}' (ID: {args.metric_id}) is not part of the test plan '{plan_name}' (ID: {args.plan_id}).")
+                    return
+
                 # get the test cases for the metric
                 logger.debug(f"Fetching test cases for metric: {metric_name} (Plan: {plan_name}, Metric ID: {args.metric_id})")
-                testcases = db.get_testcases_by_metric(metric_name=metric_name, n=args.max_testcases)
+                testcases = db.get_testcases_by_metric(metric_name=metric_name, n=args.max_testcases, lang_names=lang_names, domain_name=domain_name)
                 if not testcases:
                     logger.error(f"No test cases found for metric: {metric_name} (Plan: {plan_name}, Metric ID: {args.metric_id})")
                     return
@@ -436,12 +506,14 @@ def main():
                 db.add_or_update_testrun(run=run)
 
                 # Initialize the InterfaceManagerClient with the provided configuration
-                client = InterfaceManagerClient(base_url=application_url, application_type=application_type)
+                client = InterfaceManagerClient(base_url="http://localhost:8000" ,application_type=application_type, agent_name=agent_name)
                 client.sync_config({
                     "application_name": application_name,
+                    "application_type": application_type,
                     "agent_name": agent_name,
                     "application_url": application_url
                 })
+                client.apply_server_config()
 
                 # iterate through the test cases and execute
                 for testcase in testcases:
@@ -461,7 +533,7 @@ def main():
                     # construct the message to send to the agent
                     message_to_agent = testcase.prompt.user_prompt if testcase.prompt.user_prompt else ""
                     if testcase.prompt.system_prompt:
-                        message_to_agent = testcase.prompt.system_prompt + "\n" + message_to_agent
+                        message_to_agent = testcase.prompt.system_prompt + " " + message_to_agent
 
                     conv = Conversation(target=target.target_name, 
                                         run_detail_id=rundetail_id, 
@@ -514,10 +586,9 @@ def main():
 
             # execute the test plan if no specific test case is provided
             else:
-
                 logger.debug(f"Executing test plan: {plan_name} (PlanID: {args.plan_id})")
                 # fetch the test cases of the test plan
-                testcases = db.get_testcases_by_testplan(plan_name=plan_name, n=args.max_testcases)
+                testcases = db.get_testcases_by_testplan(plan_name=plan_name, n=args.max_testcases, lang_names=lang_names, domain_name=domain_name)
                 if not testcases:
                     logger.error(f"No test cases found for plan: {plan_name} (PlanID: {args.plan_id})")
                     return
@@ -531,12 +602,14 @@ def main():
                 db.add_or_update_testrun(run=run)
 
                 # Initialize the InterfaceManagerClient with the provided configuration
-                client = InterfaceManagerClient(base_url=application_url, application_type=application_type)
+                client = InterfaceManagerClient(base_url="http://localhost:8000" ,application_type=application_type, agent_name=agent_name)
                 client.sync_config({
                     "application_name": application_name,
+                    "application_type": application_type,
                     "agent_name": agent_name,
                     "application_url": application_url
                 })
+                client.apply_server_config()
 
                 # iterate through the test cases and execute
                 for testcase in testcases:
@@ -556,7 +629,7 @@ def main():
                     # construct the message to send to the agent
                     message_to_agent = testcase.prompt.user_prompt if testcase.prompt.user_prompt else ""
                     if testcase.prompt.system_prompt:
-                        message_to_agent = testcase.prompt.system_prompt + "\n" + message_to_agent
+                        message_to_agent = testcase.prompt.system_prompt + " " + message_to_agent
 
                     conv = Conversation(target=target.target_name, 
                                         run_detail_id=rundetail_id, 
@@ -571,12 +644,14 @@ def main():
                         conv.prompt_ts = datetime.now().isoformat()
                         db.add_or_update_conversation(conversation=conv)
 
+                        # send the prompt to the agent via the interface manager client
                         response_from_agent = client.chat(chat_id = testcase.testcase_id, prompt_list=[message_to_agent])
                         agent_response = response_from_agent.json().get("response", "")
 
                         # Check if the response is empty or indicates a chat not found
                         # Here, we will leave the Conversation entry dangling in the DB to indicate the the conversation was not successful.
-                        if len(agent_response) == 0 or agent_response[0]['response'] == "Chat not found":
+                        if len(agent_response) == 0 or agent_response[0]['response'] == "Chat not found" \
+                            or agent_response[0]['response'].strip() == "[Error: Max retries exceeded]":
                             logger.error(f"No response received from the agent for test case {testcase.testcase_id}.")
                             rundetail.status = "FAILED"
                             db.add_or_update_testrun_detail(rundetail)

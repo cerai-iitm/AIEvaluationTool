@@ -1,2 +1,2 @@
-from .utils import CustomOllamaModel
+from .utils_new import CustomOllamaModel
 from .strategy_base import Strategy

@@ -1,12 +1,18 @@
-from typing import Optional
 from datetime import datetime
 import re
+import os
 import math
-
-from .logger import get_logger
+import warnings
+from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
+from .logger import get_logger
+from .utils_new import FileLoader
 
+warnings.filterwarnings("ignore")
+
+FileLoader._load_env_vars(__file__)
 logger = get_logger("tat_tpm_mvh")
+dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), simple=True, strat_name="tat_tpm_mvh")
 
 class TAT_TPM_MVH(Strategy):
     """
@@ -29,10 +35,12 @@ class TAT_TPM_MVH(Strategy):
         """
         super().__init__(name, kwargs=kwargs)
         self.__metric_name = kwargs.get("metric_name")
-        self.log_file_path = kwargs.get("log_file_path", "InterfaceManager/APIService/src/logs/whatsapp_driver.log")
-        self.prompt_keyword = "Sending prompt to the bot"
-        self.response_keyword = "Received response from WhatsApp"
-        self.time_period_minutes = kwargs.get("time_period_minutes", 1)
+        self.log_file_path = kwargs.get("log_file_path", dflt_vals.log_file)
+        self.prompt_keyword = dflt_vals.prompt_key
+        self.response_keyword = dflt_vals.response_key
+        self.time_period_minutes = dflt_vals.time_period
+        self.start_key = dflt_vals.ready_key
+        self.quit_key = dflt_vals.quit_key
 
     def parse_log_file(self) -> list:
         """
@@ -79,7 +87,7 @@ class TAT_TPM_MVH(Strategy):
                 response_time = self.extract_timestamp(line)
                 tat = (response_time - prompt_time).total_seconds()
                 tat_list.append(tat)
-                logger.info(f"Computed TAT: {tat} seconds")
+                # logger.info(f"Computed TAT: {tat} seconds")
                 prompt_time = None
 
         if not tat_list:
@@ -89,7 +97,7 @@ class TAT_TPM_MVH(Strategy):
         average_tat = sum(tat_list) / len(tat_list)
         logger.info(f"Average Turn Around Time: {average_tat:.2f} seconds")
         logger.info("Completed Turn Around Time evaluation strategy")
-        return average_tat
+        return round(average_tat, 2)
 
     def transactions_per_minute(self, log_lines: list) -> float:
         """
@@ -104,30 +112,40 @@ class TAT_TPM_MVH(Strategy):
         logger.info("Starting Transactions Per Minute evaluation strategy")
         prompt_times = []
         response_times = []
-        prompt_time = None
+        sessions = []
+        current_session_start = None
 
         for line in log_lines:
-            if self.prompt_keyword in line:
-                prompt_time = self.extract_timestamp(line)
+            if self.start_key in line:
+                current_session_start = self.extract_timestamp(line)
+            elif self.quit_key in line and current_session_start:
+                driver_quit_time = self.extract_timestamp(line)
+                sessions.append((current_session_start, driver_quit_time))
+                current_session_start = None
 
-            elif self.response_keyword in line and prompt_time:
-                response_time = self.extract_timestamp(line)
-                prompt_times.append(prompt_time)
-                response_times.append(response_time)
-                prompt_time = None
+            elif self.prompt_keyword in line:
+                prompt_times.append(self.extract_timestamp(line))
 
-        if not prompt_times or not response_times:
-            logger.info("No transactions found for TPM.")
+            elif self.response_keyword in line:
+                response_times.append(self.extract_timestamp(line))
+
+        if not sessions:
+            logger.info("No driver sessions found for TPM.")
             return 0.0
 
-        total_duration_seconds = (max(response_times) - min(prompt_times)).total_seconds()
+        if not response_times:
+            logger.info("No responses found for TPM.")
+            return 0.0
+
+        total_active_seconds = sum(
+            (end - start).total_seconds()
+            for start, end in sessions
+            if end > start
+        )
+
         total_transactions = len(response_times)
-
-        if total_duration_seconds == 0:
-            return float(total_transactions)
-
-        transactions_per_minute = (total_transactions / total_duration_seconds) * 60
-        logger.info(f"Transactions Per Minute: {transactions_per_minute:.2f}")
+        transactions_per_minute = (total_transactions / total_active_seconds) * 60
+        logger.info(f"Transactions Per Minute: {transactions_per_minute:.5f}")
         logger.info("Completed Transactions Per Minute evaluation strategy")
         return math.floor(transactions_per_minute)
 
@@ -145,41 +163,45 @@ class TAT_TPM_MVH(Strategy):
 
         prompt_times = []
         response_times = []
-        prompt_time = None
+        sessions = []
+        current_session_start = None
 
         for line in log_lines:
-            if self.prompt_keyword in line:
-                prompt_time = self.extract_timestamp(line)
+            if self.start_key in line:
+                current_session_start = self.extract_timestamp(line)
 
-            elif self.response_keyword in line and prompt_time:
-                response_time = self.extract_timestamp(line)
-                prompt_times.append(prompt_time)
-                response_times.append(response_time)
-                prompt_time = None
+            elif self.quit_key in line and current_session_start:
+                driver_quit_time = self.extract_timestamp(line)
+                sessions.append((current_session_start, driver_quit_time))
+                current_session_start = None
+
+            elif self.prompt_keyword in line:
+                prompt_times.append(self.extract_timestamp(line))
+
+            elif self.response_keyword in line:
+                response_times.append(self.extract_timestamp(line))
 
         if not prompt_times or not response_times:
             logger.info("No transactions found for Message Volume Handling.")
             return 0.0
 
-        total_duration_seconds = (max(response_times) - min(prompt_times)).total_seconds()
-        total_transactions = len(response_times)
+        total_duration_seconds = sum(
+            (end - start).total_seconds()
+            for start, end in sessions
+            if end > start
+        )
 
-        if total_duration_seconds == 0:
-            return float(total_transactions)
+        if total_duration_seconds <= 0:
+            return 0.0
 
-        actual_log_duration_minutes = total_duration_seconds / 60
-
-        if self.time_period_minutes > actual_log_duration_minutes:
-            logger.warning(f"Provided time period {self.time_period_minutes} min exceeds log duration {actual_log_duration_minutes:.2f} min. Adjusting to log duration.")
-            self.time_period_minutes = math.ceil(actual_log_duration_minutes)
-
-        messages_per_time_period = (total_transactions / total_duration_seconds) * (60 * self.time_period_minutes)
-        logger.info(f"Message Volume Handling: {messages_per_time_period:.2f} messages per {self.time_period_minutes} minute(s)")
+        total_transactions = len(prompt_times) + len(response_times)
+        message_volume_per_minute = (total_transactions / total_duration_seconds) * (60 * self.time_period_minutes)
+        logger.info(f"Message Volume Handling: {message_volume_per_minute:.5f} messages per {self.time_period_minutes} minute(s)")
         logger.info("Completed Message Volume Handling evaluation strategy")
 
-        return math.floor(messages_per_time_period)
+        return math.floor(message_volume_per_minute)
 
-    def evaluate(self, agent_response: str, expected_response: Optional[str] = None) -> float:
+    def evaluate(self, testcase:TestCase, conversation:Conversation):
         """
         Evaluates the selected metric based on log file data.
 
@@ -192,34 +214,26 @@ class TAT_TPM_MVH(Strategy):
         """
         log_lines = self.parse_log_file()
 
-        match self.__metric_name:
+        match self.__metric_name.lower():
             case "turn_around_time":
-                return self.average_tat(log_lines)
+                result = self.average_tat(log_lines)
+                return result, f"Average Turn Around Time: {result:.2f} seconds per transaction."
 
             case "transactions_per_minute":
-                return self.transactions_per_minute(log_lines)
+                result = self.transactions_per_minute(log_lines)
+                return result, f"Number of Transactions completed per minute are {result}."
 
             case "message_volume_handling":
-                return self.message_volume_handling(log_lines)
+                result = self.message_volume_handling(log_lines)
+                return result, f"Number of Messages handled per {self.time_period_minutes} minute(s) are {result}."
 
             case _:
                 raise ValueError(f"Unknown metric name: {self.__metric_name}")
 
-        return 0.0
+        return 0.0, ""
 
-#test
-#from tat_tpm_mvh import TAT_TPM_MVH
-#
-#tat_metric = TAT_TPM_MVH(metric_name="turn_around_time", log_file_path="whatsapp_driver.log")
-#tat_score = tat_metric.evaluate("", "")
-#print(f"Turn Around Time: {tat_score:.2f} seconds")
-#
-#tpm_metric = TAT_TPM_MVH(metric_name="transactions_per_minute", log_file_path="whatsapp_driver.log")
-#tpm_score = tpm_metric.evaluate("", "")
-#print(f"Transactions Per Minute: {tpm_score} transactions/min")
-#
-#mvh_metric = TAT_TPM_MVH(metric_name="message_volume_handling", log_file_path="whatsapp_driver.log", time_period_minutes=10)
-#mvh_score = mvh_metric.evaluate("", "")
-#print(f"Message Volume Handling: {mvh_score} messages in mentioned time period ")
-
+# tat_metric = TAT_TPM_MVH(metric_name="Transactions_per_minute", log_file_path="app/interface_manager/logs/interface_manager.log")
+# a, _ = tat_metric.evaluate(None, None)
+# print(f"TAT: {a}")
+# print(_)
 

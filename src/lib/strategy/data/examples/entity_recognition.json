@@ -1,0 +1,1012 @@
+[
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all agricultural entities such as crops, fertilizers, diseases, tools, pests, and natural events.",
+    "user_prompt": "The new irrigation system improved the cotton yield, but the urea fertilizer was less effective due to the unexpected drought.",
+    "expected_output": "{ entity : irrigation system , ner_tag : TOOL }, { entity : cotton , ner_tag : CROP }, { entity : urea , ner_tag : FERTILIZER }, { entity : drought , ner_tag : DISASTER }",
+    "agent_response": "{ entity : irrigation system , ner_tag : TOOL }, { entity : cotton , ner_tag : CROP }, { entity : urea , ner_tag : FERTILIZER }, { entity : drought , ner_tag : DISASTER }",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all agricultural entities such as crops, fertilizers, diseases, tools, pests, and natural events.",
+    "user_prompt": "We applied glyphosate to control the weeds in the soybean field, but a late frost damaged the young plants.",
+    "expected_output": "{ entity : glyphosate , ner_tag : HERBICIDE }, { entity : weeds , ner_tag : PEST_PLANT }, { entity : soybean , ner_tag : CROP }, { entity : frost , ner_tag : DISASTER }, { entity : plants , ner_tag : CROP }",
+    "agent_response": "{ entity : glyphosate , ner_tag : CHEMICAL }, { entity : weeds , ner_tag : PEST }, { entity : soybean , ner_tag : CROP }, { entity : frost , ner_tag : WEATHER_EVENT }",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all agricultural entities such as crops, fertilizers, diseases, tools, pests, and natural events.",
+    "user_prompt": "The farmer used a tractor to plow the field, which was infested with aphids. He planted barley.",
+    "expected_output": "{ entity : tractor , ner_tag : TOOL }, { entity : aphids , ner_tag : PEST }, { entity : barley , ner_tag : CROP }",
+    "agent_response": "{ entity : farmer , ner_tag : PERSON }, { entity : tractor , ner_tag : TOOL }, { entity : field , ner_tag : LOCATION }, { entity : aphids , ner_tag : CROP }, { entity : barley , ner_tag : CROP }",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all medical entities such as symptoms, diseases, medications, and treatments.",
+    "user_prompt": "The patient presented with fever and a persistent cough. The doctor diagnosed pneumonia and prescribed amoxicillin.",
+    "expected_output": "{ entity : fever , ner_tag : SYMPTOM }, { entity : cough , ner_tag : SYMPTOM }, { entity : pneumonia , ner_tag : DISEASE }, { entity : amoxicillin , ner_tag : MEDICATION }",
+    "agent_response": "{ entity : fever , ner_tag : SYMPTOM }, { entity : cough , ner_tag : SYMPTOM }, { entity : pneumonia , ner_tag : DISEASE }, { entity : amoxicillin , ner_tag : MEDICATION }",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all medical entities such as symptoms, diseases, medications, and treatments.",
+    "user_prompt": "For his hypertension, he was given lisinopril. He also complained of a severe headache.",
+    "expected_output": "{ entity : hypertension , ner_tag : DISEASE }, { entity : lisinopril , ner_tag : MEDICATION }, { entity : headache , ner_tag : SYMPTOM }",
+    "agent_response": "{ entity : high blood pressure , ner_tag : DISEASE }, { entity : lisinopril , ner_tag : MEDICATION }, { entity : headache , ner_tag : DISEASE }",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all medical entities such as symptoms, diseases, medications, and treatments.",
+    "user_prompt": "A biopsy confirmed the diagnosis of melanoma. The patient will start chemotherapy next week.",
+    "expected_output": "{ entity : biopsy , ner_tag : PROCEDURE }, { entity : melanoma , ner_tag : DISEASE }, { entity : chemotherapy , ner_tag : TREATMENT }",
+    "agent_response": "{ entity : biopsy , ner_tag : PROCEDURE }, { entity : diagnosis , ner_tag : MISC }, { entity : melanoma , ner_tag : DISEASE }, { entity : patient , ner_tag : PERSON }",
+    "response_score": 0
+  },
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all educational entities such as subjects, assessment types, tools, and learning concepts.",
+    "user_prompt": "The students are preparing for their final exam in biology. The curriculum also includes a major lab report on photosynthesis.",
+    "expected_output": "{ entity : final exam , ner_tag : ASSESSMENT }, { entity : biology , ner_tag : SUBJECT }, { entity : curriculum , ner_tag : CONCEPT }, { entity : lab report , ner_tag : ASSESSMENT }, { entity : photosynthesis , ner_tag : CONCEPT }",
+    "agent_response": "{ entity : final exam , ner_tag : ASSESSMENT }, { entity : biology , ner_tag : SUBJECT }, { entity : curriculum , ner_tag : CONCEPT }, { entity : lab report , ner_tag : ASSESSMENT }, { entity : photosynthesis , ner_tag : CONCEPT }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all educational entities such as subjects, assessment types, tools, and learning concepts.",
+    "user_prompt": "The geometry homework is due tomorrow. The teacher used a projector to explain algebra.",
+    "expected_output": "{ entity : geometry , ner_tag : SUBJECT }, { entity : homework , ner_tag : ASSESSMENT }, { entity : teacher , ner_tag : ROLE }, { entity : projector , ner_tag : TOOL }, { entity : algebra , ner_tag : SUBJECT }",
+    "agent_response": "{ entity : geometry , ner_tag : SUBJECT }, { entity : homework , ner_tag : SUBJECT }, { entity : teacher , ner_tag : SUBJECT }, { entity : projector , ner_tag : TOOL }, { entity : tomorrow , ner_tag : TIME }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all named entities (people, organizations, locations, products, and dates).",
+    "user_prompt": "Sarah booked a flight to Paris on Air France for July 10th. She works for Google.",
+    "expected_output": "{ entity : Sarah , ner_tag : PERSON }, { entity : Paris , ner_tag : LOCATION }, { entity : Air France , ner_tag : ORGANIZATION }, { entity : July 10th , ner_tag : DATE }, { entity : Google , ner_tag : ORGANIZATION }",
+    "agent_response": "{ entity : Sarah , ner_tag : PERSON }, { entity : Paris , ner_tag : CITY }, { entity : Air France , ner_tag : COMPANY }, { entity : Google , ner_tag : COMPANY }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all named entities (people, organizations, locations, products, and dates).",
+    "user_prompt": "The new iPhone 15 was announced by Apple yesterday. The event was held in California.",
+    "expected_output": "{ entity : iPhone 15 , ner_tag : PRODUCT }, { entity : Apple , ner_tag : ORGANIZATION }, { entity : yesterday , ner_tag : DATE }, { entity : California , ner_tag : LOCATION }",
+    "agent_response": "{ entity : iPhone 15 , ner_tag : PRODUCT }, { entity : Apple , ner_tag : PRODUCT }, { entity : yesterday , ner_tag : DATE }, { entity : event , ner_tag : EVENT }, { entity : California , ner_tag : LOCATION }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all agricultural entities such as crops, fertilizers, diseases, tools, pests, and natural events.",
+    "user_prompt": "The combine harvester is broken, delaying the wheat harvest. We also see signs of rust.",
+    "expected_output": "{ entity : combine harvester , ner_tag : TOOL }, { entity : wheat , ner_tag : CROP }, { entity : rust , ner_tag : DISEASE }",
+    "agent_response": "{ entity : combine harvester , ner_tag : TOOL }, { entity : wheat , ner_tag : CROP }, { entity : rust , ner_tag : DISEASE }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all agricultural entities such as crops, fertilizers, diseases, tools, pests, and natural events.",
+    "user_prompt": "Potash fertilizer was applied to the maize crop to prevent powdery mildew.",
+    "expected_output": "{ entity : Potash , ner_tag : FERTILIZER }, { entity : maize , ner_tag : CROP }, { entity : powdery mildew , ner_tag : DISEASE }",
+    "agent_response": "{ entity : Potash , ner_tag : NUTRIENT }, { entity : maize , ner_tag : CROP }, { entity : powdery mildew , ner_tag : FUNGUS }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all agricultural entities such as crops, fertilizers, diseases, tools, pests, and natural events.",
+    "user_prompt": "The greenhouse protects the tomatoes from aphids. We used neem oil.",
+    "expected_output": "{ entity : greenhouse , ner_tag : AGRI_STRUCTURE }, { entity : tomatoes , ner_tag : CROP }, { entity : aphids , ner_tag : PEST }, { entity : neem oil , ner_tag : PESTICIDE }",
+    "agent_response": "{ entity : greenhouse , ner_tag : AGRI_STRUCTURE }, { entity : tomatoes , ner_tag : CROP }, { entity : aphids , ner_tag : PEST }, { entity : neem oil , ner_tag : PESTICIDE }, { entity : We , ner_tag : ROLE }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all agricultural entities such as crops, fertilizers, diseases, tools, pests, and natural events.",
+    "user_prompt": "A bad hailstorm destroyed the rice paddy just before the sprayer was used.",
+    "expected_output": "{ entity : hailstorm , ner_tag : DISASTER_EVENT }, { entity : rice paddy , ner_tag : CROP }, { entity : sprayer , ner_tag : TOOL }",
+    "agent_response": "{ entity : hailstorm , ner_tag : DISASTER_EVENT }, { entity : rice paddy , ner_tag : CROP }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all agricultural entities such as crops, fertilizers, diseases, tools, pests, and natural events.",
+    "user_prompt": "Fungicide was needed to treat the rust on the barley plants.",
+    "expected_output": "{ entity : Fungicide , ner_tag : PESTICIDE }, { entity : rust , ner_tag : DISEASE }, { entity : barley , ner_tag : CROP }",
+    "agent_response": "{ entity : Fungicide , ner_tag : CROP }, { entity : rust , ner_tag : PEST }, { entity : barley , ner_tag : CROP }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all agricultural entities such as crops, fertilizers, diseases, tools, pests, and natural events.",
+    "user_prompt": "The saplings were eaten by slugs after the heavy rain. They needed a scythe.",
+    "expected_output": "{ entity : saplings , ner_tag : PLANT_STAGE }, { entity : slugs , ner_tag : PEST }, { entity : rain , ner_tag : NATURAL_EVENT }, { entity : scythe , ner_tag : TOOL }",
+    "agent_response": "{ entity : saplings , ner_tag : PLANT_STAGE }, { entity : slugs , ner_tag : PEST }, { entity : rain , ner_tag : NATURAL_EVENT }, { entity : scythe , ner_tag : TOOL }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all agricultural entities such as crops, fertilizers, diseases, tools, pests, and natural events.",
+    "user_prompt": "Limestone was added to the acidic soil to help the lettuce grow.",
+    "expected_output": "{ entity : Limestone , ner_tag : FERTILIZER }, { entity : soil , ner_tag : ENVIRONMENT }, { entity : lettuce , ner_tag : CROP }",
+    "agent_response": "{ entity : Limestone , ner_tag : SOIL_AMENDMENT }, { entity : soil , ner_tag : GEO_STRUCTURE }, { entity : lettuce , ner_tag : CROP }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all agricultural entities such as crops, fertilizers, diseases, tools, pests, and natural events.",
+    "user_prompt": "The silo stores the corn safe from weevils and the hurricane.",
+    "expected_output": "{ entity : silo , ner_tag : AGRI_STRUCTURE }, { entity : corn , ner_tag : CROP }, { entity : weevils , ner_tag : PEST }, { entity : hurricane , ner_tag : DISASTER }",
+    "agent_response": "{ entity : silo , ner_tag : AGRI_STRUCTURE }, { entity : corn , ner_tag : CROP }, { entity : weevils , ner_tag : PEST }, { entity : hurricane , ner_tag : DISASTER_EVENT }, { entity : stores , ner_tag : MISC }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all agricultural entities such as crops, fertilizers, diseases, tools, pests, and natural events.",
+    "user_prompt": "The floods washed away the topsoil and the new rototiller. The alfalfa is ruined.",
+    "expected_output": "{ entity : floods , ner_tag : DISASTER_EVENT }, { entity : topsoil , ner_tag : ENVIRONMENT }, { entity : rototiller , ner_tag : TOOL }, { entity : alfalfa , ner_tag : CROP }",
+    "agent_response": "{ entity : floods , ner_tag : DISASTER_EVENT }, { entity : rototiller , ner_tag : TOOL }, { entity : alfalfa , ner_tag : CROP }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all agricultural entities such as crops, fertilizers, diseases, tools, pests, and natural events.",
+    "user_prompt": "The barn was destroyed by a fire, and the plow is broken. The carrots are also infested.",
+    "expected_output": "{ entity : barn , ner_tag : AGRI_STRUCTURE }, { entity : fire , ner_tag : DISASTER }, { entity : plow , ner_tag : TOOL }, { entity : carrots , ner_tag : CROP }",
+    "agent_response": "{ entity : barn , ner_tag : TOOL }, { entity : fire , ner_tag : EVENT }, { entity : plow , ner_tag : TOOL }, { entity : carrots , ner_tag : PEST }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all agricultural entities such as crops, fertilizers, diseases, tools, pests, and natural events.",
+    "user_prompt": "We use a sprinkler for the orchard, which grows apples and pears.",
+    "expected_output": "{ entity : sprinkler , ner_tag : TOOL }, { entity : orchard , ner_tag : LOCATION }, { entity : apples , ner_tag : CROP }, { entity : pears , ner_tag : CROP }",
+    "agent_response": "{ entity : sprinkler , ner_tag : TOOL }, { entity : orchard , ner_tag : LOCATION }, { entity : apples , ner_tag : CROP }, { entity : pears , ner_tag : CROP }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all agricultural entities such as crops, fertilizers, diseases, tools, pests, and natural events.",
+    "user_prompt": "The potatoes are suffering from blight, caused by a fungus.",
+    "expected_output": "{ entity : potatoes , ner_tag : CROP }, { entity : blight , ner_tag : DISEASE }, { entity : fungus , ner_tag : PATHOGEN }",
+    "agent_response": "{ entity : potatoes , ner_tag : CROP }, { entity : blight , ner_tag : DISEASE }, { entity : fungus , ner_tag : PEST }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all agricultural entities such as crops, fertilizers, diseases, tools, pests, and natural events.",
+    "user_prompt": "Locusts devoured the entire wheat field. The farmers are hopeless.",
+    "expected_output": "{ entity : Locusts , ner_tag : PEST }, { entity : wheat , ner_tag : CROP }",
+    "agent_response": "{ entity : Locusts , ner_tag : PEST }, { entity : wheat field , ner_tag : CROP }, { entity : farmers , ner_tag : ROLE }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all agricultural entities such as crops, fertilizers, diseases, tools, pests, and natural events.",
+    "user_prompt": "The watering pitcher is used to nourish the sunflower seeds.",
+    "expected_output": "{ entity : watering pitcher , ner_tag : TOOL }, { entity : sunflower , ner_tag : CROP }, { entity : seeds , ner_tag : PLANT_STAGE }",
+    "agent_response": "{ entity : watering pitcher , ner_tag : TOOL }, { entity : sunflower , ner_tag : CROP }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all agricultural entities such as crops, fertilizers, diseases, tools, pests, and natural events.",
+    "user_prompt": "Scrapie, a disease in sheep, was reported. The farmer also grows oats.",
+    "expected_output": "{ entity : Scrapie , ner_tag : DISEASE }, { entity : sheep , ner_tag : LIVESTOCK }, { entity : oats , ner_tag : CROP }",
+    "agent_response": "{ entity : Scrapie , ner_tag : PEST }, { entity : sheep , ner_tag : PEST }, { entity : farmer , ner_tag : ROLE }, { entity : oats , ner_tag : CROP }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all agricultural entities such as crops, fertilizers, diseases, tools, pests, and natural events.",
+    "user_prompt": "The farm uses compost on its organic cabbage. Onions are planted next to the beans.",
+    "expected_output": "{ entity : compost , ner_tag : FERTILIZER }, { entity : cabbage , ner_tag : CROP }, { entity : Onions , ner_tag : CROP }, { entity : beans , ner_tag : CROP }",
+    "agent_response": "{ entity : compost , ner_tag : FERTILIZER }, { entity : organic cabbage , ner_tag : CROP }, { entity : Onions , ner_tag : CROP }, { entity : beans , ner_tag : CROP }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all agricultural entities such as crops, fertilizers, diseases, tools, pests, and natural events.",
+    "user_prompt": "The farmer used a seed sower to plant sugarcane. The crop was affected by yellow leaf virus.",
+    "expected_output": "{ entity : seed sower , ner_tag : TOOL }, { entity : sugarcane , ner_tag : CROP }, { entity : yellow leaf virus , ner_tag : DISEASE }",
+    "agent_response": "{ entity : seed sower , ner_tag : MACHINERY }, { entity : sugarcane , ner_tag : CROP }, { entity : yellow leaf virus , ner_tag : DISEASE }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all agricultural entities such as crops, fertilizers, diseases, tools, pests, and natural events.",
+    "user_prompt": "Colorado potato beetle is a destructive pest. The farm also has an apiary for honey.",
+    "expected_output": "{ entity : Colorado potato beetle , ner_tag : PEST }, { entity : apiary , ner_tag : AGRI_STRUCTURE }, { entity : honey , ner_tag : PRODUCT }",
+    "agent_response": "{ entity : Colorado potato beetle , ner_tag : PEST }, { entity : pest , ner_tag : MISC }, { entity : apiary , ner_tag : AGRI_STRUCTURE }, { entity : honey , ner_tag : PRODUCT }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all agricultural entities such as crops, fertilizers, diseases, tools, pests, and natural events.",
+    "user_prompt": "The pumpkins are rotting due to a disease called damping-off.",
+    "expected_output": "{ entity : pumpkins , ner_tag : CROP }, { entity : damping-off , ner_tag : DISEASE }",
+    "agent_response": "{ entity : pumpkins , ner_tag : CROP }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all agricultural entities such as crops, fertilizers, diseases, tools, pests, and natural events.",
+    "user_prompt": "The hoe is useful to remove thistles from the lentils.",
+    "expected_output": "{ entity : hoe , ner_tag : TOOL }, { entity : thistles , ner_tag : PEST_PLANT }, { entity : lentils , ner_tag : CROP }",
+    "agent_response": "{ entity : hoe , ner_tag : CROP }, { entity : thistles , ner_tag : CROP }, { entity : lentils , ner_tag : CROP }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all agricultural entities such as crops, fertilizers, diseases, tools, pests, and natural events.",
+    "user_prompt": "Nitrogen fixing plants, like clover, might enrich the soil.",
+    "expected_output": "{ entity : Nitrogen , ner_tag : NUTRIENT }, { entity : clover , ner_tag : CROP }, { entity : soil , ner_tag : ENVIRONMENT }",
+    "agent_response": "{ entity : Nitrogen , ner_tag : NUTRIENT }, { entity : clover , ner_tag : CROP }, { entity : soil , ner_tag : ENVIRONMENT }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all agricultural entities such as crops, fertilizers, diseases, tools, pests, and natural events.",
+    "user_prompt": "Cotton bollworms are resistant to pesticides. The farmer also grows poppies.",
+    "expected_output": "{ entity : Cotton bollworms , ner_tag : PEST }, { entity : pesticides , ner_tag : PESTICIDE }, { entity : poppies , ner_tag : CROP }",
+    "agent_response": "{ entity : Cotton bollworms , ner_tag : INSECT }, { entity : pesticides , ner_tag : CHEMICAL }, { entity : poppies , ner_tag : CROP }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all agricultural entities such as crops, fertilizers, diseases, tools, pests, and natural events.",
+    "user_prompt": "The vineyard was protected by windbreaks. The grapes were huge this year.",
+    "expected_output": "{ entity : vineyard , ner_tag : LOCATION }, { entity : windbreaks , ner_tag : AGRI_STRUCTURE }, { entity : grapes , ner_tag : CROP }",
+    "agent_response": "{ entity : vineyard , ner_tag : LOCATION }, { entity : windbreaks , ner_tag : AGRI_STRUCTURE }, { entity : grapes , ner_tag : CROP }, { entity : year , ner_tag : TIME }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all agricultural entities such as crops, fertilizers, diseases, tools, pests, and natural events.",
+    "user_prompt": "Manure was spread on the field with a shovel to help the potatoes grow.",
+    "expected_output": "{ entity : Manure , ner_tag : FERTILIZER }, { entity : shovel , ner_tag : TOOL }, { entity : potatoes , ner_tag : CROP }",
+    "agent_response": "{ entity : Manure , ner_tag : FERTILIZER }, { entity : shovel , ner_tag : TOOL }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all agricultural entities such as crops, fertilizers, diseases, tools, pests, and natural events.",
+    "user_prompt": "The rabbits damaged the lettuce. The farm also rears goats.",
+    "expected_output": "{ entity : rabbits , ner_tag : PEST }, { entity : lettuce , ner_tag : CROP }, { entity : goats , ner_tag : LIVESTOCK }",
+    "agent_response": "{ entity : rabbits , ner_tag : LIVESTOCK }, { entity : lettuce , ner_tag : CROP }, { entity : farm , ner_tag : LOCATION }, { entity : goats , ner_tag : PEST }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all agricultural entities such as crops, fertilizers, diseases, tools, pests, and natural events.",
+    "user_prompt": "The seedlings were protected from a late frost by building a coldhouse.",
+    "expected_output": "{ entity : seedlings , ner_tag : PLANT_STAGE }, { entity : frost , ner_tag : DISASTER_EVENT }, { entity : coldhouse , ner_tag : AGRI_STRUCTURE }",
+    "agent_response": "{ entity : seedlings , ner_tag : PLANT_STAGE }, { entity : frost , ner_tag : DISASTER_EVENT }, { entity : coldhouse , ner_tag : AGRI_STRUCTURE }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all agricultural entities such as crops, fertilizers, diseases, tools, pests, and natural events.",
+    "user_prompt": "Artichokes and asparagus are the primary cash crops.",
+    "expected_output": "{ entity : Artichokes , ner_tag : CROP }, { entity : asparagus , ner_tag : CROP }",
+    "agent_response": "{ entity : Artichokes , ner_tag : VEGETABLE }, { entity : asparagus , ner_tag : VEGETABLE }, { entity : cash crops , ner_tag : CONCEPT }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all agricultural entities such as crops, fertilizers, diseases, tools, pests, and natural events.",
+    "user_prompt": "The scarecrow didn’t stop the crows from eating the sugarbeets.",
+    "expected_output": "{ entity : scarecrow , ner_tag : TOOL }, { entity : crows , ner_tag : PEST }, { entity : sugarbeets , ner_tag : CROP }",
+    "agent_response": "{ entity : scarecrow , ner_tag : TOOL }, { entity : crows , ner_tag : PEST }, { entity : eating , ner_tag : ACTION }, { entity : sugarbeets , ner_tag : CROP }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all medical entities such as symptoms, diseases, medications, and treatments.",
+    "user_prompt": "The vaccine for measles was administered. The child had a rash and a runny nose.",
+    "expected_output": "{ entity : vaccine , ner_tag : TREATMENT }, { entity : measles , ner_tag : DISEASE }, { entity : rash , ner_tag : SYMPTOM }, { entity : runny nose , ner_tag : SYMPTOM }",
+    "agent_response": "{ entity : vaccine , ner_tag : TREATMENT }, { entity : measles , ner_tag : DISEASE }, { entity : rash , ner_tag : SYMPTOM }, { entity : runny nose , ner_tag : SYMPTOM }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all medical entities such as symptoms, diseases, medications, and treatments.",
+    "user_prompt": "She was diagnosed with diabetes and was prescribed insulin.",
+    "expected_output": "{ entity : diabetes , ner_tag : DISEASE }, { entity : insulin , ner_tag : MEDICATION }",
+    "agent_response": "{ entity : diabetes , ner_tag : CHRONIC_CONDITION }, { entity : insulin , ner_tag : HORMONE }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all medical entities such as symptoms, diseases, medications, and treatments.",
+    "user_prompt": "The radiologist used an X-Ray to check for a fracture. The procedure was helpful.",
+    "expected_output": "{ entity : X-Ray , ner_tag : PROCEDURE }, { entity : fracture , ner_tag : INJURY }",
+    "agent_response": "{ entity : radiologist , ner_tag : MEDICAL_PROFESSIONAL }, { entity : X-Ray , ner_tag : PROCEDURE }, { entity : fracture , ner_tag : INJURY }, { entity : procedure , ner_tag : PROCEDURE }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all medical entities such as symptoms, diseases, medications, and treatments.",
+    "user_prompt": "Patient complains of chest pain and dizziness. Aspirin was recommended.",
+    "expected_output": "{ entity : chest pain , ner_tag : SYMPTOM }, { entity : dizziness , ner_tag : SYMPTOM }, { entity : Aspirin , ner_tag : MEDICATION }",
+    "agent_response": "{ entity : chest pain , ner_tag : SYMPTOM }, { entity : dizziness , ner_tag : SYMPTOM }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all medical entities such as symptoms, diseases, medications, and treatments.",
+    "user_prompt": "The surgeon performed a bariatric surgery. The result was disappointing.",
+    "expected_output": "{ entity : surgeon , ner_tag : MEDICAL_PROFESSIONAL }, { entity : bariatric surgery , ner_tag : TREATMENT }",
+    "agent_response": "{ entity : surgeon , ner_tag : TREATMENT }, { entity : bariatric surgery , ner_tag : DISEASE }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all medical entities such as symptoms, diseases, medications, and treatments.",
+    "user_prompt": "He is on paracetamol for the fever and ibuprofen for inflammation.",
+    "expected_output": "{ entity : paracetamol , ner_tag : MEDICATION }, { entity : fever , ner_tag : SYMPTOM }, { entity : ibuprofen , ner_tag : MEDICATION }, { entity : inflammation , ner_tag : SYMPTOM }",
+    "agent_response": "{ entity : paracetamol , ner_tag : MEDICATION }, { entity : fever , ner_tag : SYMPTOM }, { entity : ibuprofen , ner_tag : MEDICATION }, { entity : inflammation , ner_tag : SYMPTOM }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all medical entities such as symptoms, diseases, medications, and treatments.",
+    "user_prompt": "The oncologist suggested radiation therapy for the tumor.",
+    "expected_output": "{ entity : oncologist , ner_tag : MEDICAL_PROFESSIONAL }, { entity : radiation therapy , ner_tag : TREATMENT }, { entity : tumor , ner_tag : PATHOLOGY }",
+    "agent_response": "{ entity : oncologist , ner_tag : DOCTOR }, { entity : radiation therapy , ner_tag : TREATMENT }, { entity : tumor , ner_tag : DISEASE }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all medical entities such as symptoms, diseases, medications, and treatments.",
+    "user_prompt": "MRI scan revealed a Herniated disc. The patient also has back pain.",
+    "expected_output": "{ entity : MRI scan , ner_tag : PROCEDURE }, { entity : Herniated disc , ner_tag : DISEASE }, { entity : back pain , ner_tag : SYMPTOM }",
+    "agent_response": "{ entity : MRI scan , ner_tag : PROCEDURE }, { entity : Herniated disc , ner_tag : DISEASE }, { entity : patient , ner_tag : PERSON }, { entity : back pain , ner_tag : SYMPTOM }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all medical entities such as symptoms, diseases, medications, and treatments.",
+    "user_prompt": "The patient has allergies to penicillin. The nurse will administer a saline drip.",
+    "expected_output": "{ entity : allergies , ner_tag : DISEASE }, { entity : penicillin , ner_tag : MEDICATION }, { entity : nurse , ner_tag : MEDICAL_PROFESSIONAL }, { entity : saline drip , ner_tag : TREATMENT }",
+    "agent_response": "{ entity : allergies , ner_tag : DISEASE }, { entity : penicillin , ner_tag : MEDICATION }, { entity : saline drip , ner_tag : TREATMENT }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all medical entities such as symptoms, diseases, medications, and treatments.",
+    "user_prompt": "Anxiety can be managed with cognitive behavioral therapy. The patient was nervous.",
+    "expected_output": "{ entity : Anxiety , ner_tag : DISEASE }, { entity : cognitive behavioral therapy , ner_tag : TREATMENT }, { entity : nervous , ner_tag : SYMPTOM }",
+    "agent_response": "{ entity : Anxiety , ner_tag : SYMPTOM }, { entity : cognitive behavioral therapy , ner_tag : TREATMENT }, { entity : patient , ner_tag : PERSON }, { entity : nervous , ner_tag : DISEASE }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all medical entities such as symptoms, diseases, medications, and treatments.",
+    "user_prompt": "The cardiologist performed an ECG. The patient had arrhythmia.",
+    "expected_output": "{ entity : cardiologist , ner_tag : MEDICAL_PROFESSIONAL }, { entity : ECG , ner_tag : PROCEDURE }, { entity : arrhythmia , ner_tag : DISEASE }",
+    "agent_response": "{ entity : cardiologist , ner_tag : MEDICAL_PROFESSIONAL }, { entity : ECG , ner_tag : PROCEDURE }, { entity : arrhythmia , ner_tag : DISEASE }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all medical entities such as symptoms, diseases, medications, and treatments.",
+    "user_prompt": "The dermatologist diagnosed eczema and prescribed a steroid cream.",
+    "expected_output": "{ entity : dermatologist , ner_tag : MEDICAL_PROFESSIONAL }, { entity : eczema , ner_tag : DISEASE }, { entity : steroid cream , ner_tag : MEDICATION }",
+    "agent_response": "{ entity : dermatologist , ner_tag : SPECIALIST }, { entity : eczema , ner_tag : DISEASE }, { entity : steroid cream , ner_tag : TREATMENT }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all medical entities such as symptoms, diseases, medications, and treatments.",
+    "user_prompt": "Migraines cause severe pain. Sumatriptan offers relief.",
+    "expected_output": "{ entity : Migraines , ner_tag : DISEASE }, { entity : pain , ner_tag : SYMPTOM }, { entity : Sumatriptan , ner_tag : MEDICATION }",
+    "agent_response": "{ entity : Migraines , ner_tag : DISEASE }, { entity : severe pain , ner_tag : SYMPTOM }, { entity : Sumatripan , ner_tag : MEDICATION }, { entity : relief , ner_tag : TREATMENT }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all medical entities such as symptoms, diseases, medications, and treatments.",
+    "user_prompt": "Alzheimer’s disease affects memory. There is no cure, but Donepezil may help.",
+    "expected_output": "{ entity : Alzheimer’s disease , ner_tag : DISEASE }, { entity : memory , ner_tag : SYMPTOM }, { entity : Donepezil , ner_tag : MEDICATION }",
+    "agent_response": "{ entity : Alzheimer’s disease , ner_tag : DISEASE }, { entity : Donepezil , ner_tag : MEDICATION }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all medical entities such as symptoms, diseases, medications, and treatments.",
+    "user_prompt": "The vascuologist recommended a stent for the blocked artery.",
+    "expected_output": "{ entity : vascuologist , ner_tag : MEDICAL_PROFESSIONAL }, { entity : stent , ner_tag : TREATMENT }, { entity : blocked artery , ner_tag : DISEASE }",
+    "agent_response": "{ entity : vascuologist , ner_tag : MEDICAL_PROFESSIONAL }, { entity : stent , ner_tag : MEDICATION }, { entity : blocked artery , ner_tag : TREATMENT }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all medical entities such as symptoms, diseases, medications, and treatments.",
+    "user_prompt": "Insomnia was treated with zolpidem. The patient also had fatigue.",
+    "expected_output": "{ entity : Insomnia , ner_tag : DISEASE }, { entity : zolpidem , ner_tag : MEDICATION }, { entity : fatigue , ner_tag : SYMPTOM }",
+    "agent_response": "{ entity : Insomnia , ner_tag : DISEASE }, { entity : zolpidem , ner_tag : MEDICATION }, { entity : fatigue , ner_tag : SYMPTOM }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all medical entities such as symptoms, diseases, medications, and treatments.",
+    "user_prompt": "The antibiotics were given to treat the sepsis.",
+    "expected_output": "{ entity : antibiotics , ner_tag : MEDICATION }, { entity : sepsis , ner_tag : DISEASE }",
+    "agent_response": "{ entity : antibiotics , ner_tag : DRUG_CLASS }, { entity : sepsis , ner_tag : CONDITION }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all medical entities such as symptoms, diseases, medications, and treatments.",
+    "user_prompt": "The psychiatrist diagnosed schizophrenia. The treatment was needed.",
+    "expected_output": "{ entity : psychiatrist , ner_tag : MEDICAL_PROFESSIONAL }, { entity : schizophrenia , ner_tag : DISEASE }, { entity : treatment , ner_tag : TREATMENT }",
+    "agent_response": "{ entity : psychiatrist , ner_tag : MEDICAL_PROFESSIONAL }, { entity : schizophrenia , ner_tag : DISEASE }, { entity : treatment , ner_tag : TREATMENT }, { entity : diagnosed , ner_tag : MEDICAL_CONCEPT }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all medical entities such as symptoms, diseases, medications, and treatments.",
+    "user_prompt": "Nausea and vomiting were the primary symptoms of gastroenteritis.",
+    "expected_output": "{ entity : Nausea , ner_tag : SYMPTOM }, { entity : vomiting , ner_tag : SYMPTOM }, { entity : gastroenteritis , ner_tag : DISEASE }",
+    "agent_response": "{ entity : Nausea , ner_tag : SYMPTOM }, { entity : vomiting , ner_tag : SYMPTOM }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all medical entities such as symptoms, diseases, medications, and treatments.",
+    "user_prompt": "An appendectomy was performed to remove the inflamed appendicitis.",
+    "expected_output": "{ entity : appendectomy , ner_tag : TREATMENT }, { entity : appendicitis , ner_tag : DISEASE }",
+    "agent_response": "{ entity : appendectomy , ner_tag : SYMPTOM }, { entity : appendicitis , ner_tag : SYMPTOM }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all medical entities such as symptoms, diseases, medications, and treatments.",
+    "user_prompt": "The patient has asthma and uses an inhaler daily.",
+    "expected_output": "{ entity : asthma , ner_tag : DISEASE }, { entity : inhaler , ner_tag : MEDICATION }",
+    "agent_response": "{ entity : asthma , ner_tag : DISEASE }, { entity : inhaler , ner_tag : MEDICATION }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all medical entities such as symptoms, diseases, medications, and treatments.",
+    "user_prompt": "He was prescribed Warfarin, an anticoagulant, to prevent blood clots.",
+    "expected_output": "{ entity : Warfarin , ner_tag : MEDICATION }, { entity : anticoagulant , ner_tag : MEDICATION_CLASS }, { entity : blood clots , ner_tag : DISEASE }",
+    "agent_response": "{ entity : Warfarin , ner_tag : DRUG }, { entity : anticoagulant , ner_tag : DRUG_CLASS }, { entity : blood clots , ner_tag : PATHOLOGY }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all medical entities such as symptoms, diseases, medications, and treatments.",
+    "user_prompt": "The CT scan showed a tumor, which will require radiation.",
+    "expected_output": "{ entity : CT scan , ner_tag : PROCEDURE }, { entity : tumor , ner_tag : PATHOLOGY }, { entity : radiation , ner_tag : TREATMENT }",
+    "agent_response": "{ entity : CT scan , ner_tag : PROCEDURE }, { entity : tumor , ner_tag : PATHOLOGY }, { entity : radiation , ner_tag : TREATMENT }, { entity : showed , ner_tag : MISC }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all medical entities such as symptoms, diseases, medications, and treatments.",
+    "user_prompt": "The pharmacist gave him cough syrup for his bronchitis.",
+    "expected_output": "{ entity : pharmacist , ner_tag : MEDICAL_PROFESSIONAL }, { entity : cough syrup , ner_tag : MEDICATION }, { entity : bronchitis , ner_tag : DISEASE }",
+    "agent_response": "{ entity : cough syrup , ner_tag : MEDICATION }, { entity : bronchitis , ner_tag : DISEASE }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all medical entities such as symptoms, diseases, medications, and treatments.",
+    "user_prompt": "The doctor used a stethoscope to listen for a heart murmur. The diagnosis was difficult.",
+    "expected_output": "{ entity : stethoscope , ner_tag : TOOL }, { entity : heart murmur , ner_tag : SYMPTOM }, { entity : diagnosis , ner_tag : PROCEDURE }",
+    "agent_response": "{ entity : doctor , ner_tag : MEDICAL_PROFESSIONAL }, { entity : stethoscope , ner_tag : MEDICATION }, { entity : heart murmur , ner_tag : DISEASE }, { entity : diagnosis , ner_tag : MEDICATION }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all educational entities such as subjects, assessment types, tools, and learning concepts.",
+    "user_prompt": "The students have a final exam in biology and must submit a lab report on photosynthesis.",
+    "expected_output": "{ entity : final exam , ner_tag : ASSESSMENT }, { entity : biology , ner_tag : SUBJECT }, { entity : lab report , ner_tag : ASSESSMENT }, { entity : photosynthesis , ner_tag : CONCEPT }",
+    "agent_response": "{ entity : final exam , ner_tag : ASSESSMENT }, { entity : biology , ner_tag : SUBJECT }, { entity : lab report , ner_tag : ASSESSMENT }, { entity : photosynthesis , ner_tag : CONCEPT }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all educational entities such as subjects, assessment types, tools, and learning concepts.",
+    "user_prompt": "The midterm for the history course will be a long essay.",
+    "expected_output": "{ entity : midterm , ner_tag : ASSESSMENT }, { entity : history , ner_tag : SUBJECT }, { entity : essay , ner_tag : ASSESSMENT }",
+    "agent_response": "{ entity : midterm , ner_tag : TEST }, { entity : history , ner_tag : COURSE }, { entity : essay , ner_tag : ASSIGNMENT }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all educational entities such as subjects, assessment types, tools, and learning concepts.",
+    "user_prompt": "The professor handed out the syllabus for the economics class at the university.",
+    "expected_output": "{ entity : professor , ner_tag : ROLE }, { entity : syllabus , ner_tag : DOCUMENT }, { entity : economics , ner_tag : SUBJECT }",
+    "agent_response": "{ entity : professor , ner_tag : ROLE }, { entity : syllabus , ner_tag : DOCUMENT }, { entity : economics , ner_tag : SUBJECT }, { entity : university , ner_tag : LOCATION }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all educational entities such as subjects, assessment types, tools, and learning concepts.",
+    "user_prompt": "He received his diploma at the graduation ceremony after finishing his bachelor's degree.",
+    "expected_output": "{ entity : diploma , ner_tag : AWARD }, { entity : graduation ceremony , ner_tag : EVENT }, { entity : bachelor's degree , ner_tag : DEGREE }",
+    "agent_response": "{ entity : diploma , ner_tag : AWARD }, { entity : bachelor's degree , ner_tag : DEGREE }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all educational entities such as subjects, assessment types, tools, and learning concepts.",
+    "user_prompt": "The teacher used the whiteboard and markers to explain algebra.",
+    "expected_output": "{ entity : teacher , ner_tag : ROLE }, { entity : whiteboard , ner_tag : TOOL }, { entity : markers , ner_tag : TOOL }, { entity : algebra , ner_tag : SUBJECT }",
+    "agent_response": "{ entity : teacher , ner_tag : ROLE }, { entity : whiteboard , ner_tag : TOOL }, { entity : markers , ner_tag : TOOL }, { entity : algebra , ner_tag : TOOL }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all educational entities such as subjects, assessment types, tools, and learning concepts.",
+    "user_prompt": "The student submitted her homework for calculus before the deadline.",
+    "expected_output": "{ entity : student , ner_tag : ROLE }, { entity : homework , ner_tag : ASSESSMENT }, { entity : calculus , ner_tag : SUBJECT }",
+    "agent_response": "{ entity : student , ner_tag : ROLE }, { entity : homework , ner_tag : ASSESSMENT }, { entity : calculus , ner_tag : SUBJECT }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all educational entities such as subjects, assessment types, tools, and learning concepts.",
+    "user_prompt": "To get the scholarship, her GPA had to be high on the application.",
+    "expected_output": "{ entity : scholarship , ner_tag : AWARD }, { entity : GPA , ner_tag : METRIC }, { entity : application , ner_tag : DOCUMENT }",
+    "agent_response": "{ entity : scholarship , ner_tag : AWARD }, { entity : GPA , ner_tag : METRIC }, { entity : application , ner_tag : ASSESSMENT }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all educational entities such as subjects, assessment types, tools, and learning concepts.",
+    "user_prompt": "In literature class, we are reading a novel by Shakespeare.",
+    "expected_output": "{ entity : literature , ner_tag : SUBJECT }, { entity : novel , ner_tag : TOOL }, { entity : Shakespeare , ner_tag : PERSON }",
+    "agent_response": "{ entity : literature , ner_tag : SUBJECT }, { entity : novel , ner_tag : TOOL }, { entity : Shakespeare , ner_tag : PERSON }, { entity : reading , ner_tag : ACTIVITY }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all educational entities such as subjects, assessment types, tools, and learning concepts.",
+    "user_prompt": "She is working on her PhD dissertation and research with her advisor.",
+    "expected_output": "{ entity : PhD , ner_tag : DEGREE }, { entity : dissertation , ner_tag : ASSESSMENT }, { entity : research , ner_tag : CONCEPT }, { entity : advisor , ner_tag : ROLE }",
+    "agent_response": "{ entity : PhD , ner_tag : DEGREE }, { entity : dissertation , ner_tag : ASSESSMENT }, { entity : research , ner_tag : CONCEPT }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all educational entities such as subjects, assessment types, tools, and learning concepts.",
+    "user_prompt": "The group project requires a presentation using new software.",
+    "expected_output": "{ entity : group project , ner_tag : ASSESSMENT }, { entity : presentation , ner_tag : ASSESSMENT }, { entity : software , ner_tag : TOOL }",
+    "agent_response": "{ entity : group project , ner_tag : ASSESSMENT }, { entity : presentation , ner_tag : SUBJECT }, { entity : software , ner_tag : TOOL }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all educational entities such as subjects, assessment types, tools, and learning concepts.",
+    "user_prompt": "The school principal reviewed the geography lesson plan.",
+    "expected_output": "{ entity : school , ner_tag : LOCATION }, { entity : principal , ner_tag : ROLE }, { entity : geography , ner_tag : SUBJECT }, { entity : lesson plan , ner_tag : DOCUMENT }",
+    "agent_response": "{ entity : school , ner_tag : LOCATION }, { entity : principal , ner_tag : ROLE }, { entity : geography , ner_tag : SUBJECT }, { entity : lesson plan , ner_tag : DOCUMENT }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all educational entities such as subjects, assessment types, tools, and learning concepts.",
+    "user_prompt": "He took the SAT for college admission after high school.",
+    "expected_output": "{ entity : SAT , ner_tag : ASSESSMENT }, { entity : college , ner_tag : LOCATION }, { entity : high school , ner_tag : LOCATION }",
+    "agent_response": "{ entity : SAT , ner_tag : STANDARDIZED_TEST }, { entity : college admission , ner_tag : CONCEPT }, { entity : high school , ner_tag : INSTITUTION }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all educational entities such as subjects, assessment types, tools, and learning concepts.",
+    "user_prompt": "The computer lab is used for programming in Python.",
+    "expected_output": "{ entity : computer lab , ner_tag : LOCATION }, { entity : programming , ner_tag : SUBJECT }, { entity : Python , ner_tag : TOOL }",
+    "agent_response": "{ entity : computer lab , ner_tag : LOCATION }, { entity : programming , ner_tag : SUBJECT }, { entity : Python , ner_tag : TOOL }, { entity : computer , ner_tag : TOOL }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all educational entities such as subjects, assessment types, tools, and learning concepts.",
+    "user_prompt": "In art class, the painting was done on an easel with a canvas.",
+    "expected_output": "{ entity : art class , ner_tag : SUBJECT }, { entity : painting , ner_tag : ASSESSMENT }, { entity : easel , ner_tag : TOOL }, { entity : canvas , ner_tag : TOOL }",
+    "agent_response": "{ entity : art class , ner_tag : SUBJECT }, { entity : painting , ner_tag : ASSESSMENT }, { entity : canvas , ner_tag : TOOL }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all educational entities such as subjects, assessment types, tools, and learning concepts.",
+    "user_prompt": "We went to the library to find books for our research.",
+    "expected_output": "{ entity : library , ner_tag : LOCATION }, { entity : books , ner_tag : TOOL }, { entity : research , ner_tag : CONCEPT }",
+    "agent_response": "{ entity : library , ner_tag : SUBJECT }, { entity : books , ner_tag : TOOL }, { entity : research , ner_tag : SUBJECT }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all educational entities such as subjects, assessment types, tools, and learning concepts.",
+    "user_prompt": "The kindergarten teacher scheduled playtime after learning the ABCs.",
+    "expected_output": "{ entity : kindergarten , ner_tag : LOCATION }, { entity : teacher , ner_tag : ROLE }, { entity : playtime , ner_tag : EVENT }, { entity : ABCs , ner_tag : CONCEPT }",
+    "agent_response": "{ entity : kindergarten , ner_tag : LOCATION }, { entity : teacher , ner_tag : ROLE }, { entity : playtime , ner_tag : EVENT }, { entity : ABCs , ner_tag : CONCEPT }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all educational entities such as subjects, assessment types, tools, and learning concepts.",
+    "user_prompt": "E-learning is reliant on a good webinar platform and internet.",
+    "expected_output": "{ entity : E-learning , ner_tag : CONCEPT }, { entity : webinar , ner_tag : TOOL }, { entity : internet , ner_tag : TOOL }",
+    "agent_response": "{ entity : E-learning , ner_tag : METHOD }, { entity : webinar , ner_tag : PLATFORM }, { entity : internet , ner_tag : TOOL }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all educational entities such as subjects, assessment types, tools, and learning concepts.",
+    "user_prompt": "Students used the periodic table for the chemistry final exam.",
+    "expected_output": "{ entity : periodic table , ner_tag : TOOL }, { entity : chemistry , ner_tag : SUBJECT }, { entity : final exam , ner_tag : ASSESSMENT }",
+    "agent_response": "{ entity : Students , ner_tag : ROLE }, { entity : periodic table , ner_tag : TOOL }, { entity : chemistry , ner_tag : SUBJECT }, { entity : final exam , ner_tag : ASSESSMENT }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all educational entities such as subjects, assessment types, tools, and learning concepts.",
+    "user_prompt": "The psychology lecture was held in the new auditorium.",
+    "expected_output": "{ entity : psychology , ner_tag : SUBJECT }, { entity : lecture , ner_tag : EVENT }, { entity : auditorium , ner_tag : LOCATION }",
+    "agent_response": "{ entity : psychology , ner_tag : SUBJECT }, { entity : lecture , ner_tag : EVENT }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all educational entities such as subjects, assessment types, tools, and learning concepts.",
+    "user_prompt": "He earned his degree from a top university, but the tuition was high.",
+    "expected_output": "{ entity : degree , ner_tag : DEGREE }, { entity : university , ner_tag : LOCATION }, { entity : tuition , ner_tag : METRIC }",
+    "agent_response": "{ entity : degree , ner_tag : DEGREE }, { entity : university , ner_tag : LOCATION }, { entity : tuition , ner_tag : DEGREE }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all named entities (people, organizations, locations, products, and dates).",
+    "user_prompt": "John moved to Seattle in 2023 to work at Microsoft.",
+    "expected_output": "{ entity : John , ner_tag : PERSON }, { entity : Seattle , ner_tag : LOCATION }, { entity : 2023 , ner_tag : DATE }, { entity : Microsoft , ner_tag : ORGANIZATION }",
+    "agent_response": "{ entity : John , ner_tag : PERSON }, { entity : Seattle , ner_tag : LOCATION }, { entity : 2023 , ner_tag : DATE }, { entity : Microsoft , ner_tag : ORGANIZATION }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all named entities (people, organizations, locations, products, and dates).",
+    "user_prompt": "Elon Musk announced the Tesla Model S in Austin.",
+    "expected_output": "{ entity : Elon Musk , ner_tag : PERSON }, { entity : Tesla Model S , ner_tag : PRODUCT }, { entity : Austin , ner_tag : LOCATION }",
+    "agent_response": "{ entity : Elon Musk , ner_tag : CEO }, { entity : Tesla Model S , ner_tag : CAR }, { entity : Austin , ner_tag : CITY }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all named entities (people, organizations, locations, products, and dates).",
+    "user_prompt": "Maria flew to Spain on Tuesday for a holiday.",
+    "expected_output": "{ entity : Maria , ner_tag : PERSON }, { entity : Spain , ner_tag : LOCATION }, { entity : Tuesday , ner_tag : DATE }",
+    "agent_response": "{ entity : Maria , ner_tag : PERSON }, { entity : Spain , ner_tag : LOCATION }, { entity : Tuesday , ner_tag : DATE }, { entity : holiday , ner_tag : EVENT }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all named entities (people, organizations, locations, products, and dates).",
+    "user_prompt": "World War II ended in 1945 in Europe.",
+    "expected_output": "{ entity : World War II , ner_tag : EVENT }, { entity : 1945 , ner_tag : DATE }, { entity : Europe , ner_tag : LOCATION }",
+    "agent_response": "{ entity : World War II , ner_tag : EVENT }, { entity : Europe , ner_tag : LOCATION }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all named entities (people, organizations, locations, products, and dates).",
+    "user_prompt": "Amazon, led by Jeff Bezos, relies heavily on AWS.",
+    "expected_output": "{ entity : Amazon , ner_tag : ORGANIZATION }, { entity : Jeff Bezos , ner_tag : PERSON }, { entity : AWS , ner_tag : PRODUCT }",
+    "agent_response": "{ entity : Amazon , ner_tag : ORGANIZATION }, { entity : Jeff Bezos , ner_tag : ORGANIZATION }, { entity : AWS , ner_tag : PRODUCT }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all named entities (people, organizations, locations, products, and dates).",
+    "user_prompt": "Dr. Smith works at the Mayo Clinic in Rochester. He starts in January.",
+    "expected_output": "{ entity : Dr. Smith , ner_tag : PERSON }, { entity : Mayo Clinic , ner_tag : ORGANIZATION }, { entity : Rochester , ner_tag : LOCATION }, { entity : January , ner_tag : DATE }",
+    "agent_response": "{ entity : Dr. Smith , ner_tag : PERSON }, { entity : Mayo Clinic , ner_tag : ORGANIZATION }, { entity : Rochester , ner_tag : LOCATION }, { entity : January , ner_tag : DATE }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all named entities (people, organizations, locations, products, and dates).",
+    "user_prompt": "IBM, based in New York, developed Watson.",
+    "expected_output": "{ entity : IBM , ner_tag : ORGANIZATION }, { entity : New York , ner_tag : LOCATION }, { entity : Watson , ner_tag : PRODUCT }",
+    "agent_response": "{ entity : IBM , ner_tag : COMPANY }, { entity : New York , ner_tag : LOCATION }, { entity : Watson , ner_tag : AI }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all named entities (people, organizations, locations, products, and dates).",
+    "user_prompt": "The Mona Lisa is displayed at the Louvre in Paris.",
+    "expected_output": "{ entity : Mona Lisa , ner_tag : PRODUCT }, { entity : Louvre , ner_tag : ORGANIZATION }, { entity : Paris , ner_tag : LOCATION }",
+    "agent_response": "{ entity : Mona Lisa , ner_tag : PRODUCT }, { entity : Louvre , ner_tag : ORGANIZATION }, { entity : Paris , ner_tag : LOCATION }, { entity : painting , ner_tag : MISC }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all named entities (people, organizations, locations, products, and dates).",
+    "user_prompt": "Super Bowl LVII was held on February 12, 2023, in Arizona.",
+    "expected_output": "{ entity : Super Bowl LVII , ner_tag : EVENT }, { entity : February 12, 2023 , ner_tag : DATE }, { entity : Arizona , ner_tag : LOCATION }",
+    "agent_response": "{ entity : Super Bowl LVII , ner_tag : EVENT }, { entity : February 12, 2023 , ner_tag : DATE }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all named entities (people, organizations, locations, products, and dates).",
+    "user_prompt": "NASA launched the Artemis I mission to the Moon.",
+    "expected_output": "{ entity : NASA , ner_tag : ORGANIZATION }, { entity : Artemis I , ner_tag : EVENT }, { entity : Moon , ner_tag : LOCATION }",
+    "agent_response": "{ entity : NASA , ner_tag : ORGANIZATION }, { entity : Artemis I , ner_tag : EVENT }, { entity : Moon , ner_tag : ORGANIZATION }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all named entities (people, organizations, locations, products, and dates).",
+    "user_prompt": "Michael Jordan played for the Chicago Bulls in the 1990s.",
+    "expected_output": "{ entity : Michael Jordan , ner_tag : PERSON }, { entity : Chicago Bulls , ner_tag : ORGANIZATION }, { entity : 1990s , ner_tag : DATE }",
+    "agent_response": "{ entity : Michael Jordan , ner_tag : PERSON }, { entity : Chicago Bulls , ner_tag : ORGANIZATION }, { entity : 1990s , ner_tag : DATE }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all named entities (people, organizations, locations, products, and dates).",
+    "user_prompt": "The Samsung Galaxy S23 is made by Samsung in South Korea.",
+    "expected_output": "{ entity : Samsung Galaxy S23 , ner_tag : PRODUCT }, { entity : Samsung , ner_tag : ORGANIZATION }, { entity : South Korea , ner_tag : LOCATION }",
+    "agent_response": "{ entity : Samsung Galaxy S23 , ner_tag : PRODUCT }, { entity : Samsung , ner_tag : COMPANY }, { entity : South Korea , ner_tag : LOCATION }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all named entities (people, organizations, locations, products, and dates).",
+    "user_prompt": "The Beatles recorded the Abbey Road album in London.",
+    "expected_output": "{ entity : The Beatles , ner_tag : ORGANIZATION }, { entity : Abbey Road , ner_tag : PRODUCT }, { entity : London , ner_tag : LOCATION }",
+    "agent_response": "{ entity : The Beatles , ner_tag : ORGANIZATION }, { entity : Abbey Road , ner_tag : PRODUCT }, { entity : album , ner_tag : PRODUCT }, { entity : London , ner_tag : LOCATION }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all named entities (people, organizations, locations, products, and dates).",
+    "user_prompt": "The Eiffel Tower in Paris was designed by Gustave Eiffel.",
+    "expected_output": "{ entity : Eiffel Tower , ner_tag : LOCATION }, { entity : Paris , ner_tag : LOCATION }, { entity : Gustave Eiffel , ner_tag : PERSON }",
+    "agent_response": "{ entity : Eiffel Tower , ner_tag : LOCATION }, { entity : Paris , ner_tag : LOCATION }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all named entities (people, organizations, locations, products, and dates).",
+    "user_prompt": "Mount Everest, located in Nepal, is 8,848 meters high.",
+    "expected_output": "{ entity : Mount Everest , ner_tag : LOCATION }, { entity : Nepal , ner_tag : LOCATION }, { entity : 8,848 meters , ner_tag : QUANTITY }",
+    "agent_response": "{ entity : Mount Everest , ner_tag : LOCATION }, { entity : Nepal , ner_tag : PERSON }, { entity : 8,848 meters , ner_tag : QUANTITY }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all named entities (people, organizations, locations, products, and dates).",
+    "user_prompt": "Mr. David left IBM on Monday.",
+    "expected_output": "{ entity : Mr. David , ner_tag : PERSON }, { entity : IBM , ner_tag : ORGANIZATION }, { entity : Monday , ner_tag : DATE }",
+    "agent_response": "{ entity : Mr. David , ner_tag : PERSON }, { entity : IBM , ner_tag : ORGANIZATION }, { entity : Monday , ner_tag : DATE }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all named entities (people, organizations, locations, products, and dates).",
+    "user_prompt": "George Lucas created Star Wars, which is now owned by Disney.",
+    "expected_output": "{ entity : George Lucas , ner_tag : PERSON }, { entity : Star Wars , ner_tag : PRODUCT }, { entity : Disney , ner_tag : ORGANIZATION }",
+    "agent_response": "{ entity : George Lucas , ner_tag : PERSON }, { entity : Star Wars , ner_tag : MOVIE }, { entity : Disney , ner_tag : COMPANY }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all named entities (people, organizations, locations, products, and dates).",
+    "user_prompt": "The 2024 Toyota Camry is a popular car in Japan.",
+    "expected_output": "{ entity : 2024 , ner_tag : DATE }, { entity : Toyota Camry , ner_tag : PRODUCT }, { entity : Toyota , ner_tag : ORGANIZATION }, { entity : Japan , ner_tag : LOCATION }",
+    "agent_response": "{ entity : 2024 , ner_tag : DATE }, { entity : Toyota Camry , ner_tag : PRODUCT }, { entity : car , ner_tag : PRODUCT }, { entity : Japan , ner_tag : LOCATION }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all named entities (people, organizations, locations, products, and dates).",
+    "user_prompt": "The UN headquarters is in New York City, established in 1945.",
+    "expected_output": "{ entity : UN , ner_tag : ORGANIZATION }, { entity : New York City , ner_tag : LOCATION }, { entity : 1945 , ner_tag : DATE }",
+    "agent_response": "{ entity : UN , ner_tag : ORGANIZATION }, { entity : New York City , ner_tag : LOCATION }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all named entities (people, organizations, locations, products, and dates).",
+    "user_prompt": "The Statue of Liberty is in New York Harbor, USA.",
+    "expected_output": "{ entity : Statue of Liberty , ner_tag : LOCATION }, { entity : New York Harbor , ner_tag : LOCATION }, { entity : USA , ner_tag : LOCATION }",
+    "agent_response": "{ entity : Statue of Liberty , ner_tag : LOCATION }, { entity : New York Harbor , ner_tag : LOCATION }, { entity : USA , ner_tag : PERSON }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all agricultural entities such as crops, fertilizers, diseases, tools, pests, and natural events.",
+    "user_prompt": "Pheromone traps were used to catch the codling moth in the apple orchard.",
+    "expected_output": "{ entity : Pheromone traps , ner_tag : TOOL }, { entity : codling moth , ner_tag : PEST }, { entity : apple , ner_tag : CROP }, { entity : orchard , ner_tag : LOCATION }",
+    "agent_response": "{ entity : Pheromone traps , ner_tag : DEVICE }, { entity : codling moth , ner_tag : INSECT }, { entity : apple orchard , ner_tag : LOCATION }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all educational entities such as subjects, assessment types, tools, and learning concepts.",
+    "user_prompt": "The textbook for math class explains how to use a calculator for the exam.",
+    "expected_output": "{ entity : textbook , ner_tag : TOOL }, { entity : math , ner_tag : SUBJECT }, { entity : calculator , ner_tag : TOOL }, { entity : exam , ner_tag : ASSESSMENT }",
+    "agent_response": "{ entity : textbook , ner_tag : TOOL }, { entity : math , ner_tag : SUBJECT }, { entity : exam , ner_tag : ASSESSMENT }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all named entities (people, organizations, locations, products, and dates).",
+    "user_prompt": "Google, whose CEO is Sundar Pichai, is based in California.",
+    "expected_output": "{ entity : Google , ner_tag : ORGANIZATION }, { entity : Sundar Pichai , ner_tag : PERSON }, { entity : California , ner_tag : LOCATION }",
+    "agent_response": "{ entity : Google , ner_tag : ORGANIZATION }, { entity : CEO , ner_tag : ROLE }, { entity : Sundar Pichai , ner_tag : PERSON }, { entity : California , ner_tag : LOCATION }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all medical entities such as symptoms, diseases, medications, and treatments.",
+    "user_prompt": "The patient's high blood pressure (hypertension) is treated with lisinopril.",
+    "expected_output": "{ entity : blood pressure , ner_tag : SYMPTOM }, { entity : hypertension , ner_tag : DISEASE }, { entity : lisinopril , ner_tag : MEDICATION }",
+    "agent_response": "{ entity : patient , ner_tag : PERSON }, { entity : high blood pressure , ner_tag : SYMPTOM }, { entity : hypertension , ner_tag : DISEASE }, { entity : lisinopril , ner_tag : MEDICATION }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all agricultural entities such as crops, fertilizers, diseases, tools, pests, and natural events.",
+    "user_prompt": "Drip irrigation was installed for the grapes. A fungicide was sprayed to prevent mildew.",
+    "expected_output": "{ entity : Drip irrigation , ner_tag : TOOL }, { entity : grapes , ner_tag : CROP }, { entity : fungicide , ner_tag : PESTICIDE }, { entity : mildew , ner_tag : DISEASE }",
+    "agent_response": "{ entity : Drip irrigation , ner_tag : TOOL }, { entity : fungicide , ner_tag : PESTICIDE }, { entity : mildew , ner_tag : DISEASE }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all educational entities such as subjects, assessment types, tools, and learning concepts.",
+    "user_prompt": "Learning cursive writing is no longer standard in elementary school.",
+    "expected_output": "{ entity : cursive , ner_tag : CONCEPT }, { entity : writing , ner_tag : SUBJECT }, { entity : elementary school , ner_tag : LOCATION }",
+    "agent_response": "{ entity : cursive , ner_tag : SUBJECT }, { entity : writing , ner_tag : SUBJECT }, { entity : elementary school , ner_tag : LOCATION }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all named entities (people, organizations, locations, products, and dates).",
+    "user_prompt": "The Federal Reserve, led by Jerome Powell, is in Washington D.C.",
+    "expected_output": "{ entity : Federal Reserve , ner_tag : ORGANIZATION }, { entity : Jerome Powell , ner_tag : PERSON }, { entity : Washington D.C. , ner_tag : LOCATION }",
+    "agent_response": "{ entity : Federal Reserve , ner_tag : ORGANIZATION }, { entity : Jerome Powell , ner_tag : PERSON }, { entity : Washington D.C. , ner_tag : LOCATION }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all medical entities such as symptoms, diseases, medications, and treatments.",
+    "user_prompt": "Physical therapy was recommended for the knee injury.",
+    "expected_output": "{ entity : Physical therapy , ner_tag : TREATMENT }, { entity : knee injury , ner_tag : INJURY }",
+    "agent_response": "{ entity : Physical therapy , ner_tag : TREATMENT }, { entity : knee injury , ner_tag : INJURY }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all agricultural entities such as crops, fertilizers, diseases, tools, pests, and natural events.",
+    "user_prompt": "The tractor pulled a cultivator through the new sorghum field.",
+    "expected_output": "{ entity : tractor , ner_tag : TOOL }, { entity : cultivator , ner_tag : TOOL }, { entity : sorghum , ner_tag : CROP }",
+    "agent_response": "{ entity : tractor , ner_tag : VEHICLE }, { entity : cultivator , ner_tag : TOOL }, { entity : sorghum , ner_tag : CROP }",
+    "response_score": 0
+  },
+
+  {
+    "judge_prompt": "",
+    "sys_prompt": "Extract all educational entities such as subjects, assessment types, tools, and learning concepts.",
+    "user_prompt": "The dean announced the new curriculum for the medical school.",
+    "expected_output": "{ entity : dean , ner_tag : ROLE }, { entity : curriculum , ner_tag : CONCEPT }, { entity : medical school , ner_tag : LOCATION }",
+    "agent_response": "{ entity : dean , ner_tag : ROLE }, { entity : curriculum , ner_tag : DOCUMENT }, { entity : medical school , ner_tag : ORGANIZATION }",
+    "response_score": 0
+  }
+]

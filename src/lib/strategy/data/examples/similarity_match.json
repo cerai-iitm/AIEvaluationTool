@@ -1,0 +1,26 @@
+[
+    {
+        "judge_prompt": "",
+        "sys_prompt": "",
+        "user_prompt": "",
+        "expected_output": "gomenasai",
+        "agent_response": "hello world",
+        "response_score": 0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "",
+        "user_prompt": "",
+        "expected_output": "hello gokul",
+        "agent_response": "hello world",
+        "response_score": 0
+    },
+    {
+        "judge_prompt": "",
+        "sys_prompt": "",
+        "user_prompt": "",
+        "expected_output": "hello world",
+        "agent_response": "hello world",
+        "response_score": 0
+    }
+]

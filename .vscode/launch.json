@@ -5,6 +5,29 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "TDMS Backend",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/app/TDMS/back-end/main.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {},
+            "args": []
+        },
+        {
+            "name": "DB Language Maintenance",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/app/maintenance/fix_language.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {},
+            "args": [
+                "--config",
+                "${workspaceFolder}/src/app/maintenance/config.json",
+            ]
+        },
+        {
             "name": "Report Generator",
             "type": "debugpy",
             "request": "launch",
@@ -80,12 +103,13 @@
                 //"-v1",
                 //"-N"
                 "--testplan-id",
-                "1",
+                "5",
                 "--execute",
                 "--run-name",
-                "run-sweet-name-ultrices",
+                "new_run_with_august_ai",
                 "-n20",
                 "--run-continue",
+                "--language-strict"
                 //"--testcase-id", "149"
             ]
         },
