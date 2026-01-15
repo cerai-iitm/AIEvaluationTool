@@ -161,6 +161,112 @@ def main():
            if p_id is None:
                logger.error(f"Failed to update language for prompt ID {prompt.prompt_id}.")
                continue
+  
+    logger.info("Fixing language fields for responses ...")
+    for response in db.responses:   # DTOs (data.response.Response)
+        # Skip if already set and not forced
+        if response.lang_id is not None and response.lang_id != lang_rev["auto"] and not args.force:
+            continue
+
+        # Detect language from response text
+        lang_iso639 = lang_detect(response.response_text)
+        lang_name = iso639_to_language_name(lang_iso639)
+
+        if not lang_name:
+            logger.warning(
+                f"Could not determine language for response ID {response.response_id}. Skipping."
+            )
+            continue
+
+        # Resolve language ID
+        lang_id = lang_rev.get(lang_name)
+        if lang_id is None:
+            logger.warning(
+                f"Detected language '{lang_name}' for response ID {response.response_id} "
+                f"is not known in the database. Adding..."
+            )
+            lang_id = db.add_or_get_language_id(lang_name)
+            if lang_id is None:
+                logger.error(
+                    f"Failed to add detected language '{lang_name}' "
+                    f"for response ID {response.response_id}. Skipping."
+                )
+                continue
+
+            # Update lookup dictionaries
+            lang_fwd[lang_id] = lang_name
+            lang_rev[lang_name] = lang_id
+
+        # Persist language using DB method
+        success = db.update_response_language(
+            response_id=response.response_id,
+            lang_id=lang_id
+        )
+
+        if success:
+            logger.info(
+                f"Updated response ID {response.response_id} "
+                f"to language '{lang_name}'"
+            )
+        else:
+            logger.error(
+                f"Failed to update language for response ID {response.response_id}"
+            )
+
+    logger.info("Fixing language fields for LLM judge prompts ...")
+    for llm_judge_prompt in db.llm_judge_prompts:   # DTOs
+        # Skip if already set and not forced
+        if llm_judge_prompt.lang_id is not None and llm_judge_prompt.lang_id != lang_rev["auto"] and not args.force:
+            continue
+
+        # Detect language from prompt text
+        lang_iso639 = lang_detect(llm_judge_prompt.prompt)
+        lang_name = iso639_to_language_name(lang_iso639)
+
+        if not lang_name:
+            logger.warning(
+                f"Could not determine language for LLM judge prompt ID "
+                f"{llm_judge_prompt.prompt_id}. Skipping."
+            )
+            continue
+
+        # Resolve language ID
+        lang_id = lang_rev.get(lang_name)
+        if lang_id is None:
+            logger.warning(
+                f"Detected language '{lang_name}' for LLM judge prompt ID "
+                f"{llm_judge_prompt.prompt_id} is not known in the database. Adding..."
+            )
+            lang_id = db.add_or_get_language_id(lang_name)
+            if lang_id is None:
+                logger.error(
+                    f"Failed to add detected language '{lang_name}' "
+                    f"for LLM judge prompt ID {llm_judge_prompt.prompt_id}. Skipping."
+                )
+                continue
+
+            # Update lookup dictionaries
+            lang_fwd[lang_id] = lang_name
+            lang_rev[lang_name] = lang_id
+
+        # Persist language using DB method
+        success = db.update_llm_judge_prompt_language(
+            prompt_id=llm_judge_prompt.prompt_id,
+            lang_id=lang_id
+        )
+
+        if success:
+            logger.info(
+                f"Updated LLM judge prompt ID {llm_judge_prompt.prompt_id} "
+                f"to language '{lang_name}'"
+            )
+        else:
+            logger.error(
+                f"Failed to update language for LLM judge prompt ID "
+                f"{llm_judge_prompt.prompt_id}"
+            )
+        
+    logger.info("Language fields fixing completed.")
 
 if __name__ == "__main__":
     main()
