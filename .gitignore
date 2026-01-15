@@ -54,3 +54,5 @@ src/app/TDMS/front-end/*.ntvs*
 src/app/TDMS/front-end/*njsproj
 src/app/TDMS/front-end/*.sln
 src/app/TDMS/front-end/*.sw?
+*.sqlite3
+chroma_langchain_db/

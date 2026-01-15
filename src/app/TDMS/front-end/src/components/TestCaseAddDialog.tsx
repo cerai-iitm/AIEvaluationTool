@@ -39,6 +39,11 @@ interface Strategy {
   requires_llm_prompt: boolean | null;
 }
 
+interface Metric {
+  metric_id: number | null;
+  metric_name: string | null;
+}
+
 const responseTypes = [
   {value: "GT", label: "Ground Truth"},
   {value: "GTDesc", label: "Ground Truth Description"},
@@ -59,10 +64,13 @@ export const TestCaseAddDialog = ({
   const [responseText, setResponseText] = useState("");
   const [llmPrompt, setLlmPrompt] = useState("");
   const [strategy, setStrategy] = useState("");
+  const [metric, setMetric] = useState("");
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [strategies, setStrategies] = useState<Strategy[]>([]);
+  const [metrics, setMetrics] = useState<Metric[]>([]);
   const [isFetchingStrategies, setIsFetchingStrategies] = useState(false);
+  const [isFetchingMetrics, setIsFetchingMetrics] = useState(false);
   const [currentUserRole, setCurrentUserRole] = useState<string>("");
   
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
@@ -268,11 +276,55 @@ export const TestCaseAddDialog = ({
       }
     };
 
+    // fetch metric from api
+    const fetchMetrics = async () => {
+      setIsFetchingMetrics(true);
+      try {
+        const token = localStorage.getItem("access_token");
+        const headers: HeadersInit = {
+          "Content-Type": "application/json",
+        }
+        
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(API_ENDPOINTS.METERICS, { headers});
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (Array.isArray(data)) {
+          setMetrics(data);
+        } else {
+          console.error("Unexpected metrics data format:", data);
+          toast({
+            title: "Error",
+            description: "Failed to load metrics",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching metrics:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load metrics from server",
+          variant: "destructive",
+        });
+      } finally {
+        setIsFetchingMetrics(false);
+      }
+    };
+
     if (open) {
       fetchUserRole();
       fetchStrategies();
       fetchLanguages();
       fetchDomains();
+      fetchMetrics();
     } else {
       // Reset states when dialog closes
       setShowDetails(false);
@@ -291,6 +343,10 @@ export const TestCaseAddDialog = ({
       });
     }
   }, [open, toast]);
+
+
+
+
 
   // Check test case name availability against database
   useEffect(() => {
@@ -359,7 +415,7 @@ export const TestCaseAddDialog = ({
   // };
 
   const isAdded = (
-    userPrompts && strategy && testCaseName
+    userPrompts && strategy && testCaseName && metric && responseText
     
   )
 
@@ -593,6 +649,7 @@ export const TestCaseAddDialog = ({
         domain_name: domain.trim(),
         llm_judge_prompt:
           showLLMPrompt && llmPrompt.trim() ? llmPrompt.trim() : null,
+        metric_name: metric || "exact_match",
         notes: notes.trim() || null,
       };
 
@@ -630,6 +687,7 @@ export const TestCaseAddDialog = ({
       setResponseText("");
       setLlmPrompt("");
       setStrategy("");
+      setMetric("");
       setNotes("");
       setLanguage("");
       setDomain("");
@@ -686,7 +744,7 @@ export const TestCaseAddDialog = ({
             </Button> */}
           </DialogHeader>
 
-          <div className="space-y-4 pt-4">
+          <div className="space-y-2 pt-2">
             <div className="space-y-1">
               <Label className="text-base font-semibold">Test Case</Label>
               <div className="relative">
@@ -726,10 +784,10 @@ export const TestCaseAddDialog = ({
                 <hr />
             <div className="space-y-1 pb-2">
               {/* <div className="flex items-center justify-between"> */}
-                <Label className="text-base font-semibold">Prompt</Label>
+                {/* <Label className="text-base font-semibold">Prompt</Label> */}
               {/* </div> */}
               <div className="space-y-1">
-                <Label className="text-sm font-semibold">User Prompt</Label>
+                <Label className="text-base font-semibold">User Prompt</Label>
                 <div className="relative">
                   <Textarea
                     value={userPrompts}
@@ -1082,6 +1140,36 @@ export const TestCaseAddDialog = ({
                 </div>
               </div>
             )}
+
+            <hr />
+
+            <div className="space-y-1">
+              <Label className="text-base font-semibold">Metric</Label>
+              <Select
+                value={metric}
+                onValueChange={setMetric}
+                onOpenChange={(open) => {
+                  if (open) {
+                    setShowDetails(false);
+                    setShowRequestDetails(false);
+                  }
+                }}
+                disabled={isFetchingMetrics}
+              >
+                <SelectTrigger className={`bg-muted`}>
+                  <SelectValue className="placeholder:blur" placeholder={isFetchingMetrics ? "Loading metrics..." : "Select metric"} />
+                </SelectTrigger>
+                <SelectContent className="bg-popover max-h-[300px]">
+                  {metrics
+                    .filter((m) => m.metric_name != null)
+                    .map((m) => (
+                      <SelectItem key={m.metric_name} value={m.metric_name!}>
+                        {m.metric_name}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             <div className="flex justify-center items-center p-4 border-gray-300 bg-white sticky bottom-0 z-10">
               <Label className="text-base font-semibold mr-2">Notes</Label>

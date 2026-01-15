@@ -53,6 +53,7 @@ class TestCaseListResponse(BaseModel):
     llm_judge_prompt: Optional[str] = None
     domain_name: Optional[str] = None
     lang_name: Optional[str] = None
+    metric_name: str
 
 
 class TestCaseDetailResponse(TestCaseListResponse):
@@ -76,6 +77,7 @@ class TestCaseCreateV2(BaseModel):
     response_lang: Optional[str] = None
     strategy_name: str
     llm_judge_prompt: Optional[str] = None
+    metric_name: str
     notes: Optional[str] = None
 
 

@@ -165,4 +165,9 @@ export const API_ENDPOINTS = {
     `${API_BASE_URL}/api/strategies/update/${strategy_id}`,
   STRATEGY_DELETE: (strategy_id: number) =>
     `${API_BASE_URL}/api/strategies/delete/${strategy_id}`,
+
+
+  METERICS: `${API_BASE_URL}/api/v2/metrics`,
 };
+
+

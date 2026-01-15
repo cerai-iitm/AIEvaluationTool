@@ -45,6 +45,9 @@ from api.v2.endpoints import (
 from api.v2.endpoints import (
     testCase as testCase_v2,
 )
+from api.v2.endpoints import (
+    metric
+)
 from database.database import init_db, seed_users
 
 # from config.logger import get_logger
@@ -107,6 +110,7 @@ app.include_router(llm_prompt_v2.llm_prompt_router, tags=["LLM_Prompt_v2"])
 app.include_router(prompt_v2.prompt_router, tags=["Prompt_v2"])
 app.include_router(response_v2.response_router, tags=["Response_v2"])
 app.include_router(strategy_v2.strategy_router, tags=["Strategy_v2"])
+app.include_router(metric.metric_router, tags=["Metric"])
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

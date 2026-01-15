@@ -66,3 +66,5 @@ from .testcase import (
     TestCaseUpdateV2,
 )
 from .user import *
+
+from .metric import *

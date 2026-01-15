@@ -55,14 +55,16 @@ class IndianLanguageFluencyScorer(Strategy):
             score = json.loads(response.content.decode('utf-8'))["SLOR"]
         return score
     
-    def save_res_as_img(self, results:dict, path:str):
+    def save_res_as_img(self, results:dict, path_:str, file_name:str):
+        if not os.path.exists(path_):
+            os.mkdir(path_)
         for k , v in results.items():
             sns.kdeplot(v, label=k, fill=True)
         plt.title("Perplexity for fluent and non fluent indic language paragraphs.")
         plt.xlabel('Value')
         plt.ylabel('Density')
         plt.legend()
-        plt.savefig(path)
+        plt.savefig(os.path.join(path_, file_name))
         plt.clf()
 
     def reason_for_score(self, agent_response:str, score:float):
@@ -97,7 +99,8 @@ class IndianLanguageFluencyScorer(Strategy):
                 probs[k] = np.trapezoid(dist_int, interval)
 
             if(save_dist_img):
-                self.save_res_as_img(ex_results, os.path.join(os.path.dirname(__file__), f"{os.getenv('IMAGES_DIR')}/{dflt_vals.type}_dist.png"))
+                file_name = f"{dflt_vals.type}_dist.png"
+                self.save_res_as_img(ex_results, os.path.join(os.path.dirname(__file__), os.getenv('IMAGES_DIR')), file_name)
             
             probs_as_lst = list(probs.values())
             # if the differnce is positive the value is closer to fluent dist than non fluent
