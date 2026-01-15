@@ -52,7 +52,7 @@ def main():
     parser.add_argument("--get-testcases", "-C", dest="get_testcases", action="store_true", help="Get the test cases for a specific test plan or all test cases if no plan ID is provided")
     parser.add_argument("--get-targets", "-G", dest="get_targets", action="store_true", help="Get all target applications")
     parser.add_argument("--get-runs", "-N", dest="get_runs", action="store_true", help="Get all test runs")
-    parser.add_argument("--testplan-id", "-p", dest="plan_id", type=int, help="ID of the test plan to execute", required=True)
+    parser.add_argument("--testplan-id", "-p", dest="plan_id", type=int, help="ID of the test plan to execute", required=False)
     parser.add_argument("--testcase-id", "-t", dest="testcase_id", type=int, help="ID of the specific test case to execute")
     parser.add_argument("--metric-id", "-m", dest="metric_id", type=int, help="ID of the evaluation metric to use")
     parser.add_argument("--max-testcases", "-n", dest="max_testcases", type=int, default=10, help="Maximum number of test cases to execute (default: 10)")
