@@ -30,8 +30,8 @@ This major release marks a foundational milestone for the Conversational AI Eval
     
  **New Features**  
  
- - **Support for SQLite**
-	Robust object–relational mapping layer built on **SQLite**, enabling lightweight, portable, file-based structured storage and reliable retrieval of evaluation data with transactional consistency.  
+- **Support for SQLite**
+	Robust object–relational mapping layer built on **SQLite**, enabling lightweight, portable, file-based structured storage and reliable retrieval of evaluation data with transactional consistency.
 
 - **Enhanced and Extensible Interface Manager**  
     Introduces a modular interface manager architecture that supports easy integration of new target applications while maintaining isolation and stability across existing evaluation workflows.  
@@ -39,14 +39,14 @@ This major release marks a foundational milestone for the Conversational AI Eval
 - **Separation of Automation Configuration from Core Logic**
 	XPath definitions and credentials are externalized from the interface manager’s core codebase, allowing end users to adapt UI changes and authentication details without modifying or redeploying the system.
 
-- **Support  for API-based target applications**
+- **Support for API-based target applications**
     Adds support for API-based target applications compatible with OpenAI-style interfaces, along with native evaluation support for WhatsApp Web and browser-based web applications.  
 
 - **Refined Strategy Library**  
-    Includes 43 improved evaluation strategies covering multiple dimensions of conversational AI assessment.  
+    Includes 43 improved evaluation strategies covering multiple metrics of conversational AI assessment.  
 
 - **Synthetic Dataset Support for Strategy Validation**  
     Enables the use of synthetic datasets to systematically validate, stress-test, and benchmark individual evaluation strategies under controlled and edge-case conversational scenarios.  
 
 - **Test Data Management System (TDMS)**  
-    Introduces a centralized system to create, update, and delete test cases directly in the database, ensuring structured test data governance, version control readiness, and scalability for large evaluation programs.
+    Introduces a web application based centralized system to create, update, and delete test cases directly in the database, ensuring structured test data governance, version control readiness, and scalability for large evaluation programs.
