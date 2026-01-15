@@ -24,6 +24,7 @@ from lib.utils import get_logger
 from jose import jwt, JWTError
 from fastapi import HTTPException, status
 
+# @BUG: THIS IS WRONG.  SHOULD BE FIXED.
 sys.path.append(os.path.dirname(__file__) + "/../../app/TDMS/back-end")
 from config import settings
 
@@ -1419,7 +1420,7 @@ class DB:
         self,
         plan_name: str,
         n: int = 0,
-        lang_names: Optional[str] = None,
+        lang_names: Optional[List[str]] = None,
         domain_name: Optional[str] = None,
     ) -> List[TestCase]:
         """
@@ -3790,6 +3791,7 @@ class DB:
                                  evaluation_ts=getattr(result, "evaluation_ts"),
                                  conversation_id=getattr(result, 'conversation_id')) for result in results]
 
+    # @BUG. Why is this put here!??
     # Back-end router functions
     def get_username_from_token(authorization: Optional[str]) -> Optional[str]:
         """Extract username from JWT token."""
