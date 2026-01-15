@@ -62,7 +62,7 @@ AIEvaluationTool/
 
 ## How It Works:
 
-- **Test Case Execution**: A mechanism to send a diverse set of prompts to the conversational AI, simulating real user interactions across different platforms (e.g., WhatsApp, web interfaces).
+- **Test Case Execution**: A mechanism to send a diverse set of prompts to the conversational AI, simulating real user interactions across different platforms (e.g., WhatsApp, web interfaces, API interfaces).
 
 - **Response Analysis**: Applies a suite of custom and standard evaluation strategies—including text similarity, grammar checking, toxicity analysis, and more—to each response.
 
@@ -163,10 +163,34 @@ To keep credentials secure and maintainable, here is the template of the `creden
   }
 }
 ```
+---
+### 5. Import the Target into the Database
+
+**Supported Target Types:**
+- **API**: RESTful or custom API endpoints
+- **WhatsApp**: WhatsApp Business API integration
+- **Web Application**: Web-based interfaces
+
+Add the following code to the end of `src/app/importer/main.py` to import your target application into the database:
+
+```python
+tgt = Target(
+    target_name="your_agent_name", # Unique identifier for your agent
+    target_type="API" # or "WhatsApp" or "WebApp"
+    target_url="https://your-api-endpoint.com",  # Endpoint URL for the target service
+    target_description="Your agent description",
+    target_domain="Healthcare",  # or "Local API Interface"
+    target_languages=["english"] # List of supported languages
+)
+
+target_id = db.add_or_get_target(target=tgt)
+```
+
+Replace the placeholder values with your actual target configuration details. The script will register your target and return its unique ID for use in subsequent operations.
 
 ---
 
-### 4. **Model Setup for LLM-based Evaluation**
+### 6. **Model Setup for LLM-based Evaluation**
 
 To use the LLM-as-a-judge mechanism for evaluation, you must have a language model available. You can either:
 - **Run a model locally** (e.g., using Ollama, OpenAI-compatible local models, etc.), or
@@ -180,6 +204,20 @@ To use the LLM-as-a-judge mechanism for evaluation, you must have a language mod
 
 **Configuration:**
 - Ensure that `.env.example` in the root folder is initialized with appropriate values to create a `.env` file.
+```bash
+# Service Endpoints
+OLLAMA_URL="http://xxxx.xxxx.xxx:11434"
+GPU_URL="http://xxxx.xxxx.xxx:8000"
+
+# Model Configuration
+LLM_AS_JUDGE_MODEL=""
+
+# API Keys
+PERSPECTIVE_API_KEY=""
+SARVAM_API_KEY=""
+GEMINI_API_KEY=""
+OPENAI_API_KEY=""
+```
 - `OLLAMA_URL` points to the installed Ollama instance's endpoint address.  Typically it is `http://localhost:11434/`
 - `LLM_AS_JUDGE_MODEL` points to the name of the LLM (loaded via Ollama) that we want to use as a judge.  Typically, it is `llama3.1:70b`.
 - `PERSPECTIVE_API_KEY` should have the API KEY of Perspective service for toxicity detection.
@@ -191,7 +229,7 @@ Ensure your model is accessible and properly configured before running the evalu
 
 ---
 
-### 5. **Prepare Data Files**
+### 7. **Prepare Data Files**
 
 Ensure the `data/` directory contains the following files (already present in the repository):
 - `DataPoints.json` (sample test dataset)
@@ -201,7 +239,13 @@ Ensure the `data/` directory contains the following files (already present in th
 - `metric_strategy_mapping.json`
 - **A detailed set of Seeding data points shall be provided upon request.**
 
+---
 
+### 8. Create Environment Variable File
+
+From `src/lib/strategy/.env.example`, create a `src/lib/strategy/.env` file and paste the every paths.
+
+---
 
 ## Running the Evaluation Pipeline
 
@@ -212,7 +256,7 @@ Create a database in the MariaDB server and authorize a database user with full 
 Open a terminal on your machine and run:
 
 ```bash
-python3 src/app/importer/main.py --config "path to the config file"
+python3 src/app/importer/main.py --config "src/app/importer/config.json"
 ```
 
 After running the importer script, the terminal shows the following outputs.
@@ -239,12 +283,20 @@ Replace the host, port number, username, password, and database name in the `con
 
 ```bash
 cd src/app/testcase_executor
-python main.py --config "path to config file" -h
+python main.py --config "config.json" -h
 ```
 
 ![Arguments available in Testcase Executor](screenshots/arguments%20of%20testcase%20executor.png)
 
+```bash
+python main.py --config "config.json" --get-plans
+```
+
 ![Plans](screenshots/get_plans.png)
+
+```bash
+python main.py --config "config.json" --get-metrics
+```
 
 ![Metrics](screenshots/get_metrics.png)
 
@@ -253,7 +305,7 @@ To run the Testcase execution, run the following command:
 
 ```bash
 cd src/app/testcase_executor
-python main.py --testplan-id <testplan-id> --testcase-id <testcase-id> --metric-id <metric-id> --max-testcases <max-testcases>  --config "path to config file" --execute 
+python main.py --testplan-id <testplan-id> --testcase-id <testcase-id> --metric-id <metric-id> --max-testcases <max-testcases>  --config "config.json" --execute 
 ```
 *(Adjust `--testplan-id`, `--testcase-id`, `--metric-id`, `--max-testcases` and  as needed.)*
 
