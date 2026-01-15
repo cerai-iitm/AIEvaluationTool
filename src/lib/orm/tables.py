@@ -80,6 +80,7 @@ class Domains(Base):
     prompts = relationship("Prompts", back_populates="domain")  # Relationship to Prompts
     targets = relationship("Targets", back_populates="domain")
     prompts = relationship("Prompts", back_populates="domain")
+    metrics = relationship("Metrics", back_populates="domain")
 
 class Responses(Base):
     """ORM model for the Responses table.
@@ -158,6 +159,7 @@ class Metrics(Base):
     plans = relationship("TestPlans", secondary="TestPlanMetricMapping", back_populates="metrics")
     cases = relationship("TestCases", secondary="MetricTestCaseMapping", back_populates="metrics")
     run_details = relationship("TestRunDetails", back_populates="metric")  # Relationship to TestRunDetails
+    domain = relationship("Domains", back_populates="metrics")
 
 class TestPlanMetricMapping(Base):
     """ORM model for the TestPlanMetricMapping table.
