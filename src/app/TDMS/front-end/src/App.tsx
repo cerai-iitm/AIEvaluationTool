@@ -16,6 +16,8 @@ import DomainList from "./pages/Domains";
 import StrategyList from "./pages/Strategies";
 import LlmPrompts from "./pages/LlmPrompts";
 import LanguageList from "./pages/Language";
+import TestPlans from "./pages/TestPlans";
+import Metrics from "./pages/Metrics";
 
 
 const queryClient = new QueryClient();
@@ -39,6 +41,8 @@ const App = () => (
           <Route path="/languages" element={<LanguageList />} />
           <Route path="/strategies" element={<StrategyList />} />
           <Route path="/users" element={<Users />} />
+          <Route path="/test-plans" element={<TestPlans />} />
+          <Route path="/metrics" element={<Metrics />} />
           <Route path="/user-history/:username" element={<UserHistory />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

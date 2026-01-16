@@ -114,8 +114,7 @@ export default function TestPlanUpdateDialog({
 
   const isChanged =
     description !== (testPlanInitial.plan_description || "") ||
-    selectedMetrics.join(",") !== (testPlanInitial.metric_names || []).join(",") ||
-    notes !== (testPlanInitial.notes || "");
+    selectedMetrics.join(",") !== (testPlanInitial.metric_names || []).join(",") 
 
   const handleMetricToggle = (metric: string) => {
     setSelectedMetrics((prev) =>
@@ -260,6 +259,11 @@ export default function TestPlanUpdateDialog({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="bg-muted min-h-[80px]"
+              style={{
+                maxHeight: "120px",
+                minHeight: "70px",
+                overflowY: "auto"
+              }}
             />
           </div>
           <div className="space-y-1 pb-4">
@@ -297,7 +301,7 @@ export default function TestPlanUpdateDialog({
         </div>
 
         <div className="flex justify-center items-center p-4 border-gray-300 bg-white sticky bottom-0 z-10">
-          <Label className="text-base font-bold mr-2">Notes :</Label>
+          <Label className="text-base font-semibold mr-2">Notes :</Label>
           <Input
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
@@ -317,7 +321,7 @@ export default function TestPlanUpdateDialog({
                 !hasPermission(currentUserRole, "canUpdateRecords"))
             }
           >
-            {isLoading ? "Updating..." : "Update"}
+            {isLoading ? "Submitting..." : "Submit"}
           </Button>
         </div>
       </DialogContent>

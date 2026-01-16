@@ -81,7 +81,7 @@ export default function TestPlanAddDialog({
     );
   };
 
-  const isFormValid = name.trim() && notes.trim();
+  const isFormValid = name.trim() && selectedMetrics.length > 0 && notes.trim();
 
   const handleSubmit = async () => {
     if (!name.trim()) {
@@ -196,6 +196,11 @@ export default function TestPlanAddDialog({
               onChange={(e) => setDescription(e.target.value)}
               className="bg-muted min-h-[80px]"
               placeholder="Enter description..."
+              style={{
+                maxHeight: "120px",
+                minHeight: "70px",
+                overflowY: "auto"
+              }}
             />
           </div>
 
@@ -238,12 +243,12 @@ export default function TestPlanAddDialog({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Enter notes"
-              className="bg-gray-200 rounded px-4 py-1 mr-4 "
+              className="bg-gray-200 rounded px-4 py-1 mr-4 w-96"
               required
             />
 
             <Button
-              className="bg-accent hover:bg-accent/90 text-accent-foreground px-8"
+              className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={handleSubmit}
               disabled={!isFormValid || isSubmitting}
             >

@@ -14,7 +14,7 @@ from sqlalchemy.exc import IntegrityError
 from utils.activity_logger import log_activity
 
 from lib.orm.DB import DB
-from lib.orm.tables import TestPlans, Metrics
+from lib.orm.tables import TestPlans, Metrics, TestRunDetails
 from sqlalchemy.orm import joinedload
 
 testplan_router = APIRouter(prefix="/api/v2/testplans")
@@ -296,6 +296,14 @@ def delete_testplan(
         if plan is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Test plan not found"
+            )
+
+        # check if test plan is used in any test run detail
+        test_run_with_plan = session.query(TestRunDetails).filter(TestRunDetails.plan_id == plan_id).first()
+        if test_run_with_plan:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Test plan is used in one or more test runs. Cannot delete.",
             )
 
         plan_name = plan.plan_name

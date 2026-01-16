@@ -555,6 +555,13 @@ const Targets = () => {
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
+          <Button
+            variant="ghost"
+            className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 transition-colors"
+            onClick={() => {setDeleteDialogOpen(false); setTargetToDelete(null);}}
+          >
+            <span className="text-xl">x</span>
+          </Button>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -572,8 +579,8 @@ const Targets = () => {
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+          <AlertDialogFooter className="justify-center sm:justify-center">
+            {/* <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel> */}
             <AlertDialogAction
               onClick={handleDeleteConfirm}
               disabled={isDeleting}
@@ -585,7 +592,7 @@ const Targets = () => {
                   Deleting...
                 </>
               ) : (
-                "Delete"
+                "Confirm Delete"
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -289,7 +289,7 @@ export const TestCaseAddDialog = ({
           headers["Authorization"] = `Bearer ${token}`;
         }
 
-        const response = await fetch(API_ENDPOINTS.METERICS, { headers});
+        const response = await fetch(API_ENDPOINTS.METRICS_V2, { headers});
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);

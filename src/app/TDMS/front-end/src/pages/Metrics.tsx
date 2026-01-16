@@ -22,32 +22,34 @@ import { useToast } from "@/hooks/use-toast";
 import { API_ENDPOINTS } from "@/config/api";
 import { hasPermission } from "@/utils/permissions";
 import { HistoryButton } from "@/components/HistoryButton";
-import { set } from "date-fns";
 
 // Types
-interface Strategy {
-  strategy_id: number;
-  strategy_name: string;
-  strategy_description: string | null;
+interface Metric {
+  metric_id: number;
+  metric_name: string;
+  metric_description: string | null;
+  metric_source: string | null;
+  domain_name: string;
+  metric_benchmark: string | null;
 }
 
-const StrategyList: React.FC = () => {
+const Metrics: React.FC = () => {
   const { toast } = useToast();
   const [currentUserRole, setCurrentUserRole] = useState<string>("");
-  const [strategies, setStrategies] = useState<Strategy[]>([]);
+  const [metrics, setMetrics] = useState<Metric[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   
-  const filteredStrategies = strategies.filter((strategy) => 
-    strategy.strategy_name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredMetrics = metrics.filter((metric) => 
+    metric.metric_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const totalItems = filteredStrategies.length;
+  const totalItems = filteredMetrics.length;
   const itemsPerPage = 15;
   const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
   
-  const PaginatedStrategies = filteredStrategies.slice(
+  const PaginatedMetrics = filteredMetrics.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -55,25 +57,63 @@ const StrategyList: React.FC = () => {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [selectedStrategy, setSelectedStrategy] = useState<Strategy | null>(null);
+  const [selectedMetric, setSelectedMetric] = useState<Metric | null>(null);
   const [addOpen, setAddOpen] = useState(false);
 
   // ADD - Dialog local state
-  const [newStrategyName, setNewStrategyName] = useState("");
-  const [newStrategyDescription, setNewStrategyDescription] = useState("");
+  const [newMetricName, setNewMetricName] = useState("");
+  const [newMetricDescription, setNewMetricDescription] = useState("");
+  const [newMetricSource, setNewMetricSource] = useState("");
+  const [newDomainName, setNewDomainName] = useState("");
+  const [newMetricBenchmark, setNewMetricBenchmark] = useState("");
   const [addMessage, setAddMessage] = useState("");
 
   // UPDATE - Dialog local state
   const [updateName, setUpdateName] = useState("");
   const [updateDescription, setUpdateDescription] = useState("");
+  const [updateSource, setUpdateSource] = useState("");
+  const [updateDomainName, setUpdateDomainName] = useState("");
+  const [updateBenchmark, setUpdateBenchmark] = useState("");
   const [updateMessage, setUpdateMessage] = useState("");
 
   const [refreshKey, setRefreshKey] = useState(0);
-
   const [highlightedRowId, setHighlightedRowId] = useState<number | null>(null);
+  const [domainOptions, setDomainOptions] = useState<string[]>([]);
+  const [isFetchingDomains, setIsFetchingDomains] = useState(false);
 
-  // Fetch strategies from API
-  const fetchStrategies = async () => {
+  // Fetch domains from API
+  const fetchDomains = async () => {
+    setIsFetchingDomains(true);
+    try {
+      const token = localStorage.getItem("access_token");
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+      };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(API_ENDPOINTS.DOMAINS_V2, { headers });
+
+      if (response.ok) {
+        const domainsData = await response.json();
+        const domainNames = Array.isArray(domainsData)
+          ? domainsData.map((d: any) => d.domain_name).filter(Boolean)
+          : [];
+        setDomainOptions(domainNames);
+        if (domainNames.length > 0 && !newDomainName) {
+          setNewDomainName(domainNames[0]);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching domains:", error);
+    } finally {
+      setIsFetchingDomains(false);
+    }
+  };
+
+  // Fetch metrics from API
+  const fetchMetrics = async () => {
     setIsLoading(true);
     try {
       const token = localStorage.getItem("access_token");
@@ -85,7 +125,7 @@ const StrategyList: React.FC = () => {
         headers["Authorization"] = `Bearer ${token}`;
       }
 
-      const response = await fetch(API_ENDPOINTS.STRATEGIES_V2, {
+      const response = await fetch(API_ENDPOINTS.METRICS_V2, {
         method: "GET",
         headers,
       });
@@ -95,18 +135,12 @@ const StrategyList: React.FC = () => {
       }
 
       const data = await response.json();
-      // Map API response to match our interface
-      const mappedStrategies: Strategy[] = data.map((strategy: any) => ({
-        strategy_id: strategy.strategy_id,
-        strategy_name: strategy.strategy_name,
-        strategy_description: strategy.strategy_description || ""
-      }));
-      setStrategies(mappedStrategies);
+      setMetrics(data);
     } catch (error) {
-      console.error("Error fetching strategies:", error);
+      console.error("Error fetching metrics:", error);
       toast({
         title: "Error",
-        description: "Failed to fetch strategies. Please try again.",
+        description: "Failed to fetch metrics. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -137,26 +171,26 @@ const StrategyList: React.FC = () => {
     };
 
     fetchUserRole();
-    fetchStrategies();
+    fetchMetrics();
+    fetchDomains();
   }, [refreshKey]);
 
-  // const handleUpdateSuccess = () => {
-  //   setRefreshKey((prev) => prev + 1); // Trigger refresh
-  // };
-
   useEffect(() => {
-    if (selectedStrategy) {
-      setUpdateName(selectedStrategy.strategy_name);
-      setUpdateDescription(selectedStrategy.strategy_description || "");
+    if (selectedMetric) {
+      setUpdateName(selectedMetric.metric_name);
+      setUpdateDescription(selectedMetric.metric_description || "");
+      setUpdateSource(selectedMetric.metric_source || "");
+      setUpdateDomainName(selectedMetric.domain_name);
+      setUpdateBenchmark(selectedMetric.metric_benchmark || "");
     }
-  }, [selectedStrategy]);
+  }, [selectedMetric]);
 
   // ADD handler
   const handleAdd = async () => {
-    if (!newStrategyName.trim() || !addMessage.trim()) {
+    if (!newMetricName.trim() || !addMessage.trim() || !newDomainName.trim()) {
       toast({
         title: "Validation Error",
-        description: "Strategy name and notes are required",
+        description: "Metric name, domain, and notes are required",
         variant: "destructive",
       });
       return;
@@ -172,12 +206,15 @@ const StrategyList: React.FC = () => {
         headers["Authorization"] = `Bearer ${token}`;
       }
 
-      const response = await fetch(API_ENDPOINTS.STRATEGY_CREATE_V2, {
+      const response = await fetch(API_ENDPOINTS.METRIC_CREATE_V2, {
         method: "POST",
         headers,
         body: JSON.stringify({
-          strategy_name: newStrategyName.trim(),
-          strategy_description: newStrategyDescription.trim() || null,
+          metric_name: newMetricName.trim(),
+          metric_description: newMetricDescription.trim() || null,
+          metric_source: newMetricSource.trim() || null,
+          domain_name: newDomainName.trim(),
+          metric_benchmark: newMetricBenchmark.trim() || null,
           notes: addMessage.trim() || null,
         }),
       });
@@ -190,21 +227,24 @@ const StrategyList: React.FC = () => {
       const data = await response.json();
       toast({
         title: "Success",
-        description: "Strategy created successfully",
+        description: "Metric created successfully",
         variant: "default",
       });
       
-      setNewStrategyName("");
-      setNewStrategyDescription("");
+      setNewMetricName("");
+      setNewMetricDescription("");
+      setNewMetricSource("");
+      setNewDomainName("");
+      setNewMetricBenchmark("");
       setAddMessage("");
       setAddOpen(false);
-      fetchStrategies(); // Refresh the list
-      setHighlightedRowId(data.strategy_id);
+      fetchMetrics(); // Refresh the list
+      setHighlightedRowId(data.metric_id);
     } catch (error: any) {
-      console.error("Error creating strategy:", error);
+      console.error("Error creating metric:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to create strategy. Please try again.",
+        description: error.message || "Failed to create metric. Please try again.",
         variant: "destructive",
       });
     }
@@ -212,10 +252,10 @@ const StrategyList: React.FC = () => {
 
   // UPDATE handler
   const handleUpdate = async () => {
-    if (!selectedStrategy || !updateName.trim() || !updateMessage.trim()) {
+    if (!selectedMetric || !updateName.trim() || !updateMessage.trim() || !updateDomainName.trim()) {
       toast({
         title: "Validation Error",
-        description: "Strategy name and notes are required",
+        description: "Metric name, domain, and notes are required",
         variant: "destructive",
       });
       return;
@@ -231,13 +271,16 @@ const StrategyList: React.FC = () => {
         headers["Authorization"] = `Bearer ${token}`;
       }
 
-      const response = await fetch(API_ENDPOINTS.STRATEGY_UPDATE_V2(selectedStrategy.strategy_id), {
+      const response = await fetch(API_ENDPOINTS.METRIC_UPDATE_V2(selectedMetric.metric_id), {
         method: "PUT",
         headers,
         body: JSON.stringify({
-          strategy_name: updateName.trim(),
-          strategy_description: updateDescription.trim() || null,
-          notes: updateMessage.trim()
+          metric_name: updateName.trim(),
+          metric_description: updateDescription.trim() || null,
+          metric_source: updateSource.trim() || null,
+          domain_name: updateDomainName.trim(),
+          metric_benchmark: updateBenchmark.trim() || null,
+          user_note: updateMessage.trim()
         }),
       });
 
@@ -248,20 +291,18 @@ const StrategyList: React.FC = () => {
 
       toast({
         title: "Success",
-        description: "Strategy updated successfully",
+        description: "Metric updated successfully",
         variant: "default",
       });
       
       setShowUpdateModal(false);
-      setSelectedStrategy(null);
-      fetchStrategies(); // Refresh the list
-      // setAddMessage("");
-      //setHighlightedRowId(selectedStrategy.strategy_id);
+      setSelectedMetric(null);
+      fetchMetrics(); // Refresh the list
     } catch (error: any) {
-      console.error("Error updating strategy:", error);
+      console.error("Error updating metric:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to update strategy. Please try again.",
+        description: error.message || "Failed to update metric. Please try again.",
         variant: "destructive",
       });
     }
@@ -269,7 +310,7 @@ const StrategyList: React.FC = () => {
 
   // DELETE handler
   const handleDelete = async () => {
-    if (!selectedStrategy) return;
+    if (!selectedMetric) return;
 
     try {
       const token = localStorage.getItem("access_token");
@@ -281,19 +322,18 @@ const StrategyList: React.FC = () => {
         headers["Authorization"] = `Bearer ${token}`;
       }
 
-      const response = await fetch(API_ENDPOINTS.STRATEGY_DELETE_V2(selectedStrategy.strategy_id), {
+      const response = await fetch(API_ENDPOINTS.METRIC_DELETE_V2(selectedMetric.metric_id), {
         method: "DELETE",
         headers,
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        // throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
         const errorMessage = errorData.detail || `HTTP error! status: ${response.status}`;
 
-        if (errorMessage.includes("TestCase") || errorMessage.includes("cannot be deleted")) {
+        if (errorMessage.includes("Metric") && errorMessage.includes("cannot be deleted")) {
           toast({
-            title: "Cannot Delete Strategy",
+            title: "Cannot Delete Metric",
             description: errorMessage,
             variant: "destructive",
           });
@@ -305,21 +345,21 @@ const StrategyList: React.FC = () => {
 
       toast({
         title: "Success",
-        description: "Strategy deleted successfully",
+        description: "Metric deleted successfully",
         variant: "default",
       });
       
       setShowDeleteConfirm(false);
       setShowEditDialog(false);
-      setSelectedStrategy(null);
-      fetchStrategies(); // Refresh the list
+      setSelectedMetric(null);
+      fetchMetrics(); // Refresh the list
       setHighlightedRowId(null);
       
     } catch (error: any) {
-      console.error("Error deleting strategy:", error);
+      console.error("Error deleting metric:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to delete strategy. Please try again.",
+        description: error.message || "Failed to delete metric. Please try again.",
         variant: "destructive",
       });
     }
@@ -337,15 +377,15 @@ const StrategyList: React.FC = () => {
 
       <main className="flex-1 bg-background ml-[220px] md:ml-[224px]">
         <div className="p-4 md:p-8 flex flex-col h-screen">
-          <h1 className="text-2xl md:text-4xl font-bold mb-4 md:mb-8 text-center">Strategies</h1>
+          <h1 className="text-2xl md:text-4xl font-bold mb-4 md:mb-8 text-center">Metrics</h1>
 
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <Select defaultValue="Strategy">
+            <Select defaultValue="Metric">
               {/* <SelectTrigger className="w-full sm:w-48">
                 <SelectValue/>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Strategy">Strategy Name</SelectItem>
+                <SelectItem value="Metric">Metric Name</SelectItem>
               </SelectContent> */}
             </Select>
             <Input
@@ -359,10 +399,11 @@ const StrategyList: React.FC = () => {
             />
             <div className="ml-auto flex items-center gap-2 md:gap-4">
               <HistoryButton
-                entityType="Strategy"
-                title="Strategies"
+                entityType="Metric"
+                title="Metrics"
                 idField="testCaseId"
-                idLabel="Strategy ID"
+                idLabel="Metric ID"
+                entityId={selectedMetric?.metric_id}
               />
               <span className="text-xs sm:text-sm text-muted-foreground">
                 {totalItems === 0 ? "0" : `${(currentPage - 1) * itemsPerPage + 1} - ${Math.min(currentPage * itemsPerPage, totalItems)} of ${totalItems}`}
@@ -389,7 +430,7 @@ const StrategyList: React.FC = () => {
           </div>
           
           <div className="flex-1 min-h-0 overflow-y-auto">
-            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[73vh] max-w-[70%] mx-left overflow-y-auto">
+            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[73vh] max-w-[800px] mx-left overflow-y-auto">
               {isLoading ? (
                 <div className="flex items-center justify-center p-8">
                   <span>Loading...</span>
@@ -398,34 +439,32 @@ const StrategyList: React.FC = () => {
                 <table className="w-full table-fixed">
                   <thead className="border-b-2">
                     <tr>
-                      <th className="sticky top-0 z-10 p-4 font-semibold text-left w-[15%] ">Strategy ID</th>
-                      <th className="sticky top-0 z-10 p-2 font-semibold text-left w-[30%]">Strategy Name</th>
-                      <th className="sticky top-0 z-10 pl-8 p-2 font-semibold text-left ">Strategy Description</th>
+                      <th className="sticky top-0 z-10 p-4 font-semibold text-left pl-12 w-[15%] ">ID</th>
+                      <th className="sticky top-0 z-10 p-2 font-semibold text-left pl-4 w-[30%]">Metric Name</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {PaginatedStrategies.length === 0 ? (
+                    {PaginatedMetrics.length === 0 ? (
                       <tr>
-                        <td colSpan={3} className="p-4 text-center text-muted-foreground">
-                          No strategies found
+                        <td colSpan={2} className="p-4 text-center text-muted-foreground">
+                          No metrics found
                         </td>
                       </tr>
                     ) : (
-                      PaginatedStrategies.map((row) => (
+                      PaginatedMetrics.map((row) => (
                         <tr 
-                          key={row.strategy_id}
+                          key={row.metric_id}
                           className={`border-b cursor-pointer transition-colors duration-200 ${
-                            highlightedRowId === row.strategy_id ? "bg-primary/10 hover:bg-primary/15 border-primary/30" : "hover:bg-muted/50"
+                            highlightedRowId === row.metric_id ? "bg-primary/10 hover:bg-primary/15 border-primary/30" : "hover:bg-muted/50"
                           }`}
                           onClick={() => {
-                            setSelectedStrategy(row);
+                            setSelectedMetric(row);
                             setShowEditDialog(true);
-                            setHighlightedRowId(row.strategy_id);
+                            setHighlightedRowId(row.metric_id);
                           }}
                         >
-                          <td className="p-2 pl-12">{row.strategy_id}</td>
-                          <td className="p-2 truncate">{row.strategy_name}</td>
-                          <td className="p-2 max-w-md truncate">{row.strategy_description || ""}</td>
+                          <td className="p-2 pl-12">{row.metric_id}</td>
+                          <td className="p-2 truncate">{row.metric_name}</td>
                         </tr>
                       ))
                     )}
@@ -440,9 +479,12 @@ const StrategyList: React.FC = () => {
             <div className="mt-2 md:mt-1 sticky bottom-5">
               <button 
                 className="bg-primary hover:bg-primary/90 text-white py-2 px-4 rounded text-sm md:text-base transition-colors" 
-                onClick={() => setAddOpen(true)}
+                onClick={() => {
+                  setAddOpen(true);
+                  fetchDomains();
+                }}
               >
-                + Add Strategy
+                + Add Metric
               </button>
             </div>
           )}
@@ -450,11 +492,11 @@ const StrategyList: React.FC = () => {
       </main>
 
       {/* Edit Dialog - Shows Delete and Update buttons */}
-      {showEditDialog && selectedStrategy && (
+      {showEditDialog && selectedMetric && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50 p-4"
           onClick = {() => {
             setShowEditDialog(false);
-            setSelectedStrategy(null);
+            setSelectedMetric(null);
             setUpdateMessage("");
           }}
         >
@@ -466,28 +508,20 @@ const StrategyList: React.FC = () => {
               className="absolute top-3 right-4 text-2xl font-bold hover:text-gray-600 transition-colors" 
               onClick={() => {
                 setShowEditDialog(false);
-                setSelectedStrategy(null);
+                setSelectedMetric(null);
               }}
             >
               ×
             </button>
             <div className="flex flex-col items-left justify-center mb-6 md:mb-7 mt-4 md:mt-5 gap-4 ">
               <div className="flex flex-col gap-1">
-                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy</label>
-                <Input className="bg-muted text-sm md:text-base" value={selectedStrategy.strategy_name} readOnly />
+                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Metric</label>
+                <Input className="bg-muted text-sm md:text-base" value={selectedMetric.metric_name} readOnly />
               </div>
-              {/* if strategy description is null, don't render it */}
-              {selectedStrategy.strategy_description && (
-                <div className="flex flex-col gap-1">
-                  <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy</label>
-                  <Textarea className="text-sm md:text-base min-h-[80px] flex-1 w-full md:w-auto resize-none bg-muted" readOnly>{selectedStrategy.strategy_description}</Textarea>
-                </div>
-              )}
-              {/* <div className="flex flex-col gap-2 md:gap-3">
-                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy Description :</label>
-                
-                <Textarea className="text-sm md:text-base min-h-[80px] flex-1 w-full md:w-auto resize-none bg-muted" readOnly>{selectedStrategy.strategy_description}</Textarea>
-              </div> */}
+              <div className="flex flex-col gap-1">
+                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Domain</label>
+                <Input className="bg-muted text-sm md:text-base capitalize" value={selectedMetric.domain_name} readOnly />
+              </div>
             </div>
             <div className="flex gap-4 md:gap-8 justify-center">
               {hasPermission(currentUserRole, "canDeleteTables") && (
@@ -510,6 +544,7 @@ const StrategyList: React.FC = () => {
                     setShowEditDialog(false);
                     setShowUpdateModal(true);
                     setUpdateMessage("");
+                    fetchDomains();
                   }}
                 >
                   <p className="text-white px-2.5">Edit</p>
@@ -521,11 +556,11 @@ const StrategyList: React.FC = () => {
       )}
 
       {/* Delete Confirmation Dialog */}
-      {showDeleteConfirm && selectedStrategy && (
+      {showDeleteConfirm && selectedMetric && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50 p-4"
           onClick={() => {
             setShowUpdateModal(false);
-            setSelectedStrategy(null);
+            setSelectedMetric(null);
             setShowDeleteConfirm(false);
           }}
         >
@@ -544,20 +579,14 @@ const StrategyList: React.FC = () => {
             </button>
             <div className="mt-4 md:mt-6">
               <p className="text-base md:text-lg font-normal mb-4 text-center">
-                Are you sure you want to delete the following Strategy? This action cannot be undone.
+                Are you sure you want to delete the following Metric? This action cannot be undone.
               </p>
               <div className="mb-6">
                 <p className="text-sm md:text-base text-center capitalize font-semibold">
-                  <span className="font-medium">Strategy Name :</span> {selectedStrategy.strategy_name}
+                  <span className="font-medium">Metric Name :</span> {selectedMetric.metric_name}
                 </p>
               </div>
               <div className="flex gap-4 justify-center">
-                {/* <button
-                  className="px-6 md:px-8 py-2 bg-gray-400 hover:bg-gray-500 text-white rounded text-sm md:text-base transition-colors"
-                  onClick={() => setShowDeleteConfirm(false)}
-                >
-                  Cancel
-                </button> */}
                 <button
                   className="px-6 md:px-8 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-sm md:text-base transition-colors"
                   onClick={handleDelete}
@@ -571,14 +600,8 @@ const StrategyList: React.FC = () => {
       )}
 
       {/* Update Modal */}
-      {showUpdateModal && selectedStrategy && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50 p-4"
-          // onClick = {() => {
-          //   setShowUpdateModal(false);
-          //   setSelectedStrategy(null);
-          //   setUpdateMessage("");
-          // }}
-        >
+      {showUpdateModal && selectedMetric && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50 p-4">
           <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-lg min-h-[300px]"
             onClick={(e) => e.stopPropagation()}
           >
@@ -587,15 +610,14 @@ const StrategyList: React.FC = () => {
               className="absolute top-3 right-4 text-2xl font-bold hover:text-gray-600 transition-colors" 
               onClick={() => {
                 setShowUpdateModal(false);
-                setSelectedStrategy(null);
-                
+                setSelectedMetric(null);
               }}
             >
               ×
             </button>
             
             <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 mt-4 md:mt-5 gap-2 md:gap-0">
-              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy</label>
+              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Metric</label>
               <Input
                 value={updateName}
                 onChange={e => setUpdateName(e.target.value)}
@@ -604,12 +626,52 @@ const StrategyList: React.FC = () => {
             </div>
             
             <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 gap-2 md:gap-0">
-              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Description </label>
+              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Description</label>
               <Textarea
                 value={updateDescription}
                 onChange={e => setUpdateDescription(e.target.value)}
                 className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-lg flex-1 w-full md:w-auto min-h-[80px] resize-none focus:outline-none focus:ring focus:ring-blue-200"
-                placeholder="Enter strategy description..."
+                placeholder="Enter metric description..."
+              />
+            </div>
+
+            <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 gap-2 md:gap-0">
+              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Source</label>
+              <Input
+                value={updateSource}
+                onChange={e => setUpdateSource(e.target.value)}
+                className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-lg flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
+                placeholder="Enter metric source..."
+              />
+            </div>
+
+            <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 gap-2 md:gap-0">
+              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Domain</label>
+              <Select
+                value={updateDomainName}
+                onValueChange={setUpdateDomainName}
+                disabled={isFetchingDomains}
+              >
+                <SelectTrigger className="bg-gray-100 capitalize">
+                  <SelectValue placeholder={isFetchingDomains ? "Loading..." : "Select domain"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {domainOptions.map((d) => (
+                    <SelectItem key={d} value={d} className="capitalize">
+                      {d}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 gap-2 md:gap-0">
+              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Bench Mark</label>
+              <Input
+                value={updateBenchmark}
+                onChange={e => setUpdateBenchmark(e.target.value)}
+                className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-lg flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
+                placeholder="Enter metric benchmark..."
               />
             </div>
             
@@ -622,7 +684,7 @@ const StrategyList: React.FC = () => {
               />
               <button
                 className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={!updateName.trim() || !updateMessage.trim()}
+                disabled={!updateName.trim() || !updateMessage.trim() || !updateDomainName.trim()}
                 onClick={handleUpdate}
               >
                 Submit
@@ -632,7 +694,7 @@ const StrategyList: React.FC = () => {
         </div>
       )}
 
-      {/* Add Strategy Dialog */}
+      {/* Add Metric Dialog */}
       {addOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/20 z-50 p-4"
           onClick={() => {
@@ -648,8 +710,11 @@ const StrategyList: React.FC = () => {
               className="absolute top-3 right-4 text-2xl font-bold hover:text-gray-600 transition-colors focus:outline-none"
               onClick={() => {
                 setAddOpen(false);
-                setNewStrategyDescription("");
-                setNewStrategyName("");
+                setNewMetricDescription("");
+                setNewMetricName("");
+                setNewMetricSource("");
+                setNewDomainName("");
+                setNewMetricBenchmark("");
               }}
               aria-label="Close"
             >
@@ -658,10 +723,10 @@ const StrategyList: React.FC = () => {
             
             <div className="flex flex-col items-center justify-center flex-1">
               <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 w-full gap-2 md:gap-0">
-                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy</label>
+                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Metric</label>
                 <Input
-                  value={newStrategyName}
-                  onChange={e => setNewStrategyName(e.target.value)}
+                  value={newMetricName}
+                  onChange={e => setNewMetricName(e.target.value)}
                   className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
                   maxLength={150}
                 />
@@ -670,10 +735,50 @@ const StrategyList: React.FC = () => {
               <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 w-full gap-2 md:gap-0">
                 <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Description</label>
                 <Textarea
-                  value={newStrategyDescription}
-                  onChange={e => setNewStrategyDescription(e.target.value)}
+                  value={newMetricDescription}
+                  onChange={e => setNewMetricDescription(e.target.value)}
                   className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 w-full md:w-auto min-h-[80px] resize-none focus:outline-none focus:ring focus:ring-blue-200"
-                  placeholder="Enter strategy description..."
+                  placeholder="Enter metric description..."
+                />
+              </div>
+
+              <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 w-full gap-2 md:gap-0">
+                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Source</label>
+                <Input
+                  value={newMetricSource}
+                  onChange={e => setNewMetricSource(e.target.value)}
+                  className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
+                  placeholder="Enter metric source..."
+                />
+              </div>
+
+              <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 w-full gap-2 md:gap-0">
+                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Domain</label>
+                <Select
+                  value={newDomainName}
+                  onValueChange={setNewDomainName}
+                  disabled={isFetchingDomains}
+                >
+                  <SelectTrigger className="bg-gray-100 capitalize">
+                    <SelectValue placeholder={isFetchingDomains ? "Loading..." : "Select domain"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {domainOptions.map((d) => (
+                      <SelectItem key={d} value={d} className="capitalize">
+                        {d}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 w-full gap-2 md:gap-0">
+                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Bench Mark</label>
+                <Input
+                  value={newMetricBenchmark}
+                  onChange={e => setNewMetricBenchmark(e.target.value)}
+                  className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
+                  placeholder="Enter metric benchmark..."
                 />
               </div>
             </div>
@@ -689,7 +794,7 @@ const StrategyList: React.FC = () => {
                 type="button"
                 className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleAdd}
-                disabled={!newStrategyName.trim() || !newStrategyDescription.trim() || !addMessage.trim()}
+                disabled={!newMetricName.trim() || !newDomainName.trim() || !addMessage.trim()}
               >
                 Submit
               </button>
@@ -701,4 +806,5 @@ const StrategyList: React.FC = () => {
   );
 };
 
-export default StrategyList;
+export default Metrics;
+

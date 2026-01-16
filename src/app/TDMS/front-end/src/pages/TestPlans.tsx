@@ -205,10 +205,40 @@ const TestPlans = () => {
       );
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.detail || `HTTP error! status: ${response.status}`,
-        );
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.detail || errorData.message || errorMessage;
+        } catch {
+          // If JSON parsing fails, try to get text
+          try {
+            const errorText = await response.text();
+            errorMessage = errorText || errorMessage;
+          } catch {
+            // Keep default error message
+          }
+        }
+
+        // Check if it's the specific error about test plan being used
+        if (
+          errorMessage.toLowerCase().includes("test plan") &&
+          (errorMessage.toLowerCase().includes("cannot delete") ||
+            errorMessage.toLowerCase().includes("used in") ||
+            errorMessage.toLowerCase().includes("test cases"))
+        ) {
+          toast({
+            title: "Cannot Delete Test Plan",
+            description: errorMessage,
+            variant: "destructive",
+          });
+          setDeleteDialogOpen(false);
+          setTestPlanToDelete(null);
+          setIsDeleting(false);
+          return;
+        }
+
+        // For other errors, throw to be caught by catch block
+        throw new Error(errorMessage);
       }
 
       toast({
@@ -267,9 +297,9 @@ const TestPlans = () => {
           <h1 className="text-4xl font-bold mb-8 text-center">Test Plans</h1>
           <div className="flex gap-4 mb-6">
             <Select defaultValue="plan">
-              <SelectTrigger className="w-48">
+              {/* <SelectTrigger className="w-48">
                 <SelectValue />
-              </SelectTrigger>
+              </SelectTrigger> */}
               <SelectContent>
                 <SelectItem value="plan">Plan Name</SelectItem>
               </SelectContent>
@@ -322,14 +352,14 @@ const TestPlans = () => {
             </div>
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto">
-            <div className="bg-white rounded-lg shadow overflow-hidden max-w-7xl mx-left max-h-[67vh] overflow-y-auto">
+            <div className="bg-white rounded-lg shadow overflow-hidden  md:max-w-[500px] mx-left max-h-[67vh] overflow-y-auto">
               <table className="w-full">
                 <thead className="border-b-2">
                   <tr>
-                    <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">
-                      ID
+                    <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-center">
+                      Plan ID
                     </th>
-                    <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">
+                    <th className="sticky top-0 bg-white z-10 p-4 pl-12 font-semibold text-left">
                       Plan Name
                     </th>
                   </tr>
@@ -366,8 +396,8 @@ const TestPlans = () => {
                           setHighlightedRowId(testPlan.plan_id);
                         }}
                       >
-                        <td className="p-2 pl-12">{testPlan.plan_id}</td>
-                        <td className="p-2 pl-6 capitalize">{testPlan.plan_name}</td>
+                        <td className="p-2 pl-1 text-center">{testPlan.plan_id}</td>
+                        <td className="p-2 pl-12 text-left capitalize">{testPlan.plan_name}</td>
                       </tr>
                     ))
                   )}
@@ -421,14 +451,24 @@ const TestPlans = () => {
                   {selectedTestPlan.plan_name}
                 </Label>
               </div>
-              <div className="space-y-1">
+
+              {/* if Description is null means description is not visible  */}
+              {selectedTestPlan.plan_description && (
+                <div className="space-y-1">
                 <Label className="text-base font-semibold">Description</Label>
                 <Textarea
                   value={selectedTestPlan.plan_description || ""}
                   readOnly
                   className="bg-muted min-h-[80px]"
+                  style={{
+                    maxHeight: "120px",
+                    minHeight: "70px",
+                    overflowY: "auto"
+                  }}
                 ></Textarea>
               </div>
+              )}
+              
               <div className="space-y-1">
                 <Label className="text-base font-semibold">Metrics</Label>
                 <div className="bg-muted p-4 rounded-md min-h-[80px]">
@@ -470,7 +510,7 @@ const TestPlans = () => {
                   setIsDetailDialogOpen(false);
                 }}
               >
-                <p className="text-white px-2.5">Update</p>
+                <p className="text-white px-2.5">Edit</p>
               </Button>
             )}
           </div>
@@ -493,8 +533,16 @@ const TestPlans = () => {
       />
 
       {/* Delete Confirmation Dialog */}
+    
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
+          <Button
+            variant="ghost"
+            className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 transition-colors"
+            onClick={() => {setDeleteDialogOpen(false); setTestPlanToDelete(null);}}
+          >
+            <span className="text-xl">x</span>
+          </Button>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -512,22 +560,24 @@ const TestPlans = () => {
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteConfirm}
-              disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {isDeleting ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Deleting...
-                </>
-              ) : (
-                "Delete"
-              )}
-            </AlertDialogAction>
+          <AlertDialogFooter className="justify-center sm:justify-center">
+            <div className="flex justify-center gap-2 ">
+              {/* <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel> */}
+              <Button
+                onClick={handleDeleteConfirm}
+                disabled={isDeleting}
+                className="bg-destructive  text-destructive-foreground hover:bg-destructive/90"
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  "Confirm Delete"
+                )}
+              </Button>
+            </div>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
