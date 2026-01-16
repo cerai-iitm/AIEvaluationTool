@@ -11,12 +11,19 @@ import sys
 
 # Ensure the project's `src` directory is on sys.path so top-level imports
 # like `lib` resolve when running this module directly.
-THIS_DIR = os.path.dirname(__file__)
-SRC_DIR = os.path.abspath(os.path.join(THIS_DIR, "..", ".."))
-if SRC_DIR not in sys.path:
-    sys.path.insert(0, SRC_DIR)
+# THIS_DIR = os.path.dirname(__file__)
+# SRC_DIR = os.path.abspath(os.path.join(THIS_DIR, "..", ".."))
+# if SRC_DIR not in sys.path:
+#     sys.path.insert(0, SRC_DIR)
 
-from routers import common, chat_router, api
+# Make interface_manager importable when running: python3 main.py
+THIS_DIR = os.path.dirname(os.path.abspath(__file__))  # interface_manager/
+APP_DIR = os.path.abspath(os.path.join(THIS_DIR, ".."))  # src/app
+
+if APP_DIR not in sys.path:
+    sys.path.insert(0, APP_DIR)
+
+from interface_manager.routers import common, chat_router, api
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 # from database import init_db, seed_users
