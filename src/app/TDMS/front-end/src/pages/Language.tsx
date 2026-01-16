@@ -372,7 +372,7 @@ const LanguageList: React.FC = () => {
 
                     {/* Table */}
                     <div className="flex-1 min-h-0 overflow-y-auto">
-                        <div className="bg-white rounded-lg shadow overflow-hidden max-h-[75vh] max-w-[30%] overflow-y-auto">
+                        <div className="bg-white rounded-lg shadow overflow-hidden max-h-[75vh] max-w-[500px] overflow-y-auto">
                             {isLoading ? (
                                 <div className="flex items-center justify-center p-8">
                                     <span>Loading...</span>

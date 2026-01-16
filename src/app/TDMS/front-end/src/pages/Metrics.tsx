@@ -439,7 +439,7 @@ const Metrics: React.FC = () => {
                 <table className="w-full table-fixed">
                   <thead className="border-b-2">
                     <tr>
-                      <th className="sticky top-0 z-10 p-4 font-semibold text-left pl-12 w-[15%] ">ID</th>
+                      <th className="sticky top-0 z-10 p-4 font-semibold text-left pl-10 w-[15%] ">Metric Id</th>
                       <th className="sticky top-0 z-10 p-2 font-semibold text-left pl-4 w-[30%]">Metric Name</th>
                     </tr>
                   </thead>
@@ -463,7 +463,7 @@ const Metrics: React.FC = () => {
                             setHighlightedRowId(row.metric_id);
                           }}
                         >
-                          <td className="p-2 pl-12">{row.metric_id}</td>
+                          <td className="p-2 pl-16">{row.metric_id}</td>
                           <td className="p-2 truncate">{row.metric_name}</td>
                         </tr>
                       ))

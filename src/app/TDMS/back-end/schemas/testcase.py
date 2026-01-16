@@ -88,4 +88,5 @@ class TestCaseUpdateV2(BaseModel):
     system_prompt: Optional[str] = None
     response_text: Optional[str] = None
     llm_judge_prompt: Optional[str] = None
+    metric_name: Optional[str] = None
     notes: Optional[str] = None

@@ -389,7 +389,7 @@ const StrategyList: React.FC = () => {
           </div>
           
           <div className="flex-1 min-h-0 overflow-y-auto">
-            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[73vh] max-w-[70%] mx-left overflow-y-auto">
+            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[73vh] max-w-[500px] mx-left overflow-y-auto">
               {isLoading ? (
                 <div className="flex items-center justify-center p-8">
                   <span>Loading...</span>
@@ -400,7 +400,7 @@ const StrategyList: React.FC = () => {
                     <tr>
                       <th className="sticky top-0 z-10 p-4 font-semibold text-left w-[15%] ">Strategy ID</th>
                       <th className="sticky top-0 z-10 p-2 font-semibold text-left w-[30%]">Strategy Name</th>
-                      <th className="sticky top-0 z-10 pl-8 p-2 font-semibold text-left ">Strategy Description</th>
+                      {/* <th className="sticky top-0 z-10 pl-8 p-2 font-semibold text-left ">Strategy Description</th> */}
                     </tr>
                   </thead>
                   <tbody>
@@ -425,7 +425,7 @@ const StrategyList: React.FC = () => {
                         >
                           <td className="p-2 pl-12">{row.strategy_id}</td>
                           <td className="p-2 truncate">{row.strategy_name}</td>
-                          <td className="p-2 max-w-md truncate">{row.strategy_description || ""}</td>
+                          {/* <td className="p-2 max-w-md truncate">{row.strategy_description || ""}</td> */}
                         </tr>
                       ))
                     )}
