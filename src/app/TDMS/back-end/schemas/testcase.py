@@ -84,9 +84,9 @@ class TestCaseCreateV2(BaseModel):
 class TestCaseUpdateV2(BaseModel):
     testcase_name: Optional[str] = None
     strategy_name: Optional[str] = None
+    metric_name: Optional[str] = None
     user_prompt: Optional[str] = None
     system_prompt: Optional[str] = None
     response_text: Optional[str] = None
     llm_judge_prompt: Optional[str] = None
-    metric_name: Optional[str] = None
     notes: Optional[str] = None

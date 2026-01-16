@@ -755,6 +755,7 @@ class DB:
                     joinedload(TestCases.response),
                     joinedload(TestCases.strategy),
                     joinedload(TestCases.judge_prompt),
+                    joinedload(TestCases.metrics),
                 )
                 .filter(TestCases.testcase_id == testcase_id)
                 .first()
@@ -773,6 +774,16 @@ class DB:
                 if not strategy:
                     raise ValueError(f"Strategy '{updates['strategy_name']}' not found")
                 testcase.strategy_id = strategy.strategy_id
+                updated = True
+
+            # Update metric
+            if "metric_name" in updates and updates["metric_name"]:
+                metric = session.query(Metrics).filter(Metrics.metric_name == updates["metric_name"]).first()
+                if not metric:
+                    raise ValueError(f"Metric '{updates['metric_name']}' not found")
+                # Clear existing metrics and add the new one
+                testcase.metrics.clear()
+                testcase.metrics.append(metric)
                 updated = True
 
             # Update prompt with hash and reuse logic

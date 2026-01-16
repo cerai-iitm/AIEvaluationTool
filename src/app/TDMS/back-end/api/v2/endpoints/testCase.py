@@ -21,7 +21,7 @@ from lib.data.response import Response as ResponseData
 from lib.data.response import Response
 from lib.data.test_case import TestCase as TestCaseModel
 from lib.orm.DB import DB
-from lib.orm.tables import Prompts, TestCases
+from lib.orm.tables import Prompts, TestCases, Metrics
 
 testcase_router = APIRouter(prefix="/api/v2/testcases")
 
@@ -459,6 +459,8 @@ def update_testcase(
             changes.append("response updated")
         if "strategy_name" in normalized_updates:
             changes.append("strategy updated")
+        if "metric_name" in normalized_updates:
+            changes.append("metric updated")
         if "llm_judge_prompt" in normalized_updates and payload.llm_judge_prompt is not None:
             changes.append("judge prompt updated")
 
@@ -477,6 +479,11 @@ def update_testcase(
             user_note=payload.notes,
         )
 
+    # Get metric name from the first metric (test cases can have multiple metrics, but we'll use the first one)
+    metric_name = None
+    if updated.metrics and len(updated.metrics) > 0:
+        metric_name = updated.metrics[0].metric_name
+    
     return {
         "testcase_id": updated.testcase_id,
         "testcase_name": updated.testcase_name,
@@ -491,6 +498,7 @@ def update_testcase(
         "system_prompt": updated.prompt.system_prompt if updated.prompt else None,
         "response_id": updated.response_id,
         "response_text": updated.response.response_text if updated.response else None,
+        "metric_name": metric_name,
     }
 
 

@@ -26,6 +26,7 @@ import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
 import { hasPermission } from "@/utils/permissions";
 import { set } from "date-fns";
+import test from "node:test";
 
 
 interface TestCase {
@@ -37,6 +38,7 @@ interface TestCase {
   systemPrompts: string;
   responseText: string;
   llmPrompt: string;
+  metricName: string;
 }
 
 interface TestCaseUpdateDialogProps {
@@ -50,6 +52,11 @@ interface Strategy {
   strategy_id: number | null;
   strategy_name: string | null;
   requires_llm_prompt: boolean | null;
+}
+
+interface Metric {
+  metric_id: number | null;
+  metric_name: string | null;
 }
 
 // const domains = ["General", "Education", "agriculture", "Healthcare", "Learning Disability"];
@@ -66,11 +73,14 @@ export const TestCaseUpdateDialog = ({
   const [responseText, setResponseText] = useState(testCase?.responseText || "");
   const [llmPrompt, setLlmPrompt] = useState(testCase?.llmPrompt || "");
   const [strategy, setStrategy] = useState(testCase?.strategyName || "");
+  const [metric, setMetric] = useState(testCase?.metricName || "");
   // const [domain, setDomain] = useState(testCase?.domainName || "");
   const [notes, setNotes] = useState("");
   const [strategies, setStrategies] = useState<Strategy[]>([]);
+  const [metrics, setMetrics] = useState<Metric[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingStrategies, setIsFetchingStrategies] = useState(false);
+  const [isFetchingMetrics, setIsFetchingMetrics] = useState(false);
   const [currentUserRole, setCurrentUserRole] = useState<string>("");
   
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
@@ -204,9 +214,54 @@ export const TestCaseUpdateDialog = ({
       }
     };
 
+  // fetch metric from api
+    const fetchMetrics = async () => {
+      setIsFetchingMetrics(true);
+      try {
+        const token = localStorage.getItem("access_token");
+        const headers: HeadersInit = {
+          "Content-Type": "application/json",
+        };
+        
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(API_ENDPOINTS.METRICS_V2, { headers });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (Array.isArray(data)) {
+          setMetrics(data);
+          console.log("Fetched metrics:", data); // Debug log
+        } else {
+          console.error("Unexpected metrics data format:", data);
+          toast({
+            title: "Error",
+            description: "Failed to load metrics: Invalid data format",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching metrics:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load metrics from server",
+          variant: "destructive",
+        });
+      } finally {
+        setIsFetchingMetrics(false);
+      }
+    };
+
     if (open) {
       fetchUserRole();
       fetchStrategies();
+      fetchMetrics();
     } else {
       // Reset errors when dialog closes
       setErrors({
@@ -224,6 +279,7 @@ export const TestCaseUpdateDialog = ({
     setResponseText(testCase?.responseText || '');
     setLlmPrompt(testCase?.llmPrompt || '');
     setStrategy(testCase?.strategyName || '');
+    setMetric(testCase?.metricName || '');
     // setDomain(testCase?.domainName || '');
     setNotes(''); // Or testCase?.notes if available
     // Reset errors when test case changes
@@ -244,13 +300,17 @@ export const TestCaseUpdateDialog = ({
     systemPrompts: "",
     responseText: "",
     llmPrompt: "",
+    metricName: "",
+
   };
   const isChanged = (
     userPrompts !== (testCaseInitial.userPrompts || "") ||
     systemPrompts.trim() !== (testCaseInitial.systemPrompts || "") ||
     responseText.trim() !== (testCaseInitial.responseText || "") ||
     llmPrompt.trim() !== (testCaseInitial.llmPrompt || "") ||
-    strategy.trim() !== (testCaseInitial.strategyName || "")
+    strategy.trim() !== (testCaseInitial.strategyName || "") ||
+    metric.trim() !== (testCaseInitial.metricName || "")
+
     // notes !== ""
   );
 
@@ -409,6 +469,9 @@ export const TestCaseUpdateDialog = ({
       if (strategy !== (testCaseInitial.strategyName || "")) {
         updatePayload.strategy_name = strategy;
       }
+      if (metric !== (testCaseInitial.metricName || "")) {
+        updatePayload.metric_name = metric;
+      }
 
       // Always include notes if provided
       if (notes && notes.trim()) {
@@ -503,9 +566,9 @@ export const TestCaseUpdateDialog = ({
             </div>
 
             <div className="space-y-1 pb-4">
-              <Label className="text-base font-semibold">Prompt</Label>
-              <div className="space-y-1">
-                <Label className="text-sm font-normal">User Prompts</Label>
+              {/* <Label className="text-base font-semibold">Prompt</Label> */}
+              <div className="space-y-1 pb-4">
+                <Label className="text-base font-semibold">User Prompts</Label>
                 <div className="relative">
                   <Textarea
                     value={userPrompts}
@@ -543,8 +606,8 @@ export const TestCaseUpdateDialog = ({
 
               </div>
 
-              <div className="space-y-1">
-                <Label className="text-sm font-normal">System prompts</Label>
+              <div className="space-y-1 pb-4">
+                <Label className="text-base font-semibold">System prompts</Label>
                 <div className="relative">
                   <Textarea
                     value={systemPrompts}
@@ -628,7 +691,7 @@ export const TestCaseUpdateDialog = ({
             <div className="space-y-1 pb-4">
               <Label className="text-base font-semibold">Strategy</Label>
               <Select value={strategy} onValueChange={setStrategy} disabled={isFetchingStrategies}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-muted">
                   <SelectValue placeholder={isFetchingStrategies ? "Loading strategies..." : "Select strategy"} />
                 </SelectTrigger>
                 <SelectContent className="bg-popover max-h-[300px]">
@@ -701,6 +764,31 @@ export const TestCaseUpdateDialog = ({
                 </div>
             )
             }
+            
+            
+
+            <div className="space-y-1 pb-4">
+              <Label className="text-base font-semibold">Metric</Label>
+              <Select value={metric} onValueChange={setMetric} disabled={isFetchingMetrics}>
+                <SelectTrigger className="bg-muted">
+                  <SelectValue placeholder={isFetchingMetrics ? "Loading metrics..." : "Select metric"} />
+                </SelectTrigger>
+                <SelectContent className="bg-popover max-h-[300px]">
+                  {metrics.length === 0 && !isFetchingMetrics ? (
+                    <SelectItem value="" disabled>No metrics available</SelectItem>
+                  ) : (
+                    metrics
+                      .filter((m) => m.metric_name != null)
+                      .map((m) => (
+                        <SelectItem key={m.metric_name} value={m.metric_name!}>
+                          {m.metric_name}
+                        </SelectItem>
+                      ))
+                  
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
 
 
 
@@ -740,11 +828,9 @@ export const TestCaseUpdateDialog = ({
                 className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleSubmit}
                 disabled={
-                 // !notNull ||
                   !isChanged || 
                   !notes.trim() || 
                   isLoading ||
-                  userPrompts.trim() == (testCaseInitial.userPrompts || "")  ||
                   (!hasPermission(currentUserRole, "canUpdateTables") && 
                    !hasPermission(currentUserRole, "canUpdateRecords"))
                 }

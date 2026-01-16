@@ -42,7 +42,7 @@ def _get_username_from_token(authorization: Optional[str]) -> Optional[str]:
 
 
 @metric_router.get(
-    "",
+    "", 
     response_model=List[MetricListResponse],
     summary="List all metrics (v2)",
 )
