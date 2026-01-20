@@ -5,11 +5,13 @@ import webapp
 import whatsapp
 import json
 import webapp
+import os, sys
 
 router = APIRouter()
 
 def load_config():
-    with open('config.json', 'r') as file:
+    path = os.path.join(os.path.dirname(__file__), '..', 'config.json')
+    with open(path, 'r') as file:
         return json.load(file)
 
 @router.post("/info")

@@ -78,7 +78,7 @@ const Login = () => {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to connect to server. Please try again.",
+        description: "Failed to connect to server. Please try again." + error,
         variant: "destructive",
       });
     } finally {

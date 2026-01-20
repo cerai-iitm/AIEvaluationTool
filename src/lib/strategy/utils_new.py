@@ -237,7 +237,7 @@ class OllamaConnect:
         final_rsn = ""
         if(len(responses) > 0):
             reasons = [r["reason"] for r in responses]
-            if(len(reasons) == 1): return f"Reason : {r}" 
+            if(len(reasons) == 1): return f"{reasons[0]}" 
             for i, r in enumerate(reasons):
                 if i == 0:
                     final_rsn += f"Reason {i+1} : {r}"

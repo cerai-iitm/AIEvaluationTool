@@ -5,6 +5,16 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "TDMS Backend",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/app/TDMS/back-end/main.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {},
+            "args": []
+        },
+        {
             "name": "DB Language Maintenance",
             "type": "debugpy",
             "request": "launch",
