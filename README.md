@@ -283,7 +283,7 @@ cp src/lib/strategy/.env.example src/lib/strategy/.env
 ```
 ---
 
-### **Step 7: Prepare Data Files**
+#### **Step 7: Prepare Data Files**
 
 Ensure the `data/` directory contains the following files (already present in the repository):
 - `DataPoints.json` (sample test dataset)
@@ -331,6 +331,7 @@ Update `src/app/importer/config.json`, `src/app/testcase_executor/config.json` &
     }
 }
 ```
+---
 
 #### **Step 2: Configure Environment Variables**
 
@@ -369,6 +370,7 @@ OPENAI_API_KEY="your_openai_api_key"
 
 Ensure your model is accessible and properly configured before running the evaluation pipeline. Refer to the relevant documentation for your chosen model provider for setup instructions.
 
+---
 #### **Step 3: Configure XPath and Credentials**
 
 XPath locators are used by automation frameworks (e.g., Selenium) to identify and interact with web elements.
@@ -425,6 +427,7 @@ To keep credentials secure and maintainable, here is the template of the `src/ap
   }
 }
 ```
+---
 #### **Step 4: Import the Target into the Database**
 
 **Supported Target Types:**
@@ -449,7 +452,7 @@ target_id = db.add_or_get_target(target=tgt)
 
 Replace the placeholder values with your actual target configuration details. The script will register your target and return its unique ID for use in subsequent operations.
 
-
+---
 #### **Step 5: Configure Test Data (TDMS)**
 
 Create `src/app/TDMS/back-end/database/config.json`:
@@ -465,7 +468,7 @@ Create `src/app/TDMS/back-end/database/config.json`:
     }
 }
 ```
-
+---
 ## 5. **Getting Started**
 To getting started with tool following steps are provided for basics, for more detailed [click here](screenshots/Workflow.md).
 ### **AI Evaluation Tool**
