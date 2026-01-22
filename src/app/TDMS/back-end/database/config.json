@@ -1,11 +1,20 @@
 {
-    "db": {
-        "engine": "sqlite",
-        "file": "AIEvaluationData.db",
-        "host": "localhost",
-        "port": 3306,
-        "user": "root",
-        "password": "password",
-        "database": "test"
+    "db":{
+        "engine":"sqlite",
+        "file": "AIEvaluationData.db"
+    },
+    "example_engines":{
+        "mariadb":{
+            "engine":"mariadb",
+            "host": "localhost",
+            "port": 3306,
+            "user": "root",
+            "password": "password",
+            "database": "test"
+        },
+        "sqlite":{
+            "engine":"sqlite",
+            "file": "example.db"
+        }
     }
 }
