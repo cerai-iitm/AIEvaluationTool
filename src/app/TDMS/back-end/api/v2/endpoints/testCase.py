@@ -374,6 +374,10 @@ def create_testcase(
                 if testcase_full.prompt.lang_id:
                     lang_name = db.get_language_name(testcase_full.prompt.lang_id)
 
+            # Get metric names as a list
+            metric_name_list = [m.metric_name for m in testcase_full.metrics] if testcase_full.metrics else []
+            metric_names = ", ".join(metric_name_list) if metric_name_list else ""
+
             return TestCaseDetailResponse(
                 testcase_id=testcase_full.testcase_id,
                 testcase_name=testcase_full.testcase_name,
@@ -394,6 +398,8 @@ def create_testcase(
                 else None,
                 domain_name=domain_name,
                 lang_name=lang_name,
+                metric_name=metric_names,  # Comma-separated for backward compatibility
+                metric_name_list=metric_name_list,  # List of metric names
                 strategy_id=testcase_full.strategy_id,
                 prompt_id=testcase_full.prompt_id,
                 response_id=testcase_full.response_id,

@@ -376,8 +376,8 @@ export const TestCaseAddDialog = ({
           headers["Authorization"] = `Bearer ${token}`;
         }
 
-        // Use the /first endpoint which returns JSON instead of streaming
-        const response = await fetch(`${API_ENDPOINTS.TESTCASES_V2}/first`, { headers });
+        // Use the endpoint which returns JSON instead of streaming
+        const response = await fetch(`${API_ENDPOINTS.TESTCASES_V2}`, { headers });
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -792,12 +792,12 @@ export const TestCaseAddDialog = ({
                 {!isCheckingName && isNameAvailable === false && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-destructive">
                     <AlertCircle className="w-4 h-4" />
-                    <span className="text-sm font-medium">Taken</span>
+                    <span className="text-sm font-medium">Already Taken</span>
                   </div>
                 )}
               </div>
             </div>
-                <hr />
+               
             <div className="space-y-1 pb-2">
               {/* <div className="flex items-center justify-between"> */}
                 {/* <Label className="text-base font-semibold">Prompt</Label> */}
@@ -962,7 +962,7 @@ export const TestCaseAddDialog = ({
               )}
             </div>
             <div className="line"></div>  
-              <hr />
+           
             <div className="space-y-1 pb-2">
               <div className="space-y-2">
                 <Label className="text-base font-semibold">Response</Label>
@@ -1076,7 +1076,7 @@ export const TestCaseAddDialog = ({
                 </>
               )}
             </div>
-              <hr />
+          
             <div className="space-y-1">
               <Label className="text-base font-semibold">Strategy</Label>
               <Select 
@@ -1157,7 +1157,7 @@ export const TestCaseAddDialog = ({
               </div>
             )}
 
-            <hr />
+            
 
             <div className="space-y-2">
               <Label className="text-base font-semibold">Metrics</Label>
@@ -1180,6 +1180,10 @@ export const TestCaseAddDialog = ({
                             id={`metric-add-${m.metric_name}`}
                             checked={selectedMetrics.includes(m.metric_name!)}
                             onCheckedChange={() => handleMetricToggle(m.metric_name!)}
+                            onClick={() => {
+                              setShowRequestDetails(false);
+                              setShowDetails(false);
+                            }}
                           />
                           <label
                             htmlFor={`metric-add-${m.metric_name}`}

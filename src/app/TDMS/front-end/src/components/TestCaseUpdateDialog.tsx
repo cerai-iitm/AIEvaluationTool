@@ -591,7 +591,7 @@ export const TestCaseUpdateDialog = ({
 
             <div className="space-y-1 pb-1">
               {/* <Label className="text-base font-semibold">Prompt</Label> */}
-              <div className="space-y-1 pb-4">
+              <div className="space-y-1 pb-1">
                 <Label className="text-base font-semibold">User Prompts</Label>
                 <div className="relative">
                   <Textarea
@@ -630,7 +630,7 @@ export const TestCaseUpdateDialog = ({
 
               </div>
 
-              <div className="space-y-1 pb-4">
+              <div className="space-y-1 pb-2">
                 <Label className="text-base font-semibold">System prompts</Label>
                 <div className="relative">
                   <Textarea
@@ -671,7 +671,7 @@ export const TestCaseUpdateDialog = ({
               </div>
             </div>
 
-            <div className="space-y-1 pb-4">
+            <div className="space-y-1 pb-2">
               <Label className="text-base font-semibold">Response</Label>
               <div className="relative">
                 <Textarea
@@ -712,7 +712,7 @@ export const TestCaseUpdateDialog = ({
               </div>
             </div>
 
-            <div className="space-y-1 pb-4">
+            <div className="space-y-1 pb-2">
               <Label className="text-base font-semibold">Strategy</Label>
               <Select value={strategy} onValueChange={setStrategy} disabled={isFetchingStrategies}>
                 <SelectTrigger className="bg-muted">
@@ -735,7 +735,7 @@ export const TestCaseUpdateDialog = ({
             </div>
 
             {selectedStrategyRequiresLLM ? (
-              <div className="space-y-1 pb-4">
+              <div className="space-y-1 pb-2">
                 <Label className="text-base font-semibold">LLM Prompt</Label>
                 <div className="relative">
                   <Textarea
@@ -774,7 +774,7 @@ export const TestCaseUpdateDialog = ({
                 </div>
               </div>
             ):(
-                <div className="space-y-1 pb-4 hidden">
+                <div className="space-y-1 pb-2 hidden">
                   <Label className="text-base font-semibold">LLM Prompt</Label>
                   <Textarea
                     value=""
@@ -791,9 +791,9 @@ export const TestCaseUpdateDialog = ({
             
             
 
-            <div className="space-y-2 pb-4">
+            <div className="space-y-1 pb-2">
               <Label className="text-base font-semibold">Metrics</Label>
-              <div className="bg-muted p-4 rounded-md max-h-[150px] overflow-y-auto">
+              <div className="bg-muted p-4 rounded-md max-h-[130px] overflow-y-auto">
                 {isFetchingMetrics ? (
                   <div className="text-sm text-muted-foreground">
                     Loading metrics...
