@@ -777,8 +777,23 @@ class DB:
                 testcase.strategy_id = strategy.strategy_id
                 updated = True
 
-            # Update metric
-            if "metric_name" in updates and updates["metric_name"]:
+            # Update metrics - handle both metric_name (single) and metric_name_list (multiple)
+            if "metric_name_list" in updates and updates["metric_name_list"]:
+                # Handle list of metrics
+                metric_name_list = updates["metric_name_list"]
+                if not isinstance(metric_name_list, list):
+                    raise ValueError("metric_name_list must be a list")
+                # Clear existing metrics
+                testcase.metrics.clear()
+                # Add all metrics from the list
+                for metric_name in metric_name_list:
+                    metric = session.query(Metrics).filter(Metrics.metric_name == metric_name).first()
+                    if not metric:
+                        raise ValueError(f"Metric '{metric_name}' not found")
+                    testcase.metrics.append(metric)
+                updated = True
+            elif "metric_name" in updates and updates["metric_name"]:
+                # Handle single metric (backward compatibility)
                 metric = session.query(Metrics).filter(Metrics.metric_name == updates["metric_name"]).first()
                 if not metric:
                     raise ValueError(f"Metric '{updates['metric_name']}' not found")

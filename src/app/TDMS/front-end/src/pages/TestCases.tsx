@@ -46,7 +46,8 @@ interface TestCase {
   responseText: string;
   llmPrompt: string;
   language: string;
-  metricName: string;
+  metricName: string;  // For backward compatibility (comma-separated)
+  metricNameList?: string[];  // List of metric names
 }
 
 const TestCases = () => {
@@ -92,6 +93,7 @@ const TestCases = () => {
         llmPrompt: item.llm_judge_prompt ?? item.prompt ?? "",
         language: item.lang_name ?? item.lang ?? "",
         metricName: item.metric_name ?? item.metric?.name ?? item.metric ?? "",
+        metricNameList: item.metric_name_list ?? (item.metric_name ? item.metric_name.split(", ").filter(Boolean) : []),
       };
     };
 
@@ -191,6 +193,7 @@ const TestCases = () => {
             llmPrompt: item.llm_judge_prompt ?? item.prompt ?? "",
             language: item.lang_name ?? item.lang ?? "",
             metricName: item.metric_name ?? item.metric?.name ?? item.metric ?? "",
+            metricNameList: item.metric_name_list ?? (item.metric_name ? item.metric_name.split(", ").filter(Boolean) : []),
           }
         })
 
@@ -211,6 +214,7 @@ const TestCases = () => {
             llmPrompt: item.llm_judge_prompt ?? item.prompt ?? "",
             language: item.lang_name ?? item.lang ?? "",
             metricName: item.metric_name ?? item.metric?.name ?? item.metric ?? "",
+            metricNameList: item.metric_name_list ?? (item.metric_name ? item.metric_name.split(", ").filter(Boolean) : []),
           }));
           setTestCases(mappedData);
         } else {
@@ -710,7 +714,13 @@ const TestCases = () => {
 
               <div className="space-y-1">
                 <Label className="text-base font-semibold basis-[25%] pt-1">Metric</Label>
-                <Input value={selectedCase.metricName} readOnly className="bg-muted basis-[75%]" />
+                <Input 
+                  value={selectedCase.metricNameList && selectedCase.metricNameList.length > 0 
+                    ? selectedCase.metricNameList.join(", ") 
+                    : selectedCase.metricName} 
+                  readOnly 
+                  className="bg-muted basis-[75%]" 
+                />
               </div>
 
             </div>

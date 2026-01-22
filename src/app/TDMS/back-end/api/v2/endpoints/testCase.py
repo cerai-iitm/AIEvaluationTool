@@ -74,8 +74,10 @@ def list_testcases(db: DB = Depends(_get_db)):
         results = []
         
         for testcase in testcases:
-            # Get metric names as a comma-separated string
-            metric_names = ", ".join([m.metric_name for m in testcase.metrics]) if testcase.metrics else ""
+            # Get metric names as a list
+            metric_name_list = [m.metric_name for m in testcase.metrics] if testcase.metrics else []
+            # Get metric names as a comma-separated string for backward compatibility
+            metric_names = ", ".join(metric_name_list) if metric_name_list else ""
             
             results.append(TestCaseListResponse(
                 testcase_id=testcase.testcase_id,
@@ -87,7 +89,8 @@ def list_testcases(db: DB = Depends(_get_db)):
                 llm_judge_prompt=getattr(testcase.judge_prompt, "prompt", None),
                 domain_name=str(testcase.prompt.domain.domain_name),  # Convert to string
                 lang_name=str(testcase.prompt.lang.lang_name),      # Convert to string
-                metric_name=metric_names  # Use the joined metric names
+                metric_name=metric_names,  # Use the joined metric names for backward compatibility
+                metric_name_list=metric_name_list  # List of metric names
             ))
         
         return results
@@ -141,25 +144,45 @@ def list_testcases(db: DB = Depends(_get_db)):
     summary="Get a test case by ID (v2)",
 )
 def get_testcase(testcase_id: int, db: DB = Depends(_get_db)):
-    testcase = db.get_testcase_by_id(testcase_id)
-    if testcase is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Test case not found"
+    with db.Session() as session:
+        testcase = (
+            session.query(TestCases)
+            .options(
+                joinedload(TestCases.prompt),
+                joinedload(TestCases.response),
+                joinedload(TestCases.strategy),
+                joinedload(TestCases.judge_prompt),
+                joinedload(TestCases.metrics),
+            )
+            .filter(TestCases.testcase_id == testcase_id)
+            .first()
         )
+        
+        if testcase is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Test case not found"
+            )
 
-    judge_prompt = testcase.judge_prompt
-    llm_judge_prompt = judge_prompt.prompt if judge_prompt else None
+        judge_prompt = testcase.judge_prompt
+        llm_judge_prompt = judge_prompt.prompt if judge_prompt else None
+        
+        # Get metric names as a list
+        metric_name_list = [m.metric_name for m in testcase.metrics] if testcase.metrics else []
+        metric_names = ", ".join(metric_name_list) if metric_name_list else ""
 
-    return TestCaseListResponse(
-        testcase_id=testcase.testcase_id,
-        testcase_name=testcase.name,
-        user_prompt=testcase.prompt.user_prompt,
-        system_prompt=testcase.prompt.system_prompt,
-        response_text=testcase.response.response_text,
-        strategy_name=testcase.strategy,
-        llm_judge_prompt=llm_judge_prompt,
-        metric_name=testcase.metric,
-    )
+        return TestCaseListResponse(
+            testcase_id=testcase.testcase_id,
+            testcase_name=testcase.testcase_name,
+            user_prompt=testcase.prompt.user_prompt if testcase.prompt else None,
+            system_prompt=testcase.prompt.system_prompt if testcase.prompt else None,
+            response_text=testcase.response.response_text if testcase.response else None,
+            strategy_name=testcase.strategy.strategy_name if testcase.strategy else None,
+            llm_judge_prompt=llm_judge_prompt,
+            domain_name=testcase.prompt.domain.domain_name if testcase.prompt and testcase.prompt.domain else None,
+            lang_name=testcase.prompt.lang.lang_name if testcase.prompt and testcase.prompt.lang else None,
+            metric_name=metric_names,  # Comma-separated for backward compatibility
+            metric_name_list=metric_name_list,  # List of metric names
+        )
 
 
 # @testcase_router.get(
@@ -248,13 +271,23 @@ def create_testcase(
                 lang_id=prompt_lang_id,  # Use the prompt's language ID
             )
 
+        # Handle metric_name_list - use first metric for backward compatibility with TestCaseModel
+        metric_name_for_model = payload.metric_name
+        if payload.metric_name_list and len(payload.metric_name_list) > 0:
+            metric_name_for_model = payload.metric_name_list[0]
+        elif not metric_name_for_model:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="At least one metric name is required (metric_name_list).",
+            )
+
         testcase = TestCaseModel(
             name=payload.testcase_name,
             prompt=prompt,
             response=response,
             judge_prompt=judge_prompt,
             strategy=payload.strategy_name,
-            metric=payload.metric_name,
+            metric=metric_name_for_model,
         )
 
         # Add test case with custom ID
@@ -264,6 +297,38 @@ def create_testcase(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Failed to create test case. It may already exist.",
             )
+        
+        # Handle multiple metrics if metric_name_list is provided
+        if payload.metric_name_list and len(payload.metric_name_list) > 0:
+            with db.Session() as session:
+                # Re-query the testcase within this session to avoid detached instance error
+                testcase_in_session = (
+                    session.query(TestCases)
+                    .options(joinedload(TestCases.metrics))
+                    .filter(TestCases.testcase_id == testcase_obj.testcase_id)
+                    .first()
+                )
+                
+                if not testcase_in_session:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Test case not found after creation",
+                    )
+                
+                # Clear existing metrics
+                testcase_in_session.metrics.clear()
+                # Add all metrics from the list
+                for metric_name in payload.metric_name_list:
+                    metric = session.query(Metrics).filter(Metrics.metric_name == metric_name).first()
+                    if metric:
+                        testcase_in_session.metrics.append(metric)
+                    else:
+                        raise HTTPException(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=f"Metric '{metric_name}' not found.",
+                        )
+                session.commit()
+                session.refresh(testcase_in_session)
 
         # Get the created test case with all relationships loaded
         # This is necessary because the object returned from __add_or_get_test_case_custom_id
@@ -276,6 +341,7 @@ def create_testcase(
                     joinedload(TestCases.response),
                     joinedload(TestCases.strategy),
                     joinedload(TestCases.judge_prompt),
+                    joinedload(TestCases.metrics),
                 )
                 .filter(TestCases.testcase_id == testcase_obj.testcase_id)
                 .first()
@@ -429,6 +495,13 @@ def update_testcase(
     for key, value in update_data.items():
         normalized_updates[key] = value
 
+    # Handle metric_name_list - convert to metric_name_list format if metric_name is provided
+    if "metric_name" in normalized_updates and "metric_name_list" not in normalized_updates:
+        # If only metric_name is provided, convert to list
+        if normalized_updates["metric_name"]:
+            normalized_updates["metric_name_list"] = [normalized_updates["metric_name"]]
+        del normalized_updates["metric_name"]
+
     # Normalize optional fields
     for optional_field in ("response_text", "llm_judge_prompt"):
         if optional_field in normalized_updates:
@@ -459,7 +532,7 @@ def update_testcase(
             changes.append("response updated")
         if "strategy_name" in normalized_updates:
             changes.append("strategy updated")
-        if "metric_name" in normalized_updates:
+        if "metric_name" in normalized_updates or "metric_name_list" in normalized_updates:
             changes.append("metric updated")
         if "llm_judge_prompt" in normalized_updates and payload.llm_judge_prompt is not None:
             changes.append("judge prompt updated")
@@ -479,10 +552,9 @@ def update_testcase(
             user_note=payload.notes,
         )
 
-    # Get metric name from the first metric (test cases can have multiple metrics, but we'll use the first one)
-    metric_name = None
-    if updated.metrics and len(updated.metrics) > 0:
-        metric_name = updated.metrics[0].metric_name
+    # Get metric names as a list
+    metric_name_list = [m.metric_name for m in updated.metrics] if updated.metrics else []
+    metric_name = ", ".join(metric_name_list) if metric_name_list else ""
     
     return {
         "testcase_id": updated.testcase_id,
@@ -498,7 +570,8 @@ def update_testcase(
         "system_prompt": updated.prompt.system_prompt if updated.prompt else None,
         "response_id": updated.response_id,
         "response_text": updated.response.response_text if updated.response else None,
-        "metric_name": metric_name,
+        "metric_name": metric_name,  # Comma-separated for backward compatibility
+        "metric_name_list": metric_name_list,  # List of metric names
     }
 
 

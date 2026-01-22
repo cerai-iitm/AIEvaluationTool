@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search, X } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   PromptSearchDialog,
   PromptSearchSelection,
@@ -38,7 +39,8 @@ interface TestCase {
   systemPrompts: string;
   responseText: string;
   llmPrompt: string;
-  metricName: string;
+  metricName: string;  // For backward compatibility
+  metricNameList?: string[];  // List of metric names
 }
 
 interface TestCaseUpdateDialogProps {
@@ -73,7 +75,7 @@ export const TestCaseUpdateDialog = ({
   const [responseText, setResponseText] = useState(testCase?.responseText || "");
   const [llmPrompt, setLlmPrompt] = useState(testCase?.llmPrompt || "");
   const [strategy, setStrategy] = useState(testCase?.strategyName || "");
-  const [metric, setMetric] = useState(testCase?.metricName || "");
+  const [selectedMetrics, setSelectedMetrics] = useState<string[]>([]);
   // const [domain, setDomain] = useState(testCase?.domainName || "");
   const [notes, setNotes] = useState("");
   const [strategies, setStrategies] = useState<Strategy[]>([]);
@@ -279,7 +281,14 @@ export const TestCaseUpdateDialog = ({
     setResponseText(testCase?.responseText || '');
     setLlmPrompt(testCase?.llmPrompt || '');
     setStrategy(testCase?.strategyName || '');
-    setMetric(testCase?.metricName || '');
+    // Initialize selectedMetrics from metricNameList or parse from metricName
+    if (testCase?.metricNameList && testCase.metricNameList.length > 0) {
+      setSelectedMetrics(testCase.metricNameList);
+    } else if (testCase?.metricName) {
+      setSelectedMetrics(testCase.metricName.split(", ").filter(Boolean));
+    } else {
+      setSelectedMetrics([]);
+    }
     // setDomain(testCase?.domainName || '');
     setNotes(''); // Or testCase?.notes if available
     // Reset errors when test case changes
@@ -301,18 +310,29 @@ export const TestCaseUpdateDialog = ({
     responseText: "",
     llmPrompt: "",
     metricName: "",
-
+    metricNameList: [],
   };
+  
+  const initialMetrics = testCaseInitial.metricNameList && testCaseInitial.metricNameList.length > 0
+    ? testCaseInitial.metricNameList
+    : (testCaseInitial.metricName ? testCaseInitial.metricName.split(", ").filter(Boolean) : []);
+  
   const isChanged = (
     userPrompts !== (testCaseInitial.userPrompts || "") ||
     systemPrompts.trim() !== (testCaseInitial.systemPrompts || "") ||
     responseText.trim() !== (testCaseInitial.responseText || "") ||
     llmPrompt.trim() !== (testCaseInitial.llmPrompt || "") ||
     strategy.trim() !== (testCaseInitial.strategyName || "") ||
-    metric.trim() !== (testCaseInitial.metricName || "")
+    JSON.stringify(selectedMetrics.sort()) !== JSON.stringify(initialMetrics.sort())
 
     // notes !== ""
   );
+
+  const handleMetricToggle = (metricName: string) => {
+    setSelectedMetrics((prev) =>
+      prev.includes(metricName) ? prev.filter((m) => m !== metricName) : [...prev, metricName]
+    );
+  };
 
   // const notNull = (
   //   userPrompts !== "" ||
@@ -469,8 +489,12 @@ export const TestCaseUpdateDialog = ({
       if (strategy !== (testCaseInitial.strategyName || "")) {
         updatePayload.strategy_name = strategy;
       }
-      if (metric !== (testCaseInitial.metricName || "")) {
-        updatePayload.metric_name = metric;
+      
+      // Handle metrics - check if changed
+      const currentMetrics = selectedMetrics.sort();
+      const initialMetricsSorted = initialMetrics.sort();
+      if (JSON.stringify(currentMetrics) !== JSON.stringify(initialMetricsSorted)) {
+        updatePayload.metric_name_list = selectedMetrics;
       }
 
       // Always include notes if provided
@@ -565,7 +589,7 @@ export const TestCaseUpdateDialog = ({
               /> */}
             </div>
 
-            <div className="space-y-1 pb-4">
+            <div className="space-y-1 pb-1">
               {/* <Label className="text-base font-semibold">Prompt</Label> */}
               <div className="space-y-1 pb-4">
                 <Label className="text-base font-semibold">User Prompts</Label>
@@ -767,27 +791,39 @@ export const TestCaseUpdateDialog = ({
             
             
 
-            <div className="space-y-1 pb-4">
-              <Label className="text-base font-semibold">Metric</Label>
-              <Select value={metric} onValueChange={setMetric} disabled={isFetchingMetrics}>
-                <SelectTrigger className="bg-muted">
-                  <SelectValue placeholder={isFetchingMetrics ? "Loading metrics..." : "Select metric"} />
-                </SelectTrigger>
-                <SelectContent className="bg-popover max-h-[300px]">
-                  {metrics.length === 0 && !isFetchingMetrics ? (
-                    <SelectItem value="" disabled>No metrics available</SelectItem>
-                  ) : (
-                    metrics
+            <div className="space-y-2 pb-4">
+              <Label className="text-base font-semibold">Metrics</Label>
+              <div className="bg-muted p-4 rounded-md max-h-[150px] overflow-y-auto">
+                {isFetchingMetrics ? (
+                  <div className="text-sm text-muted-foreground">
+                    Loading metrics...
+                  </div>
+                ) : metrics.filter((m) => m.metric_name != null).length === 0 ? (
+                  <div className="text-sm text-muted-foreground">
+                    No metrics available
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {metrics
                       .filter((m) => m.metric_name != null)
                       .map((m) => (
-                        <SelectItem key={m.metric_name} value={m.metric_name!}>
-                          {m.metric_name}
-                        </SelectItem>
-                      ))
-                  
-                  )}
-                </SelectContent>
-              </Select>
+                        <div key={m.metric_name} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`metric-update-${m.metric_name}`}
+                            checked={selectedMetrics.includes(m.metric_name!)}
+                            onCheckedChange={() => handleMetricToggle(m.metric_name!)}
+                          />
+                          <label
+                            htmlFor={`metric-update-${m.metric_name}`}
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                          >
+                            {m.metric_name}
+                          </label>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
             </div>
 
 
@@ -812,7 +848,7 @@ export const TestCaseUpdateDialog = ({
 
             </div>
 
-            <div className="flex justify-center items-center p-4 border-gray-300 bg-white sticky bottom-0 z-10">
+            <div className="flex justify-center items-center p-2 border-gray-300 bg-white sticky bottom-0 z-10">
               <label className="text-base font-bold mr-2">
                 Notes 
               </label>
@@ -831,6 +867,7 @@ export const TestCaseUpdateDialog = ({
                   !isChanged || 
                   !notes.trim() || 
                   isLoading ||
+                  selectedMetrics.length === 0 ||
                   (!hasPermission(currentUserRole, "canUpdateTables") && 
                    !hasPermission(currentUserRole, "canUpdateRecords"))
                 }

@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search, X, Check, AlertCircle } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   PromptSearchDialog,
   PromptSearchSelection,
@@ -64,7 +65,7 @@ export const TestCaseAddDialog = ({
   const [responseText, setResponseText] = useState("");
   const [llmPrompt, setLlmPrompt] = useState("");
   const [strategy, setStrategy] = useState("");
-  const [metric, setMetric] = useState("");
+  const [selectedMetrics, setSelectedMetrics] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [strategies, setStrategies] = useState<Strategy[]>([]);
@@ -415,9 +416,15 @@ export const TestCaseAddDialog = ({
   // };
 
   const isAdded = (
-    userPrompts && strategy && testCaseName && metric && responseText
+    userPrompts && strategy && testCaseName && selectedMetrics.length > 0 && responseText
     
   )
+
+  const handleMetricToggle = (metricName: string) => {
+    setSelectedMetrics((prev) =>
+      prev.includes(metricName) ? prev.filter((m) => m !== metricName) : [...prev, metricName]
+    );
+  };
 
   const handleSelectPrompt = (selection: PromptSearchSelection) => {
     switch (selection.type) {
@@ -506,6 +513,15 @@ export const TestCaseAddDialog = ({
       toast({
         title: "Validation Error",
         description: "Strategy is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (selectedMetrics.length === 0) {
+      toast({
+        title: "Validation Error",
+        description: "At least one metric is required",
         variant: "destructive",
       });
       return;
@@ -649,7 +665,7 @@ export const TestCaseAddDialog = ({
         domain_name: domain.trim(),
         llm_judge_prompt:
           showLLMPrompt && llmPrompt.trim() ? llmPrompt.trim() : null,
-        metric_name: metric || "exact_match",
+        metric_name_list: selectedMetrics,
         notes: notes.trim() || null,
       };
 
@@ -687,7 +703,7 @@ export const TestCaseAddDialog = ({
       setResponseText("");
       setLlmPrompt("");
       setStrategy("");
-      setMetric("");
+      setSelectedMetrics([]);
       setNotes("");
       setLanguage("");
       setDomain("");
@@ -744,7 +760,7 @@ export const TestCaseAddDialog = ({
             </Button> */}
           </DialogHeader>
 
-          <div className="space-y-2 pt-2">
+          <div className="space-y-1 pt-1">
             <div className="space-y-1">
               <Label className="text-base font-semibold">Test Case</Label>
               <div className="relative">
@@ -1143,35 +1159,42 @@ export const TestCaseAddDialog = ({
 
             <hr />
 
-            <div className="space-y-1">
-              <Label className="text-base font-semibold">Metric</Label>
-              <Select
-                value={metric}
-                onValueChange={setMetric}
-                onOpenChange={(open) => {
-                  if (open) {
-                    setShowDetails(false);
-                    setShowRequestDetails(false);
-                  }
-                }}
-                disabled={isFetchingMetrics}
-              >
-                <SelectTrigger className={`bg-muted`}>
-                  <SelectValue className="placeholder:blur" placeholder={isFetchingMetrics ? "Loading metrics..." : "Select metric"} />
-                </SelectTrigger>
-                <SelectContent className="bg-popover max-h-[300px]">
-                  {metrics
-                    .filter((m) => m.metric_name != null)
-                    .map((m) => (
-                      <SelectItem key={m.metric_name} value={m.metric_name!}>
-                        {m.metric_name}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
+            <div className="space-y-2">
+              <Label className="text-base font-semibold">Metrics</Label>
+              <div className="bg-muted p-4 rounded-md max-h-[130px] overflow-y-auto">
+                {isFetchingMetrics ? (
+                  <div className="text-sm text-muted-foreground">
+                    Loading metrics...
+                  </div>
+                ) : metrics.filter((m) => m.metric_name != null).length === 0 ? (
+                  <div className="text-sm text-muted-foreground">
+                    No metrics available
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {metrics
+                      .filter((m) => m.metric_name != null)
+                      .map((m) => (
+                        <div key={m.metric_name} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`metric-add-${m.metric_name}`}
+                            checked={selectedMetrics.includes(m.metric_name!)}
+                            onCheckedChange={() => handleMetricToggle(m.metric_name!)}
+                          />
+                          <label
+                            htmlFor={`metric-add-${m.metric_name}`}
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                          >
+                            {m.metric_name}
+                          </label>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="flex justify-center items-center p-4 border-gray-300 bg-white sticky bottom-0 z-10">
+            <div className="flex justify-center items-center p-2 border-gray-300 bg-white sticky bottom-0 z-10">
               <Label className="text-base font-semibold mr-2">Notes</Label>
               <Input
                 placeholder="Enter Notes"
@@ -1194,6 +1217,7 @@ export const TestCaseAddDialog = ({
                   isNameAvailable === false || 
                   !isAdded || 
                   !notes ||
+                  selectedMetrics.length === 0 ||
                   (!hasPermission(currentUserRole, "canCreateTables") && 
                    !hasPermission(currentUserRole, "canCreateRecords"))
                 }
