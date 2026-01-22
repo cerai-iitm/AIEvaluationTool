@@ -5,8 +5,8 @@
         "host": "localhost",
         "port": 3306,
         "user": "root",
-        "password": "password",
-        "database": "test"
+        "password": "jarvis2025",
+        "database": "AIEvaluationData"
     },
     "files": {
         "plans": "data/plans.json",
