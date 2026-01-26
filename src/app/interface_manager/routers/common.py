@@ -107,24 +107,6 @@ def logout():
 #     return JSONResponse(content={"error": "Unsupported application type"})
 
 # new one
-# Old one
-# @router.post("/chat")
-# async def chat(prompt: PromptCreate):
-#     app_type, app_name = get_app_info()
-
-#     if app_type == "WHATSAPP_WEB":
-#         logger.info("Chat request: WhatsApp Web")
-#         result = send_prompt_whatsapp(chat_id=prompt.chat_id, prompt_list=prompt.prompt_list)
-#         return JSONResponse(content={"response": result})
-
-#     if str.upper(app_type) == "WEBAPP":
-#         logger.info(f"Chat request: WebApp {app_name}")
-#         result = send_prompt(app_name=app_name, chat_id=prompt.chat_id, prompt_list=prompt.prompt_list)
-#         return JSONResponse(content={"response": result})
-
-#     return JSONResponse(content={"error": "Unsupported application type"})
-
-# new one
 @router.post("/chat")
 async def chat(prompt: PromptCreate):
     app_type, app_name = get_app_info()
