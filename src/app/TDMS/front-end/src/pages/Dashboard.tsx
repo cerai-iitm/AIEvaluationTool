@@ -27,6 +27,8 @@ const TABLE_TO_ENTITY_TYPE: Record<string, string> = {
   "Responses": "Response",
   "Prompts": "Prompt",
   "LLM Prompts": "LLM Prompt",
+  "Test Plans": "Test Plan",
+  "Metrics": "Metric",
 };
 
 interface Activity {
@@ -48,6 +50,8 @@ interface DashboardStats {
   responses: number;
   prompts: number;
   llm_prompts: number;
+  test_plans: number;
+  metrics: number;
 }
 
 const Dashboard = () => {
@@ -63,6 +67,8 @@ const Dashboard = () => {
     { title: "Responses", count: 0, onClick: () => navigate("/responses") },
     { title: "Prompts", count: 0, onClick: () => navigate("/prompts") },
     { title: "LLM Prompts", count: 0, onClick: () => navigate("/llm-prompts") },
+    { title: "Test Plans", count: 0, onClick: () => navigate("/test-plans") },
+    { title: "Metrics", count: 0, onClick: () => navigate("/metrics") },
   ]);
   const [isLoading, setIsLoading] = useState(true);
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
@@ -118,6 +124,8 @@ const Dashboard = () => {
             { title: "Responses", count: data.responses, onClick: () => navigate("/responses") },
             { title: "Prompts", count: data.prompts, onClick: () => navigate("/prompts") },
             { title: "LLM Prompts", count: data.llm_prompts, onClick: () => navigate("/llm-prompts") },
+            { title: "Test Plans", count: data.test_plans, onClick: () => navigate("/test-plans") },
+            { title: "Metrics", count: data.metrics, onClick: () => navigate("/metrics") },
           ]);
         } else {
           toast({

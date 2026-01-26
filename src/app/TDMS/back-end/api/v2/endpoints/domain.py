@@ -97,7 +97,7 @@ def list_domains(db: DB = Depends(_get_db)):
     summary="Create a new domain (v2)",
 )
 def create_domain(
-    payload: DomainBase,
+    payload: DomainCreateV2,
     db: DB = Depends(_get_db),
     authorization: Optional[str] = Header(None),
 ):
@@ -269,9 +269,21 @@ def delete_domain(
             status_code=status.HTTP_404_NOT_FOUND, detail="Domain not found"
         )
 
-    if not db.delete_domain_record(domain_id):
+    try:
+        if not db.delete_domain_record(domain_id):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Domain not found"
+            )
+    except ValueError as e:
+        # Handle validation error for domain in use
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Domain not found"
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+        )
+    except IntegrityError as e:
+        # Handle database integrity errors (fallback)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This domain cannot be deleted because it is used in the TestCase table."
         )
 
     username = _get_username_from_token(authorization)

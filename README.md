@@ -1,112 +1,403 @@
-# AIEvaluationTool
-A comprehensive evaluation tool for verifying conversational AI applications.
 
-This project offers a robust, end-to-end framework for evaluating the performance and reliability of conversational AI systems across a variety of real-world scenarios and quality metrics. The AIEvaluationTool is designed to automate the process of testing, analyzing, and benchmarking conversational agents, ensuring they meet high standards of accuracy, safety, and user experience.
+# AI Evaluation Tool
 
-## Architecture
+## 1. **Overview & Purpose**
 
-![The overall architecture](screenshots/Arch.png)
+### What is AIEvaluationTool?
 
-## Directory Structure
+AIEvaluationTool is a comprehensive, end-to-end framework designed to automate the evaluation of conversational AI systems across diverse real-world scenarios and quality metrics. It provides organizations with a robust mechanism to verify, test, and benchmark conversational agents—whether deployed as APIs, WhatsApp bots, or web applications—ensuring they meet high standards of accuracy, safety, and user experience.
+
+### Target Audience
+
+- **AI/ML Engineers** developing and deploying conversational AI systems
+- **QA Teams** responsible for testing chatbots and virtual assistants
+- **Product Managers** evaluating AI model performance before production deployment
+- **Compliance Officers** ensuring responsible AI practices and ethical compliance
+
+### Key Use Cases
+
+- Automated testing of conversational agents across multiple platforms
+- Performance benchmarking against predefined quality metrics
+- Safety and toxicity evaluation of AI-generated responses
+- Multi-language capability assessment
+- Compliance verification for responsible AI standards
+
+### Core Benefits
+
+- **Automated Testing**: Eliminates manual testing through automated test case execution across WhatsApp, Web, and API interfaces
+- **Comprehensive Evaluation**: Assesses 7 key dimensions including responsible AI, conversational quality, guardrails, language support, task understanding, performance, and privacy
+- **End-to-End Pipeline**: Seamlessly integrates test execution, response analysis, and metric aggregation
+- **LLM-as-Judge**: Leverages advanced language models for nuanced evaluation beyond rule-based metrics
+- **Multi-Platform Support**: Evaluates agents across API, WhatsApp, and web application interfaces
+- **Detailed Insights**: Generates comprehensive evaluation reports highlighting strengths and improvement areas
+
+### Test Plans 
+
+- **Responsible AI**: Evaluates ethical behavior by measuring fairness, bias, truthfulness, robustness, transparency, and cultural sensitivity in model responses.  
+- **Conversational Quality**: Assesses coherence, fluency, relevance, and linguistic richness of responses using structural, semantic, and reference-based metrics.  
+- **Guardrails and Safety**: Tests the model’s ability to detect, reject, and safely handle toxic, harmful, out-of-scope, hallucinated, and adversarial inputs.  
+- **Language Support**: Measures multilingual capability with emphasis on Indian languages, including fluency, coverage, transliteration handling, and mixed-language contexts.  
+- **Task Performance Metrics**: Quantifies task completion accuracy and correctness while accounting for valid rejections and failures.  
+- **Performance and Scalability**: Evaluates system efficiency and reliability under load through latency, throughput, uptime, error rates, and failure resilience.  
+- **Privacy and Safety**: Assesses resistance to misuse, jailbreaks, exaggerated safety behavior, and privacy leakage while ensuring appropriate privacy awareness.
+
+### Supported Target Types
+- **API**: RESTful or custom API endpoints
+- **WhatsApp**: WhatsApp Business API integration
+- **Web Application**: Web-based interfaces
+
+
+### What is TDMS?
+
+The **Test Data Management System (TDMS)** is a comprehensive web-based application designed to manage test data for AI evaluation workflows. It provides a centralized platform for creating, organizing, and managing test cases, prompts, responses, evaluation strategies, and related metadata required for testing conversational AI systems.
+
+### System Architecture
+
+TDMS follows a modern three-tier architecture:
+
+```
+┌─────────────────┐
+│   Frontend      │  React + TypeScript + Vite
+│   (React App)   │  Tailwind CSS + shadcn/ui
+└────────┬────────┘
+         │ HTTP/REST API
+┌────────▼────────┐
+│   Backend       │  FastAPI (Python)
+│   (REST API)    │  SQLAlchemy ORM
+└────────┬────────┘
+         │
+┌────────▼────────┐
+│   Database      │  SQLite / MariaDB
+│   (Data Store)  │
+└─────────────────┘
+```
+
+## 2. **Architecture & Design**
+
+### System Architecture
+
+AIEvaluationTool follows a modular, layered architecture designed for scalability and extensibility:
+
+![System Architecture](screenshots/Arch.png)
+
+### Core Components
+
+**Data**
+- Centralized MariaDB or SQLite database for storing test cases, configurations, and evaluation results
+- JSON-based data files for test plans, strategies, and metric mappings
+
+**Execution**
+- **Test Case Executor**: Distributes and executes test cases across target platforms
+- **Interface Manager**: Automates interactions with WhatsApp, web applications, and API endpoints using Selenium and ChromeDriver
+
+**Analysis**
+- **Response Analyzer**: Applies evaluation strategies to collected responses
+- **Strategy Engine**: Implements model-based and rule-based evaluation techniques
+- **LLM-as-Judge**: Leverages language models for nuanced conversational quality assessment
+
+**Integration**
+- **Sarvam AI Service**: Hosts multiple specialized models for text classification, translation, and toxicity detection
+- **External APIs**: Perspective API for toxicity scoring, cloud LLM providers (OpenAI, Anthropic)
+
+**Management**
+- **TDMS (Test Data Management System)**: Web-based UI for managing test data, users, and permissions
+- **ORM**: Abstracts database operations and data models
+
+
+### Technology Stack
+
+| Layer | Technology |
+|-------|-----------|
+| **Backend** | Python 3.10+, FastAPI |
+| **Database** | MariaDB or sqlite |
+| **Frontend** | Node.js 20.19+ or 22.14+ |
+| **Web Automation** | ChromeDriver, Chrome Browser |
+| **ML/AI Models** | Ollama, Hugging Face Transformers, OpenAI API |
+| **APIs** | RESTful services, OpenAI-compatible endpoints |
+
+### Key Dependencies
+
+- **selenium**: Browser automation for web and WhatsApp interfaces
+- **pydantic**: Data validation and ORM modeling
+- **fastapi**: API server framework
+- **requests**: HTTP client for API interactions
+- **transformers**: Hugging Face model integration
+- **ollama**: Local LLM deployment
+
+### Project Layout
+
+The AIEvaluationTool project is organized into a modular structure that separates concerns between data, application logic, libraries, and configuration files.
 
 ```
 AIEvaluationTool/
 ├── data/
-│   ├── DataPoints.json
-│   ├── plans.json
-│   ├── strategy_map.json
-│   └── ...
+│   ├── DataPoints.json                 # Sample test dataset with evaluation prompts
+│   ├── plans.json                      # Test plan definitions
+│   ├── strategy_map.json               # Mapping of strategies to metrics
+│   ├── strategy_id.json                # Strategy identifiers
+│   ├── metric_strategy_mapping.json    # Metric to strategy associations
+│   ├── defaults.json                   # Default configuration values
+│
 ├── src/
-│   ├── app/sarvam_ai
-│   │   └── ... (scripts to run LLMs locally)
-│   ├── app/importer
-│   │   └── ... (scripts to import data from json to the database)
-│   ├── app/interface_manager
-│   │   └── ... (scripts to interact with the whastapp web or web app bots)
-│   ├── app/testcase_executor
-│   │   └── ... (scripts to run testcase execution from the prompts stored in the database)
-│   ├── app/response_analyzer
-│   │   └── ... (scripts to analyse the collected response and computer score and store in the database)
-|   |
-|   |── app/TDMS
-|   |   |__ ... (Manage data in a database and perform CRUD operations)
-|   |
-│   ├── lib/strategy
-│   │   └── ... (implementation of model and rules based evaluation strategies)
-│   ├── lib/orm
-│   │   └── ... (ORM implementation of the data model)
-│   ├── lib/data
-│   │   └── ... (Pydantic classes of all the data model objects)
-│   ├── lib/interface_manager
-│   │   └── ... (wrapper class to talk to the Interface Manager stub)
-│   ├── lib/utils
-│   │   └── ... (helper functions)
-│   ├── notebooks
-│   │   └── ... (Python notebooks)
-└── requirements.txt
+│   ├── app/
+│   │   ├── importer/                   # Data import to database module
+│   │   │   ├── main.py                 # Entry point for data import
+│   │   │   └── config.json             # Database and file configurations
+│   │   ├── interface_manager/          # Platform interaction automation
+│   │   │   ├── main.py                 # FastAPI service for interface management
+│   │   │   ├── credentials.json        # Secured account credentials
+│   │   │   ├── xpaths.json             # Locations to identify and interact with web elements
+│   │   ├── testcase_executor/          # Test execution orchestration
+│   │   │   ├── main.py                 # Test case execution manager
+│   │   │   ├── config.json             # Target and database configuration
+│   │   ├── response_analyzer/          # Response analysis and evaluation
+│   │   │   ├── analyze.py              # Main analysis script
+│   │   │   ├── report.py               # Report generation
+│   │   │   ├── config.json             # Analyzer configuration
+│   │   ├── sarvam_ai/                  # Local LLM model deployment
+│   │   │   ├── main.py                 # Model server entry point
+│   │   └── TDMS/                       # Test Data Management System
+│   │       ├── back-end/               # FastAPI backend service
+│   │       │   ├── main.py             # TDMS API server
+│   │       │   ├── database/           # Database layer
+│   │       │       ├── config.json     # Database layer
+│   │       └── front-end/              # React/Node.js frontend
+│   └── lib/
+│       ├── strategy/..                 # Evaluation strategy implementations
+│       │   ├── .env                    # Strategy configuration paths
+│       │   └── .env.example            # Environment template
+│       ├── orm/                        # Object-Relational Mapping layer
+│       ├── data/                       # Pydantic data models
+│       ├── interface_manager/          # Interface client library
+│       │   └── client.py               # REST client for interface manager
+│       └── utils/                      # Utility functions
+├── requirements.txt                    # Python package dependencies
+├── .env.example                        # Environment variables template
+└── README.md                           # Project overview and quick start
 ```
+---
 
-## Key Features and Evaluation Dimensions:
+### Module Descriptions
 
-- **Responsible AI**: Assesses the ethical and safe behavior of the AI, including toxicity detection and guardrail enforcement.
+**data/** - Contains all test data, configurations, and reference materials
+- Test datasets in JSON format
+- Strategy mappings and metric definitions
+- Default values and example data
 
-- **Conversational Quality**: Measures the fluency, coherence, and appropriateness of responses using advanced linguistic metrics and human-like judgment.
+---
 
-- **Guardrails and Safety**: Evaluates the AI's ability to avoid generating unsafe, toxic, or inappropriate content, and to comply with predefined safety and ethics.
+**src/app/** - Application modules implementing core functionality
+- `importer/` - Handles data import from JSON files to database
+- `interface_manager/` - Manages automation across different platform types
+- `testcase_executor/` - Orchestrates test execution workflow
+- `response_analyzer/` - Analyzes responses and applies evaluation strategies
+- `sarvam_ai/` - Hosts multiple specialized AI models for evaluation
+- `TDMS/` - Web-based system for test data management and user access control
 
-- **Language Support**: Evaluates the model's ability to understand and generate text in multiple languages, including coverage and similarity metrics.
+---
 
-- **Task Understanding**: Tests the AI's ability to comprehend and execute user instructions accurately.
+**src/lib/** - Reusable libraries and shared components
+- `strategy/` - Evaluation strategy implementations (model-based and rule-based)
+- `orm/` - Database abstraction and entity models
+- `data/` - Pydantic data validation classes
+- `interface_manager/` - REST client for interface manager communication
+- `utils/` - Common utilities across modules
 
-- **Performance and Scalability**: Assesses the system’s speed, reliability, and stability through performance and scalability metrics.
+---
 
-- **Privacy and Security**: Assesses the system’s ability to safeguard sensitive information, maintain user trust, and resist misuse or adversarial manipulation while ensuring balanced and responsible handling of safety constraints.
+## 3. **Installation & Setup**
 
-## How It Works:
+### 3.1 **Prerequisites and System Requirements**
 
-- **Test Case Execution**: A mechanism to send a diverse set of prompts to the conversational AI, simulating real user interactions across different platforms (e.g., WhatsApp, web interfaces).
+Before installing AIEvaluationTool, ensure your system meets the following requirements:
 
-- **Response Analysis**: Applies a suite of custom and standard evaluation strategies—including text similarity, grammar checking, toxicity analysis, and more—to each response.
+**Hardware Requirements:**
+- Minimum 8GB RAM (24GB+ recommended for local LLM deployment)
+- Multi-core processor (4+ cores)
+- 50GB+ free disk space (for models and databases)
+- GPU support recommended for faster model inference (NVIDIA CUDA compatible)
 
-- **Metric Aggregation**: Aggregates results into comprehensive reports, highlighting strengths and areas for improvement across all tested dimensions.
+**Software Requirements:**
+- **Python 3.10+**
+- **Node.js 20.19+ or 22.12+**
+- **MariaDB Server 10.5+**
+- **Google Chrome Browser** (latest version)
+- **ChromeDriver** (must match your Chrome version - critical dependency)
+- **Ollama** (for local LLM deployment)
+- **GPU drivers** (NVIDIA CUDA for accelerated processing)
 
-## Setup Guide
+---
 
-### 1. **Clone the Repository**
+### 3.2 **Step-by-Step Installation Instructions**
+
+#### **Step 1: Clone the Repository**
 
 ```bash
 git clone https://github.com/cerai-iitm/AIEvaluationTool
 cd AIEvaluationTool
 ```
-
 ---
 
-### 2. **Install Prerequisites**
+#### **Step 2: Set Up Virtual Environment & Install Dependencies**
 
-Before installing Python dependencies, ensure you have the following prerequisites installed on your system:
-
-- **Python 3.10+**
-- **Google Chrome Browser**
-- **ChromeDriver** (must match your Chrome version; this is a mandatory install for interface automation)
-- **MariaDB Server**
-
----
-
-### 3. **Install Python Dependencies**
-
-Install all dependencies for each component using the provided `requirements.txt` files:
+To ensure dependency isolation and reproducibility, create and use a Python virtual environment.
 
 ```bash
-# For installing dependencies
+# Create virtual environment
+python3 -m venv venv
+```
+
+Activate virtual environment
+```bash
+# Linux / macOS
+source venv/bin/activate
+```
+```bash
+# Windows
+venv\Scripts\activate
+```
+Install all dependencies for each component using the provided `requirements.txt` files:
+```bash
+# Install required dependencies
 pip install -r requirements.txt
 ```
 ---
 
-### 4. **Setting up the XPath and Credentials of the Accounts**
+#### **Step 3: Install ChromeDriver**
 
-This section explains how to configure XPath locators for web elements and securely store account credentials required for automated testing or web scraping. Proper setup ensures that your scripts interact with the correct UI elements and authenticate successfully.
+ChromeDriver is essential for web and WhatsApp interface automation. So first check the version of google chrome and then install the respective version of chromedriver version.
 
-### 4.1 **Adding XPath Locators**
+---
+
+#### **Step 4: Set up Database**
+
+##### **4.1 SQLite**
+By defaults, sqlite database will be used for ease to store small amount of data.
+For large testcase datasets, set up the MariaDB Database.
+
+##### **4.2 Set Up MariaDB Database**
+
+Create a new database and user:
+
+```bash
+# Login to MariaDB
+mysql -u root -p
+
+# Create database
+CREATE DATABASE aievaluationtool;
+
+# Create database user
+CREATE USER 'aiet_user'@'localhost' IDENTIFIED BY 'secure_password';
+GRANT ALL PRIVILEGES ON aievaluationtool.* TO 'aiet_user'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
+```
+---
+
+#### **Step 5: Install Node.js Dependencies**
+
+With the version 20.19+ or 22.12+.
+
+---
+
+#### **Step 6: Strategy .env**
+
+Create `src/lib/strategy/.env` from `src/lib/strategy/.env.example`:
+
+```bash
+cp src/lib/strategy/.env.example src/lib/strategy/.env
+```
+---
+
+#### **Step 7: Prepare Data Files**
+
+Ensure the `data/` directory contains the following files (already present in the repository):
+- `DataPoints.json` (sample test dataset)
+- `plans.json`
+- `strategy_map.json`
+- `strategy_id.json`
+- `metric_strategy_mapping.json`
+- **A detailed set of Seeding data points shall be provided upon request.**
+
+---
+
+#### **Test Ollama Setup (Optional)**
+
+If using local LLMs:
+
+```bash
+ollama pull qwen3:32b
+ollama serve 
+```
+
+---
+
+## 4. **Configuration**
+
+#### **Step 1: Update Database Configuration**
+
+Update `src/app/importer/config.json`, `src/app/testcase_executor/config.json` & `src/app/response_analyzer/config.json` with your database credentials, and target if you are using MariaDB, else no changes required for database:
+
+```json
+{
+    "db": {
+        "engine":"sqlite",
+        "file": "AIEvaluationData.db",
+        "host": "localhost",
+        "port": 3306,
+        "user": "root",
+        "password": "jarvis2025",
+        "database": "AIEvaluationData"
+    },
+    "target": {
+        "application_type": "WHATSAPP_WEB",
+        "application_name": "Vaidya AI",
+        "application_url": "https://web.whatsapp.com/",
+        "agent_name": "Vaidya AI"
+    }
+}
+```
+---
+
+#### **Step 2: Configure Environment Variables**
+
+To use the LLM-as-a-judge mechanism for evaluation, you must have a language model available. You can either:
+- **Run a model locally** (e.g., using Ollama, OpenAI-compatible local models, etc.), or
+- **Provide API keys** for cloud-based models (e.g., OpenAI, Anthropic, etc.)
+
+**Supported Models:**
+- OpenAI GPT-3.5/4 (via API key)
+- Anthropic Claude (via API key)
+- Ollama (local)
+- Any OpenAI-compatible local model
+
+Ensure that `.env.example` in the root folder is initialized with appropriate values to create a `.env` file :
+
+```bash
+# Service Endpoints
+OLLAMA_URL="http://localhost:11434"
+GPU_URL="http://localhost:8000"
+
+# Model Configuration
+LLM_AS_JUDGE_MODEL="qwen3:32b"
+
+# API Keys
+PERSPECTIVE_API_KEY="your_perspective_api_key"
+SARVAM_API_KEY="your_sarvam_api_key"
+GEMINI_API_KEY="your_gemini_api_key"
+OPENAI_API_KEY="your_openai_api_key"
+```
+- `OLLAMA_URL` points to the installed Ollama instance's endpoint address.  Typically it is `http://localhost:11434/`
+- `LLM_AS_JUDGE_MODEL` points to the name of the LLM (loaded via Ollama) that we want to use as a judge.  Typically, it is `llama3.1:70b`.
+- `PERSPECTIVE_API_KEY` should have the API KEY of Perspective service for toxicity detection.
+- `GPU_URL` should point to the Sarvam AI RestAPI server (./src/app/sarvam_ai/) hosted elsewhere.  Typically, the URL is `http://localhost:8000`.
+- For API-based models, set your API key in a `.env` file or as an environment variable (e.g., `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`).
+- For local models, ensure the model server is running and accessible at the expected endpoint (see your model provider's documentation).
+
+Ensure your model is accessible and properly configured before running the evaluation pipeline. Refer to the relevant documentation for your chosen model provider for setup instructions.
+
+---
+#### **Step 3: Configure XPath and Credentials**
 
 XPath locators are used by automation frameworks (e.g., Selenium) to identify and interact with web elements.
 
@@ -145,9 +436,7 @@ XPath locators are used by automation frameworks (e.g., Selenium) to identify an
 }
 ```
 
-### 4.2 Storing Account Credentials
-
-To keep credentials secure and maintainable, here is the template of the `credentials.json`
+To keep credentials secure and maintainable, here is the template of the `src/app/interface_manager/credentials.json`
 
 ```json
 {
@@ -164,231 +453,339 @@ To keep credentials secure and maintainable, here is the template of the `creden
   }
 }
 ```
-
 ---
+#### **Step 4: Import the Target into the Database**
 
-### 4. **Model Setup for LLM-based Evaluation**
+**Supported Target Types:**
+- **API**: RESTful or custom API endpoints
+- **WhatsApp**: WhatsApp Business API integration
+- **Web Application**: Web-based interfaces
 
-To use the LLM-as-a-judge mechanism for evaluation, you must have a language model available. You can either:
-- **Run a model locally** (e.g., using Ollama, OpenAI-compatible local models, etc.), or
-- **Provide API keys** for cloud-based models (e.g., OpenAI, Anthropic, etc.)
+Add the following code to the end of `src/app/importer/main.py` to import your target application into the database:
 
-**Supported Models:**
-- OpenAI GPT-3.5/4 (via API key)
-- Anthropic Claude (via API key)
-- Ollama (local)
-- Any OpenAI-compatible local model
+```python
+tgt = Target(
+    target_name="your_agent_name", # Unique identifier for your agent
+    target_type="API" # or "WhatsApp" or "WebApp"
+    target_url="https://your-api-endpoint.com",  # Endpoint URL for the target service
+    target_description="Your agent description",
+    target_domain="Healthcare",  # or "Local API Interface"
+    target_languages=["english"] # List of supported languages
+)
 
-**Configuration:**
-- Ensure that `.env.example` in the root folder is initialized with appropriate values to create a `.env` file.
-- `OLLAMA_URL` points to the installed Ollama instance's endpoint address.  Typically it is `http://localhost:11434/`
-- `LLM_AS_JUDGE_MODEL` points to the name of the LLM (loaded via Ollama) that we want to use as a judge.  Typically, it is `llama3.1:70b`.
-- `PERSPECTIVE_API_KEY` should have the API KEY of Perspective service for toxicity detection.
-- `GPU_URL` should point to the Sarvam AI RestAPI server (./src/app/sarvam_ai/) hosted elsewhere.  Typically, the URL is `http://localhost:8000`.
-- For API-based models, set your API key in a `.env` file or as an environment variable (e.g., `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`).
-- For local models, ensure the model server is running and accessible at the expected endpoint (see your model provider's documentation).
-
-Ensure your model is accessible and properly configured before running the evaluation pipeline. Refer to the relevant documentation for your chosen model provider for setup instructions.
-
----
-
-### 5. **Prepare Data Files**
-
-Ensure the `data/` directory contains the following files (already present in the repository):
-- `DataPoints.json` (sample test dataset)
-- `plans.json`
-- `strategy_map.json`
-- `strategy_id.json`
-- `metric_strategy_mapping.json`
-- **A detailed set of Seeding data points shall be provided upon request.**
-
-
-
-## Running the Evaluation Pipeline
-
-**Step 1: Import datapoints into Database**
-
-Create a database in the MariaDB server and authorize a database user with full privileges.  Replace the host, port number, username, password, and database name in the `config.json` file. 
-
-Open a terminal on your machine and run:
-
-```bash
-python3 src/app/importer/main.py --config "path to the config file"
+target_id = db.add_or_get_target(target=tgt)
 ```
 
-After running the importer script, the terminal shows the following outputs.
+Replace the placeholder values with your actual target configuration details. The script will register your target and return its unique ID for use in subsequent operations.
+
+---
+#### **Step 5: Configure Test Data (TDMS)**
+
+   Edit `src/app/TDMS/back-end/database/config.json`:
+   
+   **For SQLite (default, recommended for development):**
+   ```json
+   {
+     "db": {
+       "engine_type": "sqlite",
+       "file": "TDMS.db"
+     }
+   }
+   ```
+   
+   **For MariaDB (production):**
+   ```json
+   {
+     "db": {
+       "engine_type": "mariadb",
+       "host": "localhost",
+       "port": 3306,
+       "user": "your_username",
+       "password": "your_password",
+       "database": "tdms_db"
+     }
+   }
+   ```
+---
+## 5. **Getting Started**
+To getting started with tool following steps are provided for basics, for more detailed [click here](screenshots/Workflow.md).
+### **AI Evaluation Tool**
+#### 5.1.1 **Import Test Data into Database**
+
+Before running evaluations, you need to import test data points into the database.
+
+**Run the Importer Script :**
+
+```bash
+python3 src/app/importer/main.py --config "src/app/importer/config.json"
+```
+
+After successful execution, you should see output similar to:
 
 ![Importing datapoints to database](screenshots/importing%20data%20to%20database.png)
 
-**Step 2: Start the InterfaceManager API Service**
+---
 
-Open a terminal on your machine and run:
+#### 5.1.2 **Start the InterfaceManager API Service**
+
+The InterfaceManager handles communication with target platforms (API, WhatsApp, Web).
+
+**Step 1: Navigate to InterfaceManager Directory and Start the Service**
+
 ```bash
 cd src/app/interface_manager
 python main.py
 ```
 
-#### API Server Running
-
-After starting the InterfaceManager API Service, the terminal shows the following outputs.
+You should see output like:
 
 ![Interface Server Running](screenshots/interface_manager_running.png)
 
-**Step 3: Run the Test Case Execution Manager**
+---
 
-Replace the host, port number, username, password, and database name in the `config.json` file. Open another new terminal on your machine and run to see what options are available in testcase executor:
+#### 5.1.3 **Configure and Run Test Case Executor**
+
+The Test Case Executor sends test prompts to your target application.
+
+**Step 1: Update Executor Configuration**
+
+As above, `src/app/testcase_executor/config.json` updated with your target details and database credentials.
+
+**Step 2: View Available Options**
 
 ```bash
 cd src/app/testcase_executor
-python main.py --config "path to config file" -h
+python main.py --config "config.json" -h
+```
+![Arguments available in Testcase Executor](screenshots/arguments%20of%20testcase%20executor.png)
+
+**Step 3: Get Available Test Plans**
+
+```bash
+python main.py --config "config.json" --get-plans
 ```
 
-![Arguments available in Testcase Executor](screenshots/arguments%20of%20testcase%20executor.png)
+Expected output:
 
 ![Plans](screenshots/get_plans.png)
 
-![Metrics](screenshots/get_metrics.png)
-
-
-To run the Testcase execution, run the following command:
+**Step 4: Get Available Metrics**
 
 ```bash
-cd src/app/testcase_executor
-python main.py --testplan-id <testplan-id> --testcase-id <testcase-id> --metric-id <metric-id> --max-testcases <max-testcases>  --config "path to config file" --execute 
+python main.py --config "config.json" --get-metrics
 ```
-*(Adjust `--testplan-id`, `--testcase-id`, `--metric-id`, `--max-testcases` and  as needed.)*
 
-#### Test Case Execution Manager Running
-On running the Test Case Execution Manager, the terminal output should look similar to:
+Expected output:
+
+![Metrics](screenshots/get_metrics.png)
+
+**Step 5: Execute Test Cases**
+
+```bash
+python main.py --testplan-id <testplan-id> --testcase-id <testcase-id> --metric-id <metric-id> --max-testcases <max-testcases> --config "config.json" --execute
+```
+
+Replace placeholders with actual values from your test plan. The executor will run and display:
 
 ![TEM Running](screenshots/Testcase_execution_manager_running.png)
 
-The Test Case Execution Manager leverages the interface automation to automatically deliver test cases to the conversational platform and retrieve responses without manual intervention.
+The test execution interface will appear similar to:
 
 ![Interface](screenshots/Interface.jpg)
 
+---
 
-This step will execute the test cases and store the responses in `data/responses.json`.
+#### 5.1.4 **Deploy LLM Models**
 
-**Step 4: Run the LLMS in your GPUs**
+For evaluation using **LLM-as-Judge**, the following models must be available:
 
-In order for the evaluation framework to work we need to have 4 models to be in place - 
+**Required Models**
+1. `sarvamai/sarvam-2b-v0.5`
+2. `google/shieldgemma-2b`
+3. `sarvamai/sarvam-translate`
+4. `qwen3:32b` (Default LLM-as-Judge)
 
-1. sarvamai/sarvam-2b-v0.5
-2. google/shieldgemma-2b
-3. sarvamai/sarvam-translate
-4. mistral:7b-instruct (Default LLM as Judge)
+> **Note**
+> - Ollama’s default port **11434 is fixed**.
+> - All other service ports (e.g., Sarvam AI) are **configurable** and can be changed to any free port.
 
-```bash
-cd src/app/sarvam_ai
-python main.py
-```
+LLM models seving can be done in following two ways :
 
-You need to port forward to facilitate the model to connect to your testing machine. You can use the command below -
+**A. Local Serving**
 
-```bash
-ollama run mistral:7b-instruct
-ssh gpu_machine_cred@machineIP -L testing_machine_ip:11434:localhost:11434 -L testing_machine_ip:8000:localhost:8000
-```
+Use this setup when running all services on the same machine.
 
-Here in 11434 the LLM as Judge Model ie mistral:7b-instruct is hosted through ollama and 8000 is used to serve the other 3 models.
+- **Start Sarvam AI Service**
+    ```bash
+    cd src/app/sarvam_ai
+    python main.py --port <free-port-local>
+    ```
+
+- **Pull and serve LLM-as-Judge**
+    ```bash
+    ollama pull qwen3:32b
+    ollama serve
+    ```
+> Note: `ollama` serve usually runs by default and may not require manual execution.
+
+**B. Remote GPU Serving(Port Forwarding)**</br>
+Use this setup when models are hosted on a remote GPU machine.
+
+- **Start Services on Remote GPU Machine** </br>
+    Run the following commands on remote GPU machine-
+    ```bash
+    cd src/app/sarvam_ai
+    python main.py --port <free-port-gpu>
+    ```
+    ```bash
+    ollama pull qwen3:32b
+    ```
+- **Forward Remote Ports to Local Machine** 
+    ```bash
+    ssh gpu_machine_cred@machineIP \
+    -L localhost:11434:localhost:<free-port-local> \
+    -L localhost:<free-port-gpu:localhost:<free-port-local>
+    ```
+After serving sarvam ai, it will looks similar to following:
+
+![Image](screenshots/sarvam_ai.png)
 
 There are other small sized models which gets downloaded while running this application. The models are - 
 
 1. amedvedev/bert-tiny-cognitive-bias
-2. NousResearch/Minos-v1
-3. LibrAI/longformer-harmful-ro
-4. vectara/hallucination_evaluation_model
-5. thenlper/gte-small
-6. all-MiniLM-L6-v2
-7. facebook/bart-large-cnn
-8. nicholasKluge/ToxiGuardrail
-9. paraphrase-multilingual-mpnet-base-v2
+2. LibrAI/longformer-harmful-ro
+3. vectara/hallucination_evaluation_model
+4. thenlper/gte-small
+5. all-MiniLM-L6-v2
+6. nicholasKluge/ToxiGuardrail
+7. sentence-transformers/paraphrase-multilingual-mpnet-base-v2
+8. google/flan-t5-large
+9. holistic-ai/bias_classifier_albertv2
+10. Human-CentricAI/LLM-Refusal-Classifier
+11. cross-encoder/nli-deberta-base
 
-**Step 5: Run the Response Analyzer**
+#### 5.1.5 **Run Response Analysis**
 
-**Once the previous step has completed and `responses.json` is populated**, open a new terminal and run:
+After testcase execution completes and responses are collected, analyze them by getting run-name from Test runs table from DB OR from the testcase executor logs.
+
+**Step 1: Start Response Analyzer**
 
 ```bash
 cd src/app/response_analyzer
 python analyze.py --config "path to config file" --run-name <run-name>
 ```
 
-*(Adjust `--run-name` as needed.)*
+The analyzer will process responses and display:
 
-> **Note:** If you are using a local model (e.g., Ollama or any OpenAI-compatible local model), ensure that the model server is running in the background and accessible before executing the Response Analyzer.
-
-#### Response Analyzer Running
 ![Response Analysis Image](screenshots/Response_analyzer_running.png)
 
 ---
 
-## Results
+#### 5.1.6 **Generate Evaluation Report**
 
-The Response Analyzer block when executed will display a detailed report on the terminal, showing scores evaluated for metrics under the test plan and can be used as an indicator of the validity of the model against a particular metric.
-
-**To see the evaluation report**, open a new terminal and run:
+View comprehensive evaluation results and metrics.
 
 ```bash
 cd src/app/response_analyzer
 python report.py --config "path to config file" --run-name <run-name>
 ```
 
-*(Use the same run-name used in analysis step.)*
+Use the same `run-name` from the analysis step.
 
-#### Evaluation Report
-A sample evaluation report generated by the Response Analyzer can be seen below:
+The report will display detailed evaluation metrics:
 
 ![Evaluation Report](screenshots/report_generation.png)
----
 
 ---
-## TEST DATA MANAGEMENT SYSTEM
 
-## 1. Back-end setup
+### **Set Up Test Data Management System (TDMS)**
 
-**Step 1**: Replace the host, port number, username, password, and database name in the `config.json` file located at `src/app/TDMS/back-end/database/config.json`
+Access the web-based UI for managing test data and users.
 
-**Step 2**: Navigate to the project directory.
+#### 5.2.1 **Backend Setup**
+
+**Step 1: Configure Database**
+
+Update `src/app/TDMS/back-end/database/config.json` with your MariaDB credentials else sqlite will works by defaults.
+**Configure the database:**
+      
+   **For SQLite (default, recommended for development):**
+   ```json
+   {
+     "db": {
+       "engine_type": "sqlite",
+       "file": "TDMS.db"
+     }
+   }
+   ```
+   
+   **For MariaDB (production):**
+   ```json
+   {
+     "db": {
+       "engine_type": "mariadb",
+       "host": "localhost",
+       "port": 3306,
+       "user": "your_username",
+       "password": "your_password",
+       "database": "tdms_db"
+     }
+   }
+   ```
+
+#### Step 2: Start the Application
+
+**Terminal 1 - Start Backend Server:**
 ```bash
 cd src/app/TDMS/back-end
+source venv/bin/activate
+python main.py
 ```
 
-**Step 3**: Start the development server with auto-reloading and an instant preview.
+The backend will start on `http://localhost:8000`
+
+![back End running](screenshots/backEnd.png)
+
+#### 5.2.2 Frontend Setup
+
+1. **Navigate to the frontend directory:**
+   ```bash
+   cd src/app/TDMS/front-end
+   ```
+
+2. **Install Node.js dependencies:**
+   ```bash
+   npm install
+   ```
+
+
+**Terminal 2 - Start Frontend Development Server:**
 ```bash
-python3 main.py
-```
-
-## 2. Front-end setup
-
-**Step 1**: Navigate to the project directory.
-```sh
 cd src/app/TDMS/front-end
-```
-
-**Step 2**: Install the necessary dependencies.
-```sh
-npm i
-```
-
-**Step 3**: Start the development server with auto-reloading and an instant preview.
-```sh
 npm run dev
 ```
 
-### **Login Credentials**
-```
-Username: admin     | manager     | curator     | viewer
-Password: admin123  | manager123  | curator123  | viewer123
-```
-## Permission based on role
+The frontend will start on `http://localhost:8080` (or another port if 8080 is busy)
 
-- `canManageUsers` - Admin only
-- `canCreateUser` - Admin only
-- `canUpdateUser` - Admin only
-- `canDeleteUser` - Admin only
-- `canCreateTables` -Admin, Manager & Curator
-- `canUpdateTables` -Admin, Manager & Curator
-- `canDeleteTables` -Admin & Manager
+![Front End Running](screenshots/frontEnd.png)
 
----
+#### 5.2.3 Access the Application
+
+1. Open your web browser
+2. Navigate to `http://localhost:8080` (or the port shown in the terminal)
+3. You should see the login page
+
+![TDMS Home page](screenshots/tdms_home.png)
+
+#### **Access TDMS**
+
+Use these login credentials:
+
+| Role | Username | Password |
+|------|----------|----------|
+| Admin | `admin` | `admin123` |
+| Manager | `manager` | `manager123` |
+| Curator | `curator` | `curator123` |
+| Viewer | `viewer` | `viewer123` |
+
+This module provides comprehensive CRUD (Create, Read, Update, Delete) operations for test cases within the TDMS (Test Data Management System) application. For user manul [click here](src/app/TDMS/TDMS_Documentation.md)
