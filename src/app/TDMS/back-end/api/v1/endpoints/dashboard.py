@@ -17,6 +17,8 @@ from lib.orm.tables import (
     Targets,
     TestCases,
     Strategies,
+    TestPlans,
+    Metrics
 )
 
 # from config.settings import Settings
@@ -41,6 +43,8 @@ async def get_dashboard_summary(db: DB = Depends(_get_db)):
         prompts_count = session.query(Prompts).count()
         responses_count = session.query(Responses).count()
         llm_prompts_count = session.query(LLMJudgePrompts).count()
+        test_plans_count = session.query(TestPlans).count()
+        metrics_count = session.query(Metrics).count()
 
         return JSONResponse({
             "test_cases": test_cases_count,
@@ -51,6 +55,8 @@ async def get_dashboard_summary(db: DB = Depends(_get_db)):
             "responses": responses_count,
             "prompts": prompts_count,
             "llm_prompts": llm_prompts_count,
+            "test_plans": test_plans_count,
+            "metrics": metrics_count
         }, status_code=200)
         
     except HTTPException:

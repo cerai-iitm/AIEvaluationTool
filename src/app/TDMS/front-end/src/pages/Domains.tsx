@@ -291,7 +291,19 @@ const DomainList: React.FC = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+        const errorMessage = errorData.detail || `HTTP error! status: ${response.status}`;
+        
+        // Check if it's the specific validation error about TestCase usage
+        if (errorMessage.includes("TestCase") || errorMessage.includes("cannot be deleted")) {
+          toast({
+            title: "Cannot Delete Domain",
+            description: errorMessage,
+            variant: "destructive",
+          });
+        } else {
+          throw new Error(errorMessage);
+        }
+        return;
       }
 
       toast({
@@ -378,7 +390,7 @@ const DomainList: React.FC = () => {
             </div>
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto">
-            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[72vh] max-w-1/2 md:max-w-[30%] overflow-y-auto">
+            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[72vh] max-w-1/2 md:max-w-[500px] overflow-y-auto">
               {isLoading ? (
                 <div className="flex items-center justify-center p-8">
                   <span>Loading...</span>

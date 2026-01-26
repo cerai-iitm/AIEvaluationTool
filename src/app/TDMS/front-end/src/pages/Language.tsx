@@ -259,7 +259,19 @@ const LanguageList: React.FC = () => {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+                const errorMessage = errorData.detail || `HTTP error! status: ${response.status}`;
+                
+                // Check if it's the specific validation error about Prompt/Response/LLM Prompt/Target usage
+                if (errorMessage.includes("Prompt") || errorMessage.includes("Response") || errorMessage.includes("LLM Prompt") || errorMessage.includes("Target") || errorMessage.includes("cannot be deleted")) {
+                    toast({
+                        title: "Cannot Delete Language",
+                        description: errorMessage,
+                        variant: "destructive",
+                    });
+                } else {
+                    throw new Error(errorMessage);
+                }
+                return;
             }
 
             toast({
@@ -360,7 +372,7 @@ const LanguageList: React.FC = () => {
 
                     {/* Table */}
                     <div className="flex-1 min-h-0 overflow-y-auto">
-                        <div className="bg-white rounded-lg shadow overflow-hidden max-h-[75vh] max-w-[30%] overflow-y-auto">
+                        <div className="bg-white rounded-lg shadow overflow-hidden max-h-[75vh] max-w-[500px] overflow-y-auto">
                             {isLoading ? (
                                 <div className="flex items-center justify-center p-8">
                                     <span>Loading...</span>

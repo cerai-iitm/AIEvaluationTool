@@ -333,9 +333,21 @@ def delete_response(
             status_code=status.HTTP_404_NOT_FOUND, detail="Response not found"
         )
 
-    if not db.delete_response_record(response_id):
+    try:
+        if not db.delete_response_record(response_id):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Response not found"
+            )
+    except ValueError as e:
+        # Handle validation error for response in use
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Response not found"
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+        )
+    except IntegrityError as e:
+        # Handle database integrity errors (fallback)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This response cannot be deleted because it is used in the TestCase table."
         )
 
     username = _get_username_from_token(authorization)

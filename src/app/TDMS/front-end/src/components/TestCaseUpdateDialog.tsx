@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search, X } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   PromptSearchDialog,
   PromptSearchSelection,
@@ -26,6 +27,7 @@ import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
 import { hasPermission } from "@/utils/permissions";
 import { set } from "date-fns";
+import test from "node:test";
 
 
 interface TestCase {
@@ -37,6 +39,8 @@ interface TestCase {
   systemPrompts: string;
   responseText: string;
   llmPrompt: string;
+  metricName: string;  // For backward compatibility
+  metricNameList?: string[];  // List of metric names
 }
 
 interface TestCaseUpdateDialogProps {
@@ -50,6 +54,11 @@ interface Strategy {
   strategy_id: number | null;
   strategy_name: string | null;
   requires_llm_prompt: boolean | null;
+}
+
+interface Metric {
+  metric_id: number | null;
+  metric_name: string | null;
 }
 
 // const domains = ["General", "Education", "agriculture", "Healthcare", "Learning Disability"];
@@ -66,11 +75,14 @@ export const TestCaseUpdateDialog = ({
   const [responseText, setResponseText] = useState(testCase?.responseText || "");
   const [llmPrompt, setLlmPrompt] = useState(testCase?.llmPrompt || "");
   const [strategy, setStrategy] = useState(testCase?.strategyName || "");
+  const [selectedMetrics, setSelectedMetrics] = useState<string[]>([]);
   // const [domain, setDomain] = useState(testCase?.domainName || "");
   const [notes, setNotes] = useState("");
   const [strategies, setStrategies] = useState<Strategy[]>([]);
+  const [metrics, setMetrics] = useState<Metric[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingStrategies, setIsFetchingStrategies] = useState(false);
+  const [isFetchingMetrics, setIsFetchingMetrics] = useState(false);
   const [currentUserRole, setCurrentUserRole] = useState<string>("");
   
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
@@ -204,9 +216,54 @@ export const TestCaseUpdateDialog = ({
       }
     };
 
+  // fetch metric from api
+    const fetchMetrics = async () => {
+      setIsFetchingMetrics(true);
+      try {
+        const token = localStorage.getItem("access_token");
+        const headers: HeadersInit = {
+          "Content-Type": "application/json",
+        };
+        
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(API_ENDPOINTS.METRICS_V2, { headers });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (Array.isArray(data)) {
+          setMetrics(data);
+          console.log("Fetched metrics:", data); // Debug log
+        } else {
+          console.error("Unexpected metrics data format:", data);
+          toast({
+            title: "Error",
+            description: "Failed to load metrics: Invalid data format",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching metrics:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load metrics from server",
+          variant: "destructive",
+        });
+      } finally {
+        setIsFetchingMetrics(false);
+      }
+    };
+
     if (open) {
       fetchUserRole();
       fetchStrategies();
+      fetchMetrics();
     } else {
       // Reset errors when dialog closes
       setErrors({
@@ -224,6 +281,14 @@ export const TestCaseUpdateDialog = ({
     setResponseText(testCase?.responseText || '');
     setLlmPrompt(testCase?.llmPrompt || '');
     setStrategy(testCase?.strategyName || '');
+    // Initialize selectedMetrics from metricNameList or parse from metricName
+    if (testCase?.metricNameList && testCase.metricNameList.length > 0) {
+      setSelectedMetrics(testCase.metricNameList);
+    } else if (testCase?.metricName) {
+      setSelectedMetrics(testCase.metricName.split(", ").filter(Boolean));
+    } else {
+      setSelectedMetrics([]);
+    }
     // setDomain(testCase?.domainName || '');
     setNotes(''); // Or testCase?.notes if available
     // Reset errors when test case changes
@@ -244,15 +309,30 @@ export const TestCaseUpdateDialog = ({
     systemPrompts: "",
     responseText: "",
     llmPrompt: "",
+    metricName: "",
+    metricNameList: [],
   };
+  
+  const initialMetrics = testCaseInitial.metricNameList && testCaseInitial.metricNameList.length > 0
+    ? testCaseInitial.metricNameList
+    : (testCaseInitial.metricName ? testCaseInitial.metricName.split(", ").filter(Boolean) : []);
+  
   const isChanged = (
     userPrompts !== (testCaseInitial.userPrompts || "") ||
     systemPrompts.trim() !== (testCaseInitial.systemPrompts || "") ||
     responseText.trim() !== (testCaseInitial.responseText || "") ||
     llmPrompt.trim() !== (testCaseInitial.llmPrompt || "") ||
-    strategy.trim() !== (testCaseInitial.strategyName || "")
+    strategy.trim() !== (testCaseInitial.strategyName || "") ||
+    JSON.stringify(selectedMetrics.sort()) !== JSON.stringify(initialMetrics.sort())
+
     // notes !== ""
   );
+
+  const handleMetricToggle = (metricName: string) => {
+    setSelectedMetrics((prev) =>
+      prev.includes(metricName) ? prev.filter((m) => m !== metricName) : [...prev, metricName]
+    );
+  };
 
   // const notNull = (
   //   userPrompts !== "" ||
@@ -409,6 +489,13 @@ export const TestCaseUpdateDialog = ({
       if (strategy !== (testCaseInitial.strategyName || "")) {
         updatePayload.strategy_name = strategy;
       }
+      
+      // Handle metrics - check if changed
+      const currentMetrics = selectedMetrics.sort();
+      const initialMetricsSorted = initialMetrics.sort();
+      if (JSON.stringify(currentMetrics) !== JSON.stringify(initialMetricsSorted)) {
+        updatePayload.metric_name_list = selectedMetrics;
+      }
 
       // Always include notes if provided
       if (notes && notes.trim()) {
@@ -502,10 +589,10 @@ export const TestCaseUpdateDialog = ({
               /> */}
             </div>
 
-            <div className="space-y-1 pb-4">
-              <Label className="text-base font-semibold">Prompt</Label>
-              <div className="space-y-1">
-                <Label className="text-sm font-normal">User Prompts</Label>
+            <div className="space-y-1 pb-1">
+              {/* <Label className="text-base font-semibold">Prompt</Label> */}
+              <div className="space-y-1 pb-1">
+                <Label className="text-base font-semibold">User Prompts</Label>
                 <div className="relative">
                   <Textarea
                     value={userPrompts}
@@ -543,8 +630,8 @@ export const TestCaseUpdateDialog = ({
 
               </div>
 
-              <div className="space-y-1">
-                <Label className="text-sm font-normal">System prompts</Label>
+              <div className="space-y-1 pb-2">
+                <Label className="text-base font-semibold">System prompts</Label>
                 <div className="relative">
                   <Textarea
                     value={systemPrompts}
@@ -584,7 +671,7 @@ export const TestCaseUpdateDialog = ({
               </div>
             </div>
 
-            <div className="space-y-1 pb-4">
+            <div className="space-y-1 pb-2">
               <Label className="text-base font-semibold">Response</Label>
               <div className="relative">
                 <Textarea
@@ -625,10 +712,10 @@ export const TestCaseUpdateDialog = ({
               </div>
             </div>
 
-            <div className="space-y-1 pb-4">
+            <div className="space-y-1 pb-2">
               <Label className="text-base font-semibold">Strategy</Label>
               <Select value={strategy} onValueChange={setStrategy} disabled={isFetchingStrategies}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-muted">
                   <SelectValue placeholder={isFetchingStrategies ? "Loading strategies..." : "Select strategy"} />
                 </SelectTrigger>
                 <SelectContent className="bg-popover max-h-[300px]">
@@ -648,7 +735,7 @@ export const TestCaseUpdateDialog = ({
             </div>
 
             {selectedStrategyRequiresLLM ? (
-              <div className="space-y-1 pb-4">
+              <div className="space-y-1 pb-2">
                 <Label className="text-base font-semibold">LLM Prompt</Label>
                 <div className="relative">
                   <Textarea
@@ -687,7 +774,7 @@ export const TestCaseUpdateDialog = ({
                 </div>
               </div>
             ):(
-                <div className="space-y-1 pb-4 hidden">
+                <div className="space-y-1 pb-2 hidden">
                   <Label className="text-base font-semibold">LLM Prompt</Label>
                   <Textarea
                     value=""
@@ -701,6 +788,43 @@ export const TestCaseUpdateDialog = ({
                 </div>
             )
             }
+            
+            
+
+            <div className="space-y-1 pb-2">
+              <Label className="text-base font-semibold">Metrics</Label>
+              <div className="bg-muted p-4 rounded-md max-h-[130px] overflow-y-auto">
+                {isFetchingMetrics ? (
+                  <div className="text-sm text-muted-foreground">
+                    Loading metrics...
+                  </div>
+                ) : metrics.filter((m) => m.metric_name != null).length === 0 ? (
+                  <div className="text-sm text-muted-foreground">
+                    No metrics available
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {metrics
+                      .filter((m) => m.metric_name != null)
+                      .map((m) => (
+                        <div key={m.metric_name} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`metric-update-${m.metric_name}`}
+                            checked={selectedMetrics.includes(m.metric_name!)}
+                            onCheckedChange={() => handleMetricToggle(m.metric_name!)}
+                          />
+                          <label
+                            htmlFor={`metric-update-${m.metric_name}`}
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                          >
+                            {m.metric_name}
+                          </label>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
+            </div>
 
 
 
@@ -724,7 +848,7 @@ export const TestCaseUpdateDialog = ({
 
             </div>
 
-            <div className="flex justify-center items-center p-4 border-gray-300 bg-white sticky bottom-0 z-10">
+            <div className="flex justify-center items-center p-2 border-gray-300 bg-white sticky bottom-0 z-10">
               <label className="text-base font-bold mr-2">
                 Notes 
               </label>
@@ -740,11 +864,10 @@ export const TestCaseUpdateDialog = ({
                 className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleSubmit}
                 disabled={
-                 // !notNull ||
                   !isChanged || 
                   !notes.trim() || 
                   isLoading ||
-                  userPrompts.trim() == (testCaseInitial.userPrompts || "")  ||
+                  selectedMetrics.length === 0 ||
                   (!hasPermission(currentUserRole, "canUpdateTables") && 
                    !hasPermission(currentUserRole, "canUpdateRecords"))
                 }

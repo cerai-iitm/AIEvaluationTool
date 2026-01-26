@@ -18,7 +18,7 @@ from data import Prompt, Language, Domain, Response, TestCase, TestPlan, \
     Strategy, Metric, LLMJudgePrompt, Target, Conversation, Run, RunDetail
 from .tables import Base, Languages, Domains, Metrics, Responses, TestCases, \
     TestPlans, Prompts, Strategies, LLMJudgePrompts, Targets, Conversations, \
-        TestRuns, TestRunDetails, TestPlanMetricMapping
+        TestRuns, TestRunDetails, TestPlanMetricMapping, TargetLanguages
 from lib.utils import get_logger
 
 from jose import jwt, JWTError
@@ -756,6 +756,7 @@ class DB:
                     joinedload(TestCases.response),
                     joinedload(TestCases.strategy),
                     joinedload(TestCases.judge_prompt),
+                    joinedload(TestCases.metrics),
                 )
                 .filter(TestCases.testcase_id == testcase_id)
                 .first()
@@ -774,6 +775,31 @@ class DB:
                 if not strategy:
                     raise ValueError(f"Strategy '{updates['strategy_name']}' not found")
                 testcase.strategy_id = strategy.strategy_id
+                updated = True
+
+            # Update metrics - handle both metric_name (single) and metric_name_list (multiple)
+            if "metric_name_list" in updates and updates["metric_name_list"]:
+                # Handle list of metrics
+                metric_name_list = updates["metric_name_list"]
+                if not isinstance(metric_name_list, list):
+                    raise ValueError("metric_name_list must be a list")
+                # Clear existing metrics
+                testcase.metrics.clear()
+                # Add all metrics from the list
+                for metric_name in metric_name_list:
+                    metric = session.query(Metrics).filter(Metrics.metric_name == metric_name).first()
+                    if not metric:
+                        raise ValueError(f"Metric '{metric_name}' not found")
+                    testcase.metrics.append(metric)
+                updated = True
+            elif "metric_name" in updates and updates["metric_name"]:
+                # Handle single metric (backward compatibility)
+                metric = session.query(Metrics).filter(Metrics.metric_name == updates["metric_name"]).first()
+                if not metric:
+                    raise ValueError(f"Metric '{updates['metric_name']}' not found")
+                # Clear existing metrics and add the new one
+                testcase.metrics.clear()
+                testcase.metrics.append(metric)
                 updated = True
 
             # Update prompt with hash and reuse logic
@@ -941,6 +967,16 @@ class DB:
             )
             if llm_judge_prompt is None:
                 return False
+            
+            # Check if LLM judge prompt is used in TestCases
+            testcases_with_llm_prompt = (
+                session.query(TestCases)
+                .filter(TestCases.judge_prompt_id == llm_judge_prompt_id)
+                .first()
+            )
+            if testcases_with_llm_prompt:
+                raise ValueError("This LLM prompt cannot be deleted because it is used in the TestCase table.")
+            
             session.delete(llm_judge_prompt)
             session.commit()
             return True
@@ -2384,7 +2420,12 @@ class DB:
                 domain.domain_name = updates["domain_name"]
             session.commit()
             session.refresh(domain)
-            return self._serialize_domain(domain)
+            
+            # Return the updated domain as a dict (domain_name is a column, not a relationship)
+            return {
+                "domain_id": domain.domain_id,
+                "domain_name": domain.domain_name
+            }
 
     def delete_domain_record(self, domain_id: int) -> bool:
         with self.Session() as session:
@@ -2393,6 +2434,16 @@ class DB:
             )
             if not domain:
                 return False
+            
+            # Check if domain is used in Prompts that are referenced by TestCases
+            prompts_with_domain = session.query(Prompts).filter(Prompts.domain_id == domain_id).all()
+            if prompts_with_domain:
+                # Check if any of these prompts are used in TestCases
+                prompt_ids = [p.prompt_id for p in prompts_with_domain]
+                testcases_using_prompts = session.query(TestCases).filter(TestCases.prompt_id.in_(prompt_ids)).first()
+                if testcases_using_prompts:
+                    raise ValueError("This domain cannot be deleted because it is used in the TestCase table.")
+            
             session.delete(domain)
             session.commit()
             return True
@@ -2437,7 +2488,16 @@ class DB:
                 language.lang_name = updates["lang_name"]
             session.commit()
             session.refresh(language)
-            return self._serialize_language(language)
+            
+            # No need for joinedload on a column property
+            language_updated = (
+                session.query(Languages)
+                    .filter(Languages.lang_id == lang_id)
+                    .first()
+            )
+            
+            
+            return language_updated
 
     def delete_language_record(self, lang_id: int) -> bool:
         with self.Session() as session:
@@ -2446,6 +2506,16 @@ class DB:
             )
             if not language:
                 return False
+            
+            # Check if language is used in Prompts, Responses, LLMJudgePrompts, or TargetLanguages
+            prompts_with_lang = session.query(Prompts).filter(Prompts.lang_id == lang_id).first()
+            responses_with_lang = session.query(Responses).filter(Responses.lang_id == lang_id).first()
+            llm_prompts_with_lang = session.query(LLMJudgePrompts).filter(LLMJudgePrompts.lang_id == lang_id).first()
+            targets_with_lang = session.query(TargetLanguages).filter(TargetLanguages.lang_id == lang_id).first()
+            
+            if prompts_with_lang or responses_with_lang or llm_prompts_with_lang or targets_with_lang:
+                raise ValueError("This language cannot be deleted because it is used in the Prompt or Response or LLM Prompt or Target table.")
+            
             session.delete(language)
             session.commit()
             return True
@@ -2678,34 +2748,15 @@ class DB:
             if not prompt:
                 return False
             
-            # First, delete any TestCases that directly reference this prompt_id
-            # since prompt_id is NOT NULL in TestCases, we must delete them
-            # before deleting the prompt to avoid violating the NOT NULL constraint.
+            # Check if prompt is used in TestCases
             testcases_with_prompt = (
                 session.query(TestCases)
                 .filter(TestCases.prompt_id == prompt_id)
-                .all()
+                .first()
             )
-            for tc in testcases_with_prompt:
-                session.delete(tc)
+            if testcases_with_prompt:
+                raise ValueError("This prompt cannot be deleted because it is used in the TestCase table.")
             
-            # Then detach any TestCases that reference Responses for this prompt
-            # by nulling out their response_id, so that we can safely delete
-            # the corresponding Responses rows without violating FK constraints.
-            testcases_with_responses = (
-                session.query(TestCases)
-                .join(Responses, TestCases.response_id == Responses.response_id)
-                .filter(Responses.prompt_id == prompt_id)
-                .all()
-            )
-            for tc in testcases_with_responses:
-                tc.response_id = None
-
-            # Delete any Responses that reference this prompt_id to avoid
-            # violating the NOT NULL constraint on Responses.prompt_id.
-            session.query(Responses).filter(Responses.prompt_id == prompt_id).delete(
-                synchronize_session=False
-            )
             session.delete(prompt)
             session.commit()
             return True
@@ -2945,6 +2996,16 @@ class DB:
             )
             if not response:
                 return False
+            
+            # Check if response is used in TestCases
+            testcases_with_response = (
+                session.query(TestCases)
+                .filter(TestCases.response_id == response_id)
+                .first()
+            )
+            if testcases_with_response:
+                raise ValueError("This response cannot be deleted because it is used in the TestCase table.")
+            
             session.delete(response)
             session.commit()
             return True
@@ -3062,6 +3123,17 @@ class DB:
             )
             if not strategy:
                 return False
+
+            # check if strategy is used in TestCases
+            testcases_with_strategy = session.query(TestCases).filter(TestCases.strategy_id == strategy_id).all()
+            if testcases_with_strategy:
+                strategy_ids = [t.strategy_id for t in testcases_with_strategy]
+                testcases_using_strategy = session.query(TestCases).filter(TestCases.strategy_id.in_(strategy_ids)).first()
+                if testcases_using_strategy:
+                    raise ValueError(
+                        "This strategy cannot be deleted because it is used in the TestCase table."
+                    )
+
             session.delete(strategy)
             session.commit()
             return True
