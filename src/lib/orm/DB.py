@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine, select, update
 from sqlalchemy.orm import sessionmaker, scoped_session, joinedload
 from sqlalchemy.exc import IntegrityError
 from typing import List, Optional, Union
@@ -24,6 +24,7 @@ from lib.utils import get_logger
 from jose import jwt, JWTError
 from fastapi import HTTPException, status
 
+# @BUG: THIS IS WRONG.  SHOULD BE FIXED.
 sys.path.append(os.path.dirname(__file__) + "/../../app/TDMS/back-end")
 from config import settings
 
@@ -1419,7 +1420,7 @@ class DB:
         self,
         plan_name: str,
         n: int = 0,
-        lang_names: Optional[str] = None,
+        lang_names: Optional[List[str]] = None,
         domain_name: Optional[str] = None,
     ) -> List[TestCase]:
         """
@@ -3790,6 +3791,7 @@ class DB:
                                  evaluation_ts=getattr(result, "evaluation_ts"),
                                  conversation_id=getattr(result, 'conversation_id')) for result in results]
 
+    # @BUG. Why is this put here!??
     # Back-end router functions
     def get_username_from_token(authorization: Optional[str]) -> Optional[str]:
         """Extract username from JWT token."""
@@ -3808,3 +3810,63 @@ class DB:
             return payload.get("user_name")
         except JWTError:
             return None
+        
+    # Maintenance function: assigning language IDs to responses
+    def update_response_language(self, response_id: int, lang_id: int) -> bool:
+        """
+        Updates the language of a response.
+
+        Args:
+            response_id (int): ID of the response to update.
+            lang_id (int): Language ID to set.
+
+        Returns:
+            bool: True if the response was updated, False otherwise.
+        """
+        with self.Session() as session:
+            self.logger.debug(f"Updating language for response ID {response_id} ..")
+
+            sql = (
+                update(Responses)
+                .where(Responses.response_id == response_id)
+                .values(lang_id=lang_id)
+            )
+
+            result = session.execute(sql)
+
+            if result.rowcount == 0:
+                self.logger.warning(f"No response found with ID {response_id}.")
+                return False
+
+            session.commit()
+            return True
+
+    # Maintenance function: assigning language IDs to LLM judge prompts
+    def update_llm_judge_prompt_language(self, prompt_id: int, lang_id: int) -> bool:
+        """
+        Updates the language of an LLM judge prompt.
+
+        Args:
+            prompt_id (int): ID of the LLM judge prompt to update.
+            lang_id (int): Language ID to set.
+
+        Returns:
+            bool: True if the prompt was updated, False otherwise.
+        """
+        with self.Session() as session:
+            self.logger.debug(f"Updating language for LLM judge prompt ID {prompt_id} ..")
+
+            sql = (
+                update(LLMJudgePrompts)
+                .where(LLMJudgePrompts.prompt_id == prompt_id)
+                .values(lang_id=lang_id)
+            )
+
+            result = session.execute(sql)
+
+            if result.rowcount == 0:
+                self.logger.warning(f"No LLM judge prompt found with ID {prompt_id}.")
+                return False
+
+            session.commit()
+            return True

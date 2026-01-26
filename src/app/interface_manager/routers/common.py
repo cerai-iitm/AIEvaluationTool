@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from whatsapp import (
     login_whatsapp,
     logout_whatsapp,
@@ -20,8 +20,6 @@ from logger import get_logger
 from utils import load_config
 from context import APIRuntimeContext
 from api_handler import handle_api_chat
-
-from typing import List
 from pydantic import BaseModel
 import json
 
@@ -38,7 +36,6 @@ class PromptCreate(BaseModel):
     chat_id: int
     prompt_list: List[str]
     api_context: Optional[Dict[str, Any]] = None
-    
 
 
 # -------------------------------
@@ -92,6 +89,24 @@ def logout():
 # -------------------------------
 # Chat
 # -------------------------------
+# Old one
+# @router.post("/chat")
+# async def chat(prompt: PromptCreate):
+#     app_type, app_name = get_app_info()
+
+#     if app_type == "WHATSAPP_WEB":
+#         logger.info("Chat request: WhatsApp Web")
+#         result = send_prompt_whatsapp(chat_id=prompt.chat_id, prompt_list=prompt.prompt_list)
+#         return JSONResponse(content={"response": result})
+
+#     if str.upper(app_type) == "WEBAPP":
+#         logger.info(f"Chat request: WebApp {app_name}")
+#         result = send_prompt(app_name=app_name, chat_id=prompt.chat_id, prompt_list=prompt.prompt_list)
+#         return JSONResponse(content={"response": result})
+
+#     return JSONResponse(content={"error": "Unsupported application type"})
+
+# new one
 # Old one
 # @router.post("/chat")
 # async def chat(prompt: PromptCreate):

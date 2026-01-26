@@ -237,15 +237,16 @@ tgt = Target(target_name="OPENWEB-UI",
              target_type="WebApp", 
              target_url="http://localhost:3000", 
              target_description="OpenWeb UI is an open-source, browser-based interface designed for interacting with large language models (LLMs) and AI agents.",
-             target_domain="LLM Interface",
+             target_domain="general",
              target_languages=["english"])
 target_id = db.add_or_get_target(target = tgt)
 
+# We don't need to use url for testing gemini api, because we use python client to connect to gemini, url is just a placeholder.
 tgt = Target(target_name="Gemini-2.5-Flash", 
              target_type="API",
-             target_url="https://generativelanguage.googleapis.com/v1beta/", 
+             target_url="https://ai.google.dev/gemini-api/docs", 
              target_description="GEMINI 2.5 Flash is a state-of-the-art language model developed by Google, designed to deliver advanced natural language understanding and generation capabilities for a wide range of applications.",
-             target_domain="API Interface",
+             target_domain="general",
              target_languages=["english"])
 target_id = db.add_or_get_target(target = tgt)
 
@@ -253,6 +254,6 @@ tgt = Target(target_name="Gemma3n:e2b",
              target_type="API",
              target_url="http://localhost:11434", 
              target_description="Gemma3n:e2b is a local deployment of the Gemini 3n language model, optimized for efficient performance and tailored applications.",
-             target_domain="Local API Interface",
+             target_domain="general",
              target_languages=["english"])
 target_id = db.add_or_get_target(target = tgt)
