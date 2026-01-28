@@ -78,7 +78,7 @@ TDMS follows a modern three-tier architecture:
 
 AIEvaluationTool follows a modular, layered architecture designed for scalability and extensibility:
 
-![System Architecture](screenshots/Arch.png)
+![System Architecture](screenshots/Arch.jpg)
 
 ### Core Components
 
@@ -508,8 +508,9 @@ Replace the placeholder values with your actual target configuration details. Th
    ```
 ---
 ## 5. **Getting Started**
-To getting started with tool following steps are provided for basics, for more detailed [click here](screenshots/Workflow.md).
+To getting started with tool following steps are provided for basics, for detailed documentation [click here](docs/AI_Evaluation_Tool_Docementation.pdf).
 ### **AI Evaluation Tool**
+---
 #### 5.1.1 **Import Test Data into Database**
 
 Before running evaluations, you need to import test data points into the database.
@@ -699,8 +700,9 @@ The report will display detailed evaluation metrics:
 ---
 
 ### **Set Up Test Data Management System (TDMS)**
-
+---
 Access the web-based UI for managing test data and users.
+This module provides comprehensive CRUD (Create, Read, Update, Delete) operations for test cases within the TDMS (Test Data Management System) application. For user manul [click here](docs/TDMS_Documentation.pdf)
 
 #### 5.2.1 **Backend Setup**
 
@@ -788,4 +790,4 @@ Use these login credentials:
 | Curator | `curator` | `curator123` |
 | Viewer | `viewer` | `viewer123` |
 
-This module provides comprehensive CRUD (Create, Read, Update, Delete) operations for test cases within the TDMS (Test Data Management System) application. For user manul [click here](src/app/TDMS/TDMS_Documentation.md)
+---
