@@ -508,7 +508,7 @@ Replace the placeholder values with your actual target configuration details. Th
    ```
 ---
 ## 5. **Getting Started**
-To getting started with tool following steps are provided for basics, for detailed documentation [click here](docs/AI_Evaluation_Tool_Docementation.pdf?raw=true).
+To getting started with tool following steps are provided for basics, for detailed documentation [click here](docs/AI_Evaluation_Tool_Docementation.pdf).
 ### **AI Evaluation Tool**
 ---
 #### 5.1.1 **Import Test Data into Database**
