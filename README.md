@@ -702,7 +702,7 @@ The report will display detailed evaluation metrics:
 ### **Set Up Test Data Management System (TDMS)**
 ---
 Access the web-based UI for managing test data and users.
-This module provides comprehensive CRUD (Create, Read, Update, Delete) operations for test cases within the TDMS (Test Data Management System) application. For user manul [click here](docs/TDMS_Documentation.md)
+This module provides comprehensive CRUD (Create, Read, Update, Delete) operations for test cases within the TDMS (Test Data Management System) application. For user manul [click here](docs/TDMS_Documentation.pdf)
 
 #### 5.2.1 **Backend Setup**
 
