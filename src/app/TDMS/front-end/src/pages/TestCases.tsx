@@ -572,7 +572,7 @@ const TestCases = () => {
                     >
                       <td className="p-2 pl-12">{testCase.id}</td>
                       <td className="p-2 pl-12">{testCase.name}</td>
-                      <td className="p-2">{testCase.strategyName}</td>
+                      <td className="p-2 truncate">{testCase.strategyName}</td>
                       <td className="p-2 pl-6 capitalize first-letter">{testCase.domainName}</td>
                       <td className="p-2 pl-6 capitalize first-letter">{testCase.language}</td>
                     </tr>
