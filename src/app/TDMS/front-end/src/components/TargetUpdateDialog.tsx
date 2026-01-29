@@ -450,7 +450,7 @@ export default function TargetUpdateDialog({
               ) : (
                 <div className="space-y-2">
                   {languageOptions.map((lang) => (
-                    <div key={lang} className="flex items-center space-x-2">
+                    <div key={lang} className="flex items-center space-x-2 capitalize">
                       <Checkbox
                         id={`lang-${lang}`}
                         checked={selectedLanguages.includes(lang)}
@@ -471,7 +471,7 @@ export default function TargetUpdateDialog({
         </div>
 
         <div className="flex justify-center items-center p-4 border-gray-300 bg-white sticky bottom-0 z-10">
-          <Label className="text-base font-bold mr-2">Notes :</Label>
+          <Label className="text-base font-bold mr-2">Notes </Label>
           <Input
             value={notes}
             onChange={(e) => setNotes(e.target.value)}

@@ -377,7 +377,7 @@ export default function TargetAddDialog({
               ) : (
                 <div className="space-y-2">
                   {languageOptions.map((lang) => (
-                    <div key={lang} className="flex items-center space-x-2">
+                    <div key={lang} className="flex items-center space-x-2 capitalize">
                       <Checkbox
                         id={`lang-add-${lang}`}
                         checked={selectedLanguages.includes(lang)}

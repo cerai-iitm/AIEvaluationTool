@@ -309,7 +309,7 @@ const Users = () => {
             <DialogTitle className="text-3xl font-bold text-center">Create User</DialogTitle>
           </DialogHeader>
 
-          <form onSubmit={handleSubmit} className="space-y-6 pt-8">
+          <form onSubmit={handleSubmit} className="space-y-6 pt-8 pr-16">
             <div className="grid grid-cols-[200px_1fr] items-center gap-4">
               <Label htmlFor="username" className="text-right font-semibold">
                 User Name :
@@ -386,7 +386,7 @@ const Users = () => {
               />
             </div>
 
-            <div className="flex justify-center pt-6">
+            <div className="flex justify-center pt-6 pl-16">
               <Button
                 type="submit"
                 className="bg-primary hover:bg-primary/90 px-12"

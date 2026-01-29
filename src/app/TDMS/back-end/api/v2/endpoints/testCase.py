@@ -21,7 +21,7 @@ from lib.data.response import Response as ResponseData
 from lib.data.response import Response
 from lib.data.test_case import TestCase as TestCaseModel
 from lib.orm.DB import DB
-from lib.orm.tables import Prompts, TestCases
+from lib.orm.tables import Prompts, TestCases, Metrics
 
 testcase_router = APIRouter(prefix="/api/v2/testcases")
 
@@ -52,303 +52,80 @@ def _get_username_from_token(authorization: Optional[str]) -> Optional[str]:
     except JWTError:
         return None
 
-
-def _get_default_language_and_domain(db: DB) -> tuple[int, int]:
-    languages = db.languages
-    if not languages:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="No languages configured in the system.",
-        )
-    domains = db.domains
-    if not domains:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="No domains configured in the system.",
-        )
-    return languages[0].code, domains[0].code
-
-
-def _process_testcase_to_response(testcase, db: DB) -> TestCaseListResponse:
-    """Helper function to process a single testcase into a response model."""
-    domain_name = db.get_domain_name(testcase.prompt.domain_id)
-    lang_name = db.get_language_name(testcase.prompt.lang_id)
-    response_str = (
-        testcase.response.response_text
-        if hasattr(testcase.response, "response_text")
-        else str(testcase.response)
-    )
-    judge_prompt_str = (
-        testcase.judge_prompt.prompt
-        if hasattr(testcase.judge_prompt, "prompt")
-        else str(testcase.judge_prompt)
-    )
-    return TestCaseListResponse(
-        testcase_id=testcase.testcase_id,
-        testcase_name=testcase.name,
-        user_prompt=testcase.prompt.user_prompt,
-        system_prompt=testcase.prompt.system_prompt,
-        response_text=response_str,
-        strategy_name=testcase.strategy,
-        llm_judge_prompt=judge_prompt_str,
-        domain_name=domain_name,
-        lang_name=lang_name,
-    )
-
-
-def _convert_testcase_row_to_model(testcase_row):
-    """Helper function to convert a database row to TestCase model."""
-    testcase_name = getattr(testcase_row, "testcase_name")
-    testcase_id = getattr(testcase_row, "testcase_id")
-    
-    prompt = Prompt(
-        system_prompt=getattr(testcase_row.prompt, "system_prompt"),
-        user_prompt=getattr(testcase_row.prompt, "user_prompt"),
-        domain_id=getattr(testcase_row.prompt, "domain_id"),
-        lang_id=getattr(testcase_row.prompt, "lang_id"),
-    )
-    
-    strategy_name = (
-        testcase_row.strategy.strategy_name
-        if testcase_row.strategy
-        else None
-    )
-    
-    response_obj = (
-        Response(
-            response_text=getattr(testcase_row.response, "response_text"),
-            response_type=getattr(testcase_row.response, "response_type"),
-            lang_id=getattr(testcase_row.response, "lang_id"),
-        )
-        if testcase_row.response
-        else None
-    )
-    
-    judge_prompt_obj = (
-        LLMJudgePrompt(
-            prompt=getattr(testcase_row.judge_prompt, "prompt")
-        )
-        if testcase_row.judge_prompt
-        else None
-    )
-    
-    return TestCaseModel(
-        name=testcase_name,
-        metric="Unknown",
-        prompt=prompt,
-        strategy=strategy_name,
-        response=response_obj,
-        judge_prompt=judge_prompt_obj,
-        testcase_id=testcase_id,
-    )
-
-
-def _generate_testcases_stream(db: DB):
-    """
-    Generator function that yields test cases in batches as Server-Sent Events (SSE).
-    Yields the first 10 immediately, then remaining batches with delays.
-    """
-    with db.Session() as session:
-        # Get total count
-        total_count = session.query(TestCases).count()
-        
-        # Fetch first 10 with eager loading to avoid lazy loading issues
-        testcase_rows = (
-            session.query(TestCases)
-            .options(
-                joinedload(TestCases.prompt),
-                joinedload(TestCases.response),
-                joinedload(TestCases.strategy),
-                joinedload(TestCases.judge_prompt),
-            )
-            .limit(10)
-            .all()
-        )
-        
-        # Convert to TestCase model and process - First batch (10 test cases)
-        batch_results = []
-        for testcase_row in testcase_rows:
-            testcase = _convert_testcase_row_to_model(testcase_row)
-            batch_results.append(_process_testcase_to_response(testcase, db))
-        
-        # Yield first batch immediately as SSE
-        # Convert Pydantic models to dict (handles both v1 and v2)
-        batch_dicts = []
-        for item in batch_results:
-            if hasattr(item, 'model_dump'):
-                batch_dicts.append(item.model_dump())
-            elif hasattr(item, 'dict'):
-                batch_dicts.append(item.dict())
-            else:
-                batch_dicts.append(item)
-        batch_json = json.dumps(batch_dicts, default=str)
-        yield f"data: {batch_json}\n\n"
-        
-        # If there are more than 10 test cases, fetch the rest in batches with 1 second delay
-        if total_count > 10:
-            batch_size = 100
-            offset = 10
-            batch_number = 0
-            
-            while offset < total_count:
-                # Add 1 second delay before fetching each batch (except the first batch)
-                if batch_number > 0:
-                    time.sleep(1)
-                
-                # Use joinedload to eagerly load relationships
-                # This prevents "not bound to a Session" errors
-                remaining_rows = (
-                    session.query(TestCases)
-                    .options(
-                        joinedload(TestCases.prompt),
-                        joinedload(TestCases.response),
-                        joinedload(TestCases.strategy),
-                        joinedload(TestCases.judge_prompt),
-                    )
-                    .offset(offset)
-                    .limit(batch_size)
-                    .all()
-                )
-                
-                if not remaining_rows:
-                    break
-                
-                # Process each testcase in this batch
-                batch_results = []
-                for testcase_row in remaining_rows:
-                    try:
-                        # All relationships are already loaded via joinedload
-                        testcase = _convert_testcase_row_to_model(testcase_row)
-                        batch_results.append(_process_testcase_to_response(testcase, db))
-                    except Exception as e:
-                        # Log errors but continue processing
-                        print(f"Error processing testcase {getattr(testcase_row, 'testcase_id', 'unknown')}: {e}")
-                
-                # Yield this batch as SSE
-                # Convert Pydantic models to dict (handles both v1 and v2)
-                batch_dicts = []
-                for item in batch_results:
-                    if hasattr(item, 'model_dump'):
-                        batch_dicts.append(item.model_dump())
-                    elif hasattr(item, 'dict'):
-                        batch_dicts.append(item.dict())
-                    else:
-                        batch_dicts.append(item)
-                batch_json = json.dumps(batch_dicts, default=str)
-                yield f"data: {batch_json}\n\n"
-                
-                offset += batch_size
-                batch_number += 1
-
-
 @testcase_router.get(
     "",
-    summary="List all test cases (v2) - Streaming",
-)
-def list_testcases(
-    db: DB = Depends(_get_db),
-):
-    """
-    List test cases endpoint that streams responses incrementally:
-    - Returns first 10 test cases immediately
-    - Then returns Batch 1 (11-110) immediately after
-    - Then returns Batch 2 (111-210) after 1 second delay
-    - And so on...
-    
-    Response format: Server-Sent Events (SSE)
-    Each event contains a JSON array of test cases for that batch.
-    Frontend can use EventSource API to receive incremental updates.
-    """
-    return StreamingResponse(
-        _generate_testcases_stream(db),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "X-Accel-Buffering": "no",  # Disable nginx buffering
-        }
-    )
-
-@testcase_router.get(
-    "/first",
     response_model=List[TestCaseListResponse],
-    summary="List first 45 test cases (v2)",
+    summary="List all test cases (v2)",
 )
-def list_first_45_testcases(db: DB = Depends(_get_db)):
-    testcases = db.testcases  # assume it's an in-memory list-like collection
-
-    # slice first 45 items
-    sliced = testcases[:45]
-
-    results: List[TestCaseListResponse] = []
-    for testcase in sliced:
-        domain_name = db.get_domain_name(testcase.prompt.domain_id)
-        lang_name = db.get_language_name(testcase.prompt.lang_id)
-        response_str = (
-            testcase.response.response_text
-            if hasattr(testcase.response, "response_text")
-            else str(testcase.response)
+def list_testcases(db: DB = Depends(_get_db)):
+    with db.Session() as session:
+        testcases = (
+            session.query(TestCases)
+            .options(joinedload(TestCases.judge_prompt))
+            .options(joinedload(TestCases.prompt))
+            .options(joinedload(TestCases.response))
+            .options(joinedload(TestCases.strategy))
+            .options(joinedload(TestCases.metrics))
+            .all()
         )
-        judge_prompt_str = (
-            testcase.judge_prompt.prompt
-            if hasattr(testcase.judge_prompt, "prompt")
-            else str(testcase.judge_prompt)
-        )
-        results.append(
-            TestCaseListResponse(
+        if not testcases:
+            raise HTTPException(status_code=404, detail="No test cases found")
+        
+        results = []
+        
+        for testcase in testcases:
+            # Get metric names as a list
+            metric_name_list = [m.metric_name for m in testcase.metrics] if testcase.metrics else []
+            # Get metric names as a comma-separated string for backward compatibility
+            metric_names = ", ".join(metric_name_list) if metric_name_list else ""
+            
+            results.append(TestCaseListResponse(
                 testcase_id=testcase.testcase_id,
-                testcase_name=testcase.name,
+                testcase_name=testcase.testcase_name,
                 user_prompt=testcase.prompt.user_prompt,
                 system_prompt=testcase.prompt.system_prompt,
-                response_text=response_str,
-                strategy_name=testcase.strategy,
-                llm_judge_prompt=judge_prompt_str,
-                domain_name=domain_name,
-                lang_name=lang_name,
-            )
-        )
-    return results
+                response_text=testcase.response.response_text,
+                strategy_name=getattr(testcase.strategy, "strategy_name", ""),  # Get strategy name as string
+                llm_judge_prompt=getattr(testcase.judge_prompt, "prompt", None),
+                domain_name=str(testcase.prompt.domain.domain_name),  # Convert to string
+                lang_name=str(testcase.prompt.lang.lang_name),      # Convert to string
+                metric_name=metric_names,  # Use the joined metric names for backward compatibility
+                metric_name_list=metric_name_list  # List of metric names
+            ))
+        
+        return results
 
+    # testcases = db.testcases
 
-@testcase_router.get(
-    "/rest",
-    response_model=List[TestCaseListResponse],
-    summary="List remaining test cases after first 45 (v2)",
-)
-def list_rest_testcases(db: DB = Depends(_get_db)):
-    testcases = db.testcases
-
-    # slice from 45 onwards
-    sliced = testcases[45:]
-
-    results: List[TestCaseListResponse] = []
-    for testcase in sliced:
-        domain_name = db.get_domain_name(testcase.prompt.domain_id)
-        lang_name = db.get_language_name(testcase.prompt.lang_id)
-        response_str = (
-            testcase.response.response_text
-            if hasattr(testcase.response, "response_text")
-            else str(testcase.response)
-        )
-        judge_prompt_str = (
-            testcase.judge_prompt.prompt
-            if hasattr(testcase.judge_prompt, "prompt")
-            else str(testcase.judge_prompt)
-        )
-        results.append(
-            TestCaseListResponse(
-                testcase_id=testcase.testcase_id,
-                testcase_name=testcase.name,
-                user_prompt=testcase.prompt.user_prompt,
-                system_prompt=testcase.prompt.system_prompt,
-                response_text=response_str,
-                strategy_name=testcase.strategy,
-                llm_judge_prompt=judge_prompt_str,
-                domain_name=domain_name,
-                lang_name=lang_name,
-            )
-        )
-    return results
+    # results = []
+    # for testcase in testcases:
+    #     domain_name = db.get_domain_name(testcase.prompt.domain_id)
+    #     lang_name = db.get_language_name(testcase.prompt.lang_id)
+    #     response_str = (
+    #         testcase.response.response_text
+    #         if hasattr(testcase.response, "response_text")
+    #         else str(testcase.response)
+    #     )
+    #     judge_prompt_str = (
+    #         testcase.judge_prompt.prompt
+    #         if hasattr(testcase.judge_prompt, "prompt")
+    #         else str(testcase.judge_prompt)
+    #     )
+    #     results.append(
+    #         TestCaseListResponse(
+    #             testcase_id=testcase.testcase_id,
+    #             testcase_name=testcase.name,
+    #             user_prompt=testcase.prompt.user_prompt,
+    #             system_prompt=testcase.prompt.system_prompt,
+    #             response_text=response_str,
+    #             strategy_name=testcase.strategy,
+    #             llm_judge_prompt=judge_prompt_str,
+    #             domain_name=domain_name,
+    #             lang_name=lang_name,
+    #             metric_name=testcase.metric
+    #         )
+    #     )
+    # return results
 
 
 # @testcase_router.get(
@@ -367,24 +144,45 @@ def list_rest_testcases(db: DB = Depends(_get_db)):
     summary="Get a test case by ID (v2)",
 )
 def get_testcase(testcase_id: int, db: DB = Depends(_get_db)):
-    testcase = db.get_testcase_by_id(testcase_id)
-    if testcase is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Test case not found"
+    with db.Session() as session:
+        testcase = (
+            session.query(TestCases)
+            .options(
+                joinedload(TestCases.prompt),
+                joinedload(TestCases.response),
+                joinedload(TestCases.strategy),
+                joinedload(TestCases.judge_prompt),
+                joinedload(TestCases.metrics),
+            )
+            .filter(TestCases.testcase_id == testcase_id)
+            .first()
         )
+        
+        if testcase is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Test case not found"
+            )
 
-    judge_prompt = testcase.judge_prompt
-    llm_judge_prompt = judge_prompt.prompt if judge_prompt else None
+        judge_prompt = testcase.judge_prompt
+        llm_judge_prompt = judge_prompt.prompt if judge_prompt else None
+        
+        # Get metric names as a list
+        metric_name_list = [m.metric_name for m in testcase.metrics] if testcase.metrics else []
+        metric_names = ", ".join(metric_name_list) if metric_name_list else ""
 
-    return TestCaseListResponse(
-        testcase_id=testcase.testcase_id,
-        testcase_name=testcase.name,
-        user_prompt=testcase.prompt.user_prompt,
-        system_prompt=testcase.prompt.system_prompt,
-        response_text=testcase.response.response_text,
-        strategy_name=testcase.strategy,
-        llm_judge_prompt=llm_judge_prompt,
-    )
+        return TestCaseListResponse(
+            testcase_id=testcase.testcase_id,
+            testcase_name=testcase.testcase_name,
+            user_prompt=testcase.prompt.user_prompt if testcase.prompt else None,
+            system_prompt=testcase.prompt.system_prompt if testcase.prompt else None,
+            response_text=testcase.response.response_text if testcase.response else None,
+            strategy_name=testcase.strategy.strategy_name if testcase.strategy else None,
+            llm_judge_prompt=llm_judge_prompt,
+            domain_name=testcase.prompt.domain.domain_name if testcase.prompt and testcase.prompt.domain else None,
+            lang_name=testcase.prompt.lang.lang_name if testcase.prompt and testcase.prompt.lang else None,
+            metric_name=metric_names,  # Comma-separated for backward compatibility
+            metric_name_list=metric_name_list,  # List of metric names
+        )
 
 
 # @testcase_router.get(
@@ -473,13 +271,23 @@ def create_testcase(
                 lang_id=prompt_lang_id,  # Use the prompt's language ID
             )
 
+        # Handle metric_name_list - use first metric for backward compatibility with TestCaseModel
+        metric_name_for_model = payload.metric_name
+        if payload.metric_name_list and len(payload.metric_name_list) > 0:
+            metric_name_for_model = payload.metric_name_list[0]
+        elif not metric_name_for_model:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="At least one metric name is required (metric_name_list).",
+            )
+
         testcase = TestCaseModel(
             name=payload.testcase_name,
             prompt=prompt,
             response=response,
             judge_prompt=judge_prompt,
             strategy=payload.strategy_name,
-            metric="exact_match",  # Default metric
+            metric=metric_name_for_model,
         )
 
         # Add test case with custom ID
@@ -489,6 +297,38 @@ def create_testcase(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Failed to create test case. It may already exist.",
             )
+        
+        # Handle multiple metrics if metric_name_list is provided
+        if payload.metric_name_list and len(payload.metric_name_list) > 0:
+            with db.Session() as session:
+                # Re-query the testcase within this session to avoid detached instance error
+                testcase_in_session = (
+                    session.query(TestCases)
+                    .options(joinedload(TestCases.metrics))
+                    .filter(TestCases.testcase_id == testcase_obj.testcase_id)
+                    .first()
+                )
+                
+                if not testcase_in_session:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Test case not found after creation",
+                    )
+                
+                # Clear existing metrics
+                testcase_in_session.metrics.clear()
+                # Add all metrics from the list
+                for metric_name in payload.metric_name_list:
+                    metric = session.query(Metrics).filter(Metrics.metric_name == metric_name).first()
+                    if metric:
+                        testcase_in_session.metrics.append(metric)
+                    else:
+                        raise HTTPException(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=f"Metric '{metric_name}' not found.",
+                        )
+                session.commit()
+                session.refresh(testcase_in_session)
 
         # Get the created test case with all relationships loaded
         # This is necessary because the object returned from __add_or_get_test_case_custom_id
@@ -501,6 +341,7 @@ def create_testcase(
                     joinedload(TestCases.response),
                     joinedload(TestCases.strategy),
                     joinedload(TestCases.judge_prompt),
+                    joinedload(TestCases.metrics),
                 )
                 .filter(TestCases.testcase_id == testcase_obj.testcase_id)
                 .first()
@@ -533,6 +374,10 @@ def create_testcase(
                 if testcase_full.prompt.lang_id:
                     lang_name = db.get_language_name(testcase_full.prompt.lang_id)
 
+            # Get metric names as a list
+            metric_name_list = [m.metric_name for m in testcase_full.metrics] if testcase_full.metrics else []
+            metric_names = ", ".join(metric_name_list) if metric_name_list else ""
+
             return TestCaseDetailResponse(
                 testcase_id=testcase_full.testcase_id,
                 testcase_name=testcase_full.testcase_name,
@@ -553,6 +398,8 @@ def create_testcase(
                 else None,
                 domain_name=domain_name,
                 lang_name=lang_name,
+                metric_name=metric_names,  # Comma-separated for backward compatibility
+                metric_name_list=metric_name_list,  # List of metric names
                 strategy_id=testcase_full.strategy_id,
                 prompt_id=testcase_full.prompt_id,
                 response_id=testcase_full.response_id,
@@ -654,6 +501,13 @@ def update_testcase(
     for key, value in update_data.items():
         normalized_updates[key] = value
 
+    # Handle metric_name_list - convert to metric_name_list format if metric_name is provided
+    if "metric_name" in normalized_updates and "metric_name_list" not in normalized_updates:
+        # If only metric_name is provided, convert to list
+        if normalized_updates["metric_name"]:
+            normalized_updates["metric_name_list"] = [normalized_updates["metric_name"]]
+        del normalized_updates["metric_name"]
+
     # Normalize optional fields
     for optional_field in ("response_text", "llm_judge_prompt"):
         if optional_field in normalized_updates:
@@ -684,6 +538,8 @@ def update_testcase(
             changes.append("response updated")
         if "strategy_name" in normalized_updates:
             changes.append("strategy updated")
+        if "metric_name" in normalized_updates or "metric_name_list" in normalized_updates:
+            changes.append("metric updated")
         if "llm_judge_prompt" in normalized_updates and payload.llm_judge_prompt is not None:
             changes.append("judge prompt updated")
 
@@ -702,6 +558,10 @@ def update_testcase(
             user_note=payload.notes,
         )
 
+    # Get metric names as a list
+    metric_name_list = [m.metric_name for m in updated.metrics] if updated.metrics else []
+    metric_name = ", ".join(metric_name_list) if metric_name_list else ""
+    
     return {
         "testcase_id": updated.testcase_id,
         "testcase_name": updated.testcase_name,
@@ -716,6 +576,8 @@ def update_testcase(
         "system_prompt": updated.prompt.system_prompt if updated.prompt else None,
         "response_id": updated.response_id,
         "response_text": updated.response.response_text if updated.response else None,
+        "metric_name": metric_name,  # Comma-separated for backward compatibility
+        "metric_name_list": metric_name_list,  # List of metric names
     }
 
 

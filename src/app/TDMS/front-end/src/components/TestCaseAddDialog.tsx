@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search, X, Check, AlertCircle } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   PromptSearchDialog,
   PromptSearchSelection,
@@ -39,6 +40,11 @@ interface Strategy {
   requires_llm_prompt: boolean | null;
 }
 
+interface Metric {
+  metric_id: number | null;
+  metric_name: string | null;
+}
+
 const responseTypes = [
   {value: "GT", label: "Ground Truth"},
   {value: "GTDesc", label: "Ground Truth Description"},
@@ -59,10 +65,13 @@ export const TestCaseAddDialog = ({
   const [responseText, setResponseText] = useState("");
   const [llmPrompt, setLlmPrompt] = useState("");
   const [strategy, setStrategy] = useState("");
+  const [selectedMetrics, setSelectedMetrics] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [strategies, setStrategies] = useState<Strategy[]>([]);
+  const [metrics, setMetrics] = useState<Metric[]>([]);
   const [isFetchingStrategies, setIsFetchingStrategies] = useState(false);
+  const [isFetchingMetrics, setIsFetchingMetrics] = useState(false);
   const [currentUserRole, setCurrentUserRole] = useState<string>("");
   
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
@@ -268,17 +277,63 @@ export const TestCaseAddDialog = ({
       }
     };
 
+    // fetch metric from api
+    const fetchMetrics = async () => {
+      setIsFetchingMetrics(true);
+      try {
+        const token = localStorage.getItem("access_token");
+        const headers: HeadersInit = {
+          "Content-Type": "application/json",
+        }
+        
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const response = await fetch(API_ENDPOINTS.METRICS_V2, { headers});
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (Array.isArray(data)) {
+          setMetrics(data);
+        } else {
+          console.error("Unexpected metrics data format:", data);
+          toast({
+            title: "Error",
+            description: "Failed to load metrics",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching metrics:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load metrics from server",
+          variant: "destructive",
+        });
+      } finally {
+        setIsFetchingMetrics(false);
+      }
+    };
+
     if (open) {
       fetchUserRole();
       fetchStrategies();
       fetchLanguages();
       fetchDomains();
+      fetchMetrics();
     } else {
       // Reset states when dialog closes
       setShowDetails(false);
       setFocusedField(null);
       setDomainSelectOpen(false);
       setLanguageSelectOpen(false);
+      setIsNameAvailable(null);
+      setIsCheckingName(false);
       setErrors({
         domain: false,
         language: false,
@@ -290,8 +345,19 @@ export const TestCaseAddDialog = ({
     }
   }, [open, toast]);
 
+
+
+
+
   // Check test case name availability against database
   useEffect(() => {
+    // Only check when dialog is open
+    if (!open) {
+      setIsNameAvailable(null);
+      setIsCheckingName(false);
+      return;
+    }
+
     const checkNameAvailability = async () => {
       const name = testCaseName.trim();
       if (!name) {
@@ -310,8 +376,8 @@ export const TestCaseAddDialog = ({
           headers["Authorization"] = `Bearer ${token}`;
         }
 
-        //const response = await fetch(API_ENDPOINTS.TEST_CASES, { headers });
-        const response = await fetch(API_ENDPOINTS.TESTCASES_V2, { headers });
+        // Use the endpoint which returns JSON instead of streaming
+        const response = await fetch(`${API_ENDPOINTS.TESTCASES_V2}`, { headers });
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -342,7 +408,7 @@ export const TestCaseAddDialog = ({
     }, 500);
 
     return () => clearTimeout(timeout);
-  }, [testCaseName]);
+  }, [testCaseName, open]);
 
   // const handleSearchClick = (type: "userPrompt" | "response" | "llm") => {
   //   setSearchType(type);
@@ -350,9 +416,15 @@ export const TestCaseAddDialog = ({
   // };
 
   const isAdded = (
-    userPrompts && strategy && testCaseName
+    userPrompts && strategy && testCaseName && selectedMetrics.length > 0 && responseText
     
   )
+
+  const handleMetricToggle = (metricName: string) => {
+    setSelectedMetrics((prev) =>
+      prev.includes(metricName) ? prev.filter((m) => m !== metricName) : [...prev, metricName]
+    );
+  };
 
   const handleSelectPrompt = (selection: PromptSearchSelection) => {
     switch (selection.type) {
@@ -441,6 +513,15 @@ export const TestCaseAddDialog = ({
       toast({
         title: "Validation Error",
         description: "Strategy is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (selectedMetrics.length === 0) {
+      toast({
+        title: "Validation Error",
+        description: "At least one metric is required",
         variant: "destructive",
       });
       return;
@@ -584,6 +665,7 @@ export const TestCaseAddDialog = ({
         domain_name: domain.trim(),
         llm_judge_prompt:
           showLLMPrompt && llmPrompt.trim() ? llmPrompt.trim() : null,
+        metric_name_list: selectedMetrics,
         notes: notes.trim() || null,
       };
 
@@ -621,6 +703,7 @@ export const TestCaseAddDialog = ({
       setResponseText("");
       setLlmPrompt("");
       setStrategy("");
+      setSelectedMetrics([]);
       setNotes("");
       setLanguage("");
       setDomain("");
@@ -677,7 +760,7 @@ export const TestCaseAddDialog = ({
             </Button> */}
           </DialogHeader>
 
-          <div className="space-y-4 pt-4">
+          <div className="space-y-1 pt-1">
             <div className="space-y-1">
               <Label className="text-base font-semibold">Test Case</Label>
               <div className="relative">
@@ -709,18 +792,18 @@ export const TestCaseAddDialog = ({
                 {!isCheckingName && isNameAvailable === false && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-destructive">
                     <AlertCircle className="w-4 h-4" />
-                    <span className="text-sm font-medium">Taken</span>
+                    <span className="text-sm font-medium">Already Taken</span>
                   </div>
                 )}
               </div>
             </div>
-                <hr />
+               
             <div className="space-y-1 pb-2">
               {/* <div className="flex items-center justify-between"> */}
-                <Label className="text-base font-semibold">Prompt</Label>
+                {/* <Label className="text-base font-semibold">Prompt</Label> */}
               {/* </div> */}
               <div className="space-y-1">
-                <Label className="text-sm font-semibold">User Prompt</Label>
+                <Label className="text-base font-semibold">User Prompt</Label>
                 <div className="relative">
                   <Textarea
                     value={userPrompts}
@@ -879,7 +962,7 @@ export const TestCaseAddDialog = ({
               )}
             </div>
             <div className="line"></div>  
-              <hr />
+           
             <div className="space-y-1 pb-2">
               <div className="space-y-2">
                 <Label className="text-base font-semibold">Response</Label>
@@ -993,7 +1076,7 @@ export const TestCaseAddDialog = ({
                 </>
               )}
             </div>
-              <hr />
+          
             <div className="space-y-1">
               <Label className="text-base font-semibold">Strategy</Label>
               <Select 
@@ -1074,7 +1157,48 @@ export const TestCaseAddDialog = ({
               </div>
             )}
 
-            <div className="flex justify-center items-center p-4 border-gray-300 bg-white sticky bottom-0 z-10">
+            
+
+            <div className="space-y-2">
+              <Label className="text-base font-semibold">Metrics</Label>
+              <div className="bg-muted p-4 rounded-md max-h-[130px] overflow-y-auto">
+                {isFetchingMetrics ? (
+                  <div className="text-sm text-muted-foreground">
+                    Loading metrics...
+                  </div>
+                ) : metrics.filter((m) => m.metric_name != null).length === 0 ? (
+                  <div className="text-sm text-muted-foreground">
+                    No metrics available
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {metrics
+                      .filter((m) => m.metric_name != null)
+                      .map((m) => (
+                        <div key={m.metric_name} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`metric-add-${m.metric_name}`}
+                            checked={selectedMetrics.includes(m.metric_name!)}
+                            onCheckedChange={() => handleMetricToggle(m.metric_name!)}
+                            onClick={() => {
+                              setShowRequestDetails(false);
+                              setShowDetails(false);
+                            }}
+                          />
+                          <label
+                            htmlFor={`metric-add-${m.metric_name}`}
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                          >
+                            {m.metric_name}
+                          </label>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-center items-center p-2 border-gray-300 bg-white sticky bottom-0 z-10">
               <Label className="text-base font-semibold mr-2">Notes</Label>
               <Input
                 placeholder="Enter Notes"
@@ -1097,6 +1221,7 @@ export const TestCaseAddDialog = ({
                   isNameAvailable === false || 
                   !isAdded || 
                   !notes ||
+                  selectedMetrics.length === 0 ||
                   (!hasPermission(currentUserRole, "canCreateTables") && 
                    !hasPermission(currentUserRole, "canCreateRecords"))
                 }
