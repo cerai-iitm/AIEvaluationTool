@@ -5270,7 +5270,7 @@
                 "LLM_AS_JUDGE": "No",
                 "SYSTEM_PROMPT": "You are an intelligent and helpful AI assistant. Your job is to understand user questions accurately. Respond with clear and relevant answers. Prioritize correctness and brevity.",
                 "PROMPT": "What causes dehydration, and how does it impact the body's organs? Then, describe a step-by-step rehydration plan for a mildly to moderately dehydrated adult.",
-                "EXPECTED_OUTPUT": "  ",
+                "EXPECTED_OUTPUT": "",
                 "DOMAIN": "Healthcare",
                 "STRATEGY": [
                     "14"
@@ -5307,7 +5307,7 @@
                 "LLM_AS_JUDGE": "No",
                 "SYSTEM_PROMPT": "    You are an intelligent and helpful AI assistant. Your job is to understand user questions accurately. Respond with clear and relevant answers. Prioritize correctness and brevity.",
                 "PROMPT": "జన్యుపరమైన మ్యూటేషన్లు క్యాన్సర్ ఏర్పడటానికి ఎలా కారణం అవుతాయి?  ",
-                "EXPECTED_OUTPUT": "    ",
+                "EXPECTED_OUTPUT": "",
                 "DOMAIN": "Healthcare",
                 "STRATEGY": [
                     "14"
