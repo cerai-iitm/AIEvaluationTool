@@ -28,40 +28,37 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
-import TargetUpdateDialog from "@/components/TargetUpdateDialog";
-import TargetAddDialog from "@/components/TargetAddDialog";
+import TestPlanUpdateDialog from "@/components/TestPlanUpdateDialog";
+import TestPlanAddDialog from "@/components/TestPlanAddDialog";
 import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
 import { hasPermission } from "@/utils/permissions";
 import { HistoryButton } from "@/components/HistoryButton";
 
-interface Target {
-  target_id: number;
-  target_name: string;
-  target_type: string;
-  target_description: string;
-  target_url: string;
-  domain_name: string;
-  lang_list: string[];
+interface TestPlan {
+  plan_id: number;
+  plan_name: string;
+  plan_description: string;
+  metric_names: string[];
   notes?: string;
 }
 
-const Targets = () => {
+const TestPlans = () => {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
-  const [selectedTarget, setSelectedTarget] = useState<Target | null>(null);
-  const [updateTarget, setUpdateTarget] = useState<Target | null>(null);
+  const [selectedTestPlan, setSelectedTestPlan] = useState<TestPlan | null>(null);
+  const [updateTestPlan, setUpdateTestPlan] = useState<TestPlan | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [targets, setTargets] = useState<Target[]>([]);
+  const [testPlans, setTestPlans] = useState<TestPlan[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [isLoadingTargets, setIsLoadingTargets] = useState(false);
-  const [targetsError, setTargetsError] = useState<string | null>(null);
+  const [isLoadingTestPlans, setIsLoadingTestPlans] = useState(false);
+  const [testPlansError, setTestPlansError] = useState<string | null>(null);
   const [isDetailLoading, setIsDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [targetToDelete, setTargetToDelete] = useState<Target | null>(null);
+  const [testPlanToDelete, setTestPlanToDelete] = useState<TestPlan | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentUserRole, setCurrentUserRole] = useState<string>("");
 
@@ -78,16 +75,16 @@ const Targets = () => {
     return headers;
   }, []);
 
-  const fetchTargets = useCallback(async () => {
-    setIsLoadingTargets(true);
-    setTargetsError(null);
+  const fetchTestPlans = useCallback(async () => {
+    setIsLoadingTestPlans(true);
+    setTestPlansError(null);
     try {
-      const response = await fetch(API_ENDPOINTS.TARGETS_V2, {
+      const response = await fetch(API_ENDPOINTS.TESTPLANS_V2, {
         headers: authHeaders(),
       });
 
       if (!response.ok) {
-        let message = `Unable to fetch targets (status ${response.status})`;
+        let message = `Unable to fetch test plans (status ${response.status})`;
         try {
           const data = await response.json();
           message = data?.detail ?? data?.message ?? message;
@@ -99,33 +96,33 @@ const Targets = () => {
 
       const data = await response.json();
       if (!Array.isArray(data)) {
-        throw new Error("Unexpected response format while fetching targets");
+        throw new Error("Unexpected response format while fetching test plans");
       }
 
-      setTargets(data);
+      setTestPlans(data);
     } catch (error) {
-      console.error("Failed to load targets", error);
-      setTargets([]);
-      setTargetsError(
-        error instanceof Error ? error.message : "Failed to load targets",
+      console.error("Failed to load test plans", error);
+      setTestPlans([]);
+      setTestPlansError(
+        error instanceof Error ? error.message : "Failed to load test plans",
       );
     } finally {
-      setIsLoadingTargets(false);
+      setIsLoadingTestPlans(false);
     }
   }, [authHeaders]);
 
-  const fetchTargetDetails = useCallback(
-    async (targetId: number) => {
+  const fetchTestPlanDetails = useCallback(
+    async (planId: number) => {
       setIsDetailLoading(true);
       setDetailError(null);
-      setSelectedTarget(null);
+      setSelectedTestPlan(null);
       try {
-        const response = await fetch(API_ENDPOINTS.TARGET_BY_ID_V2(targetId), {
+        const response = await fetch(API_ENDPOINTS.TESTPLAN_BY_ID_V2(planId), {
           headers: authHeaders(),
         });
 
         if (!response.ok) {
-          let message = `Unable to fetch target ${targetId} (status ${response.status})`;
+          let message = `Unable to fetch test plan ${planId} (status ${response.status})`;
           try {
             const data = await response.json();
             message = data?.detail ?? data?.message ?? message;
@@ -136,13 +133,13 @@ const Targets = () => {
         }
 
         const data = await response.json();
-        setSelectedTarget(data);
+        setSelectedTestPlan(data);
       } catch (error) {
-        console.error("Failed to load target details", error);
+        console.error("Failed to load test plan details", error);
         setDetailError(
           error instanceof Error
             ? error.message
-            : "Failed to load target details",
+            : "Failed to load test plan details",
         );
       } finally {
         setIsDetailLoading(false);
@@ -156,7 +153,6 @@ const Targets = () => {
       try {
         const token = localStorage.getItem("access_token");
         if (!token) return;
-      
 
         const response = await fetch(API_ENDPOINTS.CURRENT_USER, {
           headers: {
@@ -173,24 +169,21 @@ const Targets = () => {
         console.error("Error fetching user role:", error);
       }
     };
-    if (open) {
-      fetchUserRole();
-      fetchTargets();
-    }
-  
-  }, [open, refreshKey]);
+    fetchUserRole();
+    fetchTestPlans();
+  }, [fetchTestPlans, refreshKey]);
 
   const handleUpdateSuccess = () => {
     setRefreshKey((prev) => prev + 1);
   };
 
-  const handleDeleteClick = (target: Target) => {
-    setTargetToDelete(target);
+  const handleDeleteClick = (testPlan: TestPlan) => {
+    setTestPlanToDelete(testPlan);
     setDeleteDialogOpen(true);
   };
 
   const handleDeleteConfirm = async () => {
-    if (!targetToDelete) return;
+    if (!testPlanToDelete) return;
 
     setIsDeleting(true);
     try {
@@ -204,7 +197,7 @@ const Targets = () => {
       }
 
       const response = await fetch(
-        API_ENDPOINTS.TARGET_DELETE_V2(targetToDelete.target_id),
+        API_ENDPOINTS.TESTPLAN_DELETE_V2(testPlanToDelete.plan_id),
         {
           method: "DELETE",
           headers,
@@ -212,29 +205,59 @@ const Targets = () => {
       );
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.detail || `HTTP error! status: ${response.status}`,
-        );
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.detail || errorData.message || errorMessage;
+        } catch {
+          // If JSON parsing fails, try to get text
+          try {
+            const errorText = await response.text();
+            errorMessage = errorText || errorMessage;
+          } catch {
+            // Keep default error message
+          }
+        }
+
+        // Check if it's the specific error about test plan being used
+        if (
+          errorMessage.toLowerCase().includes("test plan") &&
+          (errorMessage.toLowerCase().includes("cannot delete") ||
+            errorMessage.toLowerCase().includes("used in") ||
+            errorMessage.toLowerCase().includes("test cases"))
+        ) {
+          toast({
+            title: "Cannot Delete Test Plan",
+            description: errorMessage,
+            variant: "destructive",
+          });
+          setDeleteDialogOpen(false);
+          setTestPlanToDelete(null);
+          setIsDeleting(false);
+          return;
+        }
+
+        // For other errors, throw to be caught by catch block
+        throw new Error(errorMessage);
       }
 
       toast({
         title: "Success",
-        description: "Target deleted successfully",
+        description: "Test plan deleted successfully",
       });
 
       setDeleteDialogOpen(false);
-      setTargetToDelete(null);
-      setSelectedTarget(null);
+      setTestPlanToDelete(null);
+      setSelectedTestPlan(null);
       setIsDetailDialogOpen(false);
       handleUpdateSuccess();
       setHighlightedRowId(null);
     } catch (error) {
-      console.error("Error deleting target:", error);
+      console.error("Error deleting test plan:", error);
       toast({
         title: "Error",
         description:
-          error instanceof Error ? error.message : "Failed to delete target",
+          error instanceof Error ? error.message : "Failed to delete test plan",
         variant: "destructive",
       });
     } finally {
@@ -242,32 +265,26 @@ const Targets = () => {
     }
   };
 
-  const filteredTargets = targets.filter(
-    (t) =>
-      t.target_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.target_type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.domain_name.toLowerCase().includes(searchQuery.toLowerCase()),
+  const filteredTestPlans = testPlans.filter(
+    (tp) =>
+      tp.plan_name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  const totalItems = filteredTargets.length;
+  const totalItems = filteredTestPlans.length;
   const itemsPerPage = 15;
   const TotalPages = Math.ceil(totalItems / itemsPerPage);
-  const paginatedTargets = useMemo(
+  const paginatedTestPlans = useMemo(
     () =>
-      filteredTargets.slice(
+      filteredTestPlans.slice(
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage,
       ),
-    [filteredTargets, currentPage],
+    [filteredTestPlans, currentPage],
   );
 
-  const handleUrlClick = (url: string) => {
-    window.open(url, "_blank");
-  };
-
-  const handleSelectTarget = (targetId: number) => {
+  const handleSelectTestPlan = (planId: number) => {
     setIsDetailDialogOpen(true);
-    fetchTargetDetails(targetId);
+    fetchTestPlanDetails(planId);
   };
 
   return (
@@ -277,16 +294,14 @@ const Targets = () => {
       </aside>
       <main className="flex-1 bg-background ml-[224px] ">
         <div className="p-8 flex flex-col h-screen">
-          <h1 className="text-4xl font-bold mb-8 text-center">Targets</h1>
+          <h1 className="text-4xl font-bold mb-8 text-center">Test Plans</h1>
           <div className="flex gap-4 mb-6">
-            <Select defaultValue="target">
-              <SelectTrigger className="w-48">
+            <Select defaultValue="plan">
+              {/* <SelectTrigger className="w-48">
                 <SelectValue />
-              </SelectTrigger>
+              </SelectTrigger> */}
               <SelectContent>
-                <SelectItem value="target">Target Name</SelectItem>
-                <SelectItem value="type">Target Type</SelectItem>
-                <SelectItem value="domain">Domain Name</SelectItem>
+                <SelectItem value="plan">Plan Name</SelectItem>
               </SelectContent>
             </Select>
             <Input
@@ -298,14 +313,13 @@ const Targets = () => {
               }}
               className="w-64"
             />
-            {/* <Button className="ml-auto" onClick={() => setAddDialogOpen(true)}>+ Add Target</Button> */}
             <div className="ml-auto flex items-center gap-4">
               <HistoryButton
-                entityType="Target"
-                title="Targets"
+                entityType="TestPlan"
+                title="Test Plans"
                 idField="testCaseId"
-                idLabel="Target ID"
-                entityId={selectedTarget?.target_id}
+                idLabel="Plan ID"
+                entityId={selectedTestPlan?.plan_id}
               />
               <span className="test-sm text-muted-foreground">
                 {totalItems === 0
@@ -338,74 +352,52 @@ const Targets = () => {
             </div>
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto">
-            <div className="bg-white rounded-lg shadow overflow-hidden max-w-7xl mx-left max-h-[67vh] overflow-y-auto">
+            <div className="bg-white rounded-lg shadow overflow-hidden  md:max-w-[500px] mx-left max-h-[67vh] overflow-y-auto">
               <table className="w-full">
                 <thead className="border-b-2">
                   <tr>
-                    <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">
-                      Target ID
+                    <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-center">
+                      Plan ID
                     </th>
-                    <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">
-                      Target Name
-                    </th>
-                    <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">
-                      Target Type & URL
-                    </th>
-                    <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">
-                      Domain Name
+                    <th className="sticky top-0 bg-white z-10 p-4 pl-12 font-semibold text-left">
+                      Plan Name
                     </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {isLoadingTargets ? (
+                  {isLoadingTestPlans ? (
                     <tr>
-                      <td className="p-4 text-center" colSpan={4}>
-                        Loading targets...
+                      <td className="p-4 text-center" colSpan={2}>
+                        Loading test plans...
                       </td>
                     </tr>
-                  ) : targetsError ? (
+                  ) : testPlansError ? (
                     <tr>
                       <td
                         className="p-4 text-center text-destructive"
-                        colSpan={4}
+                        colSpan={2}
                       >
-                        {targetsError}
+                        {testPlansError}
                       </td>
                     </tr>
-                  ) : paginatedTargets.length === 0 ? (
+                  ) : paginatedTestPlans.length === 0 ? (
                     <tr>
-                      <td className="p-4 text-center" colSpan={4}>
-                        No targets found.
+                      <td className="p-4 text-center" colSpan={2}>
+                        No test plans found.
                       </td>
                     </tr>
                   ) : (
-                    paginatedTargets.map((target) => (
+                    paginatedTestPlans.map((testPlan) => (
                       <tr
-                        key={target.target_id}
-                        className={`border-b cursor-pointer transition-colors duration-200 ${highlightedRowId === target.target_id ? "bg-primary/10 hover:bg-primary/15 border-primary//30" : "hover:bg-muted/50"}`}
+                        key={testPlan.plan_id}
+                        className={`border-b cursor-pointer transition-colors duration-200 ${highlightedRowId === testPlan.plan_id ? "bg-primary/10 hover:bg-primary/15 border-primary//30" : "hover:bg-muted/50"}`}
                         onClick={() => {
-                          handleSelectTarget(target.target_id);
-                          setHighlightedRowId(target.target_id);
+                          handleSelectTestPlan(testPlan.plan_id);
+                          setHighlightedRowId(testPlan.plan_id);
                         }}
                       >
-                        <td className="p-2 pl-12">{target.target_id}</td>
-                        <td className="p-2 pl-6 capitalize">{target.target_name}</td>
-                        <td className="p-2 pl-12">
-                          <span
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleUrlClick(target.target_url);
-                            }}
-                            style={{
-                              color: "#3b82f6",
-                              textDecoration: "underline",
-                              cursor: "pointer",
-                            }}
-                          >
-                            {target.target_type}
-                          </span>
-                        </td>
-                        <td className="p-2 pl-8 capitalize">{target.domain_name}</td>
+                        <td className="p-2 pl-1 text-center">{testPlan.plan_id}</td>
+                        <td className="p-2 pl-12 text-left capitalize">{testPlan.plan_name}</td>
                       </tr>
                     ))
                   )}
@@ -420,7 +412,7 @@ const Targets = () => {
                 className="bg-primary hover:bg-primary/90"
                 onClick={() => setAddDialogOpen(true)}
               >
-                + Add Target
+                + Add Plan
               </Button>
             </div>
           )}
@@ -433,7 +425,7 @@ const Targets = () => {
         onOpenChange={(open) => {
           if (!open) {
             setIsDetailDialogOpen(false);
-            setSelectedTarget(null);
+            setSelectedTestPlan(null);
             setDetailError(null);
           }
         }}
@@ -443,78 +435,66 @@ const Targets = () => {
           onOpenAutoFocus={(e) => e.preventDefault()}
         >
           <DialogHeader>
-            <DialogTitle className="sr-only">Target Details</DialogTitle>
+            <DialogTitle className="sr-only">Test Plan Details</DialogTitle>
           </DialogHeader>
-          {/* ...show target details... */}
           {isDetailLoading ? (
-            <div className="p-4 text-center">Loading target details...</div>
+            <div className="p-4 text-center">Loading test plan details...</div>
           ) : detailError ? (
             <div className="p-4 text-center text-destructive">
               {detailError}
             </div>
-          ) : selectedTarget ? (
+          ) : selectedTestPlan ? (
             <div className="flex-1 p-1 overflow-y-auto space-y-6 pb-5">
               <div className="flex items-center justify-center gap-2">
-                <Label className="text-base font-semibold">Target -  </Label>
+                <Label className="text-base font-semibold">Test Plan -  </Label>
                 <Label className="text-xl font-semibold text-primary hover:text-primary/90">
-                  {selectedTarget.target_name}
+                  {selectedTestPlan.plan_name}
                 </Label>
               </div>
-              <div className="space-y-1">
+
+              {/* if Description is null means description is not visible  */}
+              {selectedTestPlan.plan_description && (
+                <div className="space-y-1">
                 <Label className="text-base font-semibold">Description</Label>
                 <Textarea
-                  value={selectedTarget.target_description}
+                  value={selectedTestPlan.plan_description || ""}
                   readOnly
                   className="bg-muted min-h-[80px]"
+                  style={{
+                    maxHeight: "120px",
+                    minHeight: "70px",
+                    overflowY: "auto"
+                  }}
                 ></Textarea>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <Label className="text-base font-semibold">Type</Label>
-                  <Input
-                    value={selectedTarget.target_type}
-                    readOnly
-                    className="bg-muted capitalize"
-                  ></Input>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-base font-semibold">Domain</Label>
-                  <Input
-                    value={selectedTarget.domain_name}
-                    readOnly
-                    className="bg-muted capitalize "
-                  ></Input>
-                </div>
-              </div>
-
+              )}
+              
               <div className="space-y-1">
-                <Label className="text-base font-semibold">URL</Label>
-                <Input
-                  value={selectedTarget.target_url}
-                  readOnly
-                  className="bg-muted"
-                ></Input>
+                <Label className="text-base font-semibold">Metrics</Label>
+                <div className="bg-muted p-4 rounded-md min-h-[80px]">
+                  {selectedTestPlan.metric_names && selectedTestPlan.metric_names.length > 0 ? (
+                    <div className="space-y-2">
+                      {selectedTestPlan.metric_names.map((metric) => (
+                        <div key={metric} className="text-sm">
+                          {metric}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-sm text-muted-foreground">No metrics assigned</div>
+                  )}
+                </div>
               </div>
-
-              <div className="space-y-1">
-                <Label className="text-base font-semibold">Languages</Label>
-                <Input
-                  value={selectedTarget.lang_list.join(",  ")}
-                  readOnly
-                  className="bg-muted capitalize"
-                ></Input>
-              </div>
-
             </div>
           ) : (
-            <div className="p-4 text-center">No target selected.</div>
+            <div className="p-4 text-center">No test plan selected.</div>
           )}
           <div className="sticky bottom-0 pt-4 flex justify-center gap-4 border-gray-200 z-10">
             {hasPermission(currentUserRole, "canDeleteTables") && (
               <Button
                 variant="destructive"
                 onClick={() =>
-                  selectedTarget && handleDeleteClick(selectedTarget)
+                  selectedTestPlan && handleDeleteClick(selectedTestPlan)
                 }
               >
                 Delete
@@ -524,8 +504,8 @@ const Targets = () => {
               <Button
                 className="bg-primary hover:bg-primary/90"
                 onClick={() => {
-                  if (selectedTarget) {
-                    setUpdateTarget(selectedTarget);
+                  if (selectedTestPlan) {
+                    setUpdateTestPlan(selectedTestPlan);
                   }
                   setIsDetailDialogOpen(false);
                 }}
@@ -537,64 +517,67 @@ const Targets = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Update Target Dialog */}
-      <TargetUpdateDialog
-        target={updateTarget}
-        open={!!updateTarget}
-        onOpenChange={(open) => !open && setUpdateTarget(null)}
+      {/* Update Test Plan Dialog */}
+      <TestPlanUpdateDialog
+        testPlan={updateTestPlan}
+        open={!!updateTestPlan}
+        onOpenChange={(open) => !open && setUpdateTestPlan(null)}
         onUpdateSuccess={handleUpdateSuccess}
       />
 
-      {/* Add Target Dialog */}
-      <TargetAddDialog
+      {/* Add Test Plan Dialog */}
+      <TestPlanAddDialog
         open={addDialogOpen}
         onOpenChange={setAddDialogOpen}
         onSuccess={handleUpdateSuccess}
       />
 
       {/* Delete Confirmation Dialog */}
+    
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <Button
             variant="ghost"
             className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 transition-colors"
-            onClick={() => {setDeleteDialogOpen(false); setTargetToDelete(null);}}
+            onClick={() => {setDeleteDialogOpen(false); setTestPlanToDelete(null);}}
           >
             <span className="text-xl">x</span>
           </Button>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete the following target? This action
+              Are you sure you want to delete the following test plan? This action
               cannot be undone.
-              {targetToDelete && (
+              {testPlanToDelete && (
                 <div className="mt-4 p-4 bg-muted rounded-md">
                   <p className="font-semibold">
-                    Target ID: {targetToDelete.target_id}
+                    Plan ID: {testPlanToDelete.plan_id}
                   </p>
                   <p className="font-semibold">
-                    Target Name: {targetToDelete.target_name}
+                    Plan Name: {testPlanToDelete.plan_name}
                   </p>
                 </div>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="justify-center sm:justify-center">
-            {/* <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel> */}
-            <AlertDialogAction
-              onClick={handleDeleteConfirm}
-              disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {isDeleting ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Deleting...
-                </>
-              ) : (
-                "Confirm Delete"
-              )}
-            </AlertDialogAction>
+            <div className="flex justify-center gap-2 ">
+              {/* <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel> */}
+              <Button
+                onClick={handleDeleteConfirm}
+                disabled={isDeleting}
+                className="bg-destructive  text-destructive-foreground hover:bg-destructive/90"
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  "Confirm Delete"
+                )}
+              </Button>
+            </div>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -602,4 +585,5 @@ const Targets = () => {
   );
 };
 
-export default Targets;
+export default TestPlans;
+

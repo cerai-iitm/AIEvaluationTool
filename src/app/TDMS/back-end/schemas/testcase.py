@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 
 class TestCaseIds(BaseModel):
     testcase_id: Optional[int] = None
@@ -53,6 +53,8 @@ class TestCaseListResponse(BaseModel):
     llm_judge_prompt: Optional[str] = None
     domain_name: Optional[str] = None
     lang_name: Optional[str] = None
+    metric_name: str  # Keep for backward compatibility (comma-separated string)
+    metric_name_list: List[str]  # New field for list of metric names
 
 
 class TestCaseDetailResponse(TestCaseListResponse):
@@ -76,12 +78,16 @@ class TestCaseCreateV2(BaseModel):
     response_lang: Optional[str] = None
     strategy_name: str
     llm_judge_prompt: Optional[str] = None
+    metric_name: Optional[str] = None  # Deprecated, use metric_name_list instead
+    metric_name_list: List[str]  # List of metric names
     notes: Optional[str] = None
 
 
 class TestCaseUpdateV2(BaseModel):
     testcase_name: Optional[str] = None
     strategy_name: Optional[str] = None
+    metric_name: Optional[str] = None  # Deprecated, use metric_name_list instead
+    metric_name_list: Optional[List[str]] = None  # List of metric names
     user_prompt: Optional[str] = None
     system_prompt: Optional[str] = None
     response_text: Optional[str] = None

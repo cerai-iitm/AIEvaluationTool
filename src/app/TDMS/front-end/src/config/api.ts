@@ -165,4 +165,26 @@ export const API_ENDPOINTS = {
     `${API_BASE_URL}/api/strategies/update/${strategy_id}`,
   STRATEGY_DELETE: (strategy_id: number) =>
     `${API_BASE_URL}/api/strategies/delete/${strategy_id}`,
+
+
+  METRICS_V2: `${API_BASE_URL}/api/v2/metrics`,
+  METRIC_BY_ID_V2: (metric_id: number) =>
+    `${API_BASE_URL}/api/v2/metrics/${metric_id}`,
+  METRIC_CREATE_V2: `${API_BASE_URL}/api/v2/metrics/create`,
+  METRIC_UPDATE_V2: (metric_id: number) =>
+    `${API_BASE_URL}/api/v2/metrics/update/${metric_id}`,
+  METRIC_DELETE_V2: (metric_id: number) =>
+    `${API_BASE_URL}/api/v2/metrics/delete/${metric_id}`,
+
+  TESTPLANS_V2: `${API_BASE_URL}/api/v2/testplans`,
+  TESTPLAN_BY_ID_V2: (plan_id: number) =>
+    `${API_BASE_URL}/api/v2/testplans/${plan_id}`,
+  TESTPLAN_CREATE_V2: `${API_BASE_URL}/api/v2/testplans/create`,
+  TESTPLAN_UPDATE_V2: (plan_id: number) =>
+    `${API_BASE_URL}/api/v2/testplans/update/${plan_id}`,
+  TESTPLAN_DELETE_V2: (plan_id: number) =>
+    `${API_BASE_URL}/api/v2/testplans/delete/${plan_id}`,
+  TESTPLAN_METRICS_ALL: `${API_BASE_URL}/api/v2/testplans/metrics/all`,
 };
+
+

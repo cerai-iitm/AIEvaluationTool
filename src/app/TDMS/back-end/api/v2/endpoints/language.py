@@ -210,15 +210,23 @@ def create_language(
                 next_id += 1
 
             # Create the language with the payload's lang_name
-            lang_id = db.create_language_v2(payload.lang_name, next_id)
+            # lang_id = db.create_language_v2(payload.lang_name, next_id)
+
+            lang_obj = db._DB__add_or_get_language_custom_Id(payload.lang_name, next_id)
+            if lang_obj is None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Language '{payload.lang_name}' already exists or ID conflict.",
+                )
+
             
             # Get the created language
-            created = db.get_language_with_metadata(lang_id)
-            if created is None:
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="Language created but could not be loaded.",
-                )
+            # created = db.get_language_with_metadata(lang_id)
+            # if created is None:
+            #     raise HTTPException(
+            #         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            #         detail="Language created but could not be loaded.",
+            #     )
 
             # Log the activity
             username = _get_username_from_token(authorization)
@@ -226,16 +234,16 @@ def create_language(
                 log_activity(
                     username=username,
                     entity_type="Language",
-                    entity_id=str(created["lang_id"]),
+                    entity_id=lang_obj.lang_id,
                     operation="create",
-                    note=f"Language '{created['lang_name']}' created",
+                    note=f"Language '{lang_obj.lang_name}' created",
                     user_note=payload.notes,
                 )
 
             # Return the created language in the expected format
             return LanguageDetailResponse(
-                lang_id=created["lang_id"],
-                lang_name=created["lang_name"]
+                lang_id=lang_obj.lang_id,
+                lang_name=lang_obj.lang_name
             )
             
         except IntegrityError:
@@ -294,8 +302,8 @@ def update_language_v2(
         )
 
     return LanguageDetailResponse(
-        lang_id=updated["lang_id"],
-        lang_name=updated["lang_name"],
+        lang_id=updated.lang_id,
+        lang_name=updated.lang_name,
     )
 
 
@@ -314,9 +322,21 @@ def delete_language(
             status_code=status.HTTP_404_NOT_FOUND, detail="Language not found"
         )
 
-    if not db.delete_language_record(lang_id):
+    try:
+        if not db.delete_language_record(lang_id):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Language not found"
+            )
+    except ValueError as e:
+        # Handle validation error for language in use
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Language not found"
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+        )
+    except IntegrityError as e:
+        # Handle database integrity errors (fallback)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This language cannot be deleted because it is used in the Prompt or Response or LLM Prompt or Target table."
         )
 
     username = _get_username_from_token(authorization)

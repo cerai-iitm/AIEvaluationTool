@@ -105,9 +105,18 @@ class InterfaceManagerClient:
 
         # Unified API flow
         if self.application_type == "API":
-            self.provider = self._auto_detect_provider()
-            self._init_clients()
-            return self._chat_api(chat_id, prompt)
+            payload = {
+                "chat_id": chat_id,
+                "prompt_list": prompt_list,
+                "api_context": {
+                    "provider": self._auto_detect_provider(),
+                    "agent_name": self.agent_name,
+                    "base_url": self.local_llm_base_url,
+                    "run_mode": self.run_mode,
+                }
+            }
+            return self._post("chat", json=payload)
+
 
         raise RuntimeError(f"Unsupported application type: {self.application_type}")
 

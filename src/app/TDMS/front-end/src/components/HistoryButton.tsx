@@ -255,7 +255,7 @@ export const HistoryButton: React.FC<HistoryButtonProps> = ({
         className="flex items-center justify-center rounded-full p-1 hover:bg-muted transition-colors mr-1"
       >
         <img
-          src="src/assets/icons8-history-50.png"
+          src="src/assets/icons8-history-60.png"
           alt="History"
           className="w-6 h-6"
         />

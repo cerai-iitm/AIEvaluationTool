@@ -1,5 +1,5 @@
 
-# AI Evaluation Tool
+# Conversational AI Evaluation Tool - v1.0
 
 ## 1. **Overview & Purpose**
 
@@ -46,13 +46,39 @@ AIEvaluationTool is a comprehensive, end-to-end framework designed to automate t
 - **WhatsApp**: WhatsApp Business API integration
 - **Web Application**: Web-based interfaces
 
+
+### What is TDMS?
+
+The **Test Data Management System (TDMS)** is a comprehensive web-based application designed to manage test data for AI evaluation workflows. It provides a centralized platform for creating, organizing, and managing test cases, prompts, responses, evaluation strategies, and related metadata required for testing conversational AI systems.
+
+### System Architecture
+
+TDMS follows a modern three-tier architecture:
+
+```
+┌─────────────────┐
+│   Frontend      │  React + TypeScript + Vite
+│   (React App)   │  Tailwind CSS + shadcn/ui
+└────────┬────────┘
+         │ HTTP/REST API
+┌────────▼────────┐
+│   Backend       │  FastAPI (Python)
+│   (REST API)    │  SQLAlchemy ORM
+└────────┬────────┘
+         │
+┌────────▼────────┐
+│   Database      │  SQLite / MariaDB
+│   (Data Store)  │
+└─────────────────┘
+```
+
 ## 2. **Architecture & Design**
 
 ### System Architecture
 
 AIEvaluationTool follows a modular, layered architecture designed for scalability and extensibility:
 
-![System Architecture](screenshots/Arch.png)
+![System Architecture](screenshots/Arch.jpg)
 
 ### Core Components
 
@@ -455,23 +481,36 @@ Replace the placeholder values with your actual target configuration details. Th
 ---
 #### **Step 5: Configure Test Data (TDMS)**
 
-Create `src/app/TDMS/back-end/database/config.json`:
-
-```json
-{
-    "db": {
-        "host": "localhost",
-        "port": 3306,
-        "user": "aiet_user",
-        "password": "secure_password",
-        "database": "aievaluationtool"
-    }
-}
-```
+   Edit `src/app/TDMS/back-end/database/config.json`:
+   
+   **For SQLite (default, recommended for development):**
+   ```json
+   {
+     "db": {
+       "engine_type": "sqlite",
+       "file": "TDMS.db"
+     }
+   }
+   ```
+   
+   **For MariaDB (production):**
+   ```json
+   {
+     "db": {
+       "engine_type": "mariadb",
+       "host": "localhost",
+       "port": 3306,
+       "user": "your_username",
+       "password": "your_password",
+       "database": "tdms_db"
+     }
+   }
+   ```
 ---
 ## 5. **Getting Started**
-To getting started with tool following steps are provided for basics, for more detailed [click here](screenshots/Workflow.md).
+To getting started with tool following steps are provided for basics, for detailed documentation [click here](docs/AI_Evaluation_Tool_Docementation.pdf).
 ### **AI Evaluation Tool**
+---
 #### 5.1.1 **Import Test Data into Database**
 
 Before running evaluations, you need to import test data points into the database.
@@ -661,37 +700,82 @@ The report will display detailed evaluation metrics:
 ---
 
 ### **Set Up Test Data Management System (TDMS)**
-
+---
 Access the web-based UI for managing test data and users.
+This module provides comprehensive CRUD (Create, Read, Update, Delete) operations for test cases within the TDMS (Test Data Management System) application. For user manul [click here](docs/TDMS_Documentation.pdf)
 
 #### 5.2.1 **Backend Setup**
 
 **Step 1: Configure Database**
 
 Update `src/app/TDMS/back-end/database/config.json` with your MariaDB credentials else sqlite will works by defaults.
+**Configure the database:**
+      
+   **For SQLite (default, recommended for development):**
+   ```json
+   {
+     "db": {
+       "engine_type": "sqlite",
+       "file": "TDMS.db"
+     }
+   }
+   ```
+   
+   **For MariaDB (production):**
+   ```json
+   {
+     "db": {
+       "engine_type": "mariadb",
+       "host": "localhost",
+       "port": 3306,
+       "user": "your_username",
+       "password": "your_password",
+       "database": "tdms_db"
+     }
+   }
+   ```
 
-**Step 2: Navigate and Start Backend**
+#### Step 2: Start the Application
 
+**Terminal 1 - Start Backend Server:**
 ```bash
 cd src/app/TDMS/back-end
-python3 main.py
+source venv/bin/activate
+python main.py
 ```
 
-#### 5.2.2 **Frontend Setup**
+The backend will start on `http://localhost:8000`
 
-**Step 1: Install Dependencies**
+![back End running](screenshots/backEnd.png)
 
-After open a new terminal and run following commands:
+#### 5.2.2 Frontend Setup
+
+1. **Navigate to the frontend directory:**
+   ```bash
+   cd src/app/TDMS/front-end
+   ```
+
+2. **Install Node.js dependencies:**
+   ```bash
+   npm install
+   ```
+
+
+**Terminal 2 - Start Frontend Development Server:**
 ```bash
 cd src/app/TDMS/front-end
-npm i
-```
-
-**Step 2: Start Development Server**
-
-```bash
 npm run dev
 ```
+
+The frontend will start on `http://localhost:8080` (or another port if 8080 is busy)
+
+![Front End Running](screenshots/frontEnd.png)
+
+#### 5.2.3 Access the Application
+
+1. Open your web browser
+2. Navigate to `http://localhost:8080` (or the port shown in the terminal)
+3. You should see the login page
 
 ![TDMS Home page](screenshots/tdms_home.png)
 
@@ -706,12 +790,4 @@ Use these login credentials:
 | Curator | `curator` | `curator123` |
 | Viewer | `viewer` | `viewer123` |
 
-**User Permissions:**
-- `canManageUsers` - Admin only
-- `canCreateTables` - Admin, Manager & Curator
-- `canUpdateTables` - Admin, Manager & Curator
-- `canDeleteTables` - Admin & Manager
-
-This module provides comprehensive CRUD (Create, Read, Update, Delete) operations for test cases within the TDMS (Test Data Management System) application.
-Users can manage test cases directly through the user interface after successful authentication and login.
-Operations include creating new test cases, retrieving existing ones, modifying test case details, and removing obsolete test cases from the system.
+---

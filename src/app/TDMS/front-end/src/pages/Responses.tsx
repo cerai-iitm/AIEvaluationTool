@@ -174,9 +174,19 @@ const Responses = () => {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.detail || `HTTP error! status: ${response.status}`,
-        );
+        const errorMessage = errorData.detail || `HTTP error! status: ${response.status}`;
+        
+        // Check if it's the specific validation error about TestCase usage
+        if (errorMessage.includes("TestCase") || errorMessage.includes("cannot be deleted")) {
+          toast({
+            title: "Cannot Delete Response",
+            description: errorMessage,
+            variant: "destructive",
+          });
+        } else {
+          throw new Error(errorMessage);
+        }
+        return;
       }
 
       toast({
