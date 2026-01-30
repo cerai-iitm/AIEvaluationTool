@@ -51,3 +51,10 @@ langchain-ollama
 beautifulsoup4
 ddgs
 sqlalchemy-utils
+
+pandas
+streamlit
+python-dotenv
+Jinja2
+plotly
+tenacity
