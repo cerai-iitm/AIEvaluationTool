@@ -39,6 +39,8 @@ export const AUTH_LOGOUT_URL = `${AUTH_SERVICE_URL}/web/logout`;
     
     CONTINUE_RUN: `${API_BASE_URL}/continue-run`,    
     DEV_Config: `${API_BASE_URL}/__dev/config`,
+
+    ANALYSE_HEALTH: `${API_BASE_URL}/analyse/health`,
 }  
 
 

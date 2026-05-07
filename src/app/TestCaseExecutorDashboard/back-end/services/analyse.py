@@ -16,6 +16,17 @@ gpu_url = os.getenv("GPU_URL")
 analysis_jobs = {}
 analysis_jobs_lock = Lock()
 
+ollama_url = os.getenv("OLLAMA_URL")
+
+def check_analyse_health_service():
+    try:
+        response = requests.get(ollama_url, timeout=3)
+        if response.status_code < 400:
+            return {"status": "ok"}
+        raise HTTPException(status_code=503, detail="Ollama is not healthy")
+    except requests.exceptions.RequestException:
+        raise HTTPException(status_code=503, detail="Ollama is not reachable")
+
 # def check_service(url: str, name: str):
 #     try:
 #         response = requests.get(url, timeout=3)

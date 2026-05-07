@@ -98,7 +98,21 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
     { key: "domain", label: "Domain", filterable: true, filterType: "domain" },
     { key: "actions", label: "Actions", filterable: false },
   ];
-
+  const handleAnalyseClick = async (runName: string, hasScore: boolean) => {
+  try {
+    const res = await fetch(API_ENDPOINTS.ANALYSE_HEALTH, {  // ✅ no ()
+      headers: getAuthHeaders(),
+      credentials: "include",
+    });
+    if (!res.ok) {
+      alert("Ollama is not running. Please start Ollama and try again.");
+      return;
+    }
+    setAnalyseModal({ runName, hasScore });
+  } catch (err) {
+    alert("Ollama is not running. Please start Ollama and try again.");
+  }
+};
   const startAnalysis = async (mode: string, runName: string) => {
     setAnalyseLoading(true);
     try {
@@ -365,7 +379,7 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
                           type="button"
                           className="action-icon-button action-analyse"
                           data-tooltip="Analyse"
-                          onClick={() => setAnalyseModal({ runName: run.run_name, hasScore: typeof run.average_score === "number" })}
+                          onClick={() => handleAnalyseClick(run.run_name, typeof run.average_score === "number")}
                           title="Analyse"
                           aria-label={`Analyse ${run.run_name}`}
                         >

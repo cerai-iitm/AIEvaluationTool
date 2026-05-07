@@ -11,7 +11,7 @@
     "application_name": "Vaidya AI",
     "application_url": "https://wa.me/8828808350",
     "headless": "False",
-    "selenium_mode": "remote",
+    "selenium_mode": "local",
     "selenium_remote_url": "http://selenium-browser:4444/wd/hub",
     "not_used": " base_url, debug, ollama_server_url, action & run_mode(runmode used but not read from config)"
 }
