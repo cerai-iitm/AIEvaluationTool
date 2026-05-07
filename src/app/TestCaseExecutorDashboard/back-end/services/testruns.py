@@ -1,3 +1,4 @@
+import math
 import os
 import sys
 import re
@@ -355,12 +356,17 @@ def get_all_test_runs_service(
     status: Optional[str] = None,
     sort_by: Literal["end_ts", "start_ts"] = "end_ts",
     order: Literal["asc", "desc"] = "desc",
+    page: int = 1,
+    page_size: int = 10,
 ) -> List[TestRunResponse]:
     try:
         runs = db.get_all_runs(domain=domain, target=target, status=status)
-            
+        total_count = len(runs)    
         response: List[TestRunResponse] = []
-
+        reverse = order == "desc"
+        runs.sort(key=lambda r: getattr(r, sort_by) or "", reverse=reverse)
+        start_idx = (page - 1) * page_size
+        runs = runs[start_idx : start_idx + page_size]
         for r in runs:
             domain_name = None
 
@@ -428,16 +434,17 @@ def get_all_test_runs_service(
                     domain=domain_name,
                     duration_ms=duration_ms,
                     average_score=average_score,
-                    evaluation_ts=evaluation_ts
+                    evaluation_ts=evaluation_ts,
+                    totalPages= math.ceil(total_count / page_size) if page_size else 1
                 )
             )
 
-        # 🔹 Sorting
-        reverse = order == "desc"
-        response.sort(
-            key=lambda x: getattr(x, sort_by) or "",
-            reverse=reverse
-        )
+        # # 🔹 Sorting
+        # reverse = order == "desc"
+        # response.sort(
+        #     key=lambda x: getattr(x, sort_by) or "",
+        #     reverse=reverse
+        # )
 
         return response
 

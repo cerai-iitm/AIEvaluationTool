@@ -12,6 +12,7 @@ class TestRunResponse(BaseModel):
     domain: Optional[str] 
     duration_ms: Optional[int] = None
     average_score: Optional[float] = None
+    totalPages: Optional[int] = None
 
 class TestRunDetailsResponse(BaseModel):
     run_name: str

@@ -7,6 +7,7 @@ import { getAuthHeaders, redirectToLogin } from "../../utils/auth";
 
 interface TestRun {
   run_id: number;
+  totalPages : number;
   run_name: string;
   target: string;
   status: string;
@@ -60,6 +61,7 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
   });
   const [filtersLoading, setFiltersLoading] = useState(true);
   const [openFilterColumn, setOpenFilterColumn] = useState<string | null>(null);
+  const [totalPages, setTotalPages] = useState(1);
   const filterRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const [sortBy, setSortBy] = useState<"start_ts" | "end_ts">("end_ts");
@@ -171,6 +173,9 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
     const params = new URLSearchParams(filters);
     params.append("sort_by", sortBy);
     params.append("order", order);
+    params.append("page", String(currentPage));
+    params.append("page_size", String(itemsPerPage));
+    
     const url = `${API_BASE_URL}${API_ENDPOINTS.GET_ALL_TEST_RUNS}?${params.toString()}`;
     fetch(url, { headers: getAuthHeaders(), credentials: "include" })
       .then((res) => {
@@ -182,17 +187,19 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
         const safeRuns = Array.isArray(data) ? data : [];
         setRuns(safeRuns);
         setFilteredRuns(safeRuns);
-        setCurrentPage(1);
+        setTotalPages(safeRuns[0]?.totalPages ?? 1); 
+        
       })
       .catch((err) => console.error("Error fetching test runs:", err))
       .finally(() => setLoading(false));
-  }, [filters, sortBy, order, loginUrl]);
-
-  const indexOfLastRun = currentPage * itemsPerPage;
-  const indexOfFirstRun = indexOfLastRun - itemsPerPage;
+  }, [filters, sortBy, order, loginUrl,currentPage,itemsPerPage]);
+  // alert(totalPage);
+  // const indexOfLastRun = currentPage * itemsPerPage;
+  // const indexOfFirstRun = indexOfLastRun - itemsPerPage;
   const safeFilteredRuns = Array.isArray(filteredRuns) ? filteredRuns : [];
-  const currentRuns = safeFilteredRuns.slice(indexOfFirstRun, indexOfLastRun);
-  const totalPages = Math.ceil(safeFilteredRuns.length / itemsPerPage);
+  // const currentRuns = safeFilteredRuns.slice(indexOfFirstRun, indexOfLastRun);
+  const currentRuns = safeFilteredRuns;
+  // const totalPages = Math.ceil(safeFilteredRuns.length / itemsPerPage);
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
   useEffect(() => {
@@ -448,7 +455,7 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
           </div>
         )}
         <div className="table-footer">
-          Showing {currentRuns.length} of {safeFilteredRuns.length} test runs
+          Showing {currentRuns.length} of {safeFilteredRuns[0]?.totalPages! * itemsPerPage} test runs
         </div>
       </div>
 
