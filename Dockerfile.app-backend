@@ -43,6 +43,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=builder /opt/venv /opt/venv
 COPY . /app
 
+RUN test -f /app/.env && test -f /app/src/lib/strategy/.env || { \
+      echo >&2 "ERROR: missing required .env files. On the host run:"; \
+      echo >&2 "  cp .env.example .env"; \
+      echo >&2 "  cp src/lib/strategy/.env.example src/lib/strategy/.env"; \
+      exit 1; }
+
 FROM runtime-base AS app-backend
 WORKDIR /app/src/app/TestCaseExecutorDashboard
 EXPOSE 7000

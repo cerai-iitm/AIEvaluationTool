@@ -31,12 +31,13 @@ Public access is through `nginx` on `http://localhost:${NGINX_PORT:-80}`.
 
 ## Configuration Files To Prepare
 
-### 1. Root `.env`
+### 1. `.env` Files
 
-Create `.env` if not present:
+For the Docker workflow, copy the root and strategy env examples before building:
 
 ```bash
 cp .env.example .env
+cp src/lib/strategy/.env.example src/lib/strategy/.env
 ```
 
 Minimal runtime values:
