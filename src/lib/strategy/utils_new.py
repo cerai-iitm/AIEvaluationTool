@@ -19,13 +19,20 @@ class FileLoader:
     """
     @staticmethod
     def _load_env_vars(run_file_path:str):
-        env_path = os.path.join(os.path.dirname(run_file_path), '.env')
-        # check if the .env file exists
-        if not os.path.exists(env_path):
-            logger.error(f"Could not find the .env file at path : {env_path}. Please make sure to create one and add the required environment variables.")
-            exit(1)
-        else:
+        base_dir = os.path.dirname(run_file_path)
+        env_path = os.path.join(base_dir, '.env')
+        example_path = os.path.join(base_dir, '.env.example')
+        if os.path.exists(env_path):
             load_dotenv(env_path)
+            return
+        # fall back to .env.example so a fresh clone (where .env is gitignored)
+        # boots without manual intervention; user-created .env still wins above
+        if os.path.exists(example_path):
+            logger.warning(f"{env_path} not found; falling back to {example_path}")
+            load_dotenv(example_path)
+            return
+        logger.error(f"Could not find the .env file at path : {env_path}. Please make sure to create one and add the required environment variables.")
+        exit(1)
     
     @staticmethod
     def _load_file_content(run_file_path:str, req_folder_path:str = "", file_name:str = "", **kwargs):
