@@ -18,7 +18,7 @@ It is aligned with the current Compose stack (`app-backend`, `app-front-end`, `a
 Primary services in [docker-compose.yml][docker-compose]:
 
 - `db` (MariaDB)
-- `selenium-browser` (Chrome + WebDriver + noVNC)
+- `selenium-browser` (Chromium + WebDriver + noVNC)
 - `interface-manager` (target interaction service)
 - `auth-service` (authentication and route redirects)
 - `app-backend` (TCE backend + CLI runtime environment)

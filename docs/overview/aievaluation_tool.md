@@ -124,7 +124,7 @@ Key parts:
 | **Backend** | Python 3.10+, FastAPI |
 | **Database** | MariaDB or SQLite |
 | **Frontend** | Node.js 20.19+ or 22.14+ |
-| **Web Automation** | ChromeDriver, Chrome Browser |
+| **Web Automation** | ChromeDriver, Chrome/Chromium Browser |
 | **ML/AI Models** | Ollama, Hugging Face Transformers, OpenAI API |
 | **APIs** | RESTful services, OpenAI-compatible endpoints |
 

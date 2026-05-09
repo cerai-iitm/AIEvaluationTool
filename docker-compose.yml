@@ -19,7 +19,7 @@ services:
       retries: 12
 
   selenium-browser:
-    image: selenium/standalone-chrome:latest
+    image: selenium/standalone-chromium:latest
     container_name: aiet-selenium
     restart: unless-stopped
     shm_size: 2gb
