@@ -45,6 +45,16 @@ Use stable relative XPath values for login fields, prompt input areas, response 
 
 Detailed configuration guide: [Docker Setup and Configuration](docs/docker_setup/setup_and_configuration.md)
 
+### 3.4 Platform Notes
+
+`selenium/standalone-chrome` ships only `linux/amd64`. On `linux/arm64`:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.arm64.yml up
+```
+
+Swaps Selenium to `selenium/standalone-chromium:latest` (multi-arch, first-party). No-op on `linux/amd64`.
+
 ## 4. Getting Started With Docker
 
 ### 4.1 Build And Start

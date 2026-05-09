@@ -1,0 +1,4 @@
+# docker compose -f docker-compose.yml -f docker-compose.arm64.yml up
+services:
+  selenium-browser:
+    image: selenium/standalone-chromium:latest
