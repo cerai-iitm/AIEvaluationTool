@@ -22,15 +22,21 @@ TDMS and the Dashboard run as a unified application layer behind a single Docker
 
 Docker reads runtime values from `.env` and application-level configuration from `config.json`.
 
-### 3.1 Create Environment File
+### 3.1 Create Environment Files
+
+Two `.env` files; both have shipped `.example` siblings:
 
 ```bash
 cp .env.example .env
+cp src/lib/strategy/.env.example src/lib/strategy/.env
 ```
+
+Without the strategy-level file, `app-backend`, `interface-manager`, and `tdms-backend` crash-loop on first start. See §4.5.
 
 ### 3.2 Required Files
 
 - Root `.env`
+- `src/lib/strategy/.env`
 - Root `config.json`
 - `src/app/interface_manager/config.json` (for browser automation settings)
 
@@ -67,6 +73,20 @@ docker compose up
 docker compose down
 # full reset
 docker compose down -v
+```
+
+### 4.5 First-Time Setup On A Fresh Clone
+
+`src/lib/strategy/.env` is `.gitignore`d and not copied into the runtime image. After §3.1's `cp` commands, layer the bundled override to bind-mount it into the three services that load it:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.env.yml up
+```
+
+Combine with §3.4 on `linux/arm64`:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.arm64.yml -f docker-compose.env.yml up
 ```
 
 ### 4.4 Other Run Modes
