@@ -22,15 +22,19 @@ TDMS and the Dashboard run as a unified application layer behind a single Docker
 
 Docker reads runtime values from `.env` and application-level configuration from `config.json`.
 
-### 3.1 Create Environment File
+### 3.1 Create Environment Files
+
+For the Docker workflow, copy the root and strategy env examples before building:
 
 ```bash
 cp .env.example .env
+cp src/lib/strategy/.env.example src/lib/strategy/.env
 ```
 
 ### 3.2 Required Files
 
 - Root `.env`
+- `src/lib/strategy/.env`
 - Root `config.json`
 - `src/app/interface_manager/config.json` (for browser automation settings)
 
