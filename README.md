@@ -45,6 +45,16 @@ Use stable relative XPath values for login fields, prompt input areas, response 
 
 Detailed configuration guide: [Docker Setup and Configuration](docs/docker_setup/setup_and_configuration.md)
 
+### 3.4 Platform Notes
+
+The default Selenium image (`selenium/standalone-chrome`) only publishes `linux/amd64`. On `linux/arm64` hosts (Apple Silicon, ARM Linux servers) override it in `.env`:
+
+```
+SELENIUM_IMAGE=seleniarm/standalone-chromium:latest
+```
+
+This is opt-in; no change is needed on `linux/amd64`.
+
 ## 4. Getting Started With Docker
 
 ### 4.1 Build And Start
