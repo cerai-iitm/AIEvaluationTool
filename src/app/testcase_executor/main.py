@@ -30,7 +30,23 @@ def is_error_response(response):
         "[error: connection refused]",
         "no response received"
     ]
-    return len(response) == 0 or any(indicator in response[0]['response'].lower() for indicator in error_indicators)
+    if response is None:
+        return True
+
+    if isinstance(response, str):
+        normalized = response.lower()
+        return len(normalized.strip()) == 0 or any(indicator in normalized for indicator in error_indicators)
+
+    if isinstance(response, list):
+        if len(response) == 0:
+            return True
+        first = response[0]
+        if isinstance(first, dict):
+            normalized = str(first.get("response", "")).lower()
+            return len(normalized.strip()) == 0 or any(indicator in normalized for indicator in error_indicators)
+
+    normalized = str(response).lower()
+    return len(normalized.strip()) == 0 or any(indicator in normalized for indicator in error_indicators)
 
 def main():
     """ Main function to handle command-line arguments and execute test cases.
@@ -105,7 +121,7 @@ def main():
     
     # Load configuration from the specified file if provided
     BASE_DIR = Path(__file__).resolve().parents[3]
-    config_path = BASE_DIR / "config.json"
+    config_path = BASE_DIR / args.config if args.config else BASE_DIR / "config.json"
     if args.config:
         if not os.path.exists(config_path):
             logger.error(f"Configuration file '{args.config}' does not exist.")
@@ -414,7 +430,7 @@ def main():
                 db.add_or_update_testrun(run=run)
 
                 # create or update the run detail entry for the test case
-                rundetail = RunDetail(run_name=args.run_name, plan_name=plan_name, metric_name=testcase.metric, testcase_name=testcase.name)
+                rundetail = RunDetail(run_name=run_name, plan_name=plan_name, metric_name=testcase.metric, testcase_name=testcase.name)
                 rundetail_id = db.add_or_update_testrun_detail(rundetail)
 
                 # fetch the run detail status.
@@ -480,7 +496,7 @@ def main():
                             db.add_or_update_testrun_detail(rundetail)
                         else:
                             conv.response_ts = datetime.now().isoformat()
-                            conv.agent_response = agent_response[0]['response']
+                            conv.agent_response = agent_response
                             db.add_or_update_conversation(conversation=conv)
 
                             rundetail.status = "COMPLETED"
@@ -609,7 +625,7 @@ def main():
                             continue
 
                         conv.response_ts = datetime.now().isoformat()
-                        conv.agent_response = agent_response[0]['response']
+                        conv.agent_response = agent_response
                         db.add_or_update_conversation(conversation=conv)
 
                         rundetail.status = "COMPLETED"
@@ -720,7 +736,7 @@ def main():
                             continue
 
                         conv.response_ts = datetime.now().isoformat()
-                        conv.agent_response = agent_response[0]['response']
+                        conv.agent_response = agent_response
                         db.add_or_update_conversation(conversation=conv)
 
                         rundetail.status = "COMPLETED"
