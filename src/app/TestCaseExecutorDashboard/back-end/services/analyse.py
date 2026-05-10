@@ -296,6 +296,7 @@ async def run_analyse_background_service(run_name: str, db, mode: str = "rerun_a
                 status = "FAILED"
                 failed += 1
                 error = _stringify_error(e)
+                score = None
                 # Best-effort: persist failure reason to conversation (if available)
                 try:
                     if conversation is None and conversation_id:

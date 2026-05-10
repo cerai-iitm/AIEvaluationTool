@@ -229,6 +229,19 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
 
   const SortIcon = ({ columnKey }: { columnKey: "start_ts" | "end_ts" }) => {
     const isActive = sortBy === columnKey;
+    if (columnKey === "start_ts") {
+      const isAscending = isActive && order === "asc";
+      return (
+        <i
+          className={`bi ${isAscending ? "bi-chevron-down" : "bi-chevron-up"}`}
+          style={{
+            fontSize: '22px',
+            color: '#ffffff',
+            fontWeight: 'bold',
+          }}
+        ></i>
+      );
+    }
     if (!isActive) return <i className="bi bi-chevron-expand" style={{ fontSize: '22px', color: 'rgba(255,255,255,0.35)' }}></i>;
     return order === "asc"
       ? <i className="bi bi-chevron-up" style={{ fontSize: '22px', color: '#ffffff', fontWeight: 'bold' }}></i>
