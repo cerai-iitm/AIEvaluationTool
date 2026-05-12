@@ -174,7 +174,7 @@ export function LlmPromptAddDialog({
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <DialogHeader>
-          <DialogTitle className="sr-only">LLM Prompts</DialogTitle>
+          <DialogTitle className="sr-only">LLM Prompt</DialogTitle>
         </DialogHeader>
 
         <div className="flex-1 p-1 overflow-y-auto space-y-6 pb-5">

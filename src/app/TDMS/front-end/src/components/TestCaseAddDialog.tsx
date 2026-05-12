@@ -981,11 +981,12 @@ export const TestCaseAddDialog = ({
                     onFocus={() => {
                       setFocusedField("response");
                       setShowDetails(false);
+                       setShowRequestDetails(true); // response details show
                     }}
                     onBlur={() => setFocusedField(null)}
                     onClick={() => {
-                      setShowRequestDetails(true);
-                      setShowDetails(false);
+                      setShowRequestDetails(true); // response details show
+                      setShowDetails(false); // user prompt details hide
                     }}
                   />
                   { focusedField === "response" && (

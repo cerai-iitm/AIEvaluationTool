@@ -201,14 +201,16 @@ const ContinueRunPage: React.FC = () => {
     setFormData(prev => ({
       ...prev,
       [key]: value,
-      ...(key === "testPlan" && { metric: "" })
+      ...(key === "testPlan" && { metric: "", testCaseId: "" }),
+      ...(key === "metric"   && value && { testCaseId: "" }),   // ← new
+      ...(key === "testCaseId" && value && { metric: "" }),     // ← new
     }));
 
     if (key === "testPlan") {
       fetchMetricsByPlan(value);
     }
   };
-
+ 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -346,9 +348,16 @@ const ContinueRunPage: React.FC = () => {
                       <div className="filter-item">
                       <label>Metric</label>
                       <CustomSelect
+                        key={formData.testCaseId}   // ← add this line
                         options={planMetrics}
-                        defaultText={formData.testPlan ? "All Metrics" : "Select Test Plan first"}
-                        disabled={!formData.testPlan}
+                        defaultText={
+                          !formData.testPlan
+                            ? "Select Test Plan first"
+                            : formData.testCaseId
+                            ? "Test case selected"
+                            : "All Metrics"
+                        }
+                        disabled={!formData.testPlan || !!formData.testCaseId}
                         onChange={(val) => handleChange("metric", val)}
                       />
                     </div>
@@ -357,10 +366,14 @@ const ContinueRunPage: React.FC = () => {
                       <input
                         type="text"
                         placeholder={
-                          formData.testPlan ? "Enter TestCase Name" : "Select Test Plan first"
+                          !formData.testPlan
+                          ? "Select Test Plan first"
+                          : formData.metric
+                          ? "Metric selected"
+                          : "Enter Test Case Name"
                         }
                         value={formData.testCaseId ?? ""}
-                        disabled={!formData.testPlan}
+                        disabled={!formData.testPlan || !!formData.metric}
                         onChange={(e) => handleChange("testCaseId", e.target.value)}
                       />
                     </div>
