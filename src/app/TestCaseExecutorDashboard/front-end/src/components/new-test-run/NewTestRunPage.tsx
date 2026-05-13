@@ -1,4 +1,4 @@
-import React,{useState, useEffect} from 'react';
+import React,{useState, useEffect, useCallback} from 'react';
 import './NewTestRunPage.css';
 import { API_BASE_URL, API_ENDPOINTS,WS_BASE_URL } from "../../config/api";
 // Import only the Bootstrap CSS for the select components
@@ -43,6 +43,7 @@ const NewTestRunPage: React.FC = () => {
   const [domainOptions, setDomainOptions] = useState<string[]>([]);
   const [languageOptions, setLanguageOptions] = useState<string[]>([]);
   const [isRunning, setIsRunning] = useState(false);
+  const [runCompleted, setRunCompleted] = useState(false);
   const [totalTestCases, setTotalTestCases] = useState(0);
   const [filters, setFilters] = useState<AllFiltersResponse | null>(null);
   const [planMetrics, setPlanMetrics] = useState<string[]>([]);
@@ -98,6 +99,11 @@ const NewTestRunPage: React.FC = () => {
 
   const isStartDisabled = !formData.testPlan || !formData.target  || isRunning;
   const isTargetSelected = !!formData.target;
+
+  const handleRunFinished = useCallback(() => {
+    setRunCompleted(true);
+    setIsRunning(false);
+  }, []);
 
   useEffect(() => {
     const fetchFilters = async () => {
@@ -172,6 +178,7 @@ const NewTestRunPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setRunCompleted(false);
     
     const res = await fetch(`${API_BASE_URL}/start-run`, {
       method: "POST",
@@ -337,9 +344,11 @@ const NewTestRunPage: React.FC = () => {
           Start Run
         </button>
       </form>
-      {isRunning && <Loop isRunning={isRunning} totalTestCases={totalTestCases} stepsPerTestCase={4} 
+      {(isRunning || runCompleted) && <Loop isRunning={isRunning} totalTestCases={totalTestCases} stepsPerTestCase={4} 
         stepNames={["Prepare", "Finding elements", "Execute", "Store"]} planName={formData.testPlan}   
-        metricName={formData.metric}/>}       
+        metricName={formData.metric}
+        onRunFinished={handleRunFinished}
+      />}       
       
     </div>
   );

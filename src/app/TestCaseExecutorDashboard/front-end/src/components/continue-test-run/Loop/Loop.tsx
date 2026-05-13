@@ -10,6 +10,7 @@ interface LoopProps {
   stepNames?: string[]; // 👈 Names for each step
   planName?: string;     // 👈 add
   metricName?: string;   // 👈 add
+  onRunFinished?: (status?: string) => void;
 }
 
 type StepStatus = "PENDING" | "RUNNING" | "DONE" | "FAILED";
@@ -20,12 +21,14 @@ const Loop: React.FC<LoopProps> = ({
   stepsPerTestCase,
   stepNames: propStepNames,
   planName,    
-  metricName
+  metricName,
+  onRunFinished
 }) => {
   const [currentTestCase, setCurrentTestCase] = useState(0);
   const navigate = useNavigate();
   const { runName } = useParams();
   const [runCompleted, setRunCompleted] = useState(false);
+  const [runStatus, setRunStatus] = useState<string | null>(null);
   // Track status for each step individually
   const [stepStatuses, setStepStatuses] = useState<StepStatus[]>(
     Array(stepsPerTestCase).fill("PENDING")
@@ -54,6 +57,8 @@ const Loop: React.FC<LoopProps> = ({
   useEffect(() => {
     if (!isRunning) return;
 
+    setRunCompleted(false);
+    setRunStatus(null);
     const ws = new WebSocket(`${WS_BASE_URL}/ws/test-run`);
 
     ws.onopen = () => {
@@ -93,6 +98,8 @@ const Loop: React.FC<LoopProps> = ({
           break;
         case "RUN_FINISHED":
           setRunCompleted(true);
+          setRunStatus(data.status);
+          onRunFinished?.(data.status);
           console.log("🏁 Run completed");
           ws.close();
           break;
@@ -102,7 +109,7 @@ const Loop: React.FC<LoopProps> = ({
     ws.onclose = () => console.log("❌ WebSocket closed");
 
     return () => ws.close();
-  }, [isRunning, stepsPerTestCase]);
+  }, [isRunning, stepsPerTestCase, onRunFinished]);
 
   /* ---------- UI HELPERS ---------- */
 
@@ -273,8 +280,8 @@ const Loop: React.FC<LoopProps> = ({
           style={{
             marginTop: "24px",
             padding: "16px",
-            background: "#ECFDF5",
-            border: "1px solid #10B981",
+            background: runStatus === "FAILED" ? "#FEF2F2" : "#ECFDF5",
+            border: `1px solid ${runStatus === "FAILED" ? "#EF4444" : "#10B981"}`,
             borderRadius: "10px",
             display: "flex",
             justifyContent: "space-between",
@@ -284,12 +291,12 @@ const Loop: React.FC<LoopProps> = ({
         >
           <span
             style={{
-              color: "#065F46",
+              color: runStatus === "FAILED" ? "#991B1B" : "#065F46",
               fontWeight: 600,
               fontSize: "14px",
             }}
           >
-            ✅ Completed successfully
+            {runStatus === "FAILED" ? "Run failed" : "Completed successfully"}
           </span>
 
           <button

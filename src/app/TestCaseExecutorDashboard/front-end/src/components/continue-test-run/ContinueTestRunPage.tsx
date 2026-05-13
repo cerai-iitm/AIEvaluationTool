@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import './ContinueTestRunPage.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Accordion, Button } from 'react-bootstrap';
@@ -37,6 +37,7 @@ const ContinueRunPage: React.FC = () => {
   const maxTestCases = ['5', '20', '30', '50', '100'];
   const languages = ['English', 'Spanish', 'French', 'German', 'Chinese'];
   const [isRunning, setIsRunning] = useState(false);
+  const [runFinished, setRunFinished] = useState(false);
   const [totalTestCases, setTotalTestCases] = useState(0);
   const [filters, setFilters] = useState<AllFiltersResponse | null>(null);
   const [existingRun, setExistingRun] = useState<any>(null);
@@ -60,6 +61,11 @@ const ContinueRunPage: React.FC = () => {
   
 
   const { runName } = useParams();
+
+  const handleRunFinished = useCallback(() => {
+    setRunFinished(true);
+    setIsRunning(false);
+  }, []);
 
   useEffect(() => {
     const fetchFilters = async () => {
@@ -213,6 +219,7 @@ const ContinueRunPage: React.FC = () => {
  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setRunFinished(false);
 
     if (!formData.runName) {
       alert("Please enter a run name and fetch it first.");
@@ -419,7 +426,7 @@ const ContinueRunPage: React.FC = () => {
                   Please wait while we fetch the run details...
                 </div>
               )}
-              {isRunning && (
+              {(isRunning || runFinished) && (
                 <Loop
                   isRunning={isRunning}
                   totalTestCases={totalTestCases}
@@ -427,6 +434,7 @@ const ContinueRunPage: React.FC = () => {
                   stepNames={["Prepare", "Finding elements", "Execute", "Store"]}
                   planName={formData.testPlan}
                   metricName={formData.metric}
+                  onRunFinished={handleRunFinished}
                 />
               )}
             </Accordion.Body>

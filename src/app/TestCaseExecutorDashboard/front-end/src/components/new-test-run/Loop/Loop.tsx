@@ -8,6 +8,7 @@ interface LoopProps {
   stepNames?: string[]; // 👈 Names for each step
   planName?: string;     // 👈 add
   metricName?: string;   // 👈 add
+  onRunFinished?: () => void;
   
 }
 
@@ -19,7 +20,8 @@ const Loop: React.FC<LoopProps> = ({
   stepsPerTestCase,
   stepNames: propStepNames,
   planName,
-  metricName
+  metricName,
+  onRunFinished
 }) => {
   const [currentTestCase, setCurrentTestCase] = useState(0);
   const navigate = useNavigate();
@@ -51,6 +53,7 @@ const Loop: React.FC<LoopProps> = ({
   useEffect(() => {
     if (!isRunning) return;
 
+    setRunCompleted(false);
     const ws = new WebSocket(`${WS_BASE_URL}/ws/test-run`);
 
     ws.onopen = () => {
@@ -91,6 +94,7 @@ const Loop: React.FC<LoopProps> = ({
           break;
         case "RUN_FINISHED":
           setRunCompleted(true);
+          onRunFinished?.();
           console.log("🏁 Run completed");
           ws.close();
           break;
@@ -100,7 +104,7 @@ const Loop: React.FC<LoopProps> = ({
     ws.onclose = () => console.log("❌ WebSocket closed");
 
     return () => ws.close();
-  }, [isRunning, stepsPerTestCase]);
+  }, [isRunning, stepsPerTestCase, onRunFinished]);
 
   /* ---------- UI HELPERS ---------- */
 
