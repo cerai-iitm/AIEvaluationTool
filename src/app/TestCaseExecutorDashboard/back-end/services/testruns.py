@@ -32,7 +32,8 @@ def start_run_service(db, data: NewTestRun, background_tasks: BackgroundTasks):
         test_case_id = data.testCaseId
         metric_name = data.metric
         domain_name = data.domain if data.domain else None
-        lang_name = data.language if data.language else None
+        lang_name = [data.language] if data.language else None
+        
         provided_run_name = data.runName.strip() if data.runName else None
         if test_case_id and metric_name:
             raise HTTPException(
@@ -121,12 +122,14 @@ def start_run_service(db, data: NewTestRun, background_tasks: BackgroundTasks):
             )
 
         else:
+            
             testcases = db.get_testcases_by_testplan(
                 plan_name=plan_name,
                 n=max_test_cases,
                 lang_names=lang_name,
                 domain_name=domain_name,
             )
+            
             if not testcases:
                 raise HTTPException(
                     status_code=404,
