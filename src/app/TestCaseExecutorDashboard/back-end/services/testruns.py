@@ -21,6 +21,60 @@ from utils.port import ensure_interface_manager_port_running
 
 logger = get_logger(__name__)
 
+GAP_THRESHOLD_MS = 5000
+
+def _parse_timeline_timestamp(value: Optional[str]) -> Optional[float]:
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value).timestamp() * 1000
+    except ValueError:
+        return None
+
+def _calculate_timeline_duration_ms(timeline) -> Optional[int]:
+    timed_events = []
+
+    for event in timeline:
+        start = _parse_timeline_timestamp(getattr(event, "prompt_ts", None))
+        end = _parse_timeline_timestamp(getattr(event, "response_ts", None))
+
+        if start is None or end is None or end <= start:
+            continue
+
+        timed_events.append({
+            "plan_name": getattr(event, "plan_name", "") or "",
+            "start": start,
+            "end": end,
+        })
+
+    if not timed_events:
+        return None
+
+    timed_events.sort(key=lambda event: event["start"])
+    plan_blocks = []
+
+    for event in timed_events:
+        last_block = plan_blocks[-1] if plan_blocks else None
+
+        if last_block and last_block["plan_name"] == event["plan_name"]:
+            last_response_time = max(item["end"] for item in last_block["events"])
+            if event["start"] - last_response_time < GAP_THRESHOLD_MS:
+                last_block["events"].append(event)
+                continue
+
+        plan_blocks.append({
+            "plan_name": event["plan_name"],
+            "events": [event],
+        })
+
+    total_ms = 0
+    for block in plan_blocks:
+        starts = [event["start"] for event in block["events"]]
+        ends = [event["end"] for event in block["events"]]
+        total_ms += max(ends) - min(starts)
+
+    return int(total_ms) if total_ms > 0 else None
+
 def start_run_service(db, data: NewTestRun, background_tasks: BackgroundTasks):
     ensure_interface_manager_port_running(interface_manager_config)
     if data.testPlan:
@@ -259,30 +313,9 @@ def get_test_run_service(db, run_name: str, metric: Optional[str] = None, status
         if not run:
             raise HTTPException(status_code=404, detail="Run not found")
         timeline = db.get_run_timeline(run_name) or []
+        duration_ms = _calculate_timeline_duration_ms(timeline)
             
         if timeline:
-            events_by_plan = {}
-            total_seconds = 0
-
-            for e in timeline:
-                events_by_plan.setdefault(e.plan_name, []).append(e)
-
-                for plan_events in events_by_plan.values():
-                    start_times = [
-                        datetime.fromisoformat(e.prompt_ts).timestamp()
-                        for e in plan_events if e.prompt_ts
-                    ]
-
-                    end_times = [
-                        datetime.fromisoformat(e.response_ts).timestamp()
-                        for e in plan_events if e.response_ts
-                    ]
-
-                    if start_times and end_times:
-                        total_seconds += (max(end_times) - min(start_times))
-
-                duration_ms = int(total_seconds * 1000)    
-
             scores = []
             for e in timeline:
                 if e.evaluation_score is not None:
@@ -387,27 +420,7 @@ def get_all_test_runs_service(
             timeline = db.get_run_timeline(r.run_name) or []
             
             if timeline:
-                events_by_plan = {}
-                total_seconds = 0
-
-                for e in timeline:
-                    events_by_plan.setdefault(e.plan_name, []).append(e)
-
-                for plan_events in events_by_plan.values():
-                    start_times = [
-                        datetime.fromisoformat(e.prompt_ts).timestamp()
-                        for e in plan_events if e.prompt_ts
-                    ]
-
-                    end_times = [
-                        datetime.fromisoformat(e.response_ts).timestamp()
-                        for e in plan_events if e.response_ts
-                    ]
-
-                    if start_times and end_times:
-                        total_seconds += (max(end_times) - min(start_times))
-
-                duration_ms = int(total_seconds * 1000)    
+                duration_ms = _calculate_timeline_duration_ms(timeline)
 
             scores = []
             count = 0
