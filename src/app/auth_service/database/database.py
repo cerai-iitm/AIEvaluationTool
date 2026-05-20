@@ -4,22 +4,38 @@ from sqlalchemy.ext.declarative import declarative_base
 from config.settings import settings
 import os
 import json
+from pathlib import Path
 
-config_path = os.path.join(os.path.dirname(__file__), "config.json")
+BASE_DIR = Path(__file__).resolve().parents[4]
+config_path = BASE_DIR / "config.json"
+local_config_path = Path(__file__).resolve().parent / "config.json"
+
 try:
     with open(config_path, "r") as f:
         config = json.load(f)
 except FileNotFoundError:
-    config = {}
+    try:
+        with open(local_config_path, "r") as f:
+            config = json.load(f)
+    except FileNotFoundError:
+        config = {}
     
 db_cfg = config.get("db", {})
-engine_type = db_cfg.get("engine_type", "sqlite").lower()
+engine_type = db_cfg.get("engine", db_cfg.get("engine_type", "sqlite")).lower()
+
+def _missing_mariadb_keys() -> list[str]:
+    required_keys = ("host", "port", "user", "password", "database")
+    return [key for key in required_keys if db_cfg.get(key) in (None, "")]
+
+
+if engine_type == "mariadb" and _missing_mariadb_keys() and db_cfg.get("file"):
+    engine_type = "sqlite"
 
 if engine_type == "sqlite":
     db_file = db_cfg.get("file", "Auth.db")
     
     # project root: AIEvaluationTool
-    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../.."))
+    project_root = str(BASE_DIR)
     
     # data folder under project root
     db_folder = os.path.join(project_root, "data")
@@ -32,6 +48,11 @@ if engine_type == "sqlite":
     SQLALCHEMY_DATABASE_URL = f"sqlite:///{db_path}".format(db_path=db_path)
 
 elif engine_type == "mariadb":
+    missing_keys = _missing_mariadb_keys()
+    if missing_keys:
+        missing = ", ".join(missing_keys)
+        raise ValueError(f"MariaDB database config is missing required key(s): {missing}")
+
     SQLALCHEMY_DATABASE_URL = "mariadb+mariadbconnector://{user}:{password}@{host}:{port}/{database}".format(
         user=db_cfg.get("user"),
         password=db_cfg.get("password"),
