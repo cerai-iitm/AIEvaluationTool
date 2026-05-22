@@ -349,7 +349,7 @@ const Targets = () => {
                       Target Name
                     </th>
                     <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">
-                      Target Type & URL
+                      Target Type 
                     </th>
                     <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">
                       Domain Name
