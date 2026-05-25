@@ -439,8 +439,8 @@ const Metrics: React.FC = () => {
                 <table className="w-full table-fixed">
                   <thead className="border-b-2">
                     <tr>
-                      <th className="sticky top-0 z-10 p-4 font-semibold text-left pl-10 w-[15%] ">Metric Id</th>
-                      <th className="sticky top-0 z-10 p-2 font-semibold text-left pl-4 w-[30%]">Metric Name</th>
+                      <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left pl-10 w-[15%] ">Metric Id</th>
+                      <th className="sticky top-0 bg-white z-10 p-2 font-semibold text-left pl-4 w-[30%]">Metric Name</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -807,4 +807,3 @@ const Metrics: React.FC = () => {
 };
 
 export default Metrics;
-
