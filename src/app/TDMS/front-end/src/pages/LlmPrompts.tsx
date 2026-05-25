@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Sidebar from "@/components/Sidebar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -185,11 +184,8 @@ const LlmPrompts = () => {
 
   return (
     <div className="flex min-h-screen">
-      <aside className="fixed top-0 left-0 h-screen w-[220px] bg-[#5252c2] z-20">
-        <Sidebar />
-      </aside>
 
-      <main className="flex-1 bg-background ml-[224px]">
+      <main className="flex-1 bg-background">
         <div className="p-8 flex flex-col h-screen">
           <h1 className="text-4xl font-bold mb-8 text-center">LLM Prompts</h1>
 

@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -218,11 +217,8 @@ const Users = () => {
 
   return (
     <div className="flex min-h-screen">
-      <aside className="fixed top-0 left-0 h-screen bg-background w-[220px] ">
-        <Sidebar />
-      </aside>
 
-      <main className="flex-1 bg-background ml-[224px]">
+      <main className="flex-1 bg-background">
         <div className="p-8">
           <h1 className="text-4xl font-bold mb-12 text-center">User's List</h1>
           {hasPermission(currentUserRole, "canCreateUser") && (

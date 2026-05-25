@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Sidebar from "@/components/Sidebar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { MoreVertical, FileText, Target, Globe, Layers, Languages, MessageSquare, PenTool, Scale, ClipboardList, BarChart3, Users, Upload, Loader } from "lucide-react";
@@ -403,10 +402,7 @@ const Dashboard = () => {
   return (
     <>
       <div className="flex min-h-screen">
-        <aside className="fixed top-0 left-0 h-screen w-[220px] bg-[#5252c2] z-20">
-          <Sidebar />
-        </aside>
-        <main className="flex-1 ml-[220px] min-h-screen flex flex-col pt-28 pb-28">
+        <main className="flex-1 min-h-screen flex flex-col pt-28 pb-28">
           {/* Centered Title */}
           <div className="flex items-center justify-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold text-black">
