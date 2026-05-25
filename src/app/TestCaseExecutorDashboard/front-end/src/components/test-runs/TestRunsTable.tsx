@@ -355,7 +355,7 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
                       {run.duration_ms != null ? formatDuration(run.duration_ms) : "-"}
                     </td>
                     <td className="col-score cell-center nowrap" onClick={(e) => e.stopPropagation()}>
-                      {typeof run.average_score === "number" ? run.average_score.toFixed(2) : "-"}
+                      {typeof run.average_score === "number" ? run.average_score.toFixed(2) : "Analysis not completed"}
                     </td>
                     <td className="col-evaluation nowrap">
                       {run.evaluation_ts != null ? (
