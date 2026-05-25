@@ -815,6 +815,7 @@ export const TestCaseAddDialog = ({
                     }}
                     placeholder="Enter user prompt or Search "
                     onChange={(e) => setUserPrompts(e.target.value)}
+                    onMouseDown={(e) => e.currentTarget.focus()}
                     onFocus={() => {
                       setFocusedField("userPrompt");
                       setShowRequestDetails(false);
@@ -860,6 +861,7 @@ export const TestCaseAddDialog = ({
                             setErrors(prev => ({ ...prev, systemPrompts: false }));
                           }
                         }}
+                        onMouseDown={(e) => e.currentTarget.focus()}
                         onFocus={() => setFocusedField("systemPrompt")}
                         onBlur={() => setFocusedField(null)}
                         className={`bg-muted min-h-[73px] pr-10 ${
@@ -978,6 +980,7 @@ export const TestCaseAddDialog = ({
                     placeholder="Enter response or Search "
                     className="bg-muted min-h-[73px] pr-10"
                     onChange={(e) => setResponseText(e.target.value)}
+                    onMouseDown={(e) => e.currentTarget.focus()}
                     onFocus={() => {
                       setFocusedField("response");
                       setShowDetails(false);
@@ -1132,6 +1135,7 @@ export const TestCaseAddDialog = ({
                             setErrors(prev => ({ ...prev, llmPrompt: false }));
                           }
                         }}
+                    onMouseDown={(e) => e.currentTarget.focus()}
                     onFocus={() => {
                       setFocusedField("llm");
                       setShowDetails(false);
