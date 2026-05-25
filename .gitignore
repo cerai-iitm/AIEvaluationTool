@@ -60,3 +60,5 @@ data/AIEvaluationData.db
 
 reports/
 chrome-data/
+.venv/
+data/aievaluationtool.db

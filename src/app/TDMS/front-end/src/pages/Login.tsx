@@ -6,6 +6,7 @@ const Login = () => {
     const appBase = import.meta.env.BASE_URL.replace(/\/$/, "");
     const returnUrl = `${window.location.origin}${appBase}/dashboard`;
     window.location.href = `${AUTH_PAGE_URL}?return_url=${encodeURIComponent(returnUrl)}`;
+    // window.location.href = `${AUTH_PAGE_URL}`;
   }, []);
 
   return (
