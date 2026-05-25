@@ -17,6 +17,7 @@ interface TestRun {
   duration_ms?: number;
   average_score?: number | null;
   evaluation_ts?: string;
+  analysis_status?: string;
 }
 
 interface HeaderConfig {
@@ -403,6 +404,10 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
                           className="action-icon-button action-report"
                           data-tooltip="Report"
                           onClick={async () => {
+                            if (run.analysis_status === "failed") {
+                              alert("Please complete the Analysis first.");
+                              return;
+                            }
                             if (downloadState) return;
                             setDownloadState({ runName: run.run_name, progress: 0, phase: "generating" });
                             let p = 0;

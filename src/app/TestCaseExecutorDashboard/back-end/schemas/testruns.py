@@ -13,7 +13,8 @@ class TestRunResponse(BaseModel):
     duration_ms: Optional[int] = None
     average_score: Optional[float] = None
     totalPages: Optional[int] = None
-
+    analysis_status: str
+    
 class TestRunDetailsResponse(BaseModel):
     run_name: str
     testcase_name: str

@@ -403,7 +403,9 @@ def get_all_test_runs_service(
         runs.sort(key=lambda r: getattr(r, sort_by) or "", reverse=reverse)
         start_idx = (page - 1) * page_size
         runs = runs[start_idx : start_idx + page_size]
+        
         for r in runs:
+            analysis_status = "failed"   # reset for each run
             domain_name = None
 
             target_id = (
@@ -425,9 +427,14 @@ def get_all_test_runs_service(
             scores = []
             count = 0
             for e in timeline:
+                
                 if (e.evaluation_score is not None) and (e.evaluation_score <= 1):
                     count += 1
                     scores.append(float(e.evaluation_score))
+                    
+            
+            if scores:
+                analysis_status="completed"
 
             average_score = (
                 round(sum(scores) / count, 4)
@@ -451,6 +458,7 @@ def get_all_test_runs_service(
                     duration_ms=duration_ms,
                     average_score=average_score,
                     evaluation_ts=evaluation_ts,
+                    analysis_status=analysis_status,
                     totalPages= math.ceil(total_count / page_size) if page_size else 1
                 )
             )
