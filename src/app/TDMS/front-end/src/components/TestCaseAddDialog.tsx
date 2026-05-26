@@ -768,6 +768,7 @@ export const TestCaseAddDialog = ({
                   placeholder="Enter new test case name"
                   value={testCaseName}
                   onChange={(e) => setTestCaseName(e.target.value)}
+                  onMouseDown={(e) => e.currentTarget.focus()}
                   onFocus={() => {
                     setShowDetails(false);
                     setShowRequestDetails(false);

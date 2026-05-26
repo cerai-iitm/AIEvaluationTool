@@ -25,7 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, Loader2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ResponseUpdateDialog } from "@/components/ResponseUpdateDialog";
@@ -298,8 +298,18 @@ const Responses = () => {
                 <Button
                   variant="ghost"
                   size="icon"
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1 || isLoading}
+                  aria-label="Go to first page"
+                >
+                  <ChevronsLeft className="w-5 h-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1 || isLoading}
+                  aria-label="Go to previous page"
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </Button>
@@ -310,8 +320,18 @@ const Responses = () => {
                     setCurrentPage((p) => Math.min(totalPages, p + 1))
                   }
                   disabled={currentPage === totalPages || isLoading}
+                  aria-label="Go to next page"
                 >
                   <ChevronRight className="w-5 h-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setCurrentPage(totalPages)}
+                  disabled={currentPage === totalPages || isLoading}
+                  aria-label="Go to last page"
+                >
+                  <ChevronsRight className="w-5 h-5" />
                 </Button>
               </div>
             </div>

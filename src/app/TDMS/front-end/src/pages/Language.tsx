@@ -3,7 +3,7 @@ import Sidebar from '@/components/Sidebar';
 import {Input} from '@/components/ui/input';
 import {Button} from '@/components/ui/button';
 import  {Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
 import { hasPermission, isUser } from '@/utils/permissions';
@@ -354,8 +354,18 @@ const LanguageList: React.FC = () => {
                             <Button
                                 variant="ghost"
                                 size="icon"
+                                onClick={() => setCurrentPage(1)}
+                                disabled={currentPage === 1}
+                                aria-label="Go to first page"
+                            >
+                                <ChevronsLeft className="w-4 h-4 md:w-5 md:h-5" />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
                                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                                 disabled={currentPage === 1}
+                                aria-label="Go to previous page"
                             >
                                 <ChevronLeft className="w-4 h-4 md:w-5 md:h-5" />
                             </Button>
@@ -364,8 +374,18 @@ const LanguageList: React.FC = () => {
                                 size="icon"
                                 onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                                 disabled={currentPage === totalPages}
+                                aria-label="Go to next page"
                             >
                                 <ChevronRight className="w-4 h-4 md:w-5 md:h-5" />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setCurrentPage(totalPages)}
+                                disabled={currentPage === totalPages}
+                                aria-label="Go to last page"
+                            >
+                                <ChevronsRight className="w-4 h-4 md:w-5 md:h-5" />
                             </Button>
                         </div>
                     </div>

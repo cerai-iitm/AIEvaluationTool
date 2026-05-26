@@ -15,7 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, X } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
@@ -412,8 +412,18 @@ const Metrics: React.FC = () => {
                 <Button
                   variant="ghost"
                   size="icon"
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                  aria-label="Go to first page"
+                >
+                  <ChevronsLeft className="w-4 h-4 md:w-5 md:h-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
+                  aria-label="Go to previous page"
                 >
                   <ChevronLeft className="w-4 h-4 md:w-5 md:h-5"></ChevronLeft>
                 </Button>
@@ -422,8 +432,18 @@ const Metrics: React.FC = () => {
                   size='icon'
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
+                  aria-label="Go to next page"
                 >
                   <ChevronRight className="w-4 h-4 md:w-5 md:h-5"></ChevronRight>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setCurrentPage(totalPages)}
+                  disabled={currentPage === totalPages}
+                  aria-label="Go to last page"
+                >
+                  <ChevronsRight className="w-4 h-4 md:w-5 md:h-5" />
                 </Button>
               </div>
             </div>
