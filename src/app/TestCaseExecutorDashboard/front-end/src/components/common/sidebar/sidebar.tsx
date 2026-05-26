@@ -27,7 +27,7 @@ interface SidebarProps {
 const Sidebar = ({ onLogout }: SidebarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [userInfo, setUserInfo] = useState<UserInfo>({ user_name: "UserName", email: "", role: "Admin" });
+  const [userInfo, setUserInfo] = useState<UserInfo>({ user_name: "", email: "", role: "" });
   const [isLoading, setIsLoading] = useState(true);
   const loginUrl = LOGIN_URL;
   const testDataUrl = process.env.REACT_APP_TEST_DATA_URL || "/tdms/dashboard";
@@ -140,7 +140,7 @@ const Sidebar = ({ onLogout }: SidebarProps) => {
       <nav className="sidebar-nav">
         {navItems
           .filter((item) => {
-            const normalizedRole = userInfo.role.toLowerCase();
+            const normalizedRole = userInfo.role.trim().toLowerCase();
             if (item.allowedRoles && !item.allowedRoles.includes(normalizedRole)) {
               return false;
             }

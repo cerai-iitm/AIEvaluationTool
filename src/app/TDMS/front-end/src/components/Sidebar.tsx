@@ -26,7 +26,7 @@ const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [userInfo, setUserInfo] = useState<UserInfo>({ user_name: "UserName", email: "", role: "Admin" });
+  const [userInfo, setUserInfo] = useState<UserInfo>({ user_name: "", email: "", role: "" });
   const [isLoading, setIsLoading] = useState(true);
   const testRunsHomeUrl =
     import.meta.env.VITE_TEST_RUNS_HOME_URL || "/";
@@ -118,7 +118,7 @@ const Sidebar = () => {
       <nav className="flex-1 px-3 mt-8">
         {navItems
           .filter((item) => {
-            const normalizedRole = userInfo.role.toLowerCase();
+            const normalizedRole = userInfo.role.trim().toLowerCase();
 
             if (item.allowedRoles && !item.allowedRoles.includes(normalizedRole)) {
               return false;
