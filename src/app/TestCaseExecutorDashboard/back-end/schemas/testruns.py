@@ -35,6 +35,8 @@ class TestRunSummaryResponse(BaseModel):
     start_ts: str
     end_ts: Optional[str] = None
     average_score: Optional[float] = None
+    analysis_status: str = "failed"  # default status
+    
 
 
 class TestRunFullResponse(BaseModel):

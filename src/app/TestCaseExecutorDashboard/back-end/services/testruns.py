@@ -314,13 +314,15 @@ def get_test_run_service(db, run_name: str, metric: Optional[str] = None, status
             raise HTTPException(status_code=404, detail="Run not found")
         timeline = db.get_run_timeline(run_name) or []
         duration_ms = _calculate_timeline_duration_ms(timeline)
-            
+        analysis_status="failed"   # default status
         if timeline:
             scores = []
             for e in timeline:
                 if e.evaluation_score is not None:
                     scores.append(float(e.evaluation_score))
-
+            if scores:
+                analysis_status="completed"
+            print(analysis_status)
             average_score = (
                 round(sum(scores) / len(scores), 4)
                 if scores
@@ -342,6 +344,7 @@ def get_test_run_service(db, run_name: str, metric: Optional[str] = None, status
             start_ts=run.start_ts,
             end_ts=run.end_ts,
             average_score=average_score,
+            analysis_status=analysis_status
         )
         logger.info(f"Run summary: {summary}")
         details = db.get_all_run_details_by_run_name(run_name)

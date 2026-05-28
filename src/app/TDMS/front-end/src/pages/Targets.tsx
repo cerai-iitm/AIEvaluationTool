@@ -49,6 +49,7 @@ interface Target {
 const Targets = () => {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchField, setSearchField] = useState<"target" | "type" | "domain">("target");
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [selectedTarget, setSelectedTarget] = useState<Target | null>(null);
   const [updateTarget, setUpdateTarget] = useState<Target | null>(null);
@@ -242,12 +243,19 @@ const Targets = () => {
     }
   };
 
-  const filteredTargets = targets.filter(
-    (t) =>
-      t.target_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.target_type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.domain_name.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
+  const filteredTargets = targets.filter((target) => {
+    const query = searchQuery.toLowerCase();
+
+    switch (searchField) {
+      case "type":
+        return target.target_type.toLowerCase().includes(query);
+      case "domain":
+        return target.domain_name.toLowerCase().includes(query);
+      case "target":
+      default:
+        return target.target_name.toLowerCase().includes(query);
+    }
+  });
 
   const totalItems = filteredTargets.length;
   const itemsPerPage = 15;
@@ -279,7 +287,13 @@ const Targets = () => {
         <div className="p-8 flex flex-col h-screen">
           <h1 className="text-4xl font-bold mb-8 text-center">Targets</h1>
           <div className="flex gap-4 mb-6">
-            <Select defaultValue="target">
+            <Select
+              value={searchField}
+              onValueChange={(value: "target" | "type" | "domain") => {
+                setSearchField(value);
+                setCurrentPage(1);
+              }}
+            >
               <SelectTrigger className="w-48">
                 <SelectValue />
               </SelectTrigger>
