@@ -34,6 +34,7 @@ import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
 import { hasPermission } from "@/utils/permissions";
 import { HistoryButton } from "@/components/HistoryButton";
+import { PageHeaderWithBack } from "@/components/PageHeaderWithBack";
 
 interface TestPlan {
   plan_id: number;
@@ -294,7 +295,7 @@ const TestPlans = () => {
       </aside>
       <main className="flex-1 bg-background ml-[224px] ">
         <div className="p-8 flex flex-col h-screen">
-          <h1 className="text-4xl font-bold mb-8 text-center">Test Plans</h1>
+          <PageHeaderWithBack title="Test Plans" />
           <div className="flex gap-4 mb-6">
             <Select defaultValue="plan">
               {/* <SelectTrigger className="w-48">

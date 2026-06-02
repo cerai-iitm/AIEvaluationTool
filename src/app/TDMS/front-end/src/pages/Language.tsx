@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
 import { hasPermission, isUser } from '@/utils/permissions';
 import { HistoryButton } from "@/components/HistoryButton";
+import { PageHeaderWithBack } from "@/components/PageHeaderWithBack";
 
 
 interface Language {
@@ -320,7 +321,7 @@ const LanguageList: React.FC = () => {
             {/* Main content */}
             <main className="flex-1 bg-background ml-[220px] md:ml-[224px]">
                 <div className="p-4 md:p-8 flex flex-col h-screen">
-                    <h1 className="text-2xl md:text-4xl font-bold mb-4 md:mb-8 text-center">Languages</h1>
+                    <PageHeaderWithBack title="Languages" />
 
                     {/* Filter/Search Bar */}
                     <div className="flex flex-col sm:flex-row gap-4 mb-6">

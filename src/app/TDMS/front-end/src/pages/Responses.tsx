@@ -34,6 +34,7 @@ import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
 import { hasPermission } from "@/utils/permissions";
 import { HistoryButton } from "@/components/HistoryButton";
+import { PageHeaderWithBack } from "@/components/PageHeaderWithBack";
 
 interface Response {
   response_id: number;
@@ -249,7 +250,7 @@ const Responses = () => {
 
       <main className="flex-1 bg-background ml-[224px]">
         <div className="p-8">
-          <h1 className="text-4xl font-bold mb-8 text-center">Responses</h1>
+          <PageHeaderWithBack title="Responses" />
 
           <div className="flex gap-4 mb-6 flex-wrap">
             <Select 
