@@ -214,7 +214,8 @@ async def execute_testcases(
                     }
                 )
                 step2_start = datetime.now()
-                response_from_agent = client.chat(
+                response_from_agent = await asyncio.to_thread(
+                    client.chat,
                     chat_id=testcase.testcase_id,
                     prompt_list=[message_to_agent],
                 )

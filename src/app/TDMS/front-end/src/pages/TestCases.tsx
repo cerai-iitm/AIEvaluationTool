@@ -457,9 +457,9 @@ const TestCases = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="testcase">Test Case</SelectItem>
-                <SelectItem value="strategy">Strategy</SelectItem>
-                <SelectItem value="domain">Domain</SelectItem>
+                <SelectItem value="testcase">Testcase Name</SelectItem>
+                <SelectItem value="strategy">Strategy Name</SelectItem>
+                <SelectItem value="domain">Domain Name</SelectItem>
               </SelectContent>
             </Select>
 

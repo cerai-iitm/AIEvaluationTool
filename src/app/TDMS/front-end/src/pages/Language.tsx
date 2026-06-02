@@ -577,7 +577,6 @@ const LanguageList: React.FC = () => {
                             <Input
                                 value={updateName}
                                 onChange={e => setUpdateName(e.target.value)}
-                                maxLength={15}
                                 className="text-sm md:text-[17px] capitalize w-full md:w-1/2 "
                             />
                         </div>
@@ -586,7 +585,6 @@ const LanguageList: React.FC = () => {
                             <Input
                                 value={addMessage}
                                 onChange={e => setAddMessage(e.target.value)}
-                                maxLength={15}
                                 placeholder='Required'
                                 className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 focus:outline-none focus:ring focus:ring-blue-200 "
                             />
@@ -638,7 +636,6 @@ const LanguageList: React.FC = () => {
                                 value={newLanguageName}
                                 onChange={e => setNewLanguageName(e.target.value)}
                                 className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] w-full md:w-1/2 capitalize"
-                                maxLength={15}
                             />
                         </div>
                         {/* Message Row + Submit Button */}
@@ -647,7 +644,6 @@ const LanguageList: React.FC = () => {
                             <Input
                                 value={addMessage}
                                 onChange={e => setAddMessage(e.target.value)}
-                                maxLength={15}
                                 placeholder='Required'
                                 className=" rounded border px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
                             />

@@ -1,30 +1,47 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {WS_BASE_URL,} from "../../../config/api"
+
+export interface TestRunEvent {
+  type: "RUN_STARTED" | "STEP_UPDATE" | "TESTCASE_FINISHED" | "RUN_FINISHED";
+  runId?: string | number;
+  total?: number;
+  testcaseIndex?: number;
+  step?: number;
+  status?: StepStatus | string;
+  current?: number;
+  error?: string;
+}
+
 interface LoopProps {
   isRunning: boolean;
   totalTestCases: number;
   stepsPerTestCase: number; // 👈 how many steps each TC has
   stepNames?: string[]; // 👈 Names for each step
   planName?: string;     // 👈 add
+  runName?: string;   // <-- ADD THIS
   metricName?: string;   // 👈 add
+  liveEvents?: TestRunEvent[];
   onRunFinished?: () => void;
   
 }
 
 type StepStatus = "PENDING" | "RUNNING" | "DONE" | "FAILED";
 
-const Loop: React.FC<LoopProps> = ({
-  isRunning,
+  const Loop: React.FC<LoopProps> = ({
+     isRunning,
   totalTestCases,
   stepsPerTestCase,
   stepNames: propStepNames,
   planName,
+  runName,
   metricName,
+  liveEvents = [],
   onRunFinished
-}) => {
+  }) => {
   const [currentTestCase, setCurrentTestCase] = useState(0);
   const navigate = useNavigate();
+  const activeTestCaseRef = useRef(0);
+  const processedEventCountRef = useRef(0);
   // Track status for each step individually
   const [stepStatuses, setStepStatuses] = useState<StepStatus[]>(
     Array(stepsPerTestCase).fill("PENDING")
@@ -53,58 +70,80 @@ const Loop: React.FC<LoopProps> = ({
   useEffect(() => {
     if (!isRunning) return;
 
+    activeTestCaseRef.current = 0;
+    processedEventCountRef.current = 0;
+    setCurrentTestCase(0);
     setRunCompleted(false);
-    const ws = new WebSocket(`${WS_BASE_URL}/ws/test-run`);
+    setStepStatuses(Array(stepsPerTestCase).fill("PENDING"));
+  }, [isRunning, stepsPerTestCase]);
 
-    ws.onopen = () => {
-      console.log("✅ WebSocket connected");
-    };
+  useEffect(() => {
+    const nextEvents = liveEvents.slice(processedEventCountRef.current);
+    if (nextEvents.length === 0) return;
 
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      console.log("📩 WS EVENT:", data);
+    processedEventCountRef.current = liveEvents.length;
 
-      switch (data.type) {
-        case "RUN_STARTED":
-          setCurrentTestCase(0);
-          setStepStatuses(Array(stepsPerTestCase).fill("PENDING"));
-          break;
+    nextEvents.forEach((liveEvent) => {
+      switch (liveEvent.type) {
+      case "RUN_STARTED":
+        activeTestCaseRef.current = 0;
+        setRunCompleted(false);
+        setCurrentTestCase(0);
+        setStepStatuses(Array(stepsPerTestCase).fill("PENDING"));
+        break;
 
-        case "STEP_UPDATE":
-          console.log('STEP_UPDATE received:', { step: data.step, status: data.status });
-          setCurrentTestCase(data.testcaseIndex);
-          setStepStatuses((prev) => {
-            const next = [...prev];
-            // Convert 1-based step to 0-based index
-            const stepIndex = data.step - 1;
-            if (stepIndex >= 0 && stepIndex < next.length) {
-              next[stepIndex] = data.status;
-            } else {
-              console.warn(`Invalid step index: ${stepIndex}, max allowed: ${next.length - 1}`);
-            }
-            console.log('Updated step statuses:', next);
-            return next;
-          });
-          break;
+      case "STEP_UPDATE": {
+        const testcaseIndex = Number(liveEvent.testcaseIndex ?? 0);
+        const stepIndex = Number(liveEvent.step ?? 0) - 1;
+        const status = liveEvent.status as StepStatus;
+        const previousTestCase = activeTestCaseRef.current;
 
-        case "TESTCASE_FINISHED":
-          setStepStatuses(Array(stepsPerTestCase).fill("PENDING"));
-          
-          setCurrentTestCase(data.current + 1);
-          break;
-        case "RUN_FINISHED":
-          setRunCompleted(true);
-          onRunFinished?.();
-          console.log("🏁 Run completed");
-          ws.close();
-          break;
+        if (testcaseIndex < previousTestCase) {
+          return;
+        }
+
+        activeTestCaseRef.current = testcaseIndex;
+        setCurrentTestCase((prev) => Math.max(prev, testcaseIndex));
+        setStepStatuses((prev) => {
+          const next =
+            testcaseIndex === previousTestCase
+              ? [...prev]
+              : Array(stepsPerTestCase).fill("PENDING");
+
+          if (stepIndex >= 0 && stepIndex < next.length) {
+            next[stepIndex] = status;
+          } else {
+            console.warn(`Invalid step index: ${stepIndex}, max allowed: ${next.length - 1}`);
+          }
+
+          return next;
+        });
+        break;
       }
-    };
 
-    ws.onclose = () => console.log("❌ WebSocket closed");
+      case "TESTCASE_FINISHED": {
+        const finishedTestCase = Number(liveEvent.current ?? 0);
 
-    return () => ws.close();
-  }, [isRunning, stepsPerTestCase, onRunFinished]);
+        if (finishedTestCase < activeTestCaseRef.current) {
+          return;
+        }
+
+        activeTestCaseRef.current = finishedTestCase + 1;
+        setStepStatuses(Array(stepsPerTestCase).fill("PENDING"));
+        setCurrentTestCase(Math.min(finishedTestCase + 1, totalTestCases));
+        break;
+      }
+
+      case "RUN_FINISHED":
+        activeTestCaseRef.current = totalTestCases;
+        setCurrentTestCase(totalTestCases);
+        setRunCompleted(true);
+        onRunFinished?.();
+        console.log("🏁 Run completed");
+        break;
+      }
+    });
+  }, [liveEvents, onRunFinished, stepsPerTestCase, totalTestCases]);
 
   /* ---------- UI HELPERS ---------- */
 
@@ -295,7 +334,7 @@ const Loop: React.FC<LoopProps> = ({
           </span>
 
           <button
-            onClick={() => navigate("/")}
+            onClick={() => navigate(`/test-runs/${runName}`)}
             style={{
               padding: "8px 14px",
               borderRadius: "6px",
@@ -306,7 +345,7 @@ const Loop: React.FC<LoopProps> = ({
               cursor: "pointer",
             }}
           >
-            View Test Runs
+            View Test Run Details
           </button>
         </div>
       )}

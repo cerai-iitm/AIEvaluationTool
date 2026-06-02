@@ -1,10 +1,10 @@
-import React,{useState, useEffect, useCallback} from 'react';
+import React,{useState, useEffect, useCallback, useRef} from 'react';
 import './NewTestRunPage.css';
 import { API_BASE_URL, API_ENDPOINTS,WS_BASE_URL } from "../../config/api";
 // Import only the Bootstrap CSS for the select components
 
 import CustomSelect from './CustomSelect/CustomSelect';
-import Loop from './Loop/Loop';
+import Loop, { TestRunEvent } from './Loop/Loop';
 import { getAuthHeaders, redirectToLogin } from "../../utils/auth";
 
 interface RunFormData {
@@ -40,6 +40,7 @@ const NewTestRunPage: React.FC = () => {
   const maxTestCases = ['5', '20', '30', '50', '100'];
   const domains = ['E-commerce', 'Healthcare', 'Finance', 'Education'];
   const languages = ['Tamil', 'Hindi', 'Assamese', 'Bengali', 'Sindhi', 'Bodo'];
+  const [runName, setRunName] = useState("");
   const [domainOptions, setDomainOptions] = useState<string[]>([]);
   const [languageOptions, setLanguageOptions] = useState<string[]>([]);
   const [isRunning, setIsRunning] = useState(false);
@@ -47,6 +48,12 @@ const NewTestRunPage: React.FC = () => {
   const [totalTestCases, setTotalTestCases] = useState(0);
   const [filters, setFilters] = useState<AllFiltersResponse | null>(null);
   const [planMetrics, setPlanMetrics] = useState<string[]>([]);
+  const [liveEvents, setLiveEvents] = useState<TestRunEvent[]>([]);
+  const wsRef = useRef<WebSocket | null>(null);
+  const wsConnectingRef = useRef<Promise<void> | null>(null);
+  const activeRunIdRef = useRef<string | number | null>(null);
+  const pendingRunStartRef = useRef(false);
+  const pendingEventsRef = useRef<TestRunEvent[]>([]);
 
   const [formData, setFormData] = useState<RunFormData>({
     runName: "",   
@@ -105,6 +112,91 @@ const NewTestRunPage: React.FC = () => {
     setIsRunning(false);
   }, []);
 
+  const handleWsMessage = useCallback((event: MessageEvent) => {
+    const data: TestRunEvent = JSON.parse(event.data);
+    const activeRunId = activeRunIdRef.current;
+
+    if (activeRunId === null) {
+      if (pendingRunStartRef.current) {
+        pendingEventsRef.current.push(data);
+      }
+      return;
+    }
+
+    if (data.runId === undefined || String(data.runId) !== String(activeRunId)) {
+      return;
+    }
+
+    console.log("Test run websocket event:", data);
+    setLiveEvents((prev) => [...prev, data]);
+
+    if (data.type === "RUN_FINISHED") {
+      setRunCompleted(true);
+      setIsRunning(false);
+      activeRunIdRef.current = null;
+    }
+  }, []);
+
+  const closeLiveSocket = useCallback(() => {
+    activeRunIdRef.current = null;
+    wsConnectingRef.current = null;
+    pendingRunStartRef.current = false;
+    pendingEventsRef.current = [];
+
+    if (wsRef.current) {
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+  }, []);
+
+  const ensureLiveSocket = useCallback(() => {
+    const existingSocket = wsRef.current;
+
+    if (existingSocket?.readyState === WebSocket.OPEN) {
+      return Promise.resolve();
+    }
+
+    if (existingSocket?.readyState === WebSocket.CONNECTING && wsConnectingRef.current) {
+      return wsConnectingRef.current;
+    }
+
+    const ws = new WebSocket(`${WS_BASE_URL}/ws/test-run`);
+    wsRef.current = ws;
+
+    wsConnectingRef.current = new Promise<void>((resolve, reject) => {
+      const timeoutId = window.setTimeout(() => {
+        if (ws.readyState !== WebSocket.OPEN) {
+          reject(new Error("Timed out connecting to test run websocket"));
+          ws.close();
+        }
+      }, 10000);
+
+      ws.onopen = () => {
+        window.clearTimeout(timeoutId);
+        wsConnectingRef.current = null;
+        console.log("Test run websocket connected");
+        resolve();
+      };
+
+      ws.onerror = () => {
+        window.clearTimeout(timeoutId);
+        wsConnectingRef.current = null;
+        reject(new Error("Failed to connect to test run websocket"));
+      };
+    });
+
+    ws.onmessage = handleWsMessage;
+    ws.onclose = () => {
+      if (wsRef.current === ws) {
+        wsRef.current = null;
+      }
+      wsConnectingRef.current = null;
+      console.log("Test run websocket closed");
+    };
+
+    return wsConnectingRef.current;
+  }, [handleWsMessage]);
+
   useEffect(() => {
     const fetchFilters = async () => {
       try {
@@ -131,6 +223,10 @@ const NewTestRunPage: React.FC = () => {
 
     fetchFilters();
   }, []);
+
+  useEffect(() => {
+    return () => closeLiveSocket();
+  }, [closeLiveSocket]);
 
   const fetchMetricsByPlan = async (planName: string) => {
     try {
@@ -179,47 +275,64 @@ const NewTestRunPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setRunCompleted(false);
-    
-    const res = await fetch(`${API_BASE_URL}/start-run`, {
-      method: "POST",
-      headers: getAuthHeaders(),
-      credentials: "include",
-      body: JSON.stringify(formData),
-    });
+    setLiveEvents([]);
+    activeRunIdRef.current = null;
+    pendingEventsRef.current = [];
+    pendingRunStartRef.current = true;
+
+    try {
+      await ensureLiveSocket();
+    } catch (err) {
+      console.error("Unable to open websocket before starting run:", err);
+      alert("Unable to connect to live progress updates. Please try again.");
+      pendingRunStartRef.current = false;
+      return;
+    }
+
+    let res: Response;
+    try {
+      res = await fetch(`${API_BASE_URL}/start-run`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        credentials: "include",
+        body: JSON.stringify(formData),
+      });
+    } catch (err) {
+      console.error("Failed to start run:", err);
+      pendingRunStartRef.current = false;
+      alert("Failed to start run");
+      return;
+    }
 
     if (res.status === 401) {
       redirectToLogin();
+      pendingRunStartRef.current = false;
       return;
     }
 
     const runData = await res.json(); // <-- this should now include runName, runId, testPlanId, metricId
      if (!res.ok) {
       alert(runData.detail || "Failed to start run");
+      pendingRunStartRef.current = false;
       return;  // 🛑 STOP here
     }
     setTotalTestCases(runData.totalTestCases);
+    setRunName(runData.runName);
+    activeRunIdRef.current = runData.runId;
+    pendingRunStartRef.current = false;
+
+    const bufferedEvents = pendingEventsRef.current.filter(
+      (pendingEvent) =>
+        pendingEvent.runId !== undefined &&
+        String(pendingEvent.runId) === String(runData.runId)
+    );
+    pendingEventsRef.current = [];
+
+    if (bufferedEvents.length > 0) {
+      setLiveEvents((prev) => [...prev, ...bufferedEvents]);
+    }
+
     setIsRunning(true); // now we can start the Loop component
-
-    // 2️⃣ Open WebSocket to get live updates
-    const ws = new WebSocket(`${WS_BASE_URL}/ws/test-run`);
-
-    ws.onopen = () => {
-      console.log("WebSocket connected, sending run info");
-      ws.send(JSON.stringify(runData)); // send metric_id, runId, etc.
-    };
-
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data); // backend sends JSON updates
-      console.log("Update from backend:", data);
-
-      // Example: if backend sends total_test_cases
-      // setTotalTestCases(data.total);
-      // setCurrentTestCase(data.current);
-    };
-
-    ws.onclose = () => {
-      console.log("WebSocket closed");
-    };
   };
 
   return (
@@ -344,9 +457,14 @@ const NewTestRunPage: React.FC = () => {
           Start Run
         </button>
       </form>
-      {(isRunning || runCompleted) && <Loop isRunning={isRunning} totalTestCases={totalTestCases} stepsPerTestCase={4} 
+      {(isRunning || runCompleted) && 
+      <Loop isRunning={isRunning} 
+        totalTestCases={totalTestCases} 
+        stepsPerTestCase={4} 
         stepNames={["Prepare", "Finding elements", "Execute", "Store"]} planName={formData.testPlan}   
         metricName={formData.metric}
+        runName={runName}
+        liveEvents={liveEvents}
         onRunFinished={handleRunFinished}
       />}       
       
