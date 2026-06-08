@@ -3,10 +3,12 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import "./App.css";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
-import { isAuthenticated, parseUrlTokens } from "./utils/auth";
+import { getValidAccessToken, hasSharedLogoutSignal, parseUrlTokens, redirectToLogin } from "./utils/auth";
+import { API_ENDPOINTS } from "./config/api";
 import Sidebar from "./components/Sidebar";
 import TestCases from "./pages/TestCases";
 import Responses from "./pages/Responses";
@@ -53,6 +55,60 @@ const AuthenticatedApp = () => (
   </div>
 );
 
+const AuthGate = () => {
+  const [isAllowed, setIsAllowed] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const validateAuth = async () => {
+      const token = await getValidAccessToken(API_ENDPOINTS.REFRESH);
+
+      if (!isMounted) return;
+
+      if (!token) {
+        redirectToLogin();
+        return;
+      }
+
+      setIsAllowed(true);
+      setIsChecking(false);
+    };
+
+    validateAuth();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleSharedLogout = () => {
+      if (hasSharedLogoutSignal()) {
+        redirectToLogin();
+      }
+    };
+
+    handleSharedLogout();
+    window.addEventListener("focus", handleSharedLogout);
+    document.addEventListener("visibilitychange", handleSharedLogout);
+    const intervalId = window.setInterval(handleSharedLogout, 1000);
+
+    return () => {
+      window.removeEventListener("focus", handleSharedLogout);
+      document.removeEventListener("visibilitychange", handleSharedLogout);
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
+  if (isChecking) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+
+  return isAllowed ? <AuthenticatedApp /> : null;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -61,8 +117,9 @@ const App = () => (
       <BrowserRouter basename={routerBasename}>
         {parseUrlTokens()}
         <Routes>
-          <Route path="/" element={isAuthenticated() ? <Navigate to="/dashboard" replace /> : <Login />} />
-          <Route path="/*" element={isAuthenticated() ? <AuthenticatedApp /> : <Navigate to="/" replace />} />
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/*" element={<AuthGate />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>

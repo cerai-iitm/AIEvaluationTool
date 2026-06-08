@@ -2,7 +2,7 @@ export const API_BASE_URL =
   process.env.REACT_APP_API_BASE_URL !;
 
 export const AUTH_SERVICE_URL =
-  process.env.REACT_APP_AUTH_SERVICE_URL || "/auth";
+  process.env.REACT_APP_AUTH_SERVICE_URL || "http://localhost:7500";
 
 export const AUTH_PAGE_URL = `${AUTH_SERVICE_URL}/web/login`;
 export const LOGIN_URL = process.env.REACT_APP_LOGIN_URL || AUTH_PAGE_URL;

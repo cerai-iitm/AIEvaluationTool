@@ -1,10 +1,14 @@
 // Auth utilities for managing tokens
+import { AUTH_LOGOUT_URL, AUTH_PAGE_URL } from "@/config/api";
+
 export const AUTH_KEYS = {
   ACCESS_TOKEN: 'access_token',
   REFRESH_TOKEN: 'refresh_token',
   USER_NAME: 'user_name',
   ROLE: 'role'
 };
+
+const SHARED_LOGOUT_COOKIE = "cerai_logout_at";
 
 export const getStoredTokens = () => ({
   accessToken: localStorage.getItem(AUTH_KEYS.ACCESS_TOKEN),
@@ -32,7 +36,39 @@ export const clearStoredTokens = () => {
   localStorage.removeItem(AUTH_KEYS.ROLE);
 };
 
+export const markSharedLogout = (): void => {
+  document.cookie = `${SHARED_LOGOUT_COOKIE}=${Date.now()}; path=/; max-age=120; SameSite=Lax`;
+};
+
+export const clearSharedLogout = (): void => {
+  document.cookie = `${SHARED_LOGOUT_COOKIE}=; path=/; max-age=0; SameSite=Lax`;
+};
+
+export const hasSharedLogoutSignal = (): boolean =>
+  document.cookie.split("; ").some((cookie) => cookie.startsWith(`${SHARED_LOGOUT_COOKIE}=`));
+
 export const isAuthenticated = () => !!localStorage.getItem(AUTH_KEYS.ACCESS_TOKEN);
+
+export const getTdmsReturnUrl = (): string => {
+  const appBase = import.meta.env.BASE_URL.replace(/\/$/, "");
+  return `${window.location.origin}${appBase}/dashboard`;
+};
+
+export const getLoginUrl = (returnUrl = getTdmsReturnUrl()): string =>
+  `${AUTH_PAGE_URL}?return_url=${encodeURIComponent(returnUrl)}`;
+  // `${AUTH_PAGE_URL}`;
+
+export const redirectToLogin = (returnUrl?: string): void => {
+  clearStoredTokens();
+  window.location.replace(getLoginUrl(returnUrl));
+};
+
+export const logoutAndRedirect = (): void => {
+  markSharedLogout();
+  clearStoredTokens();
+  const returnUrl = encodeURIComponent(AUTH_PAGE_URL);
+  window.location.replace(`${AUTH_LOGOUT_URL}?return_url=${returnUrl}`);
+};
 
 const decodeJwtPayload = (token: string): Record<string, unknown> | null => {
   const [, payload] = token.split(".");
@@ -63,6 +99,7 @@ const storeTokensFromParams = (params: URLSearchParams): boolean => {
   const values = Object.fromEntries(params);
 
   if (values.access_token && values.refresh_token) {
+    clearSharedLogout();
     setStoredTokens({
       access_token: values.access_token,
       refresh_token: values.refresh_token,
