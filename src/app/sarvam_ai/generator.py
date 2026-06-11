@@ -35,7 +35,7 @@ class SarvamAIGenerator:
         self.logger = get_logger(__name__, loglevel=loglevel)
         self.model_loaded = False
         self.api_key_check = bool(os.environ.get('SARVAM_API_KEY'))
-        self.device = torch.device("cuda")
+        self.device = torch.device("cpu")
 
     def load_model(self, model_id: str = "sarvamai/sarvam-2b-v0.5"):
         """ Load the Sarvam AI model for text generation.
@@ -48,18 +48,20 @@ class SarvamAIGenerator:
 
         if torch.cuda.is_available() and not self.force_cpu:
             self.logger.info("using GPU for infering from Sarvam generator model")
-            self.model = AutoModelForCausalLM.from_pretrained(self.model_id, 
-                                                              torch_dtype=torch.float16, device_map="cuda")
-            current_device = torch.cuda.current_device()
-            print(f"Current CUDA device ID: {current_device}")
+            self.model = AutoModelForCausalLM.from_pretrained(
+                self.model_id,
+                torch_dtype=torch.float16,
+                device_map="auto"
+            )
             self.device = torch.device("cuda")
         else:
             self.logger.info("using CPU for infering from Sarvam generator model")
-            self.model = AutoModelForCausalLM.from_pretrained(self.model_id, 
-                                                              torch_dtype=torch.float32)
-            self.device = torch.device("cpu")
-        # Move model to the appropriate device
-        self.model.to(self.device)
+            self.model = AutoModelForCausalLM.from_pretrained(
+                self.model_id,
+                torch_dtype=torch.float32
+            )
+            self.model.to(self.device)
+
         self.model_loaded = True
 
     def generate(self, prompt: str, max_new_tokens: int = 1024) -> str:
@@ -69,8 +71,9 @@ class SarvamAIGenerator:
         if not self.model_loaded:
             self.load_model()
 
-        current_device = torch.cuda.current_device()
-        print(f"Current CUDA device ID: {current_device}")
+        if torch.cuda.is_available():
+            current_device = torch.cuda.current_device()
+            print(f"Current CUDA device ID: {current_device}")
 
         inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
         inputs = {k: v for k, v in inputs.items() if k in ['input_ids', 'attention_mask']}
@@ -81,8 +84,9 @@ class SarvamAIGenerator:
         """
         Return mean pooled embedding from last hidden state.
         """
-        current_device = torch.cuda.current_device()
-        print(f"Current CUDA device ID: {current_device}")
+        if torch.cuda.is_available():
+            current_device = torch.cuda.current_device()
+            print(f"Current CUDA device ID: {current_device}")
         print(f"Model device: {next(self.model.parameters()).device}")
 
         inputs = self.tokenizer(text, return_tensors="pt", truncation=True, max_length=512).to(self.device)
@@ -125,7 +129,7 @@ class SarvamAIGenerator:
         with torch.no_grad():
             outputs = self.model(**inputs, labels=inputs["input_ids"])
             loss = outputs.loss
-            perplexity = math.exp(loss.item()) # this calculates the perplexity in the text -> e ^(- 1/N SUM(1->N) (log(w_{i}|c_{0:i-1})) )
+            perplexity = math.exp(loss.item())
         return perplexity
 
     def get_SLOR(self, text:str):
