@@ -30,6 +30,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__) + '/../../'))  # Adjust t
 from lib.data import Prompt, TestCase, Response, TestPlan, Metric, LLMJudgePrompt, Target, Run, RunDetail, Conversation
 
 from lib.orm import DB  # Import the DB class from the orm module
+from lib.orm.tables import Metrics
 
 #----------------------remove the code below in production----------------------
 # Silence everything except your manual prints
@@ -131,6 +132,21 @@ prompts = json.load(open(config['files']['testcases'], 'r'))
 db = DB(db_url=db_url, debug=args.orm_debug)
 
 strategies = json.load(open(config["files"]["strategies"], "r"))
+descriptions = json.load(open(config["files"]["descriptions"], "r"))
+
+# Build one case-insensitive lookup for parent metrics and Parent/SubMetric rows.
+metric_descriptions = {}
+for plan_metrics in descriptions.values():
+    for metric_name, metric_data in plan_metrics.items():
+        metric_description = metric_data.get("description")
+        if metric_description:
+            metric_descriptions[metric_name.lower()] = metric_description
+
+        for submetric_name, submetric_data in metric_data.get("sub_metrics", {}).items():
+            submetric_description = submetric_data.get("description")
+            if submetric_description:
+                lookup_key = f"{metric_name}/{submetric_name}".lower()
+                metric_descriptions[lookup_key] = submetric_description
 
 # import all the strategies.
 logger.debug("Importing strategies...")
@@ -162,6 +178,7 @@ for plan in plans.keys():
             metric_obj = Metric(
                 metric_name=metric_name,
                 domain_id=domain_general if domain_general is not None else 1,
+                metric_description=metric_descriptions.get(metric_name.lower()),
             )
             metrics_list.append(metric_obj)
 
@@ -267,7 +284,11 @@ for met in prompts.keys():
             for t in base_cases
         ]
         # print(f"Adding metric '{metric_name_key}' with {len(mapped_cases)} test cases to the database.")
-        metric_obj = Metric(metric_name=str(metric_name_key), domain_id=domain_general)
+        metric_obj = Metric(
+            metric_name=str(metric_name_key),
+            domain_id=domain_general,
+            metric_description=metric_descriptions.get(metric_name_key.lower()),
+        )
         db.add_metric_and_testcases(testcases=mapped_cases, metric=metric_obj)
 
     # Phase 2: add child metric associations.
@@ -284,8 +305,22 @@ for met in prompts.keys():
             for t in base_cases
         ]
         # print(f"Adding metric '{metric_name_key}' with {len(mapped_cases)} test cases to the database.")
-        metric_obj = Metric(metric_name=str(metric_name_key), domain_id=domain_general)
+        metric_obj = Metric(
+            metric_name=str(metric_name_key),
+            domain_id=domain_general,
+            metric_description=metric_descriptions.get(metric_name_key.lower()),
+        )
         db.add_metric_and_testcases(testcases=mapped_cases, metric=metric_obj)
+
+# _get_or_create_metric does not update existing rows, so fill only blank
+# descriptions in one transaction after all parent and child metrics exist.
+with db.Session() as session:
+    existing_metrics = session.query(Metrics).all()
+    for existing_metric in existing_metrics:
+        description = metric_descriptions.get(existing_metric.metric_name.lower())
+        if description and not existing_metric.metric_description:
+            existing_metric.metric_description = description
+    session.commit()
 
 tgt = Target(
     target_name="Gooey AI",
