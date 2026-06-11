@@ -16,6 +16,17 @@ gpu_url = os.getenv("GPU_URL")
 analysis_jobs = {}
 analysis_jobs_lock = Lock()
 
+ollama_url = os.getenv("OLLAMA_URL")
+
+def check_analyse_health_service():
+    try:
+        response = requests.get(ollama_url, timeout=3)
+        if response.status_code < 400:
+            return {"status": "ok"}
+        raise HTTPException(status_code=503, detail="Ollama is not healthy")
+    except requests.exceptions.RequestException:
+        raise HTTPException(status_code=503, detail="Ollama is not reachable")
+
 # def check_service(url: str, name: str):
 #     try:
 #         response = requests.get(url, timeout=3)
@@ -285,6 +296,7 @@ async def run_analyse_background_service(run_name: str, db, mode: str = "rerun_a
                 status = "FAILED"
                 failed += 1
                 error = _stringify_error(e)
+                score = None
                 # Best-effort: persist failure reason to conversation (if available)
                 try:
                     if conversation is None and conversation_id:

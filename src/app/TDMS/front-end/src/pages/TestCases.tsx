@@ -25,7 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ChevronLeft, ChevronRight, X, Loader2 } from "lucide-react";
+import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, X, Loader2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { TestCaseUpdateDialog } from "@/components/TestCaseUpdateDialog";
@@ -34,6 +34,7 @@ import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
 import { hasPermission } from "@/utils/permissions";
 import { HistoryButton } from "@/components/HistoryButton";
+import { PageHeaderWithBack } from "@/components/PageHeaderWithBack";
 import { set } from "date-fns";
 
 interface TestCase {
@@ -365,7 +366,7 @@ const TestCases = () => {
   );
   const totalItems = filteredCases.length;
   const itemsPerPage = 15;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
 
   // Pagination logic: get items for current page
   const paginatedCases = filteredCases.slice(
@@ -447,7 +448,7 @@ const TestCases = () => {
 
       <main className="flex-1 bg-background ml-[224px]">
         <div className="p-8 flex flex-col h-screen">
-          <h1 className="text-4xl font-bold mb-8 text-center">Test Cases</h1>
+          <PageHeaderWithBack title="Test Cases" />
 
           <div className="flex gap-4 mb-6 ">
             <Select defaultValue="testcase"
@@ -457,9 +458,9 @@ const TestCases = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="testcase">Test Case</SelectItem>
-                <SelectItem value="strategy">Strategy</SelectItem>
-                <SelectItem value="domain">Domain</SelectItem>
+                <SelectItem value="testcase">Testcase Name</SelectItem>
+                <SelectItem value="strategy">Strategy Name</SelectItem>
+                <SelectItem value="domain">Domain Name</SelectItem>
               </SelectContent>
             </Select>
 
@@ -491,8 +492,18 @@ const TestCases = () => {
                 <Button
                   variant="ghost"
                   size="icon"
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                  aria-label="Go to first page"
+                >
+                  <ChevronsLeft className="w-5 h-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
+                  aria-label="Go to previous page"
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </Button>
@@ -503,8 +514,18 @@ const TestCases = () => {
                     setCurrentPage((p) => Math.min(totalPages, p + 1))
                   }
                   disabled={currentPage === totalPages}
+                  aria-label="Go to next page"
                 >
                   <ChevronRight className="w-5 h-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setCurrentPage(totalPages)}
+                  disabled={currentPage === totalPages}
+                  aria-label="Go to last page"
+                >
+                  <ChevronsRight className="w-5 h-5" />
                 </Button>
               </div>
             </div>

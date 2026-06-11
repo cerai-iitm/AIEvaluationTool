@@ -15,13 +15,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, X } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { API_ENDPOINTS } from "@/config/api";
 import { hasPermission } from "@/utils/permissions";
 import { HistoryButton } from "@/components/HistoryButton";
+import { PageHeaderWithBack } from "@/components/PageHeaderWithBack";
 
 // Types
 interface Domain {
@@ -339,7 +340,7 @@ const DomainList: React.FC = () => {
 
       <main className="flex-1 bg-background ml-[220px] md:ml-[224px]">
         <div className="p-4 md:p-8 flex flex-col h-screen">
-          <h1 className="text-2xl md:text-4xl font-bold mb-4 md:mb-8 text-center">Domains</h1>
+          <PageHeaderWithBack title="Domains" />
 
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             {/* <Select defaultValue="Domain">
@@ -373,8 +374,18 @@ const DomainList: React.FC = () => {
                 <Button
                   variant="ghost"
                   size="icon"
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                  aria-label="Go to first page"
+                >
+                  <ChevronsLeft className="w-4 h-4 md:w-5 md:h-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
+                  aria-label="Go to previous page"
                 >
                   <ChevronLeft className="w-4 h-4 md:w-5 md:h-5"></ChevronLeft>
                 </Button>
@@ -383,8 +394,18 @@ const DomainList: React.FC = () => {
                   size='icon'
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p+1))}
                   disabled={currentPage === totalPages}
+                  aria-label="Go to next page"
                 >
                   <ChevronRight className="w-4 h-4 md:w-5 md:h-5"></ChevronRight>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setCurrentPage(totalPages)}
+                  disabled={currentPage === totalPages}
+                  aria-label="Go to last page"
+                >
+                  <ChevronsRight className="w-4 h-4 md:w-5 md:h-5" />
                 </Button>
               </div>
             </div>

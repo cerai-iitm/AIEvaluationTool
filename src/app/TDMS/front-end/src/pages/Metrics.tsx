@@ -15,13 +15,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, X } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { API_ENDPOINTS } from "@/config/api";
 import { hasPermission } from "@/utils/permissions";
 import { HistoryButton } from "@/components/HistoryButton";
+import { PageHeaderWithBack } from "@/components/PageHeaderWithBack";
 
 // Types
 interface Metric {
@@ -377,7 +378,7 @@ const Metrics: React.FC = () => {
 
       <main className="flex-1 bg-background ml-[220px] md:ml-[224px]">
         <div className="p-4 md:p-8 flex flex-col h-screen">
-          <h1 className="text-2xl md:text-4xl font-bold mb-4 md:mb-8 text-center">Metrics</h1>
+          <PageHeaderWithBack title="Metrics" />
 
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <Select defaultValue="Metric">
@@ -412,8 +413,18 @@ const Metrics: React.FC = () => {
                 <Button
                   variant="ghost"
                   size="icon"
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                  aria-label="Go to first page"
+                >
+                  <ChevronsLeft className="w-4 h-4 md:w-5 md:h-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
+                  aria-label="Go to previous page"
                 >
                   <ChevronLeft className="w-4 h-4 md:w-5 md:h-5"></ChevronLeft>
                 </Button>
@@ -422,8 +433,18 @@ const Metrics: React.FC = () => {
                   size='icon'
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
+                  aria-label="Go to next page"
                 >
                   <ChevronRight className="w-4 h-4 md:w-5 md:h-5"></ChevronRight>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setCurrentPage(totalPages)}
+                  disabled={currentPage === totalPages}
+                  aria-label="Go to last page"
+                >
+                  <ChevronsRight className="w-4 h-4 md:w-5 md:h-5" />
                 </Button>
               </div>
             </div>
@@ -439,8 +460,8 @@ const Metrics: React.FC = () => {
                 <table className="w-full table-fixed">
                   <thead className="border-b-2">
                     <tr>
-                      <th className="sticky top-0 z-10 p-4 font-semibold text-left pl-10 w-[15%] ">Metric Id</th>
-                      <th className="sticky top-0 z-10 p-2 font-semibold text-left pl-4 w-[30%]">Metric Name</th>
+                      <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left pl-10 w-[15%] ">Metric Id</th>
+                      <th className="sticky top-0 bg-white z-10 p-2 font-semibold text-left pl-4 w-[30%]">Metric Name</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -807,4 +828,3 @@ const Metrics: React.FC = () => {
 };
 
 export default Metrics;
-

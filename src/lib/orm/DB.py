@@ -480,7 +480,11 @@ class DB:
         """
         try:
             with self.Session() as session:
-                existing_language = session.query(Languages).filter_by(lang_name=language_name).first()
+                existing_language = (
+                    session.query(Languages)
+                    .filter(func.lower(Languages.lang_name) == language_name.strip().lower())
+                    .first()
+                )
                 if existing_language:
                     raise ValueError(f"Language with name '{language_name}' already exists.")
 

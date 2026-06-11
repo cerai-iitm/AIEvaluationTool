@@ -17,6 +17,7 @@ interface RunSummary {
   start_ts: string;
   end_ts: string | null;
   average_score?: number | null;
+  analysis_status?: string; // "completed" | "failed"
 }
 
 interface RunDetail {
@@ -107,8 +108,8 @@ const RunDetails: React.FC = () => {
   };
 
   const formatScore = (score?: number | null) => {
-    if (score === null || score === undefined) return "-";
-    if (!Number.isFinite(score)) return "-";
+    if (score === null || score === undefined) return "Analysis not completed";
+    if (!Number.isFinite(score)) return "Analysis not completed";
     return Number.isInteger(score) ? String(score) : score.toFixed(2);
   };
 
@@ -352,6 +353,10 @@ const RunDetails: React.FC = () => {
                   className={`${styles.actionIconButton} ${styles.actionReport}`}
                   data-tooltip="Report"
                   onClick={async () => {
+                     if (summary.analysis_status !== "completed") {
+                        alert("Please complete the Analysis first.");
+                        return;
+                      }
                   if (downloadState) return;
                   setDownloadState({ runName: summary.run_name, progress: 0, phase: "generating" });
                   let p = 0;

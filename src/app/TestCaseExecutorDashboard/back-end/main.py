@@ -125,9 +125,13 @@ async def websocket_endpoint(websocket: WebSocket):
     await ws_manager.connect(websocket)
     try:
         while True:
-            # keep connection alive
-            await websocket.receive_text()
+            try:
+                await asyncio.wait_for(websocket.receive_text(), timeout=15)
+            except asyncio.TimeoutError:
+                await ws_manager.send_one(websocket, {"type": "HEARTBEAT"})
     except WebSocketDisconnect:
+        ws_manager.disconnect(websocket)
+    except Exception:
         ws_manager.disconnect(websocket)
          
 @app.get(

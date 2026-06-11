@@ -602,6 +602,7 @@ export const TestCaseUpdateDialog = ({
                       minHeight: "75px",
                       overflowY: "auto"
                     }}
+                    onMouseDown={(e) => e.currentTarget.focus()}
                     onFocus={() => setFocusedField("userPrompt")}
                     onBlur={() => setFocusedField(null)}
                     onChange={(e) => {
@@ -650,6 +651,7 @@ export const TestCaseUpdateDialog = ({
                     className={`bg-muted min-h-[73px] pr-10 ${
                       errors.systemPrompts ? 'border-red-500 ring-2 ring-red-200' : ''
                     }`}
+                    onMouseDown={(e) => e.currentTarget.focus()}
                     onFocus={() => setFocusedField("systemPrompt")}
                     onBlur={() => setFocusedField(null)}
                     // tabIndex = {-1}
@@ -683,6 +685,7 @@ export const TestCaseUpdateDialog = ({
                       overflowY: "auto"
                   }}
                   // readOnly = {responseText === "None"}
+                  onMouseDown={(e) => e.currentTarget.focus()}
                   onFocus = { () => setFocusedField("response")}
                   onBlur={() => setFocusedField(null)}
                   onChange={(e) => {
@@ -747,6 +750,7 @@ export const TestCaseUpdateDialog = ({
                         overflowY: "auto"
                     }}
                     placeholder="Enter prompt or Search"
+                    onMouseDown={(e) => e.currentTarget.focus()}
                     onFocus={() => setFocusedField("llm")}
                     onBlur = {() => setTimeout(() => setFocusedField(null), 100)}
                     onChange={(e) => {

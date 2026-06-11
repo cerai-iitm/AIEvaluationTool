@@ -7,6 +7,7 @@ import { getAuthHeaders, redirectToLogin } from "../../utils/auth";
 
 interface TestRun {
   run_id: number;
+  totalPages : number;
   run_name: string;
   target: string;
   status: string;
@@ -16,6 +17,7 @@ interface TestRun {
   duration_ms?: number;
   average_score?: number | null;
   evaluation_ts?: string;
+  analysis_status?: string;
 }
 
 interface HeaderConfig {
@@ -60,6 +62,7 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
   });
   const [filtersLoading, setFiltersLoading] = useState(true);
   const [openFilterColumn, setOpenFilterColumn] = useState<string | null>(null);
+  const [totalPages, setTotalPages] = useState(1);
   const filterRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const [sortBy, setSortBy] = useState<"start_ts" | "end_ts">("end_ts");
@@ -96,7 +99,21 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
     { key: "domain", label: "Domain", filterable: true, filterType: "domain" },
     { key: "actions", label: "Actions", filterable: false },
   ];
-
+  const handleAnalyseClick = async (runName: string, hasScore: boolean) => {
+  try {
+    const res = await fetch(API_ENDPOINTS.ANALYSE_HEALTH, {  // ✅ no ()
+      headers: getAuthHeaders(),
+      credentials: "include",
+    });
+    if (!res.ok) {
+      alert("Ollama is not running. Please start Ollama and try again.");
+      return;
+    }
+    setAnalyseModal({ runName, hasScore });
+  } catch (err) {
+    alert("Ollama is not running. Please start Ollama and try again.");
+  }
+};
   const startAnalysis = async (mode: string, runName: string) => {
     setAnalyseLoading(true);
     try {
@@ -171,6 +188,9 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
     const params = new URLSearchParams(filters);
     params.append("sort_by", sortBy);
     params.append("order", order);
+    params.append("page", String(currentPage));
+    params.append("page_size", String(itemsPerPage));
+    
     const url = `${API_BASE_URL}${API_ENDPOINTS.GET_ALL_TEST_RUNS}?${params.toString()}`;
     fetch(url, { headers: getAuthHeaders(), credentials: "include" })
       .then((res) => {
@@ -182,17 +202,19 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
         const safeRuns = Array.isArray(data) ? data : [];
         setRuns(safeRuns);
         setFilteredRuns(safeRuns);
-        setCurrentPage(1);
+        setTotalPages(safeRuns[0]?.totalPages ?? 1); 
+        
       })
       .catch((err) => console.error("Error fetching test runs:", err))
       .finally(() => setLoading(false));
-  }, [filters, sortBy, order, loginUrl]);
-
-  const indexOfLastRun = currentPage * itemsPerPage;
-  const indexOfFirstRun = indexOfLastRun - itemsPerPage;
+  }, [filters, sortBy, order, loginUrl,currentPage,itemsPerPage]);
+  // alert(totalPage);
+  // const indexOfLastRun = currentPage * itemsPerPage;
+  // const indexOfFirstRun = indexOfLastRun - itemsPerPage;
   const safeFilteredRuns = Array.isArray(filteredRuns) ? filteredRuns : [];
-  const currentRuns = safeFilteredRuns.slice(indexOfFirstRun, indexOfLastRun);
-  const totalPages = Math.ceil(safeFilteredRuns.length / itemsPerPage);
+  // const currentRuns = safeFilteredRuns.slice(indexOfFirstRun, indexOfLastRun);
+  const currentRuns = safeFilteredRuns;
+  // const totalPages = Math.ceil(safeFilteredRuns.length / itemsPerPage);
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
   useEffect(() => {
@@ -208,6 +230,19 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
 
   const SortIcon = ({ columnKey }: { columnKey: "start_ts" | "end_ts" }) => {
     const isActive = sortBy === columnKey;
+    if (columnKey === "start_ts") {
+      const isAscending = isActive && order === "asc";
+      return (
+        <i
+          className={`bi ${isAscending ? "bi-chevron-down" : "bi-chevron-up"}`}
+          style={{
+            fontSize: '22px',
+            color: '#ffffff',
+            fontWeight: 'bold',
+          }}
+        ></i>
+      );
+    }
     if (!isActive) return <i className="bi bi-chevron-expand" style={{ fontSize: '22px', color: 'rgba(255,255,255,0.35)' }}></i>;
     return order === "asc"
       ? <i className="bi bi-chevron-up" style={{ fontSize: '22px', color: '#ffffff', fontWeight: 'bold' }}></i>
@@ -320,7 +355,7 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
                       {run.duration_ms != null ? formatDuration(run.duration_ms) : "-"}
                     </td>
                     <td className="col-score cell-center nowrap" onClick={(e) => e.stopPropagation()}>
-                      {typeof run.average_score === "number" ? run.average_score.toFixed(2) : "-"}
+                      {typeof run.average_score === "number" ? run.average_score.toFixed(2) : "Analysis not completed"}
                     </td>
                     <td className="col-evaluation nowrap">
                       {run.evaluation_ts != null ? (
@@ -358,7 +393,7 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
                           type="button"
                           className="action-icon-button action-analyse"
                           data-tooltip="Analyse"
-                          onClick={() => setAnalyseModal({ runName: run.run_name, hasScore: typeof run.average_score === "number" })}
+                          onClick={() => handleAnalyseClick(run.run_name, typeof run.average_score === "number")}
                           title="Analyse"
                           aria-label={`Analyse ${run.run_name}`}
                         >
@@ -369,6 +404,10 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
                           className="action-icon-button action-report"
                           data-tooltip="Report"
                           onClick={async () => {
+                            if (run.analysis_status === "failed") {
+                              alert("Please complete the Analysis first.");
+                              return;
+                            }
                             if (downloadState) return;
                             setDownloadState({ runName: run.run_name, progress: 0, phase: "generating" });
                             let p = 0;
@@ -448,7 +487,7 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
           </div>
         )}
         <div className="table-footer">
-          Showing {currentRuns.length} of {safeFilteredRuns.length} test runs
+          Showing {currentRuns.length} of {safeFilteredRuns[0]?.totalPages! * itemsPerPage} test runs
         </div>
       </div>
 
@@ -538,16 +577,12 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
 export default TestRunsTable;
 
 function formatDuration(ms: number): string {
-  const seconds = Math.floor(ms / 1000);
-  if (seconds < 1) return '0s';
-  if (seconds < 60) return `${seconds}s`;
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-  if (minutes < 60) return remainingSeconds > 0 ? `${minutes}m ${remainingSeconds}s` : `${minutes}m`;
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
-  if (hours < 24) return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
-  const days = Math.floor(hours / 24);
-  const remainingHours = hours % 24;
-  return remainingHours > 0 ? `${days}d ${remainingHours}h` : `${days}d`;
+  if (!Number.isFinite(ms) || ms <= 0) return "-";
+  const totalSeconds = Math.floor(ms / 1000);
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  if (h > 0) return `${h}h ${m}m ${s}s`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
 }

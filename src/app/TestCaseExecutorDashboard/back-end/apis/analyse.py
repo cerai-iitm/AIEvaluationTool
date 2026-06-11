@@ -1,10 +1,14 @@
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 
-from services.analyse import get_analyse_status_service, start_analyse_service
+from services.analyse import get_analyse_status_service, start_analyse_service, check_analyse_health_service
 from services.testruns import get_test_run_service
 
 router = APIRouter()
 from configuration.database import get_db
+
+@router.get("/analyse/health")
+def check_health():
+    return check_analyse_health_service()
 
 @router.get("/analyse/{RunName}")
 def get_analyse(RunName: str, background_tasks: BackgroundTasks, db=Depends(get_db), mode: str = Query("rerun_all")):

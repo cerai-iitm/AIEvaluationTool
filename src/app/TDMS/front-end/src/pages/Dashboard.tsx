@@ -424,7 +424,7 @@ const Dashboard = () => {
                     className={`relative shadow-lg hover:shadow-xl transition-shadow hovershadow-md ${stat.onClick ? "cursor-pointer" : ""}`}
                     onClick={() => stat.onClick && stat.onClick()}
                   >
-                    <button
+                    {/* <button
                       className="absolute top-4 right-4 text-muted-foreground hover:text-foreground z-10"
                       onClick={(e) => {
                         e.stopPropagation();
@@ -432,7 +432,7 @@ const Dashboard = () => {
                       }}
                     >
                       <MoreVertical className="w-5 h-5" />
-                    </button>
+                    </button> */}
                     {menuOpen === idx && (
                       <div className="absolute top-12 right-4 z-20 bg-white border rounded-lg shadow-lg flex flex-col min-w-[150px]">
                         {MENU_OPTIONS.filter(opt => {

@@ -12,7 +12,9 @@ class TestRunResponse(BaseModel):
     domain: Optional[str] 
     duration_ms: Optional[int] = None
     average_score: Optional[float] = None
-
+    totalPages: Optional[int] = None
+    analysis_status: str
+    
 class TestRunDetailsResponse(BaseModel):
     run_name: str
     testcase_name: str
@@ -33,6 +35,8 @@ class TestRunSummaryResponse(BaseModel):
     start_ts: str
     end_ts: Optional[str] = None
     average_score: Optional[float] = None
+    analysis_status: str = "failed"  # default status
+    
 
 
 class TestRunFullResponse(BaseModel):

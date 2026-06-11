@@ -1,12 +1,8 @@
 {
-    "db": {
-        "engine": "mariadb",
-        "host": "db",
-        "port": 3306,
-        "user": "aiet_user",
-        "password": "aiet_password",
-        "database": "aievaluationtool"
-        },
+   "db": {
+    "engine": "sqlite",
+    "file": "AIEvaluationData.db"
+  },
     "examples":{
         "db_1":{
             "engine": "mariadb",
@@ -34,7 +30,7 @@
         "agent_name": "Vaidya AI"
     },
     "interface_manager": {
-        "docker": true,
+        "docker": false,
         "base_url": "http://interface-manager:8000",
         "base_url_local": "http://localhost:8000"
     },
