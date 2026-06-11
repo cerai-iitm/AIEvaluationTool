@@ -30,7 +30,6 @@ sys.path.append(os.path.join(os.path.dirname(__file__) + '/../../'))  # Adjust t
 from lib.data import Prompt, TestCase, Response, TestPlan, Metric, LLMJudgePrompt, Target, Run, RunDetail, Conversation
 
 from lib.orm import DB  # Import the DB class from the orm module
-from lib.orm.tables import Metrics, TestPlans
 
 #----------------------remove the code below in production----------------------
 # Silence everything except your manual prints
@@ -314,25 +313,6 @@ for met in prompts.keys():
             metric_description=metric_descriptions.get(metric_name_key.lower()),
         )
         db.add_metric_and_testcases(testcases=mapped_cases, metric=metric_obj)
-
-# _get_or_create_metric does not update existing rows, so fill only blank
-# descriptions in one transaction after all parent and child metrics exist.
-with db.Session() as session:
-    existing_metrics = session.query(Metrics).all()
-    for existing_metric in existing_metrics:
-        description = metric_descriptions.get(existing_metric.metric_name.lower())
-        if description and not existing_metric.metric_description:
-            existing_metric.metric_description = description
-    existing_plans = session.query(TestPlans).all()
-    plan_descriptions = {
-        record["TestPlan_name"]: record.get("TestPlan_description")
-        for record in plans.values()
-    }
-    for existing_plan in existing_plans:
-        description = plan_descriptions.get(existing_plan.plan_name)
-        if description and not existing_plan.plan_description:
-            existing_plan.plan_description = description
-    session.commit()
 
 tgt = Target(
     target_name="Gooey AI",
