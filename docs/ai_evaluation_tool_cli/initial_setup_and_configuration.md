@@ -23,6 +23,25 @@ This page covers everything required before running the AI Evaluation Tool from 
 - `Ollama` for local LLM serving
 - GPU drivers when running accelerated inference
 
+## Install MariaDB
+
+Skip this section if you are using SQLite.
+
+On Ubuntu, install MariaDB Server and the Python connector dependency:
+
+```bash
+sudo apt update
+sudo apt install mariadb-server libmariadb-dev
+```
+
+Then install the Python connector in the same Python environment used for the backends:
+
+```bash
+pip install mariadb
+```
+
+  > Note - Check the official MariaDB documentation for any changes to packages or installation instructions before proceeding.
+
 ## Clone The Repository
 
 ```bash

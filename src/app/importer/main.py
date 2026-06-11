@@ -30,7 +30,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__) + '/../../'))  # Adjust t
 from lib.data import Prompt, TestCase, Response, TestPlan, Metric, LLMJudgePrompt, Target, Run, RunDetail, Conversation
 
 from lib.orm import DB  # Import the DB class from the orm module
-from lib.orm.tables import Metrics
+from lib.orm.tables import Metrics, TestPlans
 
 #----------------------remove the code below in production----------------------
 # Silence everything except your manual prints
@@ -167,7 +167,10 @@ all_metrics_set = set()  # Track all metrics in lowercase for uniqueness
 for plan in plans.keys():
     record = plans[plan]
     plan_name = record["TestPlan_name"]
-    test_plan = TestPlan(plan_name=plan_name)
+    test_plan = TestPlan(
+        plan_name=plan_name,
+        plan_description=record.get("TestPlan_description"),
+    )
     metrics_list = []
     for metric in record["metrics"].keys():
         metric_name = record["metrics"][metric]
@@ -320,6 +323,15 @@ with db.Session() as session:
         description = metric_descriptions.get(existing_metric.metric_name.lower())
         if description and not existing_metric.metric_description:
             existing_metric.metric_description = description
+    existing_plans = session.query(TestPlans).all()
+    plan_descriptions = {
+        record["TestPlan_name"]: record.get("TestPlan_description")
+        for record in plans.values()
+    }
+    for existing_plan in existing_plans:
+        description = plan_descriptions.get(existing_plan.plan_name)
+        if description and not existing_plan.plan_description:
+            existing_plan.plan_description = description
     session.commit()
 
 tgt = Target(
