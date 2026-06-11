@@ -26,6 +26,14 @@ interface TargetAddDialogProps {
   onSuccess?: () => void;
 }
 
+interface DomainOption {
+  domain_name?: string;
+}
+
+interface LanguageOption {
+  lang_name?: string;
+}
+
 export default function TargetAddDialog({
   open,
   onOpenChange,
@@ -75,7 +83,9 @@ export default function TargetAddDialog({
       if (domainsResponse.ok) {
         const domainsData = await domainsResponse.json();
         const domainNames = Array.isArray(domainsData)
-          ? domainsData.map((d: any) => d.domain_name).filter(Boolean)
+          ? domainsData
+              .map((d: DomainOption) => d.domain_name)
+              .filter((domainName): domainName is string => Boolean(domainName))
           : [];
         setDomainOptions(domainNames);
         if (domainNames.length > 0) {
@@ -86,7 +96,9 @@ export default function TargetAddDialog({
       if (languagesResponse.ok) {
         const languagesData = await languagesResponse.json();
         const langNames = Array.isArray(languagesData)
-          ? languagesData.map((l: any) => l.lang_name).filter(Boolean)
+          ? languagesData
+              .map((l: LanguageOption) => l.lang_name)
+              .filter((langName): langName is string => Boolean(langName))
           : [];
         setLanguageOptions(langNames);
       }
@@ -124,7 +136,13 @@ export default function TargetAddDialog({
   };
 
   const isFormValid =
-    name.trim() && type && url.trim() && domain && notes.trim();
+    name.trim() &&
+    type &&
+    description.trim() &&
+    url.trim() &&
+    domain &&
+    selectedLanguages.length > 0 &&
+    notes.trim();
 
   const handleSubmit = async () => {
     if (!name.trim()) {
@@ -291,6 +309,7 @@ export default function TargetAddDialog({
               onChange={(e) => setDescription(e.target.value)}
               className="bg-muted min-h-[80px]"
               placeholder="Enter description..."
+              required
             />
           </div>
 

@@ -7,6 +7,7 @@ import Loop from './Loop/Loop';
 import { API_BASE_URL, API_ENDPOINTS, WS_BASE_URL } from "../../config/api";
 import { useParams } from 'react-router-dom';
 import { getAuthHeaders, redirectToLogin } from '../../utils/auth';
+import { useNavigationBlocker } from "../../hooks/useNavigationBlocker";
 
 interface RunFormData {
   runName: string;
@@ -45,6 +46,7 @@ const ContinueRunPage: React.FC = () => {
   const [planMetrics, setPlanMetrics] = useState<string[]>([]);
   const [domainOptions, setDomainOptions] = useState<string[]>([]);
   const [languageOptions, setLanguageOptions] = useState<string[]>([]);
+  useNavigationBlocker(isRunning);
   
   const [formData, setFormData] = useState<RunFormData>({
     runName: "",
@@ -434,6 +436,7 @@ const ContinueRunPage: React.FC = () => {
                   stepNames={["Prepare", "Finding elements", "Execute", "Store"]}
                   planName={formData.testPlan}
                   metricName={formData.metric}
+                  testCaseName={formData.testCaseId}
                   onRunFinished={handleRunFinished}
                 />
               )}

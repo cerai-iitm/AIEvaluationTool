@@ -40,6 +40,29 @@ interface TargetUpdateDialogProps {
   onUpdateSuccess?: () => void;
 }
 
+interface DomainOption {
+  domain_name?: string;
+}
+
+interface LanguageOption {
+  lang_name?: string;
+}
+
+interface TargetUpdatePayload {
+  target_name: string;
+  target_type: string;
+  target_description: string;
+  target_url: string;
+  domain_name: string;
+  lang_list: string[];
+  notes: string;
+}
+
+interface ApiValidationError {
+  loc?: Array<string | number>;
+  msg?: string;
+}
+
 export default function TargetUpdateDialog({
   target,
   open,
@@ -88,7 +111,9 @@ export default function TargetUpdateDialog({
       if (domainsResponse.ok) {
         const domainsData = await domainsResponse.json();
         const domainNames = Array.isArray(domainsData)
-          ? domainsData.map((d: any) => d.domain_name).filter(Boolean)
+          ? domainsData
+              .map((d: DomainOption) => d.domain_name)
+              .filter((domainName): domainName is string => Boolean(domainName))
           : [];
         setDomainOptions(domainNames);
       }
@@ -96,7 +121,9 @@ export default function TargetUpdateDialog({
       if (languagesResponse.ok) {
         const languagesData = await languagesResponse.json();
         const langNames = Array.isArray(languagesData)
-          ? languagesData.map((l: any) => l.lang_name).filter(Boolean)
+          ? languagesData
+              .map((l: LanguageOption) => l.lang_name)
+              .filter((langName): langName is string => Boolean(langName))
           : [];
         setLanguageOptions(langNames);
       }
@@ -257,17 +284,17 @@ export default function TargetUpdateDialog({
       }
 
       // Send all fields to match backend expectations
-      const updatePayload: any = {
+      const updatePayload: TargetUpdatePayload = {
         target_name: target.target_name,
         target_type: type || targetInitial.target_type,
-        target_description: description || null,
-        target_url: url || targetInitial.target_url,
+        target_description: description,
+        target_url: url.trim(),
         domain_name: domain || targetInitial.domain_name,
         lang_list:
           selectedLanguages.length > 0
             ? selectedLanguages
             : targetInitial.lang_list || [],
-        notes: notes.trim() || null,
+        notes: notes.trim(),
       };
 
       console.log("Updating target with payload:", updatePayload);
@@ -291,7 +318,7 @@ export default function TargetUpdateDialog({
             if (Array.isArray(errorData.detail)) {
               // Pydantic validation errors
               errorMessage = errorData.detail
-                .map((err: any) => {
+                .map((err: string | ApiValidationError) => {
                   if (typeof err === "string") return err;
                   if (err.msg)
                     return `${err.loc?.join(".") || "field"}: ${err.msg}`;
@@ -434,6 +461,7 @@ export default function TargetUpdateDialog({
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               className="bg-muted"
+              required
             />
           </div>
           <div className="space-y-1 pb-4">
@@ -487,6 +515,9 @@ export default function TargetUpdateDialog({
             onClick={handleSubmit}
             className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={!isChanged || !notes.trim() || isLoading ||
+              !description.trim() ||
+              !url.trim() ||
+              selectedLanguages.length === 0 ||
               (!hasPermission(currentUserRole, "canUpdateTables") &&
                 !hasPermission(currentUserRole, "canUpdateRecords"))
             }

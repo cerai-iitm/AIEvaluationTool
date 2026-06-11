@@ -46,6 +46,33 @@ interface User {
   role: string;
 }
 
+const normalizeRole = (role: string) => role.trim().toLowerCase();
+
+const formatLocalTimestamp = (timestamp: string) => {
+  const trimmedTimestamp = timestamp.trim();
+  const hasTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(trimmedTimestamp);
+  const normalizedTimestamp = trimmedTimestamp.replace(" ", "T");
+  const date = new Date(hasTimezone ? normalizedTimestamp : `${normalizedTimestamp}Z`);
+
+  if (Number.isNaN(date.getTime())) {
+    return timestamp;
+  }
+
+  const parts = new Intl.DateTimeFormat(undefined, {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+
+  const getPart = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? "";
+
+  return `${getPart("year")}-${getPart("month")}-${getPart("day")} ${getPart("hour")}:${getPart("minute")}`;
+};
+
 const UserHistory = () => {
   const { username } = useParams();
   const navigate = useNavigate();
@@ -70,6 +97,8 @@ const UserHistory = () => {
     role: "",
     password: "",
   });
+
+  
 
   // Fetch current logged-in user data
   useEffect(() => {
@@ -126,7 +155,7 @@ const UserHistory = () => {
             setUpdateForm({
               user_name: foundUser.user_name,
               email: foundUser.email,
-              role: foundUser.role,
+              role: normalizeRole(foundUser.role),
               password: "",
             });
           } else {
@@ -271,6 +300,20 @@ const UserHistory = () => {
     }
   };
 
+  const handleUpdateDialogOpenChange = (open: boolean) => {
+    if (open && user) {
+      setUpdateForm({
+        user_name: user.user_name,
+        email: user.email,
+        role: normalizeRole(user.role),
+        password: "",
+      });
+      setShowPassword(false);
+    }
+
+    setUpdateDialogOpen(open);
+  };
+
   const handleDelete = async () => {
     if (!user || !user.user_id) {
       toast({
@@ -386,7 +429,7 @@ const UserHistory = () => {
                 <>
                   <Button
                     className="bg-primary hover:bg-primary/90"
-                    onClick={() => setUpdateDialogOpen(true)}
+                    onClick={() => handleUpdateDialogOpenChange(true)}
                     disabled={isLoadingUser || !user}
                   >
                     Update
@@ -465,7 +508,9 @@ const UserHistory = () => {
                       {activity.status}
                     </span>
                   </div>
-                  <p className="text-sm text-muted-foreground">{activity.timestamp}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {formatLocalTimestamp(activity.timestamp)}
+                  </p>
                 </div>
               </div>
             </div>
@@ -475,7 +520,7 @@ const UserHistory = () => {
       </main>
 
       {/* Update User Dialog */}
-      <Dialog open={updateDialogOpen} onOpenChange={setUpdateDialogOpen}>
+      <Dialog open={updateDialogOpen} onOpenChange={handleUpdateDialogOpenChange}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="text-3xl font-bold text-center">Update User</DialogTitle>
@@ -525,7 +570,7 @@ const UserHistory = () => {
                   <SelectItem value="admin">Admin</SelectItem>
                   <SelectItem value="manager">Manager</SelectItem>
                   <SelectItem value="curator">Curator</SelectItem>
-                  <SelectItem value="user">User</SelectItem>
+                  <SelectItem value="viewer">Viewer</SelectItem>
                 </SelectContent>
               </Select>
             </div>

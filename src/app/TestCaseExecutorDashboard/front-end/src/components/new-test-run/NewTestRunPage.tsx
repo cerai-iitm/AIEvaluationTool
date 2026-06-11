@@ -6,6 +6,7 @@ import { API_BASE_URL, API_ENDPOINTS,WS_BASE_URL } from "../../config/api";
 import CustomSelect from './CustomSelect/CustomSelect';
 import Loop, { TestRunEvent } from './Loop/Loop';
 import { getAuthHeaders, redirectToLogin } from "../../utils/auth";
+import { useNavigationBlocker } from "../../hooks/useNavigationBlocker";
 
 interface RunFormData {
   runName?: string;   // 👈 add this
@@ -54,6 +55,7 @@ const NewTestRunPage: React.FC = () => {
   const activeRunIdRef = useRef<string | number | null>(null);
   const pendingRunStartRef = useRef(false);
   const pendingEventsRef = useRef<TestRunEvent[]>([]);
+  useNavigationBlocker(isRunning);
 
   const [formData, setFormData] = useState<RunFormData>({
     runName: "",   
@@ -463,6 +465,7 @@ const NewTestRunPage: React.FC = () => {
         stepsPerTestCase={4} 
         stepNames={["Prepare", "Finding elements", "Execute", "Store"]} planName={formData.testPlan}   
         metricName={formData.metric}
+        testCaseName={formData.testCaseId}
         runName={runName}
         liveEvents={liveEvents}
         onRunFinished={handleRunFinished}

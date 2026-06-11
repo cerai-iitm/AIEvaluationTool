@@ -10,6 +10,7 @@ interface LoopProps {
   stepNames?: string[]; // 👈 Names for each step
   planName?: string;     // 👈 add
   metricName?: string;   // 👈 add
+  testCaseName?: string; 
   onRunFinished?: (status?: string) => void;
 }
 
@@ -22,6 +23,7 @@ const Loop: React.FC<LoopProps> = ({
   stepNames: propStepNames,
   planName,    
   metricName,
+  testCaseName,
   onRunFinished
 }) => {
   const [currentTestCase, setCurrentTestCase] = useState(0);
@@ -165,7 +167,7 @@ const Loop: React.FC<LoopProps> = ({
           borderRadius: '4px',
           fontWeight: 500
         }}>
-          {planName} {metricName && `• ${metricName}`}
+          {planName} {metricName && `• ${metricName}`} {testCaseName && `• ${testCaseName}`}
         </div>
       </div>
       

@@ -34,6 +34,10 @@ interface Metric {
   metric_benchmark: string | null;
 }
 
+interface DomainOption {
+  domain_name?: string;
+}
+
 const Metrics: React.FC = () => {
   const { toast } = useToast();
   const [currentUserRole, setCurrentUserRole] = useState<string>("");
@@ -99,7 +103,9 @@ const Metrics: React.FC = () => {
       if (response.ok) {
         const domainsData = await response.json();
         const domainNames = Array.isArray(domainsData)
-          ? domainsData.map((d: any) => d.domain_name).filter(Boolean)
+          ? domainsData
+              .map((d: DomainOption) => d.domain_name)
+              .filter((domainName): domainName is string => Boolean(domainName))
           : [];
         setDomainOptions(domainNames);
         if (domainNames.length > 0 && !newDomainName) {
@@ -188,10 +194,17 @@ const Metrics: React.FC = () => {
 
   // ADD handler
   const handleAdd = async () => {
-    if (!newMetricName.trim() || !addMessage.trim() || !newDomainName.trim()) {
+    if (
+      !newMetricName.trim() ||
+      !newMetricDescription.trim() ||
+      !newMetricSource.trim() ||
+      !newDomainName.trim() ||
+      !newMetricBenchmark.trim() ||
+      !addMessage.trim()
+    ) {
       toast({
         title: "Validation Error",
-        description: "Metric name, domain, and notes are required",
+        description: "Metric name, description, source, domain, benchmark, and notes are required",
         variant: "destructive",
       });
       return;
@@ -212,11 +225,11 @@ const Metrics: React.FC = () => {
         headers,
         body: JSON.stringify({
           metric_name: newMetricName.trim(),
-          metric_description: newMetricDescription.trim() || null,
-          metric_source: newMetricSource.trim() || null,
+          metric_description: newMetricDescription.trim(),
+          metric_source: newMetricSource.trim(),
           domain_name: newDomainName.trim(),
-          metric_benchmark: newMetricBenchmark.trim() || null,
-          notes: addMessage.trim() || null,
+          metric_benchmark: newMetricBenchmark.trim(),
+          notes: addMessage.trim(),
         }),
       });
 
@@ -241,11 +254,14 @@ const Metrics: React.FC = () => {
       setAddOpen(false);
       fetchMetrics(); // Refresh the list
       setHighlightedRowId(data.metric_id);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error creating metric:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to create metric. Please try again.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to create metric. Please try again.",
         variant: "destructive",
       });
     }
@@ -253,10 +269,18 @@ const Metrics: React.FC = () => {
 
   // UPDATE handler
   const handleUpdate = async () => {
-    if (!selectedMetric || !updateName.trim() || !updateMessage.trim() || !updateDomainName.trim()) {
+    if (
+      !selectedMetric ||
+      !updateName.trim() ||
+      !updateDescription.trim() ||
+      !updateSource.trim() ||
+      !updateDomainName.trim() ||
+      !updateBenchmark.trim() ||
+      !updateMessage.trim()
+    ) {
       toast({
         title: "Validation Error",
-        description: "Metric name, domain, and notes are required",
+        description: "Metric name, description, source, domain, benchmark, and notes are required",
         variant: "destructive",
       });
       return;
@@ -277,10 +301,10 @@ const Metrics: React.FC = () => {
         headers,
         body: JSON.stringify({
           metric_name: updateName.trim(),
-          metric_description: updateDescription.trim() || null,
-          metric_source: updateSource.trim() || null,
+          metric_description: updateDescription.trim(),
+          metric_source: updateSource.trim(),
           domain_name: updateDomainName.trim(),
-          metric_benchmark: updateBenchmark.trim() || null,
+          metric_benchmark: updateBenchmark.trim(),
           user_note: updateMessage.trim()
         }),
       });
@@ -299,11 +323,14 @@ const Metrics: React.FC = () => {
       setShowUpdateModal(false);
       setSelectedMetric(null);
       fetchMetrics(); // Refresh the list
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error updating metric:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to update metric. Please try again.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to update metric. Please try again.",
         variant: "destructive",
       });
     }
@@ -356,11 +383,14 @@ const Metrics: React.FC = () => {
       fetchMetrics(); // Refresh the list
       setHighlightedRowId(null);
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error deleting metric:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to delete metric. Please try again.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to delete metric. Please try again.",
         variant: "destructive",
       });
     }
@@ -549,7 +579,7 @@ const Metrics: React.FC = () => {
                 <button
                   className="px-6 md:px-8 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-sm md:text-base transition-colors"
                   onClick={() =>{
-                    handleDeleteClick;
+                    handleDeleteClick();
                     setShowEditDialog(false);
                     setShowDeleteConfirm(true);
                   }}
@@ -643,6 +673,7 @@ const Metrics: React.FC = () => {
                 value={updateName}
                 onChange={e => setUpdateName(e.target.value)}
                 className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-lg flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
+                required
               />
             </div>
             
@@ -653,6 +684,7 @@ const Metrics: React.FC = () => {
                 onChange={e => setUpdateDescription(e.target.value)}
                 className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-lg flex-1 w-full md:w-auto min-h-[80px] resize-none focus:outline-none focus:ring focus:ring-blue-200"
                 placeholder="Enter metric description..."
+                required
               />
             </div>
 
@@ -663,6 +695,7 @@ const Metrics: React.FC = () => {
                 onChange={e => setUpdateSource(e.target.value)}
                 className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-lg flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
                 placeholder="Enter metric source..."
+                required
               />
             </div>
 
@@ -693,6 +726,7 @@ const Metrics: React.FC = () => {
                 onChange={e => setUpdateBenchmark(e.target.value)}
                 className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-lg flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
                 placeholder="Enter metric benchmark..."
+                required
               />
             </div>
             
@@ -702,10 +736,18 @@ const Metrics: React.FC = () => {
                 value={updateMessage}
                 onChange={e => setUpdateMessage(e.target.value)}
                 className="bg-gray-100 rounded px-4 py-1 mr-4 w-96"
+                required
               />
               <button
                 className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={!updateName.trim() || !updateMessage.trim() || !updateDomainName.trim()}
+                disabled={
+                  !updateName.trim() ||
+                  !updateDescription.trim() ||
+                  !updateSource.trim() ||
+                  !updateDomainName.trim() ||
+                  !updateBenchmark.trim() ||
+                  !updateMessage.trim()
+                }
                 onClick={handleUpdate}
               >
                 Submit
@@ -750,6 +792,7 @@ const Metrics: React.FC = () => {
                   onChange={e => setNewMetricName(e.target.value)}
                   className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
                   maxLength={150}
+                  required
                 />
               </div>
               
@@ -760,6 +803,7 @@ const Metrics: React.FC = () => {
                   onChange={e => setNewMetricDescription(e.target.value)}
                   className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 w-full md:w-auto min-h-[80px] resize-none focus:outline-none focus:ring focus:ring-blue-200"
                   placeholder="Enter metric description..."
+                  required
                 />
               </div>
 
@@ -770,6 +814,7 @@ const Metrics: React.FC = () => {
                   onChange={e => setNewMetricSource(e.target.value)}
                   className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
                   placeholder="Enter metric source..."
+                  required
                 />
               </div>
 
@@ -800,6 +845,7 @@ const Metrics: React.FC = () => {
                   onChange={e => setNewMetricBenchmark(e.target.value)}
                   className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
                   placeholder="Enter metric benchmark..."
+                  required
                 />
               </div>
             </div>
@@ -810,12 +856,20 @@ const Metrics: React.FC = () => {
                 value={addMessage}
                 onChange={e => setAddMessage(e.target.value)}
                 className="bg-gray-200 rounded px-4 py-1 mr-4 w-96"
+                required
               />
               <button
                 type="button"
                 className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleAdd}
-                disabled={!newMetricName.trim() || !newDomainName.trim() || !addMessage.trim()}
+                disabled={
+                  !newMetricName.trim() ||
+                  !newMetricDescription.trim() ||
+                  !newMetricSource.trim() ||
+                  !newDomainName.trim() ||
+                  !newMetricBenchmark.trim() ||
+                  !addMessage.trim()
+                }
               >
                 Submit
               </button>

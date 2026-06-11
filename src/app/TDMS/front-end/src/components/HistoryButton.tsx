@@ -36,6 +36,31 @@ const getStatusColor = (status: string) => {
   }
 };
 
+const formatLocalTimestamp = (timestamp: string) => {
+  const trimmedTimestamp = timestamp.trim();
+  const hasTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(trimmedTimestamp);
+  const normalizedTimestamp = trimmedTimestamp.replace(" ", "T");
+  const date = new Date(hasTimezone ? normalizedTimestamp : `${normalizedTimestamp}Z`);
+
+  if (Number.isNaN(date.getTime())) {
+    return timestamp;
+  }
+
+  const parts = new Intl.DateTimeFormat(undefined, {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+
+  const getPart = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? "";
+
+  return `${getPart("year")}-${getPart("month")}-${getPart("day")} ${getPart("hour")}:${getPart("minute")}`;
+};
+
 const EntityHistoryDialog: React.FC<EntityHistoryProps> = ({
   entityType,
   title,
@@ -178,7 +203,7 @@ const EntityHistoryDialog: React.FC<EntityHistoryProps> = ({
                         )}
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        {activity.timestamp}
+                        {formatLocalTimestamp(activity.timestamp)}
                       </p>
                     </div>
                   </div>
