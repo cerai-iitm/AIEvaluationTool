@@ -1,6 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import Sidebar from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -412,11 +411,8 @@ const UserHistory = () => {
 
   return (
     <div className="flex min-h-screen">
-      <aside className="fixed top-0 left-0 h-screen w-[220px] z-20">
-        <Sidebar />
-      </aside>
 
-      <main className="flex-1 ml-[220px] p-28 min-h-screen items-center justify-center">
+      <main className="flex-1 p-28 min-h-screen items-center justify-center">
         <div className="sticky top-0 bg-white rounded-lg px-4 py-4 shadow-md max-w-5xl z-10 mb-12">
           <div className="flex items-center justify-between">
             <h1 className="text-4xl font-bold">

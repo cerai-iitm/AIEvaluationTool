@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Sidebar from "@/components/Sidebar";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -290,10 +289,7 @@ const TestPlans = () => {
 
   return (
     <div className="flex min-h-screen">
-      <aside className="fixed top-0 left-0 h-screen w-224px bg-[#5252c2] z-20">
-        <Sidebar />
-      </aside>
-      <main className="flex-1 bg-background ml-[224px] ">
+      <main className="flex-1 bg-background ">
         <div className="p-8 flex flex-col h-screen">
           <PageHeaderWithBack title="Test Plans" />
           <div className="flex gap-4 mb-6">
