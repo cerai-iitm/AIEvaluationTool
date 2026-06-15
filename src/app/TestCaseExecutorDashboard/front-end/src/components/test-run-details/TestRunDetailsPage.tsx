@@ -1,10 +1,9 @@
 import React, { useEffect, useState, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import styles from "./TestRunDetails.module.css";
 import Modal from "./Modal";
 import RunTimeline from "./RunTimeline";
 import DetailCard from "../common/DetailCard/DetailCard";
-import { useNavigate } from "react-router-dom";
 import { API_BASE_URL, API_ENDPOINTS } from "../../config/api";
 import { redirectToLogin } from "../../utils/auth";
 
@@ -42,6 +41,7 @@ interface AllFilters {
 
 const RunDetails: React.FC = () => {
   const { runName } = useParams<{ runName: string }>();
+  const [searchParams] = useSearchParams();
 
   const [summary, setSummary] = useState<RunSummary | null>(null);
   const [details, setDetails] = useState<RunDetail[]>([]);
@@ -72,6 +72,14 @@ const RunDetails: React.FC = () => {
   const filterRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const navigate = useNavigate();
+  const returnPage = Number(searchParams.get("page"));
+  const safeReturnPage = Number.isInteger(returnPage) && returnPage > 0 ? returnPage : 1;
+
+  const handleBackToRuns = () => {
+    const params = new URLSearchParams(searchParams);
+    params.set("page", String(safeReturnPage));
+    navigate(`/?${params.toString()}`);
+  };
 
   const getAuthHeaders = (): HeadersInit => {
     const token = localStorage.getItem("access_token");
@@ -290,6 +298,18 @@ const RunDetails: React.FC = () => {
 
   return (
     <div className={styles.container}>
+      <div className={styles.backBar}>
+        <button
+          type="button"
+          className={styles.backButton}
+          onClick={handleBackToRuns}
+          aria-label={`Back to test runs page ${safeReturnPage}`}
+          title={`Back to page ${safeReturnPage}`}
+        >
+          <i className="bi bi-arrow-left"></i>
+          <span>Back</span>
+        </button>
+      </div>
       <RunTimeline
         runName={summary.run_name}
         hoveredMetric={hoveredMetric}

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import "./TestRunsTable.css";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { API_BASE_URL, API_ENDPOINTS, LOGIN_URL } from "../../config/api";
 import { AllFilters, FilterOption } from "../../types/Filters";
 import { getAuthHeaders, redirectToLogin } from "../../utils/auth";
@@ -34,13 +34,19 @@ interface Props {
   onFilterChange?: (filterType: string, value: string) => void;
 }
 
+const getPageFromSearchParams = (searchParams: URLSearchParams) => {
+  const page = Number(searchParams.get("page"));
+  return Number.isInteger(page) && page > 0 ? page : 1;
+};
+
 const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const loginUrl = LOGIN_URL;
-  const [runs, setRuns] = useState<TestRun[]>([]);
   const [filteredRuns, setFilteredRuns] = useState<TestRun[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(() => getPageFromSearchParams(searchParams));
   const [itemsPerPage] = useState(10);
   const [downloadState, setDownloadState] = useState<{
     runName: string;
@@ -161,11 +167,13 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
 
   const handleFilterChange = (filterType: string, value: string) => {
     onFilterChange?.(filterType, value);
+    paginate(1);
     setOpenFilterColumn(null);
   };
 
   const handleFilterClear = (filterType: string) => {
     onFilterChange?.(filterType, "");
+    paginate(1);
     setOpenFilterColumn(null);
   };
 
@@ -180,8 +188,13 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
       setSortBy(sortKey);
       setOrder("desc");
     }
-    setCurrentPage(1);
+    paginate(1);
   };
+
+  useEffect(() => {
+    const page = getPageFromSearchParams(searchParams);
+    setCurrentPage((prevPage) => (prevPage === page ? prevPage : page));
+  }, [searchParams]);
 
   useEffect(() => {
     setLoading(true);
@@ -200,22 +213,40 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
       })
       .then((data: TestRun[] | { detail?: string }) => {
         const safeRuns = Array.isArray(data) ? data : [];
-        setRuns(safeRuns);
+        const nextTotalPages = safeRuns[0]?.totalPages ?? 1;
         setFilteredRuns(safeRuns);
-        setTotalPages(safeRuns[0]?.totalPages ?? 1); 
+        setTotalPages(nextTotalPages);
+        if (currentPage > nextTotalPages) {
+          const nextPage = Math.max(1, nextTotalPages);
+          setCurrentPage(nextPage);
+          setSearchParams((prevParams) => {
+            const nextParams = new URLSearchParams(prevParams);
+            nextParams.set("page", String(nextPage));
+            return nextParams;
+          });
+        }
         
       })
       .catch((err) => console.error("Error fetching test runs:", err))
       .finally(() => setLoading(false));
-  }, [filters, sortBy, order, loginUrl,currentPage,itemsPerPage]);
+  }, [filters, sortBy, order, loginUrl, currentPage, itemsPerPage, setSearchParams]);
   // alert(totalPage);
   // const indexOfLastRun = currentPage * itemsPerPage;
   // const indexOfFirstRun = indexOfLastRun - itemsPerPage;
+  function paginate(pageNumber: number) {
+    const nextPage = Math.max(1, pageNumber);
+    setCurrentPage(nextPage);
+    setSearchParams((prevParams) => {
+      const nextParams = new URLSearchParams(prevParams);
+      nextParams.set("page", String(nextPage));
+      return nextParams;
+    });
+  }
+
   const safeFilteredRuns = Array.isArray(filteredRuns) ? filteredRuns : [];
   // const currentRuns = safeFilteredRuns.slice(indexOfFirstRun, indexOfLastRun);
   const currentRuns = safeFilteredRuns;
   // const totalPages = Math.ceil(safeFilteredRuns.length / itemsPerPage);
-  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
   useEffect(() => {
     if (totalPages <= 5) return;
@@ -336,7 +367,9 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
                         alert("Run is not completed yet");
                         return;
                       }
-                      navigate(`/test-runs/${run.run_name}`);
+                      const detailParams = new URLSearchParams(location.search);
+                      detailParams.set("page", String(currentPage));
+                      navigate(`/test-runs/${encodeURIComponent(run.run_name)}?${detailParams.toString()}`);
                     }}
                   >
                     <td className="col-run-id cell-center nowrap">{run.run_id}</td>

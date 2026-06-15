@@ -89,7 +89,7 @@ const UserHistory = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  
+  const [resetPassword, setResetPassword] = useState(false);
   // Update form state
   const [updateForm, setUpdateForm] = useState({
     user_name: "",
@@ -574,8 +574,8 @@ const UserHistory = () => {
                 </SelectContent>
               </Select>
             </div>
-
-            <div className="grid grid-cols-[200px_1fr] items-center gap-4">
+            {resetPassword && (
+              <div className="grid grid-cols-[200px_1fr] items-center gap-4">
               <Label htmlFor="update-password" className="text-right font-semibold">
                 Password :
               </Label>
@@ -594,14 +594,16 @@ const UserHistory = () => {
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
                     <Eye className="h-4 w-4" />
+                  ) : (
+                    <EyeOff className="h-4 w-4" />
                   )}
                 </button>
               </div>
             </div>
-
+            )}
+            
+                    
             <div className="flex justify-center gap-4 pt-6">
               <Button
                 variant="outline"
@@ -609,6 +611,15 @@ const UserHistory = () => {
                 disabled={isUpdating}
               >
                 Cancel
+              </Button>
+               <Button
+                variant="outline"
+                className="border-yellow-500 text-yellow-600 "
+                type="button"
+                onClick={() => setResetPassword(!resetPassword)}
+                disabled={isUpdating}
+              >
+                {resetPassword ? "Cancel Reset" : "Reset Password"}
               </Button>
               <Button
                 className="bg-primary hover:bg-primary/90 px-6"
