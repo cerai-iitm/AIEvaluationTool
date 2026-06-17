@@ -11,7 +11,7 @@ from configuration.paths import (
 from lib.data import Conversation, RunDetail
 from lib.interface_manager import InterfaceManagerClient
 from services.ws_manager import ws_manager
-from utils.port import watch_im_process
+from utils.port import watch_im_process, set_active_stop_watcher
 from lib.utils import get_logger, get_logger_verbosity
 
 logger = get_logger(__name__)
@@ -97,6 +97,8 @@ async def execute_testcases(
     try:
         
         stop_watcher = threading.Event()
+        frontend_disconnected_event = threading.Event()  # 👈 add this
+        set_active_stop_watcher(stop_watcher)
         watcher_thread = threading.Thread(
             target=watch_im_process,
             args=(interface_manager_config, profile_path, stop_watcher),
@@ -320,6 +322,7 @@ async def execute_testcases(
         except Exception as ws_error:
             logger.error(f"Failed to push RUN_FINISHED for failed run {run_id}: {ws_error}")
     finally:
+        set_active_stop_watcher(None)
         if client is not None:
             try:
                 client.close()

@@ -503,7 +503,18 @@ def send_message_whatsapp(driver: webdriver.Chrome, prompt: str):
                     )
                 )
 
+                logger.info(
+                    "Total message containers: %d",
+                    len(all_messages)
+                )
+
                 outgoing_msgs = driver.find_elements(By.XPATH, message_out)
+
+                logger.info(
+                    "Outgoing messages: %d",
+                    len(outgoing_msgs)
+                )
+
                 if not outgoing_msgs:
                     raise Exception("No outgoing messages found.")
 
@@ -544,16 +555,35 @@ def send_message_whatsapp(driver: webdriver.Chrome, prompt: str):
                 response_texts = []
                 for msg in responses:
                     try:
-                        text_elems = msg.find_elements(By.XPATH, selectable_text)
-                        text = " ".join(
-                            elem.text.strip()
-                            for elem in text_elems
-                            if elem.text.strip()
+                        text_elems = msg.find_elements(
+                            By.XPATH,
+                            selectable_text
                         )
+
+                        parts = []
+
+                        for elem in text_elems:
+                            txt = elem.text.strip()
+
+                            if txt:
+                                parts.append(txt)
+
+                        text = "\n".join(parts)
+
+                        logger.info(
+                            "Found %d text elements, extracted: %s",
+                            len(text_elems),
+                            text
+                        )
+
                         if text:
                             response_texts.append(text)
+
                     except Exception as e:
-                        logger.debug("Could not read response message: %s", e)
+                        logger.debug(
+                            "Could not read response message: %s",
+                            e
+                        )
 
                 full_text = "\n".join(response_texts)
                 current_count = len(response_texts)

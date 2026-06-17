@@ -4,6 +4,7 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { API_BASE_URL, API_ENDPOINTS, LOGIN_URL } from "../../config/api";
 import { AllFilters, FilterOption } from "../../types/Filters";
 import { getAuthHeaders, redirectToLogin } from "../../utils/auth";
+import { createPortal } from "react-dom";
 
 interface TestRun {
   run_id: number;
@@ -39,6 +40,52 @@ const getPageFromSearchParams = (searchParams: URLSearchParams) => {
   return Number.isInteger(page) && page > 0 ? page : 1;
 };
 
+const FilterDropdownPortal: React.FC<{
+  anchorEl: HTMLElement | null;
+  children: React.ReactNode;
+  setRef: (el: HTMLDivElement | null) => void;
+}> = ({ anchorEl, children, setRef }) => {
+  const [style, setStyle] = useState<React.CSSProperties>({ visibility: "hidden" });
+
+  useEffect(() => {
+    const updatePosition = () => {
+      if (!anchorEl) return;
+      const rect = anchorEl.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const dropdownWidth = 220;
+
+      let left = rect.left;
+      if (left + dropdownWidth > viewportWidth - 8) {
+        left = Math.max(8, rect.right - dropdownWidth);
+      }
+
+      setStyle({
+        position: "fixed",
+        top: rect.bottom + 4,
+        left,
+        width: dropdownWidth,
+        zIndex: 9999,
+        visibility: "visible",
+      });
+    };
+
+    updatePosition();
+    window.addEventListener("scroll", updatePosition, true);
+    window.addEventListener("resize", updatePosition);
+    return () => {
+      window.removeEventListener("scroll", updatePosition, true);
+      window.removeEventListener("resize", updatePosition);
+    };
+  }, [anchorEl]);
+
+  return createPortal(
+    <div className="filter-dropdown" style={style} ref={setRef}>
+      {children}
+    </div>,
+    document.body
+  );
+};
+
 const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -69,7 +116,8 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
   const [filtersLoading, setFiltersLoading] = useState(true);
   const [openFilterColumn, setOpenFilterColumn] = useState<string | null>(null);
   const [totalPages, setTotalPages] = useState(1);
-  const filterRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const filterTriggerRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const filterPortalRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const [sortBy, setSortBy] = useState<"start_ts" | "end_ts">("end_ts");
   const [order, setOrder] = useState<"asc" | "desc">("desc");
@@ -154,12 +202,13 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (openFilterColumn && filterRefs.current[openFilterColumn]) {
-        const filterElement = filterRefs.current[openFilterColumn];
-        if (filterElement && !filterElement.contains(event.target as Node)) {
-          setOpenFilterColumn(null);
-        }
-      }
+      if (!openFilterColumn) return;
+      const target = event.target as Node;
+      const trigger = filterTriggerRefs.current[openFilterColumn];
+      const portal = filterPortalRefs.current[openFilterColumn];
+      if (trigger && trigger.contains(target)) return;
+      if (portal && portal.contains(target)) return;
+      setOpenFilterColumn(null);
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -307,13 +356,21 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
                       ) : (
                         <span>{header.label}</span>
                       )}
-                      {header.filterable && header.filterType && (
-                        <div className="filter-wrapper" ref={(el) => { filterRefs.current[header.key] = el; }}>
-                          <button className="filter-trigger" onClick={() => toggleFilterDropdown(header.key)} title={`Filter by ${header.label}`}>
+                     {header.filterable && header.filterType && (
+                        <div className="filter-wrapper">
+                          <button
+                            ref={(el) => { filterTriggerRefs.current[header.key] = el; }}
+                            className="filter-trigger"
+                            onClick={() => toggleFilterDropdown(header.key)}
+                            title={`Filter by ${header.label}`}
+                          >
                             <i className={`bi bi-funnel${filters[header.filterType] ? "-fill" : ""}`}></i>
                           </button>
                           {openFilterColumn === header.key && (
-                            <div className="filter-dropdown">
+                            <FilterDropdownPortal
+                              anchorEl={filterTriggerRefs.current[header.key]}
+                              setRef={(el) => { filterPortalRefs.current[header.key] = el; }}
+                            >
                               <div className="filter-options">
                                 <select
                                   className="form-select form-select-sm"
@@ -332,7 +389,7 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
                                   </button>
                                 )}
                               </div>
-                            </div>
+                            </FilterDropdownPortal>
                           )}
                         </div>
                       )}

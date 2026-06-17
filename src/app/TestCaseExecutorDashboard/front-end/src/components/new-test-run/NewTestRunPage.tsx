@@ -139,6 +139,18 @@ const NewTestRunPage: React.FC = () => {
     }
   }, []);
 
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      console.log("Tab closing, WS state:", wsRef.current?.readyState);
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []);
+
   const closeLiveSocket = useCallback(() => {
     activeRunIdRef.current = null;
     wsConnectingRef.current = null;

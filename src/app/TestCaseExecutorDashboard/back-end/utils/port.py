@@ -6,7 +6,32 @@ import psutil
 import requests
 from fastapi import HTTPException
 from lib.utils import get_logger, get_logger_verbosity
+from services.ws_manager import ws_manager
+
 logger = get_logger(__name__)
+
+
+_active_stop_watcher: threading.Event | None = None
+
+def set_active_stop_watcher(event):
+    global _active_stop_watcher
+    _active_stop_watcher = event
+
+def on_frontend_disconnect(config_path):
+    
+    ws_manager.disconnected_by_frontend = True
+    global _active_stop_watcher
+    if _active_stop_watcher is None:
+        logger.info("👀 Frontend disconnected, but no active run — nothing to kill")
+        return
+    logger.info("🛑 Frontend tab closed — killing Interface Manager")
+    _active_stop_watcher.set()
+    try:
+        stop_interface_manager(config_path)
+    except Exception as e:
+        logger.error(f"Failed to kill IM on tab close: {e}")
+    _active_stop_watcher = None
+
 
 def check_service(url: str, name: str):
     try:
@@ -80,14 +105,19 @@ def ensure_interface_manager_port_running(
 
 
 def stop_interface_manager(config_path: str, profile_path: str = "/home/varun/test_profile"):
+    
     try:
         with open(config_path, "r") as f:
             config = json.load(f)
         
-        base_url = config.get("base_url")
+        im_config = config.get("interface_manager", {})
+        if im_config.get("docker"):
+            base_url = im_config.get("base_url")
+        else:
+            base_url = im_config.get("base_url_local")  # 👈 this is "http://localhost:8000"
         parsed = urlparse(base_url)
         port = parsed.port
-
+        
         if not port:
             return
 
@@ -218,14 +248,18 @@ def watch_im_process(config_path: str, profile_path: str, stop_event: threading.
         time.sleep(1)
     else:
         logger.info("👀 IM Chrome never opened — watcher exiting")
-        return
+        
 
     # 2️⃣ Now watch if it closes
     while True:
         time.sleep(2)
         if stop_event.is_set():
+            if ws_manager.disconnected_by_frontend:  # 👈 check why it stopped
+                logger.info("🛑 Frontend disconnected — killing IM")
+                stop_interface_manager(config_path)
+        else:
             logger.info("👀 Run completed normally — NOT killing IM ✅")
-            return
+        return
         if not is_im_chrome_open():
             logger.info("💀 IM Chrome closed — killing IM!")
             stop_interface_manager(config_path)
