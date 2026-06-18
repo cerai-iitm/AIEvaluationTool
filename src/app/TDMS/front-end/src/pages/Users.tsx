@@ -37,6 +37,17 @@ const Users = () => {
   const [currentUserRole, setCurrentUserRole] = useState<string>("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const validateUserName = (value: string): string | null => {
+  const v = value.trim();
+  if (v.length < 3) return "Username must be at least 3 characters long";
+  if (v.length > 30) return "Username must be 30 characters or fewer";
+  if (v.includes("@")) return "Username cannot be an email address";
+  if (!/^[a-zA-Z0-9._-]+$/.test(v)) return "Only letters, numbers, _ - . are allowed";
+  if (!/^[a-zA-Z0-9]/.test(v)) return "Username must start with a letter or number";
+  if (!/[a-zA-Z0-9]$/.test(v)) return "Username must end with a letter or number";
+  if (/[._-]{2,}/.test(v)) return "No consecutive special characters (e.g. .. __ --)";
+  return null;
+};
   // Form state
   const [formData, setFormData] = useState({
     user_name: "",
@@ -145,7 +156,17 @@ const Users = () => {
       });
       return;
     }
+    if (!formData.user_name || !formData.email || !formData.role || !formData.password) {
+      toast({ title: "Error", description: "Please fill in all fields", variant: "destructive" });
+      return;
+    }
 
+    // ← just add these 6 lines here
+    const userNameError = validateUserName(formData.user_name);
+    if (userNameError) {
+      toast({ title: "Invalid Username", description: userNameError, variant: "destructive" });
+      return;
+    }
     if (formData.password !== formData.confirm_password) {
       toast({
         title: "Error",
