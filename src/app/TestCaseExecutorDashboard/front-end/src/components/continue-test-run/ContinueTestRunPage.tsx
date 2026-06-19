@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback,useRef } from 'react';
 import './ContinueTestRunPage.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Accordion, Button } from 'react-bootstrap';
@@ -8,6 +8,7 @@ import { API_BASE_URL, API_ENDPOINTS, WS_BASE_URL } from "../../config/api";
 import { useParams } from 'react-router-dom';
 import { getAuthHeaders, redirectToLogin } from '../../utils/auth';
 import { useNavigationBlocker } from "../../hooks/useNavigationBlocker";
+
 
 interface RunFormData {
   runName: string;
@@ -47,7 +48,7 @@ const ContinueRunPage: React.FC = () => {
   const [domainOptions, setDomainOptions] = useState<string[]>([]);
   const [languageOptions, setLanguageOptions] = useState<string[]>([]);
   useNavigationBlocker(isRunning);
-  
+  const wsRef = useRef<WebSocket | null>(null);
   const [formData, setFormData] = useState<RunFormData>({
     runName: "",
     // target: "",
@@ -101,6 +102,16 @@ const ContinueRunPage: React.FC = () => {
       handleFetchRun(runName);
     }
   }, [runName]);
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+        if (wsRef.current) {
+            wsRef.current.close();
+        }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+}, []);
 
   const fetchMetricsByPlan = async (planName: string) => {
     try {
@@ -257,7 +268,7 @@ const ContinueRunPage: React.FC = () => {
       setIsRunning(true);
 
       const ws = new WebSocket(`${WS_BASE_URL}/ws/test-run`);
-
+      wsRef.current = ws;  
       ws.onopen = () => {
         console.log("WebSocket connected for continue");
         ws.send(JSON.stringify(data));

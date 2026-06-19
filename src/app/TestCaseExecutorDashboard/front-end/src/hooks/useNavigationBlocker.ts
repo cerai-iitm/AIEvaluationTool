@@ -51,6 +51,14 @@ export const useNavigationBlocker = (
         return;
       }
 
+      const target = event.target as Element;
+        if (target.closest("[data-nav-block]")) {
+            event.preventDefault();
+            event.stopPropagation();
+            showMessage();
+            return;
+        }
+
       const anchor = getAnchor(event.target);
       if (!anchor || !anchor.href || anchor.target || anchor.download) {
         return;

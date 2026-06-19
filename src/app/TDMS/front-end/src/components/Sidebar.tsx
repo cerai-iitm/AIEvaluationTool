@@ -168,6 +168,7 @@ const Sidebar = ({ onLogout }: SidebarProps) => {
           </div>
         </div>
         <button
+          data-nav-block 
           type="button"
           onClick={logoutAndRedirect}
           className="flex w-full items-center justify-start gap-3 px-4 py-3 text-primary-foreground/80 hover:bg-white/10 rounded-lg mb-2 transition-colors"
