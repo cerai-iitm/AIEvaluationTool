@@ -6,6 +6,7 @@ from database import get_db, get_current_user
 from models import user as user_model
 from controllers import users as users_controller
 from schemas import UserCreate, UserOut, UserActivityCreate, UserActivityResponse, CreateUser, UpdateUser
+from utils.auth import require_admin
 
 
 users_router = APIRouter(prefix="/api/users")
@@ -33,20 +34,33 @@ async def get_users(db: Session = Depends(get_db)):
 
 
 @users_router.put("/{user_id}", response_model=UserOut)
-async def update_user(user_id: str, payload: UpdateUser, db: Session = Depends(get_db)):
-    user = users_controller.update_user(db, user_id, payload)
+async def update_user(
+    user_id: str,
+    payload: UpdateUser,
+    db: Session = Depends(get_db),
+    current_user: user_model.Users = Depends(require_admin),
+):
+    user = users_controller.update_user(db, user_id, payload, current_user)
     return UserOut(user_id=user.user_id, user_name=user.user_name, email=user.email, role=str(user.role))
 
 
 
 @users_router.delete("/{user_id}", response_model=UserOut)
-async def delete_user(user_id: str, db: Session = Depends(get_db)):
-    user = users_controller.delete_user(db, user_id)
+async def delete_user(
+    user_id: str,
+    db: Session = Depends(get_db),
+    current_user: user_model.Users = Depends(require_admin),
+):
+    user = users_controller.delete_user(db, user_id, current_user)
     return UserOut(user_id=user.user_id, user_name=user.user_name, email=user.email, role=str(user.role))
 
 @users_router.post("", response_model=UserOut)
-async def create_user(payload: CreateUser, db: Session = Depends(get_db)):
-    user = users_controller.create_user(db, payload)
+async def create_user(
+    payload: CreateUser,
+    db: Session = Depends(get_db),
+    current_user: user_model.Users = Depends(require_admin),
+):
+    user = users_controller.create_user(db, payload, current_user)
     return UserOut(user_id=user.user_id, user_name=user.user_name, email=user.email, role=str(user.role))
 
 
@@ -125,5 +139,3 @@ async def get_user_activity(username: str, db: Session = Depends(get_db)):
 #         status=status_map.get(str(row.operation), str(row.operation)),
 #         timestamp=row.created_at.strftime("%Y-%m-%d %H:%M"),
 #     )
-
-
