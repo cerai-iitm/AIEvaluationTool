@@ -415,8 +415,8 @@ const StrategyList: React.FC = () => {
                 <table className="w-full table-fixed">
                   <thead className="border-b-2">
                     <tr>
-                      <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left w-[15%] ">Strategy ID</th>
-                      <th className="sticky top-0 bg-white z-10 p-2 font-semibold text-left w-[30%]">Strategy Name</th>
+                      <th className="sticky top-0 bg-white z-10 p-2 md:p-4 font-semibold text-center text-xs md:text-base w-[30%]">Strategy ID</th>
+                      <th className="sticky top-0 bg-white z-10 p-2 md:p-4 font-semibold text-left text-xs md:text-base">Strategy Name</th>
                       {/* <th className="sticky top-0 z-10 pl-8 p-2 font-semibold text-left ">Strategy Description</th> */}
                     </tr>
                   </thead>
