@@ -129,7 +129,7 @@ export const ResponseUpdateDialog = ({
     if (response) {
       setResponseText(response.response_text || "");
       setResponseType(response.response_type || "");
-      setLanguage(response.language || "");
+      setLanguage(response.language === "auto" ? "" : response.language || "");  // ← fix here
       setUserPrompts(response.user_prompt || "");
       setSystemPrompts(response.system_prompt || "");
       setNotes(response.notes || "");
@@ -161,11 +161,15 @@ export const ResponseUpdateDialog = ({
   const isChanged =
     responseText.trim() !== (responseInitial.response_text || "") ||
     responseType.trim() !== (responseInitial.response_type || "") ||
-    language.trim() !== (responseInitial.language || "") ||
+    language.trim() !== (responseInitial.language === "auto" ? "" : responseInitial.language || "") ||  
     userPrompts.trim() !== (responseInitial.user_prompt || "") ||
     systemPrompts.trim() !== (responseInitial.system_prompt || "") ||
     notes.trim() !== (responseInitial.notes || "");
 
+  const arePromptsNonEmpty =
+    responseText.trim().length > 0 &&
+    userPrompts.trim().length > 0 &&
+    systemPrompts.trim().length > 0;  
   const handleSubmit = async () => {
     if (!response?.response_id) {
       toast({
@@ -385,7 +389,7 @@ export const ResponseUpdateDialog = ({
               <Button
                 className="bg-accent hover:bg-accent/90 ml-4 text-accent-foreground px-8"
                 onClick={handleSubmit}
-                disabled={!isChanged || !notes.trim() || isLoading}
+                disabled={!isChanged || !notes.trim() || !arePromptsNonEmpty || !language || isLoading}
               >
                 {isLoading ? "Updating..." : "Submit"}
               </Button>
