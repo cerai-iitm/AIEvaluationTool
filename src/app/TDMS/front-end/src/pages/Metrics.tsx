@@ -514,10 +514,44 @@ const Metrics: React.FC = () => {
                 <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Metric</label>
                 <Input className="bg-muted text-sm md:text-base" value={selectedMetric.metric_name} readOnly />
               </div>
+
+              {/* if Description is null means description is not visible */}
+              {selectedMetric.metric_description && (
+              <div className="flex flex-col gap-1">
+                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Description</label>
+                <Textarea className="bg-muted text-sm md:text-base" 
+                  value={selectedMetric.metric_description || ""} 
+                  readOnly 
+                style={{
+                    maxHeight: "120px",
+                    minHeight: "80px",
+                    overflowY: "auto"
+                  }}
+                ></Textarea>
+              </div>
+              )}
+              {selectedMetric.metric_source && (
+              <div className="flex flex-col gap-1">
+                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Source</label>
+                <Input className="bg-muted text-sm md:text-base" 
+                  value={selectedMetric.metric_source || ""} 
+                  readOnly 
+                />
+              </div>
+              )}
               <div className="flex flex-col gap-1">
                 <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Domain</label>
                 <Input className="bg-muted text-sm md:text-base capitalize" value={selectedMetric.domain_name} readOnly />
               </div>
+              {selectedMetric.metric_benchmark && (
+              <div className="flex flex-col gap-1">
+                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Benchmark</label>
+                <Input className="bg-muted text-sm md:text-base" 
+                  value={selectedMetric.metric_benchmark || ""} 
+                  readOnly 
+                />
+              </div>
+              )}
             </div>
             <div className="flex gap-4 md:gap-8 justify-center">
               {hasPermission(currentUserRole, "canDeleteTables") && (
