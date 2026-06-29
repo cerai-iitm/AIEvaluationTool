@@ -294,7 +294,13 @@ const UserHistory = () => {
         });
         setUpdateDialogOpen(false);
         // Refresh user data and activities
-        window.location.reload();
+         if (updateForm.user_name !== user.user_name) {
+          window.location.href = `/user-history/${updateForm.user_name}`;
+        } 
+        else {
+          window.location.reload();
+        }
+
       } else {
         const errorData = await response.json().catch(() => ({}));
         toast({
