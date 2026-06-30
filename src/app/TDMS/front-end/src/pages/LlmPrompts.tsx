@@ -332,7 +332,7 @@ const LlmPrompts = () => {
                 className="bg-primary hover:bg-primary/90"
                 onClick={() => setAddDialogOpen(true)}
               >
-                + Add Prompts
+                + Add LLM Prompt
               </Button>
             </div>
           )}
