@@ -294,7 +294,13 @@ const UserHistory = () => {
         });
         setUpdateDialogOpen(false);
         // Refresh user data and activities
-        window.location.reload();
+         if (updateForm.user_name !== user.user_name) {
+          window.location.href = `/user-history/${updateForm.user_name}`;
+        } 
+        else {
+          window.location.reload();
+        }
+
       } else {
         const errorData = await response.json().catch(() => ({}));
         toast({
@@ -428,7 +434,7 @@ const UserHistory = () => {
   return (
     <div className="flex min-h-screen">
 
-      <main className="flex-1 p-28 min-h-screen items-center justify-center">
+      <main className="flex-1 p-28 min-h-screen items-center justify-center ">
         <div className="sticky top-0 bg-white rounded-lg px-4 py-4 shadow-md max-w-5xl z-10 mb-12">
           <div className="flex items-center justify-between">
             <h1 className="text-4xl font-bold">
@@ -514,8 +520,12 @@ const UserHistory = () => {
                 </div>
                 <div className="text-right">
                   <div className="flex items-center gap-2 justify-end mb-1">
-                    <span className="font-medium">{activity.testCaseId}</span>
-                    <span className="text-xl">-</span>
+                    {activity.type !== "User" && (
+                      <>
+                        <span className="font-medium">{activity.testCaseId}</span>
+                        <span className="text-xl">-</span>
+                      </>
+                    )}
                     <span className={`font-semibold ${getStatusColor(activity.status)}`}>
                       {activity.status}
                     </span>
@@ -606,9 +616,9 @@ const UserHistory = () => {
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                    <Eye className="h-4 w-4" />
-                  ) : (
                     <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
                   )}
                 </button>
               </div>

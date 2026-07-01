@@ -45,7 +45,7 @@ const LlmPrompts = () => {
   );
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentUserRole, setCurrentUserRole] = useState<string>("");
-
+  const [searchField, setSearchField] = useState<"llmprompts" | "language">("llmprompts");
   const [highlightedRowId, setHighlightedRowId] = useState<number | null>(null);
 
   const fetchLlmPrompts = useCallback(async () => {
@@ -108,12 +108,13 @@ const LlmPrompts = () => {
     () =>
       llmPrompts.filter((p) => {
         const query = searchQuery.toLowerCase();
-        return (
-          p.prompt.toLowerCase().includes(query) ||
-          (p.language?.toLowerCase() ?? "").includes(query)
-        );
+        if (!query) return true;
+        if (searchField === "language") {
+          return (p.language?.toLowerCase() ?? "").includes(query);
+        }
+        return p.prompt.toLowerCase().includes(query);
       }),
-    [llmPrompts, searchQuery],
+    [llmPrompts, searchQuery, searchField], // add searchField here
   );
 
   const totalItems = filteredPrompts.length;
@@ -191,7 +192,10 @@ const LlmPrompts = () => {
           <PageHeaderWithBack title="LLM Prompts" />
 
           <div className="flex gap-4 mb-6">
-            <Select defaultValue="llmprompts">
+            <Select 
+            defaultValue="llmprompts"
+            onValueChange={(value: "llmprompts" | "language") => setSearchField(value)}
+            >
               <SelectTrigger className="w-48">
                 <SelectValue />
               </SelectTrigger>
@@ -328,7 +332,7 @@ const LlmPrompts = () => {
                 className="bg-primary hover:bg-primary/90"
                 onClick={() => setAddDialogOpen(true)}
               >
-                + Add Prompts
+                + Add LLM Prompt
               </Button>
             </div>
           )}

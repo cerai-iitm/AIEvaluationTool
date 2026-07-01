@@ -20,6 +20,7 @@ import {
 import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
 import { hasPermission } from "@/utils/permissions";
+import { HistoryButton } from "@/components/HistoryButton";
 
 interface User {
   user_name: string;
@@ -246,16 +247,22 @@ const Users = () => {
       <main className="flex-1 bg-background">
         <div className="p-8">
           <h1 className="text-4xl font-bold mb-12 text-center">User's List</h1>
-          {hasPermission(currentUserRole, "canCreateUser") && (
-            <div className="mt-8 max-w-5xl mx-auto mb-4">
+          <div className="mt-8 max-w-5xl mx-auto mb-4 flex items-center justify-between gap-4">
+            {hasPermission(currentUserRole, "canCreateUser") && (
               <Button
                 className="bg-primary hover:bg-primary/90"
                 onClick={() => setShowCreateUser(true)}
               >
                 + Add User
               </Button>
-            </div>
-          )}
+            )}
+            <HistoryButton
+              entityType="User"
+              title="Users"
+              idField="testCaseId"
+              idLabel="User ID"
+            />
+          </div>
           {isLoading ? (
             <div className="text-center py-12">
               <p className="text-lg text-muted-foreground">Loading users...</p>
@@ -407,7 +414,7 @@ const Users = () => {
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" /> }
                 </button>
               </div>
             </div>
@@ -433,7 +440,7 @@ const Users = () => {
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
                 >
-                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showConfirmPassword ?  <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" /> }
                 </button>
               </div>
             </div>
