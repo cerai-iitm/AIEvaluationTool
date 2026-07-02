@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -72,6 +73,9 @@ const formatLocalTimestamp = (timestamp: string) => {
   return `${getPart("year")}-${getPart("month")}-${getPart("day")} ${getPart("hour")}:${getPart("minute")}`;
 };
 
+
+
+
 const UserHistory = () => {
   const { username } = useParams();
   const navigate = useNavigate();
@@ -97,12 +101,15 @@ const UserHistory = () => {
     password: "",
   });
 
+  function getBasePath(): string {
+    return window.location.pathname.startsWith("/tdms") ? "/tdms" : "";
+  }
   const validateUserName = (value: string): string | null => {
   const v = value.trim();
     if (v.length < 3) return "Username must be at least 3 characters long";
     if (v.length > 30) return "Username must be 30 characters or fewer";
-    if (v.includes("@")) return "Username cannot be an email address";
-    if (!/^[a-zA-Z0-9._-]+$/.test(v)) return "Only letters, numbers, _ - . are allowed";
+    
+    if (!/^[a-zA-Z0-9._-]+$/.test(v)) return "Special characters are not allowed";
     if (!/^[a-zA-Z0-9]/.test(v)) return "Username must start with a letter or number";
     if (!/[a-zA-Z0-9]$/.test(v)) return "Username must end with a letter or number";
     if (/[._-]{2,}/.test(v)) return "No consecutive special characters (e.g. .. __ --)";
@@ -294,10 +301,9 @@ const UserHistory = () => {
         });
         setUpdateDialogOpen(false);
         // Refresh user data and activities
-         if (updateForm.user_name !== user.user_name) {
-          window.location.href = `/user-history/${updateForm.user_name}`;
-        } 
-        else {
+        if (updateForm.user_name !== user.user_name) {
+          window.location.href = `${getBasePath()}/user-history/${updateForm.user_name}`;
+        } else {
           window.location.reload();
         }
 
