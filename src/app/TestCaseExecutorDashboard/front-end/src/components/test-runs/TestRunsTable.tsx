@@ -19,6 +19,7 @@ interface TestRun {
   average_score?: number | null;
   evaluation_ts?: string;
   analysis_status?: string;
+  has_failed_cases?: boolean;
 }
 
 interface HeaderConfig {
@@ -103,6 +104,7 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
   const [analyseModal, setAnalyseModal] = useState<{
     runName: string;
     hasScore: boolean;
+    hasFailedCases: boolean;
   } | null>(null);
   const [analyseLoading, setAnalyseLoading] = useState(false);
   const [availableFilters, setAvailableFilters] = useState<AllFilters>({
@@ -153,7 +155,7 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
     { key: "domain", label: "Domain", filterable: true, filterType: "domain" },
     { key: "actions", label: "Actions", filterable: false },
   ];
-  const handleAnalyseClick = async (runName: string, hasScore: boolean) => {
+  const handleAnalyseClick = async (runName: string, hasScore: boolean, hasFailedCases: boolean) => {
   try {
     const res = await fetch(API_ENDPOINTS.ANALYSE_HEALTH, {  // ✅ no ()
       headers: getAuthHeaders(),
@@ -163,7 +165,7 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
       alert("Ollama is not running. Please start Ollama and try again.");
       return;
     }
-    setAnalyseModal({ runName, hasScore });
+    setAnalyseModal({ runName, hasScore, hasFailedCases });
   } catch (err) {
     alert("Ollama is not running. Please start Ollama and try again.");
   }
@@ -483,7 +485,11 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
                           type="button"
                           className="action-icon-button action-analyse"
                           data-tooltip="Analyse"
-                          onClick={() => handleAnalyseClick(run.run_name, typeof run.average_score === "number")}
+                          onClick={() => handleAnalyseClick(
+                            run.run_name,
+                            typeof run.average_score === "number",
+                            run.has_failed_cases === true
+                          )}
                           title="Analyse"
                           aria-label={`Analyse ${run.run_name}`}
                         >
@@ -628,7 +634,7 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
                   <p className="download-overlay-sub" style={{ marginTop: 4 }}>{analyseModal.runName}</p>
                 </div>
                 <div className="analyse-modal-options">
-                  {analyseModal.hasScore && (
+                  {analyseModal.hasScore && analyseModal.hasFailedCases && (
                     <button
                       className="analyse-option-btn"
                       onClick={() => startAnalysis("retry_failed", analyseModal.runName)}

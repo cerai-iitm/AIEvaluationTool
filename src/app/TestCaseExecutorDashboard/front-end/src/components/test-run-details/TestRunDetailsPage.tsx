@@ -28,6 +28,7 @@ interface RunDetail {
   conversation_id: string;
   status: string;
   score?: number | null;
+  has_failed_cases?: boolean;
 }
 
 interface FilterOption {
@@ -65,6 +66,7 @@ const RunDetails: React.FC = () => {
   const [analyseModal, setAnalyseModal] = useState<{
       runName: string;
       hasScore: boolean;
+      hasFailedCases: boolean;
     } | null>(null);  
   const [cardHeight, setCardHeight] = useState<number | null>(null);
   const summaryCardRef = useRef<HTMLDivElement | null>(null);
@@ -293,6 +295,7 @@ const RunDetails: React.FC = () => {
     return acc;
   }, {} as Record<string, RunDetail[]>);
   const hasExistingScores = details.some((detail) => typeof detail.score === "number");
+  const hasFailedCases = details.some((detail) => detail.has_failed_cases === true);
 
   const tableContainerHeight = cardHeight ?? undefined;
 
@@ -362,7 +365,11 @@ const RunDetails: React.FC = () => {
                           type="button"
                           className={`${styles.actionIconButton} ${styles.actionAnalyse}`}
                           data-tooltip="Analyse"
-                          onClick={() => setAnalyseModal({ runName: summary.run_name, hasScore: typeof summary.average_score === "number" })}
+                          onClick={() => setAnalyseModal({
+                            runName: summary.run_name,
+                            hasScore: typeof summary.average_score === "number",
+                            hasFailedCases,
+                          })}
                           title="Analyse"
                           aria-label={`Analyse ${summary.run_name}`}
                         >
@@ -653,7 +660,7 @@ const RunDetails: React.FC = () => {
                   <p className="download-overlay-sub" style={{ marginTop: 4 }}>{analyseModal.runName}</p>
                 </div>
                 <div className="analyse-modal-options">
-                  {analyseModal.hasScore && (
+                  {analyseModal.hasScore && analyseModal.hasFailedCases && (
                     <button
                       className="analyse-option-btn"
                       onClick={() => startAnalysis("retry_failed", analyseModal.runName)}

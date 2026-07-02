@@ -75,6 +75,17 @@ def _calculate_timeline_duration_ms(timeline) -> Optional[int]:
 
     return int(total_ms) if total_ms > 0 else None
 
+def _has_failed_cases(db, details) -> bool:
+    for d in details:
+        evaluation_reason = ""
+        if d.conversation_id:
+            conv = db.get_conversation_by_id(d.conversation_id)
+            if conv:
+                evaluation_reason = conv.evaluation_reason or ""
+        if not evaluation_reason.strip():
+            return True
+    return False
+
 def start_run_service(db, data: NewTestRun, background_tasks: BackgroundTasks):
     ensure_interface_manager_port_running(interface_manager_config)
     if data.testPlan:
@@ -349,6 +360,8 @@ def get_test_run_service(db, run_name: str, metric: Optional[str] = None, status
         logger.info(f"Run summary: {summary}")
         details = db.get_all_run_details_by_run_name(run_name)
 
+        has_failed_cases = False 
+
         details_response = []
         if metric:
             details = [d for d in details if d.metric_name == metric]
@@ -358,12 +371,16 @@ def get_test_run_service(db, run_name: str, metric: Optional[str] = None, status
 
         for d in details:
             score = None
+            evaluation_reason = ""
             if d.conversation_id:
                 conv = db.get_conversation_by_id(d.conversation_id)
                 if conv and conv.evaluation_score is not None:
                     score = float(conv.evaluation_score)
                 if conv:
                     evaluation_reason = conv.evaluation_reason or ""  # ← add this
+            if not evaluation_reason.strip():
+                has_failed_cases = True        
+
             details_response.append(
                 TestRunDetailsResponse(
                     run_name=d.run_name,
@@ -374,10 +391,11 @@ def get_test_run_service(db, run_name: str, metric: Optional[str] = None, status
                     status=d.status,
                     detail_id=d.detail_id,
                     score=score,
-                    evaluation_reason=evaluation_reason  
+                    evaluation_reason=evaluation_reason,
+                    has_failed_cases=has_failed_cases
                 )
             )
-
+        print(has_failed_cases)    
         return TestRunFullResponse(
             summary=summary,
             details=details_response
@@ -447,7 +465,8 @@ def get_all_test_runs_service(
             evaluation_ts = max(
                 (e.evaluation_ts for e in timeline if e.evaluation_ts),
                 default=None
-            )    
+            )
+            run_details = db.get_all_run_details_by_run_name(r.run_name)
             # print("evaluation time stamp", evaluation_ts)   
             response.append(
                 TestRunResponse(
@@ -462,6 +481,7 @@ def get_all_test_runs_service(
                     average_score=average_score,
                     evaluation_ts=evaluation_ts,
                     analysis_status=analysis_status,
+                    has_failed_cases=_has_failed_cases(db, run_details),
                     totalPages= math.ceil(total_count / page_size) if page_size else 1
                 )
             )
