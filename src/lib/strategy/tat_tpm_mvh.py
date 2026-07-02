@@ -7,11 +7,13 @@ from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
 from .logger import get_logger
 from .utils_new import FileLoader
+from pathlib import Path
 
 warnings.filterwarnings("ignore")
 
 FileLoader._load_env_vars(__file__)
 logger = get_logger("tat_tpm_mvh")
+project_root = Path(__file__).parents[3]
 dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), simple=True, strat_name="tat_tpm_mvh")
 
 class TAT_TPM_MVH(Strategy):
@@ -35,7 +37,7 @@ class TAT_TPM_MVH(Strategy):
         """
         super().__init__(name, kwargs=kwargs)
         self.__metric_name = kwargs.get("metric_name")
-        self.log_file_path = kwargs.get("log_file_path", dflt_vals.log_file)
+        self.log_file_path = project_root / Path(kwargs.get("log_file_path", dflt_vals.log_file))
         self.prompt_keyword = dflt_vals.prompt_key
         self.response_keyword = dflt_vals.response_key
         self.time_period_minutes = dflt_vals.time_period
