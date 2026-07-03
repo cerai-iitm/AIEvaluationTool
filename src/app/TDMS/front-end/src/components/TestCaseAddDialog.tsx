@@ -768,6 +768,7 @@ export const TestCaseAddDialog = ({
                   placeholder="Enter new test case name"
                   value={testCaseName}
                   onChange={(e) => setTestCaseName(e.target.value)}
+                  onMouseDown={(e) => e.currentTarget.focus()}
                   onFocus={() => {
                     setShowDetails(false);
                     setShowRequestDetails(false);
@@ -815,6 +816,7 @@ export const TestCaseAddDialog = ({
                     }}
                     placeholder="Enter user prompt or Search "
                     onChange={(e) => setUserPrompts(e.target.value)}
+                    onMouseDown={(e) => e.currentTarget.focus()}
                     onFocus={() => {
                       setFocusedField("userPrompt");
                       setShowRequestDetails(false);
@@ -860,6 +862,7 @@ export const TestCaseAddDialog = ({
                             setErrors(prev => ({ ...prev, systemPrompts: false }));
                           }
                         }}
+                        onMouseDown={(e) => e.currentTarget.focus()}
                         onFocus={() => setFocusedField("systemPrompt")}
                         onBlur={() => setFocusedField(null)}
                         className={`bg-muted min-h-[73px] pr-10 ${
@@ -978,14 +981,16 @@ export const TestCaseAddDialog = ({
                     placeholder="Enter response or Search "
                     className="bg-muted min-h-[73px] pr-10"
                     onChange={(e) => setResponseText(e.target.value)}
+                    onMouseDown={(e) => e.currentTarget.focus()}
                     onFocus={() => {
                       setFocusedField("response");
                       setShowDetails(false);
+                       setShowRequestDetails(true); // response details show
                     }}
                     onBlur={() => setFocusedField(null)}
                     onClick={() => {
-                      setShowRequestDetails(true);
-                      setShowDetails(false);
+                      setShowRequestDetails(true); // response details show
+                      setShowDetails(false); // user prompt details hide
                     }}
                   />
                   { focusedField === "response" && (
@@ -1131,6 +1136,7 @@ export const TestCaseAddDialog = ({
                             setErrors(prev => ({ ...prev, llmPrompt: false }));
                           }
                         }}
+                    onMouseDown={(e) => e.currentTarget.focus()}
                     onFocus={() => {
                       setFocusedField("llm");
                       setShowDetails(false);

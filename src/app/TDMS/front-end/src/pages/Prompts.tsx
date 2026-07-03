@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, Loader2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { PromptUpdateDialog } from "@/components/PromptUpdateDialog";
@@ -23,6 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import { API_ENDPOINTS } from "@/config/api";
 import { hasPermission } from "@/utils/permissions";
 import { HistoryButton } from "@/components/HistoryButton";
+import { PageHeaderWithBack } from "@/components/PageHeaderWithBack";
 import { set } from "date-fns";
 
 interface PromptItem {
@@ -201,7 +202,7 @@ const Prompts = () => {
 
       <main className="flex-1 bg-background">
         <div className="p-8 flex flex-col h-screen">
-          <h1 className="text-4xl font-bold mb-8 text-center">Prompts</h1>
+          <PageHeaderWithBack title="Prompts" />
 
           <div className="flex gap-4 mb-6 ">
             <Select 
@@ -246,8 +247,18 @@ const Prompts = () => {
                 <Button
                   variant="ghost"
                   size="icon"
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                  aria-label="Go to first page"
+                >
+                  <ChevronsLeft className="w-5 h-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
+                  aria-label="Go to previous page"
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </Button>
@@ -258,8 +269,18 @@ const Prompts = () => {
                     setCurrentPage((p) => Math.min(totalPages, p + 1))
                   }
                   disabled={currentPage === totalPages}
+                  aria-label="Go to next page"
                 >
                   <ChevronRight className="w-5 h-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setCurrentPage(totalPages)}
+                  disabled={currentPage === totalPages}
+                  aria-label="Go to last page"
+                >
+                  <ChevronsRight className="w-5 h-5" />
                 </Button>
               </div>
             </div>

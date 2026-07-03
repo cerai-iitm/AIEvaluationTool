@@ -25,7 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import TestPlanUpdateDialog from "@/components/TestPlanUpdateDialog";
 import TestPlanAddDialog from "@/components/TestPlanAddDialog";
@@ -33,6 +33,7 @@ import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
 import { hasPermission } from "@/utils/permissions";
 import { HistoryButton } from "@/components/HistoryButton";
+import { PageHeaderWithBack } from "@/components/PageHeaderWithBack";
 
 interface TestPlan {
   plan_id: number;
@@ -271,7 +272,7 @@ const TestPlans = () => {
 
   const totalItems = filteredTestPlans.length;
   const itemsPerPage = 15;
-  const TotalPages = Math.ceil(totalItems / itemsPerPage);
+  const TotalPages = Math.ceil(totalItems / itemsPerPage) || 1;
   const paginatedTestPlans = useMemo(
     () =>
       filteredTestPlans.slice(
@@ -290,7 +291,7 @@ const TestPlans = () => {
     <div className="flex min-h-screen">
       <main className="flex-1 bg-background ">
         <div className="p-8 flex flex-col h-screen">
-          <h1 className="text-4xl font-bold mb-8 text-center">Test Plans</h1>
+          <PageHeaderWithBack title="Test Plans" />
           <div className="flex gap-4 mb-6">
             <Select defaultValue="plan">
               {/* <SelectTrigger className="w-48">
@@ -329,8 +330,18 @@ const TestPlans = () => {
                 <Button
                   variant="ghost"
                   size="icon"
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                  aria-label="Go to first page"
+                >
+                  <ChevronsLeft className="w-5 h-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
+                  aria-label="Go to previous page"
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </Button>
@@ -341,8 +352,18 @@ const TestPlans = () => {
                     setCurrentPage((p) => Math.min(TotalPages, p + 1))
                   }
                   disabled={currentPage === TotalPages}
+                  aria-label="Go to next page"
                 >
                   <ChevronRight className="w-5 h-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setCurrentPage(TotalPages)}
+                  disabled={currentPage === TotalPages}
+                  aria-label="Go to last page"
+                >
+                  <ChevronsRight className="w-5 h-5" />
                 </Button>
               </div>
             </div>
@@ -582,4 +603,3 @@ const TestPlans = () => {
 };
 
 export default TestPlans;
-

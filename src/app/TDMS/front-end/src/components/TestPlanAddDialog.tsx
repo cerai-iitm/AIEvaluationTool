@@ -81,13 +81,26 @@ export default function TestPlanAddDialog({
     );
   };
 
-  const isFormValid = name.trim() && selectedMetrics.length > 0 && notes.trim();
+  const isFormValid =
+    name.trim() &&
+    description.trim() &&
+    selectedMetrics.length > 0 &&
+    notes.trim();
 
   const handleSubmit = async () => {
     if (!name.trim()) {
       toast({
         title: "Validation Error",
         description: "Test plan name is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!description.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Description field is required",
         variant: "destructive",
       });
       return;
@@ -196,6 +209,7 @@ export default function TestPlanAddDialog({
               onChange={(e) => setDescription(e.target.value)}
               className="bg-muted min-h-[80px]"
               placeholder="Enter description..."
+              required
               style={{
                 maxHeight: "120px",
                 minHeight: "70px",
@@ -260,4 +274,3 @@ export default function TestPlanAddDialog({
     </Dialog>
   );
 }
-

@@ -14,13 +14,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, X } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { API_ENDPOINTS } from "@/config/api";
 import { hasPermission } from "@/utils/permissions";
 import { HistoryButton } from "@/components/HistoryButton";
+import { PageHeaderWithBack } from "@/components/PageHeaderWithBack";
 import { set } from "date-fns";
 
 // Types
@@ -333,7 +334,7 @@ const StrategyList: React.FC = () => {
 
       <main className="flex-1 bg-background">
         <div className="p-4 md:p-8 flex flex-col h-screen">
-          <h1 className="text-2xl md:text-4xl font-bold mb-4 md:mb-8 text-center">Strategies</h1>
+          <PageHeaderWithBack title="Strategies" />
 
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <Select defaultValue="Strategy">
@@ -367,8 +368,18 @@ const StrategyList: React.FC = () => {
                 <Button
                   variant="ghost"
                   size="icon"
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                  aria-label="Go to first page"
+                >
+                  <ChevronsLeft className="w-4 h-4 md:w-5 md:h-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
+                  aria-label="Go to previous page"
                 >
                   <ChevronLeft className="w-4 h-4 md:w-5 md:h-5"></ChevronLeft>
                 </Button>
@@ -377,8 +388,18 @@ const StrategyList: React.FC = () => {
                   size='icon'
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
+                  aria-label="Go to next page"
                 >
                   <ChevronRight className="w-4 h-4 md:w-5 md:h-5"></ChevronRight>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setCurrentPage(totalPages)}
+                  disabled={currentPage === totalPages}
+                  aria-label="Go to last page"
+                >
+                  <ChevronsRight className="w-4 h-4 md:w-5 md:h-5" />
                 </Button>
               </div>
             </div>
@@ -394,8 +415,8 @@ const StrategyList: React.FC = () => {
                 <table className="w-full table-fixed">
                   <thead className="border-b-2">
                     <tr>
-                      <th className="sticky top-0 z-10 p-4 font-semibold text-left w-[15%] ">Strategy ID</th>
-                      <th className="sticky top-0 z-10 p-2 font-semibold text-left w-[30%]">Strategy Name</th>
+                      <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left w-[15%] ">Strategy ID</th>
+                      <th className="sticky top-0 bg-white z-10 p-2 font-semibold text-left w-[30%]">Strategy Name</th>
                       {/* <th className="sticky top-0 z-10 pl-8 p-2 font-semibold text-left ">Strategy Description</th> */}
                     </tr>
                   </thead>

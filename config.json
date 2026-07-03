@@ -1,8 +1,8 @@
 {
-    "db": {
-        "engine": "sqlite",
-        "file":"aievaluationtool.db"
-        },
+   "db": {
+    "engine": "sqlite",
+    "file": "AIEvaluationData.db"
+  },
     "examples":{
         "db_1":{
             "engine": "mariadb",
@@ -20,7 +20,8 @@
     "files": {
         "plans": "data/plans.json",
         "testcases": "data/updated_datapoints.json",
-        "strategies": "data/strategy_id.json"
+        "strategies": "data/strategy_id.json",
+        "descriptions": "data/metrics_and_submetrics.json"
     },
     "target": {
         "application_type": "WHATSAPP_WEB",
@@ -29,7 +30,7 @@
         "agent_name": "Vaidya AI"
     },
     "interface_manager": {
-        "docker": true,
+        "docker": false,
         "base_url": "http://interface-manager:8000",
         "base_url_local": "http://localhost:8000"
     },

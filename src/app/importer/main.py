@@ -131,6 +131,21 @@ prompts = json.load(open(config['files']['testcases'], 'r'))
 db = DB(db_url=db_url, debug=args.orm_debug)
 
 strategies = json.load(open(config["files"]["strategies"], "r"))
+descriptions = json.load(open(config["files"]["descriptions"], "r"))
+
+# Build one case-insensitive lookup for parent metrics and Parent/SubMetric rows.
+metric_descriptions = {}
+for plan_metrics in descriptions.values():
+    for metric_name, metric_data in plan_metrics.items():
+        metric_description = metric_data.get("description")
+        if metric_description:
+            metric_descriptions[metric_name.lower()] = metric_description
+
+        for submetric_name, submetric_data in metric_data.get("sub_metrics", {}).items():
+            submetric_description = submetric_data.get("description")
+            if submetric_description:
+                lookup_key = f"{metric_name}/{submetric_name}".lower()
+                metric_descriptions[lookup_key] = submetric_description
 
 # import all the strategies.
 logger.debug("Importing strategies...")
@@ -151,7 +166,10 @@ all_metrics_set = set()  # Track all metrics in lowercase for uniqueness
 for plan in plans.keys():
     record = plans[plan]
     plan_name = record["TestPlan_name"]
-    test_plan = TestPlan(plan_name=plan_name)
+    test_plan = TestPlan(
+        plan_name=plan_name,
+        plan_description=record.get("TestPlan_description"),
+    )
     metrics_list = []
     for metric in record["metrics"].keys():
         metric_name = record["metrics"][metric]
@@ -162,6 +180,7 @@ for plan in plans.keys():
             metric_obj = Metric(
                 metric_name=metric_name,
                 domain_id=domain_general if domain_general is not None else 1,
+                metric_description=metric_descriptions.get(metric_name.lower()),
             )
             metrics_list.append(metric_obj)
 
@@ -267,7 +286,11 @@ for met in prompts.keys():
             for t in base_cases
         ]
         # print(f"Adding metric '{metric_name_key}' with {len(mapped_cases)} test cases to the database.")
-        metric_obj = Metric(metric_name=str(metric_name_key), domain_id=domain_general)
+        metric_obj = Metric(
+            metric_name=str(metric_name_key),
+            domain_id=domain_general,
+            metric_description=metric_descriptions.get(metric_name_key.lower()),
+        )
         db.add_metric_and_testcases(testcases=mapped_cases, metric=metric_obj)
 
     # Phase 2: add child metric associations.
@@ -284,7 +307,11 @@ for met in prompts.keys():
             for t in base_cases
         ]
         # print(f"Adding metric '{metric_name_key}' with {len(mapped_cases)} test cases to the database.")
-        metric_obj = Metric(metric_name=str(metric_name_key), domain_id=domain_general)
+        metric_obj = Metric(
+            metric_name=str(metric_name_key),
+            domain_id=domain_general,
+            metric_description=metric_descriptions.get(metric_name_key.lower()),
+        )
         db.add_metric_and_testcases(testcases=mapped_cases, metric=metric_obj)
 
 tgt = Target(

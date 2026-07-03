@@ -25,6 +25,8 @@ import {
   PromptSearchType,
 } from "./PromptSearchDialog";
 
+const PROMPT_CHARACTER_LIMIT = 10000;
+
 interface PromptAddDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -173,10 +175,25 @@ export function PromptAddDialog({
     }
   }, [open, fetchReferenceData]);
 
+  const isUserPromptOverLimit = userPrompt.length > PROMPT_CHARACTER_LIMIT;
+  const isSystemPromptOverLimit = systemPrompt.length > PROMPT_CHARACTER_LIMIT;
+  const arePromptLengthsValid =
+    !isUserPromptOverLimit && !isSystemPromptOverLimit;
   const isValid =
-    userPrompt.trim().length > 0 && systemPrompt.trim().length > 0;
+    userPrompt.trim().length > 0 &&
+    systemPrompt.trim().length > 0 &&
+    arePromptLengthsValid;
 
   const handleSubmit = async () => {
+    if (!arePromptLengthsValid) {
+      toast({
+        title: "Validation error",
+        description: "User Prompt and System Prompt must be 10,000 characters or fewer.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!isValid || !notes.trim() || !language || !domain) {
       toast({
         title: "Validation error",
@@ -250,13 +267,22 @@ export function PromptAddDialog({
               value={userPrompt}
               placeholder="Enter user prompt"
               onChange={(e) => setUserPrompt(e.target.value)}
-              className="bg-muted min-h-[80px]"
+              className={`bg-muted min-h-[80px] ${
+                isUserPromptOverLimit ? "border-red-500 focus-visible:ring-red-500" : ""
+              }`}
               style={{
                 maxHeight: "120px",
                 minHeight: "70px",
                 overflow: "auto",
               }}
             />
+            <div
+              className={`text-right text-xs ${
+                isUserPromptOverLimit ? "text-red-600" : "text-muted-foreground"
+              }`}
+            >
+              {userPrompt.length}/{PROMPT_CHARACTER_LIMIT} characters
+            </div>
           </div>
           <div className="space-y-1">
             <Label className="text-base font-semibold">System Prompt</Label>
@@ -266,7 +292,9 @@ export function PromptAddDialog({
                 onChange={(e) => setSystemPrompt(e.target.value)}
                 onFocus={() => setFocusedField("systemPrompt")}
                 onBlur={() => setFocusedField(null)}
-                className="bg-muted min-h-[80px] pr-10"
+                className={`bg-muted min-h-[80px] pr-10 ${
+                  isSystemPromptOverLimit ? "border-red-500 focus-visible:ring-red-500" : ""
+                }`}
                 style={{
                   maxHeight: "120px",
                   minHeight: "70px",
@@ -286,6 +314,13 @@ export function PromptAddDialog({
                   <Search className="w-4 h-4" />
                 </Button>
               )}
+            </div>
+            <div
+              className={`text-right text-xs ${
+                isSystemPromptOverLimit ? "text-red-600" : "text-muted-foreground"
+              }`}
+            >
+              {systemPrompt.length}/{PROMPT_CHARACTER_LIMIT} characters
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2">

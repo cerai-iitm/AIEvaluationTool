@@ -90,6 +90,8 @@ def get_all_test_runs(
     status: Optional[str] = Query(None),
     sort_by: Literal["end_ts", "start_ts"] = Query("end_ts"),
     order: Literal["asc", "desc"] = Query("desc"),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=10, ge=1, le=100),
     db=Depends(get_db),
 ):
     try:
@@ -100,6 +102,8 @@ def get_all_test_runs(
             status=status,
             sort_by=sort_by,
             order=order,
+            page=page, 
+            page_size=page_size
         )
     except HTTPException:
         raise

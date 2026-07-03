@@ -24,6 +24,8 @@ interface Props {
 
 /* ===== COMPONENT ===== */
 
+const GAP_THRESHOLD_MS = 5000; // 5 seconds
+
 const RunTimeline: React.FC<Props> = ({ runName, hoveredMetric, onHoverMetric, onDurationCalculated }) => {
   const [events, setEvents] = useState<TimelineEvent[]>([]);
 
@@ -49,65 +51,19 @@ const RunTimeline: React.FC<Props> = ({ runName, hoveredMetric, onHoverMetric, o
       .then(setEvents);
   }, [runName]);
 
-  /* ================= CALCULATE TOTAL EXECUTION TIME ================= */
-
-  useEffect(() => {
-    if (!events.length) return;
-
-    const eventsByPlan = events.reduce<Record<string, TimelineEvent[]>>((acc, e) => {
-      acc[e.plan_name] ||= [];
-      acc[e.plan_name].push(e);
-      return acc;
-    }, {});
-
-    let totalMs = 0;
-
-    Object.values(eventsByPlan).forEach(planEvents => {
-      const start = Math.min(...planEvents.map(e => new Date(e.prompt_ts!).getTime()));
-      const end = Math.max(...planEvents.map(e => new Date(e.response_ts!).getTime()));
-      totalMs += (end - start);
-    });
-
-    const formatted = formatDuration(totalMs);
-    onDurationCalculated?.(formatted);
-  }, [events, onDurationCalculated]);
-
-  if (events.length === 0) return null;
-
   /* ================= GROUP INTO SEQUENTIAL PLAN BLOCKS ================= */
-  // Sort ALL events by prompt time first
-  const sortedEvents = [...events].sort(
-    (a, b) => new Date(a.prompt_ts!).getTime() - new Date(b.prompt_ts!).getTime()
+  const planBlocks = buildPlanBlocks(events);
+
+  const totalDuration = planBlocks.reduce(
+    (sum, block) => sum + getPlanDuration(block.events),
+    0
   );
 
-  // Split into blocks: same plan name with a significant time gap = new block
-  const GAP_THRESHOLD_MS = 5000; // 5 seconds
+  useEffect(() => {
+    onDurationCalculated?.(formatDuration(totalDuration));
+  }, [onDurationCalculated, totalDuration]);
 
-  const planBlocks: { key: string; name: string; events: TimelineEvent[] }[] = [];
-
-  for (const event of sortedEvents) {
-    const last = planBlocks[planBlocks.length - 1];
-    const eventTime = new Date(event.prompt_ts!).getTime();
-
-    if (last && last.name === event.plan_name) {
-      const lastResponseTime = Math.max(
-        ...last.events.map(e => new Date(e.response_ts!).getTime())
-      );
-      if (eventTime - lastResponseTime < GAP_THRESHOLD_MS) {
-        // Continuous run — same block
-        last.events.push(event);
-        continue;
-      }
-    }
-
-    // New block (different name, or same name after a gap)
-    const count = planBlocks.filter(b => b.name === event.plan_name).length;
-    planBlocks.push({
-      key: `${event.plan_name}__${count}`,
-      name: event.plan_name,
-      events: [event],
-    });
-  }
+  if (events.length === 0) return null;
 
   const eventsByPlan: Record<string, TimelineEvent[]> = Object.fromEntries(
     planBlocks.map(b => [b.key, b.events])
@@ -147,9 +103,8 @@ const RunTimeline: React.FC<Props> = ({ runName, hoveredMetric, onHoverMetric, o
         {planNames.map((planKey, index) => {
           const planEvents = eventsByPlan[planKey];
 
-          const start = Math.min(...planEvents.map(e => new Date(e.prompt_ts!).getTime()));
-          const end = Math.max(...planEvents.map(e => new Date(e.response_ts!).getTime()));
-          const total = end - start || 1;
+          const start = getPlanStart(planEvents);
+          const total = getPlanDuration(planEvents) || 1;
 
           if (total <= 0) return null;
 
@@ -163,8 +118,8 @@ const RunTimeline: React.FC<Props> = ({ runName, hoveredMetric, onHoverMetric, o
 
                 <div className={styles.timeline}>
                   {planEvents.map(e => {
-                    const prompt = new Date(e.prompt_ts!).getTime();
-                    const response = new Date(e.response_ts!).getTime();
+                    const prompt = getTimestamp(e.prompt_ts);
+                    const response = getTimestamp(e.response_ts);
                     const left = ((prompt - start) / total) * 100;
                     const width = ((response - prompt) / total) * 100;
 
@@ -217,7 +172,7 @@ const RunTimeline: React.FC<Props> = ({ runName, hoveredMetric, onHoverMetric, o
 };
 
 function formatDuration(ms: number): string {
-  if (!ms || ms < 0) return "-";
+  if (!Number.isFinite(ms) || ms <= 0) return "-";
   const totalSeconds = Math.floor(ms / 1000);
   const h = Math.floor(totalSeconds / 3600);
   const m = Math.floor((totalSeconds % 3600) / 60);
@@ -225,6 +180,61 @@ function formatDuration(ms: number): string {
   if (h > 0) return `${h}h ${m}m ${s}s`;
   if (m > 0) return `${m}m ${s}s`;
   return `${s}s`;
+}
+
+function getTimestamp(value: string | null): number {
+  if (!value) return NaN;
+  return new Date(value).getTime();
+}
+
+function hasCompleteTiming(event: TimelineEvent): boolean {
+  return Number.isFinite(getTimestamp(event.prompt_ts)) && Number.isFinite(getTimestamp(event.response_ts));
+}
+
+function getPlanStart(planEvents: TimelineEvent[]): number {
+  return Math.min(...planEvents.map(e => getTimestamp(e.prompt_ts)));
+}
+
+function getPlanEnd(planEvents: TimelineEvent[]): number {
+  return Math.max(...planEvents.map(e => getTimestamp(e.response_ts)));
+}
+
+function getPlanDuration(planEvents: TimelineEvent[]): number {
+  const start = getPlanStart(planEvents);
+  const end = getPlanEnd(planEvents);
+  const duration = end - start;
+  return Number.isFinite(duration) && duration > 0 ? duration : 0;
+}
+
+function buildPlanBlocks(events: TimelineEvent[]): { key: string; name: string; events: TimelineEvent[] }[] {
+  const sortedEvents = events
+    .filter(hasCompleteTiming)
+    .sort((a, b) => getTimestamp(a.prompt_ts) - getTimestamp(b.prompt_ts));
+
+  const planBlocks: { key: string; name: string; events: TimelineEvent[] }[] = [];
+
+  for (const event of sortedEvents) {
+    const last = planBlocks[planBlocks.length - 1];
+    const eventTime = getTimestamp(event.prompt_ts);
+
+    if (last && last.name === event.plan_name) {
+      const lastResponseTime = getPlanEnd(last.events);
+      if (eventTime - lastResponseTime < GAP_THRESHOLD_MS) {
+        // Continuous run: same plan remains one visible timeline block.
+        last.events.push(event);
+        continue;
+      }
+    }
+
+    const count = planBlocks.filter(b => b.name === event.plan_name).length;
+    planBlocks.push({
+      key: `${event.plan_name}__${count}`,
+      name: event.plan_name,
+      events: [event],
+    });
+  }
+
+  return planBlocks;
 }
 
 export default RunTimeline;

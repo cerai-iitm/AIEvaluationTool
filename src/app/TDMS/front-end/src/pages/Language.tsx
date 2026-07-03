@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import {Input} from '@/components/ui/input';
 import {Button} from '@/components/ui/button';
 import  {Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
 import { hasPermission, isUser } from '@/utils/permissions';
 import { HistoryButton } from "@/components/HistoryButton";
+import { PageHeaderWithBack } from "@/components/PageHeaderWithBack";
 
 
 interface Language {
@@ -316,7 +317,7 @@ const LanguageList: React.FC = () => {
             {/* Main content */}
             <main className="flex-1 bg-background">
                 <div className="p-4 md:p-8 flex flex-col h-screen">
-                    <h1 className="text-2xl md:text-4xl font-bold mb-4 md:mb-8 text-center">Languages</h1>
+                    <PageHeaderWithBack title="Languages" />
 
                     {/* Filter/Search Bar */}
                     <div className="flex flex-col sm:flex-row gap-4 mb-6">
@@ -350,8 +351,18 @@ const LanguageList: React.FC = () => {
                             <Button
                                 variant="ghost"
                                 size="icon"
+                                onClick={() => setCurrentPage(1)}
+                                disabled={currentPage === 1}
+                                aria-label="Go to first page"
+                            >
+                                <ChevronsLeft className="w-4 h-4 md:w-5 md:h-5" />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
                                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                                 disabled={currentPage === 1}
+                                aria-label="Go to previous page"
                             >
                                 <ChevronLeft className="w-4 h-4 md:w-5 md:h-5" />
                             </Button>
@@ -360,8 +371,18 @@ const LanguageList: React.FC = () => {
                                 size="icon"
                                 onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                                 disabled={currentPage === totalPages}
+                                aria-label="Go to next page"
                             >
                                 <ChevronRight className="w-4 h-4 md:w-5 md:h-5" />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setCurrentPage(totalPages)}
+                                disabled={currentPage === totalPages}
+                                aria-label="Go to last page"
+                            >
+                                <ChevronsRight className="w-4 h-4 md:w-5 md:h-5" />
                             </Button>
                         </div>
                     </div>
@@ -553,7 +574,6 @@ const LanguageList: React.FC = () => {
                             <Input
                                 value={updateName}
                                 onChange={e => setUpdateName(e.target.value)}
-                                maxLength={15}
                                 className="text-sm md:text-[17px] capitalize w-full md:w-1/2 "
                             />
                         </div>
@@ -562,7 +582,6 @@ const LanguageList: React.FC = () => {
                             <Input
                                 value={addMessage}
                                 onChange={e => setAddMessage(e.target.value)}
-                                maxLength={15}
                                 placeholder='Required'
                                 className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 focus:outline-none focus:ring focus:ring-blue-200 "
                             />
@@ -614,7 +633,6 @@ const LanguageList: React.FC = () => {
                                 value={newLanguageName}
                                 onChange={e => setNewLanguageName(e.target.value)}
                                 className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] w-full md:w-1/2 capitalize"
-                                maxLength={15}
                             />
                         </div>
                         {/* Message Row + Submit Button */}
@@ -623,7 +641,6 @@ const LanguageList: React.FC = () => {
                             <Input
                                 value={addMessage}
                                 onChange={e => setAddMessage(e.target.value)}
-                                maxLength={15}
                                 placeholder='Required'
                                 className=" rounded border px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
                             />

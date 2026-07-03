@@ -51,12 +51,13 @@ async def detect_text(text):
         return "unknown"
 
 class ShieldGemmaSafety:
-    def __init__(self, model_name="google/shieldgemma-2b", metric="misuse", loglevel=logging.INFO):
+    def __init__(self, model_name="google/shieldgemma-2b", metric="misuse", loglevel=logging.INFO, force_cpu=False):
         self.logger = get_logger("shieldgemma_safety", loglevel)
         self.model_name = model_name
         self.metric = metric.lower()
         self.prompt = ""
-        self.device = "cpu"
+        self.force_cpu = force_cpu
+        self.device = torch.device("cpu")
         self.tokenizer = None
         self.model = None
         self.safety_policies = self.load_safety_policies()
@@ -70,23 +71,36 @@ class ShieldGemmaSafety:
         }
 
     def load_model(self):
+        self.device = torch.device("cuda" if torch.cuda.is_available() and not self.force_cpu else "cpu")
         self.logger.info(f"Loading model: {self.model_name} on device: {self.device}")
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
-        base_model = AutoModelForCausalLM.from_pretrained(
-            self.model_name, torch_dtype=torch.bfloat16, low_cpu_mem_usage=True
-        )
 
-        offload_dir = "shieldgemma_offload_cache"
-        os.makedirs(offload_dir, exist_ok=True)
+        if self.device.type == "cuda":
+            self.logger.info("using GPU for ShieldGemma safety model")
+            base_model = AutoModelForCausalLM.from_pretrained(
+                self.model_name,
+                torch_dtype=torch.float16,
+                low_cpu_mem_usage=True
+            )
+            offload_dir = "shieldgemma_offload_cache"
+            os.makedirs(offload_dir, exist_ok=True)
 
-        device_map = infer_auto_device_map(
-            base_model,
-            max_memory={0: "0GiB", "cpu": "10GiB"},
-            dtype=torch.bfloat16,
-            no_split_module_classes=["GemmaDecoderLayer"]
-        )
+            device_map = infer_auto_device_map(
+                base_model,
+                dtype=torch.float16,
+                no_split_module_classes=["GemmaDecoderLayer"]
+            )
 
-        self.model = dispatch_model(base_model, device_map=device_map, offload_dir=offload_dir)
+            self.model = dispatch_model(base_model, device_map=device_map, offload_dir=offload_dir)
+        else:
+            self.logger.info("using CPU for ShieldGemma safety model")
+            self.model = AutoModelForCausalLM.from_pretrained(
+                self.model_name,
+                torch_dtype=torch.float32,
+                low_cpu_mem_usage=True
+            )
+            self.model.to(self.device)
+
         self.model.eval()
         self.logger.info("ShieldGemma model loaded and ready.")
 
@@ -112,7 +126,7 @@ Our safety policy:
 
 Does the human question violate the above principle? Answer with 'Yes' or 'No' and explain."""
 
-        inputs = self.tokenizer(final_prompt, return_tensors="pt").to(self.model.device)
+        inputs = self.tokenizer(final_prompt, return_tensors="pt").to(self.device)
         with torch.no_grad():
             outputs = self.model.generate(**inputs, max_new_tokens=1, output_scores=True, return_dict_in_generate=True)
             logits = outputs.scores[0][0]

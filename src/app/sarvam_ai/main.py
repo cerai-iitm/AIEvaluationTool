@@ -107,7 +107,7 @@ if __name__ == "__main__":
     parser.add_argument("--translator-model", "-t", type=str, default="sarvamai/sarvam-translate", help="Sarvam AI translation model name", dest="translator_model")
     parser.add_argument("--generator-model", "-g", type=str, default="sarvamai/sarvam-2b-v0.5", help="Sarvam AI generator model name", dest="generator_model")
     parser.add_argument("--safety-model", "-s", type=str, default="google/shieldgemma-2b", help="ShieldGemma safety model name", dest="safety_model")
-    parser.add_argument("--force-cpu", action="store_true", help="Force CPU usage for the translator model", dest="force_cpu")
+    parser.add_argument("--force-cpu", action="store_true", help="Force CPU usage for all local Sarvam and ShieldGemma models", dest="force_cpu")
 
     args = parser.parse_args()
 
@@ -134,14 +134,18 @@ if __name__ == "__main__":
     logger.debug(f"Starting Sarvam AI and Shieldgemma application")
 
     # Initialize the translator and generator with the specified log level
-    translator = SarvamAITranslator(loglevel=loglevel, force_cpu=True)
+    translator = SarvamAITranslator(loglevel=loglevel, force_cpu=args.force_cpu)
     translator.load_model(model_name=args.translator_model)
 
     generator = SarvamAIGenerator(loglevel=loglevel, force_cpu=args.force_cpu)
     generator.load_model(model_id=args.generator_model)
 
-    safety_engine = ShieldGemmaSafety(metric="misuse", loglevel=loglevel)
-    safety_engine.load_model()
+    safety_engine = ShieldGemmaSafety(
+        model_name=args.safety_model,
+        metric="misuse",
+        loglevel=loglevel,
+        force_cpu=args.force_cpu
+    )
 
     # Run the FastAPI application
     uvicorn.run(app, host=args.host, port=args.port)

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Eye, EyeOff } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -35,7 +36,8 @@ const Users = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentUserRole, setCurrentUserRole] = useState<string>("");
-  
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   // Form state
   const [formData, setFormData] = useState({
     user_name: "",
@@ -186,6 +188,8 @@ const Users = () => {
           description: "User created successfully",
         });
         setShowCreateUser(false);
+        setShowPassword(false);
+        setShowConfirmPassword(false);
         setFormData({
           user_name: "",
           email: "",
@@ -297,6 +301,8 @@ const Users = () => {
           setShowCreateUser(open);
           if (!open) {
             // Reset form when dialog is closed
+            setShowPassword(false);
+            setShowConfirmPassword(false);
             setFormData({
               user_name: "",
               email: "",
@@ -312,17 +318,21 @@ const Users = () => {
             <DialogTitle className="text-3xl font-bold text-center">Create User</DialogTitle>
           </DialogHeader>
 
-          <form onSubmit={handleSubmit} className="space-y-6 pt-8 pr-16">
+          <form onSubmit={handleSubmit} className="space-y-6 pt-8 pr-16" autoComplete="off">
             <div className="grid grid-cols-[200px_1fr] items-center gap-4">
-              <Label htmlFor="username" className="text-right font-semibold">
+              <Label htmlFor="create-account-display-id" className="text-right font-semibold">
                 User Name :
               </Label>
               <Input
-                id="username"
+                id="create-account-display-id"
+                name="create_account_display_id"
                 className="bg-muted"
                 value={formData.user_name}
                 onChange={(e) => setFormData({ ...formData, user_name: e.target.value })}
                 required
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
               />
             </div>
 
@@ -337,6 +347,7 @@ const Users = () => {
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 required
+                autoComplete="off"
               />
             </div>
 
@@ -362,31 +373,55 @@ const Users = () => {
             </div>
 
             <div className="grid grid-cols-[200px_1fr] items-center gap-4">
-              <Label htmlFor="password" className="text-right font-semibold">
+              <Label htmlFor="create-account-password" className="text-right font-semibold">
                 Password :
               </Label>
-              <Input
-                id="password"
-                type="password"
-                className="bg-muted"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="create-account-password"
+                  name="create_account_password"
+                  type={showPassword ? "text" : "password"}
+                  className="bg-muted pr-10"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  required
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-[200px_1fr] items-center gap-4">
-              <Label htmlFor="confirm-password" className="text-right font-semibold">
+              <Label htmlFor="create-account-confirm-password" className="text-right font-semibold">
                 Confirm Password :
               </Label>
-              <Input
-                id="confirm-password"
-                type="password"
-                className="bg-muted"
-                value={formData.confirm_password}
-                onChange={(e) => setFormData({ ...formData, confirm_password: e.target.value })}
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="create-account-confirm-password"
+                  name="create_account_confirm_password"
+                  type={showConfirmPassword ? "text" : "password"}
+                  className="bg-muted pr-10"
+                  value={formData.confirm_password}
+                  onChange={(e) => setFormData({ ...formData, confirm_password: e.target.value })}
+                  required
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                >
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
 
             <div className="flex justify-center pt-6 pl-16">
