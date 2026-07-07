@@ -17,6 +17,12 @@ def set_active_stop_watcher(event):
     global _active_stop_watcher
     _active_stop_watcher = event
 
+def reset_frontend_disconnect_state():
+    ws_manager.disconnected_by_frontend = False
+
+def is_frontend_disconnect_requested(stop_event: threading.Event | None = None) -> bool:
+    return ws_manager.disconnected_by_frontend or bool(stop_event and stop_event.is_set())
+
 def on_frontend_disconnect(config_path):
     
     ws_manager.disconnected_by_frontend = True
@@ -111,7 +117,8 @@ def stop_interface_manager(config_path: str, profile_path: str = "/home/varun/te
             config = json.load(f)
         
         im_config = config.get("interface_manager", {})
-        if im_config.get("docker"):
+        is_docker = bool(im_config.get("docker"))
+        if is_docker:
             base_url = im_config.get("base_url")
         else:
             base_url = im_config.get("base_url_local")  # 👈 this is "http://localhost:8000"
@@ -127,6 +134,10 @@ def stop_interface_manager(config_path: str, profile_path: str = "/home/varun/te
             logger.info("Interface Manager /close called successfully")
         except Exception as e:
             logger.error(f"/close failed (IM may already be dead): {e}")
+
+        if is_docker:
+            logger.info("Docker mode detected; /close requested, skipping local PID cleanup")
+            return
 
         # 2️⃣ Kill ALL python processes on that port
         for proc in psutil.process_iter(['pid', 'name']):

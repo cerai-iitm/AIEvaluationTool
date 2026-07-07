@@ -12,6 +12,7 @@ class WSManager:
         await websocket.accept()
         self.connections.append(websocket)
         self._send_locks[websocket] = asyncio.Lock()
+        self.disconnected_by_frontend = False
 
     def disconnect(self, websocket: WebSocket):
         if websocket in self.connections:

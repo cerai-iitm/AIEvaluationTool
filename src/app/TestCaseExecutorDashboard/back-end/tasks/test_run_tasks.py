@@ -11,7 +11,11 @@ from configuration.paths import (
 from lib.data import Conversation, RunDetail
 from lib.interface_manager import InterfaceManagerClient
 from services.ws_manager import ws_manager
-from utils.port import watch_im_process, set_active_stop_watcher
+from utils.port import (
+    is_frontend_disconnect_requested,
+    set_active_stop_watcher,
+    watch_im_process,
+)
 from lib.utils import get_logger, get_logger_verbosity
 
 logger = get_logger(__name__)
@@ -97,14 +101,42 @@ async def execute_testcases(
     try:
         
         stop_watcher = threading.Event()
-        frontend_disconnected_event = threading.Event()  # 👈 add this
         set_active_stop_watcher(stop_watcher)
-        watcher_thread = threading.Thread(
-            target=watch_im_process,
-            args=(interface_manager_config, profile_path, stop_watcher),
-            daemon=True,
-        )
-        watcher_thread.start()
+
+        def stop_requested() -> bool:
+            return is_frontend_disconnect_requested(stop_watcher)
+
+        async def finish_aborted_run(rundetail=None):
+            logger.info(f"Frontend disconnected; aborting run {run_id}")
+            stop_watcher.set()
+            if rundetail is not None:
+                rundetail.status = "FAILED"
+                db.add_or_update_testrun_detail(rundetail)
+            run.end_ts = datetime.now().isoformat()
+            run.status = "FAILED"
+            db.add_or_update_testrun(run=run)
+            await ws_manager.send_all(
+                {
+                    "type": "RUN_FINISHED",
+                    "runId": run_id,
+                    "status": "FAILED",
+                    "error": "Frontend disconnected",
+                }
+            )
+
+        if interface_manager_config.get("docker"):
+            logger.info("Docker mode detected; skipping local Chrome process watcher")
+        else:
+            watcher_thread = threading.Thread(
+                target=watch_im_process,
+                args=(config_path, profile_path, stop_watcher),
+                daemon=True,
+            )
+            watcher_thread.start()
+
+        if stop_requested():
+            await finish_aborted_run()
+            return
 
         agent_name = target
         application_name = target
@@ -132,6 +164,10 @@ async def execute_testcases(
             {"type": "RUN_STARTED", "runId": run_id, "total": len(testcases)}
         )
 
+        if stop_requested():
+            await finish_aborted_run()
+            return
+
         try:
             client.sync_config(
                 {
@@ -144,6 +180,9 @@ async def execute_testcases(
             )
             client.apply_server_config()
         except Exception as e:
+            if stop_requested():
+                await finish_aborted_run()
+                return
             logger.error(f"Interface manager setup failed for run {run_id}: {e}")
             run.status = "FAILED"
             run.end_ts = datetime.now().isoformat()
@@ -164,6 +203,10 @@ async def execute_testcases(
         for index, testcase in enumerate(testcases, start=1):
             rundetail = None
             try:
+                if stop_requested():
+                    await finish_aborted_run()
+                    return
+
                 rundetail = RunDetail(
                     run_name=run_name,
                     plan_name=plan_name,
@@ -216,11 +259,19 @@ async def execute_testcases(
                     }
                 )
                 step2_start = datetime.now()
+                if stop_requested():
+                    await finish_aborted_run(rundetail)
+                    return
+
                 response_from_agent = await asyncio.to_thread(
                     client.chat,
                     chat_id=testcase.testcase_id,
                     prompt_list=[message_to_agent],
                 )
+                if stop_requested():
+                    await finish_aborted_run(rundetail)
+                    return
+
                 step2_duration = (datetime.now() - step2_start).total_seconds()
                 if step2_duration < 2:
                     logger.error(
@@ -287,6 +338,9 @@ async def execute_testcases(
                 rundetail.status = "COMPLETED"
                 db.add_or_update_testrun_detail(rundetail)
             except Exception as e:
+                if stop_requested():
+                    await finish_aborted_run(rundetail)
+                    return
                 logger.error(
                     f"Testcase execution failed for run {run_id}, testcase index {index}: {e}"
                 )

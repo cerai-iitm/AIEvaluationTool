@@ -17,7 +17,7 @@ from lib.data import Run
 from schemas import TestRunFullResponse, TestRunSummaryResponse, TestRunDetailsResponse,TestRunResponse, NewTestRun, FilterResponse, EvaluationItemResponse, RunEvaluationSummaryResponse
 from fastapi.responses import FileResponse
 from tasks.test_run_tasks import execute_testcases
-from utils.port import ensure_interface_manager_port_running
+from utils.port import ensure_interface_manager_port_running, reset_frontend_disconnect_state
 
 logger = get_logger(__name__)
 
@@ -77,16 +77,24 @@ def _calculate_timeline_duration_ms(timeline) -> Optional[int]:
 
 def _has_failed_cases(db, details) -> bool:
     for d in details:
-        evaluation_reason = ""
-        if d.conversation_id:
-            conv = db.get_conversation_by_id(d.conversation_id)
-            if conv:
-                evaluation_reason = conv.evaluation_reason or ""
+        if getattr(d, "status", None) != "COMPLETED":
+            continue
+
+        conversation_id = getattr(d, "conversation_id", None)
+        if not conversation_id:
+            continue
+
+        conv = db.get_conversation_by_id(conversation_id)
+        if not conv:
+            continue
+
+        evaluation_reason = conv.evaluation_reason or ""
         if not evaluation_reason.strip():
             return True
     return False
 
 def start_run_service(db, data: NewTestRun, background_tasks: BackgroundTasks):
+    reset_frontend_disconnect_state()
     ensure_interface_manager_port_running(interface_manager_config)
     if data.testPlan:
         logger.info("Starting new test run...")
@@ -239,6 +247,7 @@ def continue_run_service(db, run_name: str):
 
 
 def continue_run_with_plan_service(db, data: NewTestRun, background_tasks: BackgroundTasks):
+    reset_frontend_disconnect_state()
     ensure_interface_manager_port_running(interface_manager_config)
     run = db.get_run_by_name(data.runName)
 
@@ -360,14 +369,14 @@ def get_test_run_service(db, run_name: str, metric: Optional[str] = None, status
         logger.info(f"Run summary: {summary}")
         details = db.get_all_run_details_by_run_name(run_name)
 
-        has_failed_cases = False 
-
         details_response = []
         if metric:
             details = [d for d in details if d.metric_name == metric]
 
         if status:
             details = [d for d in details if d.status == status]
+
+        has_failed_cases = _has_failed_cases(db, details)
 
         for d in details:
             score = None
@@ -378,8 +387,6 @@ def get_test_run_service(db, run_name: str, metric: Optional[str] = None, status
                     score = float(conv.evaluation_score)
                 if conv:
                     evaluation_reason = conv.evaluation_reason or ""  # ← add this
-            if not evaluation_reason.strip():
-                has_failed_cases = True        
 
             details_response.append(
                 TestRunDetailsResponse(

@@ -66,8 +66,8 @@ col.col-run-id { width: 60px; min-width: 60px; }
 col.col-run-name { width: 180px; min-width: 150px; max-width: 250px; }
 col.col-target { width: 100px; min-width: 80px; }
 col.col-started-at { width: 150px; min-width: 130px; }
-col.col-duration { width: 80px; min-width: 70px; }
-col.col-score { width: 70px; min-width: 60px; }
+col.col-duration { width: 90px; min-width: 80px; }
+col.col-score { width: 150px; min-width: 140px; }
 col.col-evaluation { width: 150px; min-width: 130px; }
 col.col-status { width: 110px; min-width: 90px; }
 col.col-domain { width: 100px; min-width: 80px; }
@@ -101,6 +101,18 @@ td.col-evaluation {
 .cell-center {
   text-align: center;
   font-variant-numeric: tabular-nums;
+}
+
+th.col-duration,
+td.col-duration,
+th.col-score,
+td.col-score {
+  text-align: center;
+}
+
+th.col-duration .header-content,
+th.col-score .header-content {
+  justify-content: center;
 }
 
 .run-name-cell { overflow: hidden;  }
@@ -788,8 +800,8 @@ td.col-evaluation {
   col.col-run-name { width: 120px; min-width: 100px; max-width: 140px; }
   col.col-target { width: 70px; min-width: 50px; }
   col.col-started-at { width: 110px; min-width: 90px; }
-  col.col-duration { width: 60px; min-width: 50px; }
-  col.col-score { width: 60px; min-width: 50px; }
+  col.col-duration { width: 70px; min-width: 60px; }
+  col.col-score { width: 130px; min-width: 120px; }
   col.col-evaluation { width: 110px; min-width: 90px; }
   col.col-status { width: 90px; min-width: 70px; }
   col.col-domain { width: 70px; min-width: 50px; }
