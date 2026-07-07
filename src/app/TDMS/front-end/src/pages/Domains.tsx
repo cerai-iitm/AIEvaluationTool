@@ -441,7 +441,7 @@ const DomainList: React.FC = () => {
                           }}
                         >
                           <td className="p-2 text-center text-xs md:text-base">{row.domain_id}</td>
-                          <td className="p-2 text-xs md:text-base capitalize pl-6">{row.domain_name}</td>
+                          <td className="p-2 text-xs md:text-base capitalize pl-6 truncate">{row.domain_name}</td>
                         </tr>
                       ))
                     )}
@@ -590,11 +590,11 @@ const DomainList: React.FC = () => {
             </button>
             <div className="flex flex-col md:flex-row items-center mb-6 md:mb-8 mt-4 md:mt-5 gap-2 md:gap-0">
               {/* <label className="font-semibold text-left md:text-lg min-w-[100px] md:min-w-[165px]">Domain :</label> */}
-              <label className="font-semibold text-lg text-left ml-8 p-2">Domain :</label>
+              <label className="font-semibold text-base ml-8 p-2">Domain :</label>
               <Input
                 value={updateName}
                 onChange={e => setUpdateName(e.target.value)}
-                className="bg-gray-100 rounded border px-3 md:px-4 py-2 text-sm md:text-lg flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200 capitalize mx-2 mr-8"
+                className="bg-gray-100 rounded border px-2 md:px-4 py-2 text-sm md:text-lg flex-1 md:w-auto focus:outline-none focus:ring focus:ring-blue-200 capitalize mx-1 mr-4"
               />
             </div>
             <div className="flex justify-center items-center p-4">

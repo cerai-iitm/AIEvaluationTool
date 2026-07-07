@@ -447,7 +447,7 @@ const Metrics: React.FC = () => {
           </div>
           
           <div className="flex-1 min-h-0 overflow-y-auto">
-            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[73vh] max-w-[800px] mx-left overflow-y-auto">
+            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[73vh] max-w-[1200px] mx-left overflow-y-auto">
               {isLoading ? (
                 <div className="flex items-center justify-center p-8">
                   <span>Loading...</span>
@@ -456,8 +456,9 @@ const Metrics: React.FC = () => {
                 <table className="w-full table-fixed">
                   <thead className="border-b-2">
                     <tr>
-                      <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left pl-10 w-[15%] ">Metric Id</th>
-                      <th className="sticky top-0 bg-white z-10 p-2 font-semibold text-left pl-4 w-[30%]">Metric Name</th>
+                      <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left pl-10 w-[20%] ">Metric Id</th>
+                      <th className="sticky top-0 bg-white z-10 p-2 font-semibold text-left pl-4 w-[40%]">Metric Name</th>
+                      <th className="sticky top-0 bg-white z-10 p-2 font-semibold text-left pl-4 w-[80%]">Description</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -482,6 +483,7 @@ const Metrics: React.FC = () => {
                         >
                           <td className="p-2 pl-16">{row.metric_id}</td>
                           <td className="p-2 truncate">{row.metric_name}</td>
+                          <td className="p-2 truncate ">{row.metric_description}</td>
                         </tr>
                       ))
                     )}

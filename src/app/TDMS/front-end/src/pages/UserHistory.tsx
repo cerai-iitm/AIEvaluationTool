@@ -455,12 +455,12 @@ const UserHistory = () => {
                 </div>
                 <div className="text-right">
                   <div className="flex items-center gap-2 justify-end mb-1">
-                    {activity.type !== "User" && (
+                    {/* {activity.type !== "User" && (
                       <>
                         <span className="font-medium">{activity.testCaseId}</span>
                         <span className="text-xl">-</span>
                       </>
-                    )}
+                    )} */}
                     <span className={`font-semibold ${getStatusColor(activity.status)}`}>
                       {activity.status}
                     </span>
