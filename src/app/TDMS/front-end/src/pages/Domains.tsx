@@ -428,7 +428,7 @@ const DomainList: React.FC = () => {
                         </td>
                       </tr>
                     ) : (
-                      PaginatedDomains.map((row) => (
+                      PaginatedDomains.map((row,index) => (
                         <tr 
                           key={row.domain_id}
                           className={`border-b cursor-pointer transition-colors duration-200 ${
@@ -440,7 +440,7 @@ const DomainList: React.FC = () => {
                             setHighlightedRowId(row.domain_id);
                           }}
                         >
-                          <td className="p-2 text-center text-xs md:text-base">{row.domain_id}</td>
+                          <td className="p-2 text-center text-xs md:text-base">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                           <td className="p-2 text-xs md:text-base capitalize pl-6">{row.domain_name}</td>
                         </tr>
                       ))

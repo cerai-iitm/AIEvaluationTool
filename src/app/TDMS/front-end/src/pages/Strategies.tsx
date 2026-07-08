@@ -428,7 +428,7 @@ const StrategyList: React.FC = () => {
                         </td>
                       </tr>
                     ) : (
-                      PaginatedStrategies.map((row) => (
+                      PaginatedStrategies.map((row, index) => (
                         <tr 
                           key={row.strategy_id}
                           className={`border-b cursor-pointer transition-colors duration-200 ${
@@ -440,7 +440,7 @@ const StrategyList: React.FC = () => {
                             setHighlightedRowId(row.strategy_id);
                           }}
                         >
-                          <td className="p-2 pl-12">{row.strategy_id}</td>
+                          <td className="p-2 pl-12">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                           <td className="p-2 truncate">{row.strategy_name}</td>
                           {/* <td className="p-2 max-w-md truncate">{row.strategy_description || ""}</td> */}
                         </tr>

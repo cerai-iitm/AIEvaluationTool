@@ -410,7 +410,7 @@ const Targets = () => {
                       </td>
                     </tr>
                   ) : (
-                    paginatedTargets.map((target) => (
+                    paginatedTargets.map((target,index) => (
                       <tr
                         key={target.target_id}
                         className={`border-b cursor-pointer transition-colors duration-200 ${highlightedRowId === target.target_id ? "bg-primary/10 hover:bg-primary/15 border-primary//30" : "hover:bg-muted/50"}`}
@@ -419,7 +419,7 @@ const Targets = () => {
                           setHighlightedRowId(target.target_id);
                         }}
                       >
-                        <td className="p-2 pl-12">{target.target_id}</td>
+                        <td className="p-2 pl-12">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                         <td className="p-2 pl-6 capitalize">{target.target_name}</td>
                         <td className="p-2 pl-12">
                           <span
