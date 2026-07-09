@@ -667,9 +667,96 @@ def handle_farmerchat(driver, prompt):
         "content": text
     }
 
+def handle_bodhan_ai(driver, prompt):
+   cfg = load_xpaths()["applications"]["bodhan-ai"]["ChatPage"]
+
+   prompt_xpath = cfg["prompt_input_box_element"]
+   response_xpath = cfg["agent_response_element"]
+
+   if not prompt_xpath or not response_xpath:
+       raise RuntimeError("Prompt input box or response XPath not configured.")
+
+   wait = WebDriverWait(driver, 30)
+
+   def get_textarea():
+       return wait.until(
+           EC.element_to_be_clickable((By.XPATH, prompt_xpath))
+       )
+
+   def get_response_text():
+       elements = driver.find_elements(By.XPATH, response_xpath)
+       return "\n".join(
+           e.text.strip()
+           for e in elements
+           if e.text.strip()
+       )
+
+   # Current response before sending prompt
+   previous_response = get_response_text()
+
+   # Retry in case React replaces the textarea
+   for _ in range(3):
+       try:
+           textarea = get_textarea()
+
+           textarea.click()
+           textarea.send_keys(Keys.CONTROL, "a")
+           textarea.send_keys(Keys.DELETE)
+
+           textarea = get_textarea()
+           textarea.send_keys(prompt)
+
+           textarea = get_textarea()
+           textarea.send_keys(Keys.ENTER)
+
+           break
+
+       except StaleElementReferenceException:
+           time.sleep(0.5)
+   else:
+       raise RuntimeError("Textarea became stale repeatedly.")
+
+   # Wait until response starts changing
+   try:
+       wait.until(
+           lambda d: get_response_text() != previous_response
+       )
+   except TimeoutException:
+       raise RuntimeError("No response received from Bodhan AI.")
+
+   # Wait until streaming finishes
+   last_text = ""
+   stable_count = 0
+   timeout = time.time() + 120
+
+   while time.time() < timeout:
+       try:
+           current_text = get_response_text()
+
+           if current_text == last_text and current_text:
+               stable_count += 1
+           else:
+               stable_count = 0
+               last_text = current_text
+
+           # 4 consecutive stable reads (~2 seconds)
+           if stable_count >= 4:
+               break
+
+           time.sleep(0.5)
+
+       except StaleElementReferenceException:
+           continue
+
+   return {
+       "type": "text",
+       "content": last_text.strip()
+   }
+
 
 APP_HANDLERS = {
     "farmerchat": handle_farmerchat,
+    "bodhan-ai": handle_bodhan_ai
 }
 
 # Sending Message to Web applications
