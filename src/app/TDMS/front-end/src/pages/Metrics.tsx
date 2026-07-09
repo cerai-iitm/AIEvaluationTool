@@ -477,7 +477,7 @@ const Metrics: React.FC = () => {
           </div>
           
           <div className="flex-1 min-h-0 overflow-y-auto">
-            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[73vh] max-w-[800px] mx-left overflow-y-auto">
+            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[73vh] max-w-[1200px] mx-left overflow-y-auto">
               {isLoading ? (
                 <div className="flex items-center justify-center p-8">
                   <span>Loading...</span>
@@ -486,8 +486,9 @@ const Metrics: React.FC = () => {
                 <table className="w-full table-fixed">
                   <thead className="border-b-2">
                     <tr>
-                      <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left pl-10 w-[15%] ">Metric Id</th>
-                      <th className="sticky top-0 bg-white z-10 p-2 font-semibold text-left pl-4 w-[30%]">Metric Name</th>
+                      <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left pl-10 w-[20%] ">Metric Id</th>
+                      <th className="sticky top-0 bg-white z-10 p-2 font-semibold text-left pl-4 w-[40%]">Metric Name</th>
+                      <th className="sticky top-0 bg-white z-10 p-2 font-semibold text-left pl-4 w-[80%]">Description</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -512,6 +513,7 @@ const Metrics: React.FC = () => {
                         >
                           <td className="p-2 pl-16">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                           <td className="p-2 truncate">{row.metric_name}</td>
+                          <td className="p-2 truncate ">{row.metric_description}</td>
                         </tr>
                       ))
                     )}
@@ -565,10 +567,44 @@ const Metrics: React.FC = () => {
                 <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Metric</label>
                 <Input className="bg-muted text-sm md:text-base" value={selectedMetric.metric_name} readOnly />
               </div>
+
+              {/* if Description is null means description is not visible */}
+              {selectedMetric.metric_description && (
+              <div className="flex flex-col gap-1">
+                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Description</label>
+                <Textarea className="bg-muted text-sm md:text-base" 
+                  value={selectedMetric.metric_description || ""} 
+                  readOnly 
+                style={{
+                    maxHeight: "120px",
+                    minHeight: "80px",
+                    overflowY: "auto"
+                  }}
+                ></Textarea>
+              </div>
+              )}
+              {selectedMetric.metric_source && (
+              <div className="flex flex-col gap-1">
+                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Source</label>
+                <Input className="bg-muted text-sm md:text-base" 
+                  value={selectedMetric.metric_source || ""} 
+                  readOnly 
+                />
+              </div>
+              )}
               <div className="flex flex-col gap-1">
                 <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Domain</label>
                 <Input className="bg-muted text-sm md:text-base capitalize" value={selectedMetric.domain_name} readOnly />
               </div>
+              {selectedMetric.metric_benchmark && (
+              <div className="flex flex-col gap-1">
+                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Benchmark</label>
+                <Input className="bg-muted text-sm md:text-base" 
+                  value={selectedMetric.metric_benchmark || ""} 
+                  readOnly 
+                />
+              </div>
+              )}
             </div>
             <div className="flex gap-4 md:gap-8 justify-center">
               {hasPermission(currentUserRole, "canDeleteTables") && (

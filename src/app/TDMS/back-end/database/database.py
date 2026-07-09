@@ -11,7 +11,7 @@ import os
 import json
 from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parents[5]
+BASE_DIR = Path(__file__).resolve().parents[4]
 config_path = BASE_DIR / "config.json"
 
 try:
