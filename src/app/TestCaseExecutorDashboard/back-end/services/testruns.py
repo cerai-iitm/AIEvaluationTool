@@ -17,7 +17,7 @@ from lib.data import Run
 from schemas import TestRunFullResponse, TestRunSummaryResponse, TestRunDetailsResponse,TestRunResponse, NewTestRun, FilterResponse, EvaluationItemResponse, RunEvaluationSummaryResponse
 from fastapi.responses import FileResponse
 from tasks.test_run_tasks import execute_testcases
-from utils.port import ensure_interface_manager_port_running
+from utils.port import ensure_interface_manager_port_running, reset_frontend_disconnect_state
 
 logger = get_logger(__name__)
 
@@ -75,7 +75,26 @@ def _calculate_timeline_duration_ms(timeline) -> Optional[int]:
 
     return int(total_ms) if total_ms > 0 else None
 
+def _has_failed_cases(db, details) -> bool:
+    for d in details:
+        if getattr(d, "status", None) != "COMPLETED":
+            continue
+
+        conversation_id = getattr(d, "conversation_id", None)
+        if not conversation_id:
+            continue
+
+        conv = db.get_conversation_by_id(conversation_id)
+        if not conv:
+            continue
+
+        evaluation_reason = conv.evaluation_reason or ""
+        if not evaluation_reason.strip():
+            return True
+    return False
+
 def start_run_service(db, data: NewTestRun, background_tasks: BackgroundTasks):
+    reset_frontend_disconnect_state()
     ensure_interface_manager_port_running(interface_manager_config)
     if data.testPlan:
         logger.info("Starting new test run...")
@@ -228,6 +247,7 @@ def continue_run_service(db, run_name: str):
 
 
 def continue_run_with_plan_service(db, data: NewTestRun, background_tasks: BackgroundTasks):
+    reset_frontend_disconnect_state()
     ensure_interface_manager_port_running(interface_manager_config)
     run = db.get_run_by_name(data.runName)
 
@@ -356,14 +376,18 @@ def get_test_run_service(db, run_name: str, metric: Optional[str] = None, status
         if status:
             details = [d for d in details if d.status == status]
 
+        has_failed_cases = _has_failed_cases(db, details)
+
         for d in details:
             score = None
+            evaluation_reason = ""
             if d.conversation_id:
                 conv = db.get_conversation_by_id(d.conversation_id)
                 if conv and conv.evaluation_score is not None:
                     score = float(conv.evaluation_score)
                 if conv:
                     evaluation_reason = conv.evaluation_reason or ""  # ← add this
+
             details_response.append(
                 TestRunDetailsResponse(
                     run_name=d.run_name,
@@ -374,10 +398,11 @@ def get_test_run_service(db, run_name: str, metric: Optional[str] = None, status
                     status=d.status,
                     detail_id=d.detail_id,
                     score=score,
-                    evaluation_reason=evaluation_reason  
+                    evaluation_reason=evaluation_reason,
+                    has_failed_cases=has_failed_cases
                 )
             )
-
+        print(has_failed_cases)    
         return TestRunFullResponse(
             summary=summary,
             details=details_response
@@ -447,7 +472,8 @@ def get_all_test_runs_service(
             evaluation_ts = max(
                 (e.evaluation_ts for e in timeline if e.evaluation_ts),
                 default=None
-            )    
+            )
+            run_details = db.get_all_run_details_by_run_name(r.run_name)
             # print("evaluation time stamp", evaluation_ts)   
             response.append(
                 TestRunResponse(
@@ -462,6 +488,7 @@ def get_all_test_runs_service(
                     average_score=average_score,
                     evaluation_ts=evaluation_ts,
                     analysis_status=analysis_status,
+                    has_failed_cases=_has_failed_cases(db, run_details),
                     totalPages= math.ceil(total_count / page_size) if page_size else 1
                 )
             )
@@ -629,6 +656,22 @@ def get_test_run_summary_service(db, run_name: str):
         start_ts=run.start_ts,
         end_ts=run.end_ts
     )
+
+
+def delete_test_run_service(db, run_name: str):
+    run = db.get_run_by_name(run_name)
+    if not run:
+        raise HTTPException(status_code=404, detail="Run not found")
+
+    deleted = db.delete_run_by_name(run_name)
+    if not deleted:
+        raise HTTPException(status_code=500, detail="Failed to delete run")
+
+    return {
+        "status": "success",
+        "message": f"Run '{run_name}' deleted successfully",
+        "run_name": run_name,
+    }
 
 # def start_run_service(db, data: NewTestRun, background_tasks: BackgroundTasks):    
 #     ensure_interface_manager_running(interface_manager_config)

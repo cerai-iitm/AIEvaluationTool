@@ -63,7 +63,7 @@ def get_report_service(run_name: str, db):
             if not scores:
                 continue
 
-            metric_score = round(sum(scores) / len(scores), 3)
+            metric_score = round(sum(scores) / len(scores), 2)
 
             metric_summary = OllamaConnect.get_metric_summary(
                 metric_name,

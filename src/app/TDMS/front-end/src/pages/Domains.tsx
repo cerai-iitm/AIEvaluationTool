@@ -428,7 +428,7 @@ const DomainList: React.FC = () => {
                         </td>
                       </tr>
                     ) : (
-                      PaginatedDomains.map((row) => (
+                      PaginatedDomains.map((row,index) => (
                         <tr 
                           key={row.domain_id}
                           className={`border-b cursor-pointer transition-colors duration-200 ${

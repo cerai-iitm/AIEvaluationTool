@@ -5,18 +5,19 @@ from lib.data import TestCase, Conversation
 from .utils_new import FileLoader
 from .strategy_base import Strategy
 from .logger import get_logger
-
+from pathlib import Path
 warnings.filterwarnings("ignore")
 
 FileLoader._load_env_vars(__file__)
 logger = get_logger("compute_mtbf")
+project_root = Path(__file__).parents[3]
 dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), simple=True, strat_name="compute_mtbf")
 
 # this module compute mean time between failures from the log file generated during interaction with AI agents
 class Compute_MTBF(Strategy):
     def __init__(self, name: str = "compute_mtbf", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
-        self.file_path = dflt_vals.file_path
+        self.file_path = project_root / Path(dflt_vals.file_path)
 
     def extract_failure_timestamps(self, log_path, keyword="ERROR"):
         """

@@ -125,6 +125,12 @@ def update_user(db:Session, user_id: str, payload: UpdateUser, actor: Optional[U
     user.email = payload.email
     user.role = payload.role.lower()
     if payload.password:
+        # Check if new password is the same as the current one
+        if helpers.verify_password(payload.password, user.password):
+            raise HTTPException(
+                status_code=400,
+                detail="New password cannot be the same as the current password"
+            )
         user.password = helpers.hash_password(payload.password)
     if payload.is_active is not None:
         user.is_active = payload.is_active

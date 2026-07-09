@@ -366,7 +366,7 @@ const Responses = () => {
                     </td>
                   </tr>
                 ) : (
-                  paginatedResponses.map((response) => (
+                  paginatedResponses.map((response, index) => (
                     <tr
                       key={response.response_id}
                       className={`border-b cursor-pointer transition-colors duration-200 ${
@@ -377,7 +377,7 @@ const Responses = () => {
                         setHighlightedRowId(response.response_id);
                       }}
                     >
-                      <td className="p-2 pl-12">{response.response_id}</td>
+                      <td className="p-2 pl-12">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                       <td className="p-2 max-w-md truncate">
                         {response.response_text}
                       </td>

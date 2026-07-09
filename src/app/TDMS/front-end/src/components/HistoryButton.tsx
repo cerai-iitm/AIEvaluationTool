@@ -37,6 +37,31 @@ const getStatusColor = (status: string) => {
   }
 };
 
+const formatLocalTimestamp = (timestamp: string) => {
+  const trimmedTimestamp = timestamp.trim();
+  const hasTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(trimmedTimestamp);
+  const normalizedTimestamp = trimmedTimestamp.replace(" ", "T");
+  const date = new Date(hasTimezone ? normalizedTimestamp : `${normalizedTimestamp}Z`);
+
+  if (Number.isNaN(date.getTime())) {
+    return timestamp;
+  }
+
+  const parts = new Intl.DateTimeFormat(undefined, {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+
+  const getPart = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? "";
+
+  return `${getPart("year")}-${getPart("month")}-${getPart("day")} ${getPart("hour")}:${getPart("minute")}`;
+};
+
 const EntityHistoryDialog: React.FC<EntityHistoryProps> = ({
   entityType,
   title,
@@ -114,7 +139,7 @@ const EntityHistoryDialog: React.FC<EntityHistoryProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto overflow-x-hidden">
         <DialogHeader className="mt-4 sticky top-0 mb-2 bg-white rounded-lg px-4 py-4 shadow-md">
           <DialogTitle className="sticky">History - {title}</DialogTitle>
         </DialogHeader>
@@ -130,7 +155,7 @@ const EntityHistoryDialog: React.FC<EntityHistoryProps> = ({
             </p>
           </div>
         ) : (
-          <div className="space-y-4 mt-4">
+          <div className="space-y-4 mt-4 min-w-0">
             {activities.map((activity, index) => {
               const activityEntityId =
                 activity[idField] ??
@@ -145,7 +170,7 @@ const EntityHistoryDialog: React.FC<EntityHistoryProps> = ({
                   className="bg-white rounded-lg shadow-md p-6 border-l-4 border-primary"
                 >
                   <div className="flex justify-between items-start">
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 mb-2">
                         <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                           <span className="w-4 h-4 rounded-full bg-primary" />
@@ -156,9 +181,9 @@ const EntityHistoryDialog: React.FC<EntityHistoryProps> = ({
                           </p>
                         </div>
                       </div>
-                      <p className="text-lg mb-2">{activity.description}</p>
+                      <p className="text-lg mb-2 break-words whitespace-pre-wrap">{activity.description}</p>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right shrink-0">
                       <div className="flex items-center gap-2 justify-end mb-1">
                         {activityEntityId && (
                           <>
@@ -179,7 +204,7 @@ const EntityHistoryDialog: React.FC<EntityHistoryProps> = ({
                         )}
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        {activity.timestamp}
+                        {formatLocalTimestamp(activity.timestamp)}
                       </p>
                     </div>
                   </div>

@@ -38,6 +38,17 @@ const Users = () => {
   const [currentUserRole, setCurrentUserRole] = useState<string>("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const validateUserName = (value: string): string | null => {
+  const v = value.trim();
+  if (v.length < 3) return "Username must be at least 3 characters long";
+  if (v.length > 30) return "Username must be 30 characters or fewer";
+  
+  if (!/^[a-zA-Z0-9._-]+$/.test(v)) return "Special characters are not allowed";
+  if (!/^[a-zA-Z0-9]/.test(v)) return "Username must start with a letter or number";
+  if (!/[a-zA-Z0-9]$/.test(v)) return "Username must end with a letter or number";
+  if (/[._-]{2,}/.test(v)) return "No consecutive special characters (e.g. .. __ --)";
+  return null;
+};
   // Form state
   const [formData, setFormData] = useState({
     user_name: "",
@@ -146,7 +157,17 @@ const Users = () => {
       });
       return;
     }
+    if (!formData.user_name || !formData.email || !formData.role || !formData.password) {
+      toast({ title: "Error", description: "Please fill in all fields", variant: "destructive" });
+      return;
+    }
 
+    // ← just add these 6 lines here
+    const userNameError = validateUserName(formData.user_name);
+    if (userNameError) {
+      toast({ title: "Invalid Username", description: userNameError, variant: "destructive" });
+      return;
+    }
     if (formData.password !== formData.confirm_password) {
       toast({
         title: "Error",
@@ -393,7 +414,7 @@ const Users = () => {
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" /> }
                 </button>
               </div>
             </div>
@@ -419,7 +440,7 @@ const Users = () => {
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
                 >
-                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showConfirmPassword ?  <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" /> }
                 </button>
               </div>
             </div>

@@ -574,7 +574,7 @@ const TestCases = () => {
                     </td>
                   </tr>
                 ) : (
-                  paginatedCases.map((testCase) => (
+                  paginatedCases.map((testCase,index) => (
                     <tr
                       key={testCase.id}
                       className={`border-b cursor-pointer transition-colors duration-200 ${
@@ -587,8 +587,8 @@ const TestCases = () => {
                         setHighlightedRowId(testCase.id);
                       }}
                     >
-                      <td className="p-2 pl-12">{testCase.id}</td>
-                      <td className="p-2 pl-12">{testCase.name}</td>
+                      <td className="p-2 pl-12">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                      <td className="p-2 pl-12 max-w-[200px] whitespace-normal break-words">{testCase.name}</td>
                       <td className="p-2 truncate">{testCase.strategyName}</td>
                       <td className="p-2 pl-6 capitalize first-letter">{testCase.domainName}</td>
                       <td className="p-2 pl-6 capitalize first-letter">{testCase.language}</td>
@@ -638,12 +638,12 @@ const TestCases = () => {
                 <Label className="text-base font-semibold pl-2">Test Case  - </Label> <Label className="text-base font-semibold text-xl pl-2 text-primary hover:text-primary/90"> {selectedCase.name} </Label>
                 
               </div> */}
-              <div className="flex items-center justify-center gap-2">
-                <Label className="text-base font-semibold">
+              <div className="flex items-center justify-center gap-2 flex-wrap text-center w-full">
+                <Label className="text-base font-semibold whitespace-nowrap">
                   Test Case -
                 </Label>
 
-                <Label className="text-xl font-semibold text-primary hover:text-primary/90">
+                 <Label className="text-xl font-semibold text-primary hover:text-primary/90 break-all min-w-0 max-w-full">
                   {selectedCase.name}
                 </Label>
               </div>

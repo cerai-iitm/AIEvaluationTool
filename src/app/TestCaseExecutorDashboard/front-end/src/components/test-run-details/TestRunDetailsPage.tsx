@@ -1,10 +1,9 @@
 import React, { useEffect, useState, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import styles from "./TestRunDetails.module.css";
 import Modal from "./Modal";
 import RunTimeline from "./RunTimeline";
 import DetailCard from "../common/DetailCard/DetailCard";
-import { useNavigate } from "react-router-dom";
 import { API_BASE_URL, API_ENDPOINTS } from "../../config/api";
 import { redirectToLogin } from "../../utils/auth";
 
@@ -29,6 +28,7 @@ interface RunDetail {
   conversation_id: string;
   status: string;
   score?: number | null;
+  has_failed_cases?: boolean;
 }
 
 interface FilterOption {
@@ -42,6 +42,7 @@ interface AllFilters {
 
 const RunDetails: React.FC = () => {
   const { runName } = useParams<{ runName: string }>();
+  const [searchParams] = useSearchParams();
 
   const [summary, setSummary] = useState<RunSummary | null>(null);
   const [details, setDetails] = useState<RunDetail[]>([]);
@@ -65,6 +66,7 @@ const RunDetails: React.FC = () => {
   const [analyseModal, setAnalyseModal] = useState<{
       runName: string;
       hasScore: boolean;
+      hasFailedCases: boolean;
     } | null>(null);  
   const [cardHeight, setCardHeight] = useState<number | null>(null);
   const summaryCardRef = useRef<HTMLDivElement | null>(null);
@@ -72,6 +74,14 @@ const RunDetails: React.FC = () => {
   const filterRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const navigate = useNavigate();
+  const returnPage = Number(searchParams.get("page"));
+  const safeReturnPage = Number.isInteger(returnPage) && returnPage > 0 ? returnPage : 1;
+
+  const handleBackToRuns = () => {
+    const params = new URLSearchParams(searchParams);
+    params.set("page", String(safeReturnPage));
+    navigate(`/?${params.toString()}`);
+  };
 
   const getAuthHeaders = (): HeadersInit => {
     const token = localStorage.getItem("access_token");
@@ -285,11 +295,24 @@ const RunDetails: React.FC = () => {
     return acc;
   }, {} as Record<string, RunDetail[]>);
   const hasExistingScores = details.some((detail) => typeof detail.score === "number");
+  const hasFailedCases = details.some((detail) => detail.has_failed_cases === true);
 
   const tableContainerHeight = cardHeight ?? undefined;
 
   return (
     <div className={styles.container}>
+      <div className={styles.backBar}>
+        <button
+          type="button"
+          className={styles.backButton}
+          onClick={handleBackToRuns}
+          aria-label={`Back to test runs page ${safeReturnPage}`}
+          title={`Back to page ${safeReturnPage}`}
+        >
+          <i className="bi bi-arrow-left"></i>
+          <span>Back</span>
+        </button>
+      </div>
       <RunTimeline
         runName={summary.run_name}
         hoveredMetric={hoveredMetric}
@@ -342,7 +365,11 @@ const RunDetails: React.FC = () => {
                           type="button"
                           className={`${styles.actionIconButton} ${styles.actionAnalyse}`}
                           data-tooltip="Analyse"
-                          onClick={() => setAnalyseModal({ runName: summary.run_name, hasScore: typeof summary.average_score === "number" })}
+                          onClick={() => setAnalyseModal({
+                            runName: summary.run_name,
+                            hasScore: typeof summary.average_score === "number",
+                            hasFailedCases,
+                          })}
                           title="Analyse"
                           aria-label={`Analyse ${summary.run_name}`}
                         >
@@ -633,7 +660,7 @@ const RunDetails: React.FC = () => {
                   <p className="download-overlay-sub" style={{ marginTop: 4 }}>{analyseModal.runName}</p>
                 </div>
                 <div className="analyse-modal-options">
-                  {analyseModal.hasScore && (
+                  {analyseModal.hasScore && analyseModal.hasFailedCases && (
                     <button
                       className="analyse-option-btn"
                       onClick={() => startAnalysis("retry_failed", analyseModal.runName)}

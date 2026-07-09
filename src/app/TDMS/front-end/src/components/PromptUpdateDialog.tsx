@@ -212,6 +212,7 @@ export function PromptUpdateDialog({
   const isSystemPromptOverLimit = systemPrompt.length > PROMPT_CHARACTER_LIMIT;
   const arePromptLengthsValid =
     !isUserPromptOverLimit && !isSystemPromptOverLimit;
+  const arePromptsNonEmpty = userPrompt.trim().length > 0 && systemPrompt.trim().length > 0;  
 
   const handleSubmit = async () => {
     if (!arePromptLengthsValid) {
@@ -223,6 +224,15 @@ export function PromptUpdateDialog({
       return;
     }
 
+    if (!arePromptsNonEmpty) {
+      toast({
+        title: "Validation error",
+        description: "User Prompt and System Prompt cannot be empty.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (!isChanged || !notes.trim() || !language || !domain) {
       toast({
         title: "Validation error",
@@ -443,6 +453,7 @@ export function PromptUpdateDialog({
               !language ||
               !domain ||
               !arePromptLengthsValid ||
+              !arePromptsNonEmpty ||  
               isSubmitting
             }
             onClick={handleSubmit}

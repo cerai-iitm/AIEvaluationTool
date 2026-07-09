@@ -20,6 +20,7 @@ interface LoopProps {
   planName?: string;     // 👈 add
   runName?: string;   // <-- ADD THIS
   metricName?: string;   // 👈 add
+  testCaseName?: string; 
   liveEvents?: TestRunEvent[];
   onRunFinished?: () => void;
   
@@ -35,6 +36,7 @@ type StepStatus = "PENDING" | "RUNNING" | "DONE" | "FAILED";
   planName,
   runName,
   metricName,
+  testCaseName,
   liveEvents = [],
   onRunFinished
   }) => {
@@ -199,7 +201,7 @@ type StepStatus = "PENDING" | "RUNNING" | "DONE" | "FAILED";
           borderRadius: '4px',
           fontWeight: 500
         }}>
-          {planName} {metricName && `• ${metricName}`}
+          {planName} {metricName && `• ${metricName}`} {testCaseName && `• ${testCaseName}`}
         </div>
       </div>
       

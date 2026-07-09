@@ -29,6 +29,8 @@ export const AUTH_LOGOUT_URL = `${AUTH_SERVICE_URL}/web/logout`;
     `${API_BASE_URL}/test-runs/${encodeURIComponent(runName)}${
       query ? `?${query}` : ""
     }`,
+    DELETE_TEST_RUN: (runName: string) =>
+    `${API_BASE_URL}/test-runs/${encodeURIComponent(runName)}`,
     GET_METRICS_BY_PLAN: (planName: string) =>
     `${API_BASE_URL}/get_metrics_by_plan/${planName}`,
     GET_TARGET_METADATA: (targetName: string) =>

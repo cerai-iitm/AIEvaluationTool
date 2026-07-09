@@ -66,12 +66,12 @@ col.col-run-id { width: 60px; min-width: 60px; }
 col.col-run-name { width: 180px; min-width: 150px; max-width: 250px; }
 col.col-target { width: 100px; min-width: 80px; }
 col.col-started-at { width: 150px; min-width: 130px; }
-col.col-duration { width: 80px; min-width: 70px; }
-col.col-score { width: 70px; min-width: 60px; }
+col.col-duration { width: 90px; min-width: 80px; }
+col.col-score { width: 150px; min-width: 140px; }
 col.col-evaluation { width: 150px; min-width: 130px; }
 col.col-status { width: 110px; min-width: 90px; }
 col.col-domain { width: 100px; min-width: 80px; }
-col.col-actions { width: 130px; min-width: 120px; }
+col.col-actions { width: 170px; min-width: 160px; }
 
 th.col-run-name,
 td.col-run-name {
@@ -101,6 +101,18 @@ td.col-evaluation {
 .cell-center {
   text-align: center;
   font-variant-numeric: tabular-nums;
+}
+
+th.col-duration,
+td.col-duration,
+th.col-score,
+td.col-score {
+  text-align: center;
+}
+
+th.col-duration .header-content,
+th.col-score .header-content {
+  justify-content: center;
 }
 
 .run-name-cell { overflow: hidden;  }
@@ -313,7 +325,7 @@ td.col-evaluation {
 .actions-group {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .test-runs-table .actions-cell:hover {
@@ -356,6 +368,11 @@ td.col-evaluation {
   outline-offset: 2px;
 }
 
+.test-runs-table .actions-group .action-icon-button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
 .test-runs-table .actions-group .action-continue {
   background: #b9ece9 !important;
   color: #0f9f98 !important;
@@ -369,6 +386,11 @@ td.col-evaluation {
 .test-runs-table .actions-group .action-report {
   background: #e6ebf2 !important;
   color: #475569 !important;
+}
+
+.test-runs-table .actions-group .action-delete {
+  background: #fee2e2 !important;
+  color: #dc2626 !important;
 }
 
 
@@ -747,7 +769,7 @@ td.col-evaluation {
   col.col-target { width: 90px; min-width: 70px; }
   col.col-started-at { width: 140px; min-width: 120px; }
   col.col-evaluation { width: 140px; min-width: 120px; }
-  col.col-actions { width: 120px; min-width: 110px; }
+  col.col-actions { width: 150px; min-width: 140px; }
   
   th.col-run-name, td.col-run-name {
     width: 160px; min-width: 140px; max-width: 200px;
@@ -766,7 +788,7 @@ td.col-evaluation {
   col.col-target { width: 80px; min-width: 60px; }
   col.col-started-at { width: 130px; min-width: 110px; }
   col.col-evaluation { width: 130px; min-width: 110px; }
-  col.col-actions { width: 110px; min-width: 100px; }
+  col.col-actions { width: 140px; min-width: 130px; }
   
   th.col-run-name, td.col-run-name {
     width: 150px; min-width: 130px; max-width: 180px;
@@ -788,12 +810,12 @@ td.col-evaluation {
   col.col-run-name { width: 120px; min-width: 100px; max-width: 140px; }
   col.col-target { width: 70px; min-width: 50px; }
   col.col-started-at { width: 110px; min-width: 90px; }
-  col.col-duration { width: 60px; min-width: 50px; }
-  col.col-score { width: 60px; min-width: 50px; }
+  col.col-duration { width: 70px; min-width: 60px; }
+  col.col-score { width: 130px; min-width: 120px; }
   col.col-evaluation { width: 110px; min-width: 90px; }
   col.col-status { width: 90px; min-width: 70px; }
   col.col-domain { width: 70px; min-width: 50px; }
-  col.col-actions { width: 100px; min-width: 90px; }
+  col.col-actions { width: 130px; min-width: 120px; }
   
   th.col-run-name, td.col-run-name {
     width: 120px; min-width: 100px; max-width: 140px;

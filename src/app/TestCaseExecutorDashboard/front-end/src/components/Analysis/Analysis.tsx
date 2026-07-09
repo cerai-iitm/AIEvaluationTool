@@ -493,11 +493,12 @@ const Analysis: React.FC = () => {
           throw new Error(body?.detail || `Analysis request failed (${analyseRes.status})`);
         }
 
-        const analyseData = await analyseRes.json().catch(() => ({ status: "started" }));
+        const analyseData = (await analyseRes.json().catch(() => null)) as Partial<AnalyseStatusResponse> | null;
         if (!isMounted) return;
 
+        const analyseStatus = analyseData?.status ?? "started";
         setIsAnalysing(
-          analyseData.status === "started" || analyseData.status === "running"
+          analyseStatus === "started" || analyseStatus === "running"
         );
         setIsCompleted(false);
         setLoading(false);
@@ -591,7 +592,7 @@ const Analysis: React.FC = () => {
       if (keepAliveTimer) window.clearInterval(keepAliveTimer);
       if (ws) ws.close();
     };
-  }, [runName, applyProgress, fetchDetails]);
+  }, [runName, mode, applyProgress, fetchDetails]);
 
   useEffect(() => {
     if (!isCompleted) {

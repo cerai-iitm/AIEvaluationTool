@@ -14,6 +14,7 @@ class TestRunResponse(BaseModel):
     average_score: Optional[float] = None
     totalPages: Optional[int] = None
     analysis_status: str
+    has_failed_cases: bool = False
     
 class TestRunDetailsResponse(BaseModel):
     run_name: str
@@ -25,6 +26,7 @@ class TestRunDetailsResponse(BaseModel):
     detail_id: int    
     score: Optional[float] = None
     evaluation_reason: Optional[str] = None  # ← add this
+    has_failed_cases: bool = False
 
 class TestRunSummaryResponse(BaseModel):
     run_id: int

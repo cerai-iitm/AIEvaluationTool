@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useRef } from "react";
 import "./TestRunsTable.css";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { API_BASE_URL, API_ENDPOINTS, LOGIN_URL } from "../../config/api";
 import { AllFilters, FilterOption } from "../../types/Filters";
 import { getAuthHeaders, redirectToLogin } from "../../utils/auth";
+import { createPortal } from "react-dom";
 
 interface TestRun {
   run_id: number;
@@ -18,6 +19,7 @@ interface TestRun {
   average_score?: number | null;
   evaluation_ts?: string;
   analysis_status?: string;
+  has_failed_cases?: boolean;
 }
 
 interface HeaderConfig {
@@ -34,22 +36,77 @@ interface Props {
   onFilterChange?: (filterType: string, value: string) => void;
 }
 
+const getPageFromSearchParams = (searchParams: URLSearchParams) => {
+  const page = Number(searchParams.get("page"));
+  return Number.isInteger(page) && page > 0 ? page : 1;
+};
+
+const FilterDropdownPortal: React.FC<{
+  anchorEl: HTMLElement | null;
+  children: React.ReactNode;
+  setRef: (el: HTMLDivElement | null) => void;
+}> = ({ anchorEl, children, setRef }) => {
+  const [style, setStyle] = useState<React.CSSProperties>({ visibility: "hidden" });
+
+  useEffect(() => {
+    const updatePosition = () => {
+      if (!anchorEl) return;
+      const rect = anchorEl.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const dropdownWidth = 220;
+
+      let left = rect.left;
+      if (left + dropdownWidth > viewportWidth - 8) {
+        left = Math.max(8, rect.right - dropdownWidth);
+      }
+
+      setStyle({
+        position: "fixed",
+        top: rect.bottom + 4,
+        left,
+        width: dropdownWidth,
+        zIndex: 9999,
+        visibility: "visible",
+      });
+    };
+
+    updatePosition();
+    window.addEventListener("scroll", updatePosition, true);
+    window.addEventListener("resize", updatePosition);
+    return () => {
+      window.removeEventListener("scroll", updatePosition, true);
+      window.removeEventListener("resize", updatePosition);
+    };
+  }, [anchorEl]);
+
+  return createPortal(
+    <div className="filter-dropdown" style={style} ref={setRef}>
+      {children}
+    </div>,
+    document.body
+  );
+};
+
 const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const loginUrl = LOGIN_URL;
-  const [runs, setRuns] = useState<TestRun[]>([]);
   const [filteredRuns, setFilteredRuns] = useState<TestRun[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(() => getPageFromSearchParams(searchParams));
   const [itemsPerPage] = useState(10);
   const [downloadState, setDownloadState] = useState<{
     runName: string;
     progress: number;
     phase: "generating" | "done";
   } | null>(null);
+  const [deletingRunName, setDeletingRunName] = useState<string | null>(null);
+  const [refreshRunsTick, setRefreshRunsTick] = useState(0);
   const [analyseModal, setAnalyseModal] = useState<{
     runName: string;
     hasScore: boolean;
+    hasFailedCases: boolean;
   } | null>(null);
   const [analyseLoading, setAnalyseLoading] = useState(false);
   const [availableFilters, setAvailableFilters] = useState<AllFilters>({
@@ -63,7 +120,8 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
   const [filtersLoading, setFiltersLoading] = useState(true);
   const [openFilterColumn, setOpenFilterColumn] = useState<string | null>(null);
   const [totalPages, setTotalPages] = useState(1);
-  const filterRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const filterTriggerRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const filterPortalRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const [sortBy, setSortBy] = useState<"start_ts" | "end_ts">("end_ts");
   const [order, setOrder] = useState<"asc" | "desc">("desc");
@@ -99,7 +157,7 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
     { key: "domain", label: "Domain", filterable: true, filterType: "domain" },
     { key: "actions", label: "Actions", filterable: false },
   ];
-  const handleAnalyseClick = async (runName: string, hasScore: boolean) => {
+  const handleAnalyseClick = async (runName: string, hasScore: boolean, hasFailedCases: boolean) => {
   try {
     const res = await fetch(API_ENDPOINTS.ANALYSE_HEALTH, {  // ✅ no ()
       headers: getAuthHeaders(),
@@ -109,7 +167,7 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
       alert("Ollama is not running. Please start Ollama and try again.");
       return;
     }
-    setAnalyseModal({ runName, hasScore });
+    setAnalyseModal({ runName, hasScore, hasFailedCases });
   } catch (err) {
     alert("Ollama is not running. Please start Ollama and try again.");
   }
@@ -131,6 +189,37 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
     }
   };
 
+  const handleDeleteRun = async (runName: string) => {
+    const confirmed = window.confirm(
+      `Delete run "${runName}"? This will remove its conversations and test run details.`
+    );
+    if (!confirmed) return;
+
+    setDeletingRunName(runName);
+    try {
+      const res = await fetch(API_ENDPOINTS.DELETE_TEST_RUN(runName), {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+      if (res.status === 401) {
+        redirectToLogin();
+        throw new Error("Unauthorized");
+      }
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.detail || `Failed to delete run (${res.status})`);
+      }
+      setFilteredRuns((prev) => prev.filter((run) => run.run_name !== runName));
+      setRefreshRunsTick((prev) => prev + 1);
+    } catch (err) {
+      console.error("Run delete failed:", err);
+      alert(err instanceof Error ? err.message : "Failed to delete run");
+    } finally {
+      setDeletingRunName(null);
+    }
+  };
+
   useEffect(() => {
     setFiltersLoading(true);
     fetch(`${API_BASE_URL}${API_ENDPOINTS.GET_ALL_FILTERS}`, {
@@ -148,12 +237,13 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (openFilterColumn && filterRefs.current[openFilterColumn]) {
-        const filterElement = filterRefs.current[openFilterColumn];
-        if (filterElement && !filterElement.contains(event.target as Node)) {
-          setOpenFilterColumn(null);
-        }
-      }
+      if (!openFilterColumn) return;
+      const target = event.target as Node;
+      const trigger = filterTriggerRefs.current[openFilterColumn];
+      const portal = filterPortalRefs.current[openFilterColumn];
+      if (trigger && trigger.contains(target)) return;
+      if (portal && portal.contains(target)) return;
+      setOpenFilterColumn(null);
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -161,11 +251,13 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
 
   const handleFilterChange = (filterType: string, value: string) => {
     onFilterChange?.(filterType, value);
+    paginate(1);
     setOpenFilterColumn(null);
   };
 
   const handleFilterClear = (filterType: string) => {
     onFilterChange?.(filterType, "");
+    paginate(1);
     setOpenFilterColumn(null);
   };
 
@@ -180,8 +272,13 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
       setSortBy(sortKey);
       setOrder("desc");
     }
-    setCurrentPage(1);
+    paginate(1);
   };
+
+  useEffect(() => {
+    const page = getPageFromSearchParams(searchParams);
+    setCurrentPage((prevPage) => (prevPage === page ? prevPage : page));
+  }, [searchParams]);
 
   useEffect(() => {
     setLoading(true);
@@ -200,22 +297,40 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
       })
       .then((data: TestRun[] | { detail?: string }) => {
         const safeRuns = Array.isArray(data) ? data : [];
-        setRuns(safeRuns);
+        const nextTotalPages = safeRuns[0]?.totalPages ?? 1;
         setFilteredRuns(safeRuns);
-        setTotalPages(safeRuns[0]?.totalPages ?? 1); 
+        setTotalPages(nextTotalPages);
+        if (currentPage > nextTotalPages) {
+          const nextPage = Math.max(1, nextTotalPages);
+          setCurrentPage(nextPage);
+          setSearchParams((prevParams) => {
+            const nextParams = new URLSearchParams(prevParams);
+            nextParams.set("page", String(nextPage));
+            return nextParams;
+          });
+        }
         
       })
       .catch((err) => console.error("Error fetching test runs:", err))
       .finally(() => setLoading(false));
-  }, [filters, sortBy, order, loginUrl,currentPage,itemsPerPage]);
+  }, [filters, sortBy, order, loginUrl, currentPage, itemsPerPage, refreshRunsTick, setSearchParams]);
   // alert(totalPage);
   // const indexOfLastRun = currentPage * itemsPerPage;
   // const indexOfFirstRun = indexOfLastRun - itemsPerPage;
+  function paginate(pageNumber: number) {
+    const nextPage = Math.max(1, pageNumber);
+    setCurrentPage(nextPage);
+    setSearchParams((prevParams) => {
+      const nextParams = new URLSearchParams(prevParams);
+      nextParams.set("page", String(nextPage));
+      return nextParams;
+    });
+  }
+
   const safeFilteredRuns = Array.isArray(filteredRuns) ? filteredRuns : [];
   // const currentRuns = safeFilteredRuns.slice(indexOfFirstRun, indexOfLastRun);
   const currentRuns = safeFilteredRuns;
   // const totalPages = Math.ceil(safeFilteredRuns.length / itemsPerPage);
-  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
   useEffect(() => {
     if (totalPages <= 5) return;
@@ -276,13 +391,21 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
                       ) : (
                         <span>{header.label}</span>
                       )}
-                      {header.filterable && header.filterType && (
-                        <div className="filter-wrapper" ref={(el) => { filterRefs.current[header.key] = el; }}>
-                          <button className="filter-trigger" onClick={() => toggleFilterDropdown(header.key)} title={`Filter by ${header.label}`}>
+                     {header.filterable && header.filterType && (
+                        <div className="filter-wrapper">
+                          <button
+                            ref={(el) => { filterTriggerRefs.current[header.key] = el; }}
+                            className="filter-trigger"
+                            onClick={() => toggleFilterDropdown(header.key)}
+                            title={`Filter by ${header.label}`}
+                          >
                             <i className={`bi bi-funnel${filters[header.filterType] ? "-fill" : ""}`}></i>
                           </button>
                           {openFilterColumn === header.key && (
-                            <div className="filter-dropdown">
+                            <FilterDropdownPortal
+                              anchorEl={filterTriggerRefs.current[header.key]}
+                              setRef={(el) => { filterPortalRefs.current[header.key] = el; }}
+                            >
                               <div className="filter-options">
                                 <select
                                   className="form-select form-select-sm"
@@ -301,7 +424,7 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
                                   </button>
                                 )}
                               </div>
-                            </div>
+                            </FilterDropdownPortal>
                           )}
                         </div>
                       )}
@@ -336,7 +459,9 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
                         alert("Run is not completed yet");
                         return;
                       }
-                      navigate(`/test-runs/${run.run_name}`);
+                      const detailParams = new URLSearchParams(location.search);
+                      detailParams.set("page", String(currentPage));
+                      navigate(`/test-runs/${encodeURIComponent(run.run_name)}?${detailParams.toString()}`);
                     }}
                   >
                     <td className="col-run-id cell-center nowrap">{run.run_id}</td>
@@ -393,7 +518,11 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
                           type="button"
                           className="action-icon-button action-analyse"
                           data-tooltip="Analyse"
-                          onClick={() => handleAnalyseClick(run.run_name, typeof run.average_score === "number")}
+                          onClick={() => handleAnalyseClick(
+                            run.run_name,
+                            typeof run.average_score === "number",
+                            run.has_failed_cases === true
+                          )}
                           title="Analyse"
                           aria-label={`Analyse ${run.run_name}`}
                         >
@@ -443,6 +572,17 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
                           aria-label={`Download report for ${run.run_name}`}
                         >
                           <i className="bi bi-clipboard2-check"></i>
+                        </button>
+                        <button
+                          type="button"
+                          className="action-icon-button action-delete"
+                          data-tooltip="Delete"
+                          onClick={() => handleDeleteRun(run.run_name)}
+                          title="Delete"
+                          aria-label={`Delete ${run.run_name}`}
+                          disabled={deletingRunName === run.run_name}
+                        >
+                          <i className={`bi ${deletingRunName === run.run_name ? "bi-hourglass-split" : "bi-trash3"}`}></i>
                         </button>
                       </div>
                     </td>
@@ -538,7 +678,7 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
                   <p className="download-overlay-sub" style={{ marginTop: 4 }}>{analyseModal.runName}</p>
                 </div>
                 <div className="analyse-modal-options">
-                  {analyseModal.hasScore && (
+                  {analyseModal.hasScore && analyseModal.hasFailedCases && (
                     <button
                       className="analyse-option-btn"
                       onClick={() => startAnalysis("retry_failed", analyseModal.runName)}

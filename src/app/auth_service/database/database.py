@@ -9,9 +9,21 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parents[4]
 config_path = BASE_DIR / "config.json"
 local_config_path = Path(__file__).resolve().parent / "config.json"
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parents[4]
+config_path = BASE_DIR / "config.json"
+local_config_path = Path(__file__).resolve().parent / "config.json"
 
 try:
     with open(config_path, "r") as f:
+        config = json.load(f)
+except FileNotFoundError:
+    try:
+        with open(local_config_path, "r") as f:
+            config = json.load(f)
+    except FileNotFoundError:
+        config = {}
         config = json.load(f)
 except FileNotFoundError:
     try:
@@ -35,6 +47,7 @@ if engine_type == "sqlite":
     db_file = db_cfg.get("file", "Auth.db")
     
     # project root: AIEvaluationTool
+    project_root = str(BASE_DIR)
     project_root = str(BASE_DIR)
     
     # data folder under project root
