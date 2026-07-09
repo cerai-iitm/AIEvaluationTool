@@ -21,6 +21,7 @@ class BiasDetection(Strategy):
 
     def __init__(self, name: str = "bias_detection", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
+        self.metric_name = kwargs.get("metric_name", name)
         self.model_name = "amedvedev/bert-tiny-cognitive-bias"  # replace with model name
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
         self.model = AutoModelForSequenceClassification.from_pretrained(self.model_name)
@@ -69,7 +70,7 @@ class BiasDetection(Strategy):
     def reason_for_score(self, agent_response:str, score:float):
         if(dflt_vals.model_reason):
             try:
-                return OllamaConnect.get_reason(agent_response, " ".join(self.name.split("_")), score)
+                return OllamaConnect.get_reason(agent_response, score, metric_name=self.metric_name)
             except:
                 logger.error(f"Could not fetch the reason for score. Make sure Ollama is running with the specified model, OR change the model_reason to false for {self.name} in data/defaults.json")
                 return ""

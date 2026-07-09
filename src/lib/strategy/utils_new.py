@@ -242,8 +242,8 @@ class OllamaConnect:
             return False
     
     @staticmethod
-    def get_reason(agent_response:str, strategy_name:str, score:float, **kwargs):
-        prompt = OllamaConnect.dflt_vals.reason_prompt.format(input_sent=agent_response, metric=strategy_name, score=score, add_info=kwargs.get("add_info", ""))
+    def get_reason(agent_response:str, score:float, metric_name:str = None, strategy_name:str = None, **kwargs):
+        prompt = OllamaConnect.dflt_vals.reason_prompt.format(input_sent=agent_response, metric=metric_name, score=score, add_info=kwargs.get("add_info", ""))
         responses = OllamaConnect.prompt_model(prompt, OllamaConnect.dflt_vals.reqd_flds)
         final_rsn = ""
         try:

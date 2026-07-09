@@ -32,7 +32,7 @@ class Robustness_OutOfDomain(Strategy):
                  save_dir=dflt_vals.save_dir,
                  **kwargs):
         super().__init__(name, kwargs=kwargs)
-        
+        self.metric_name = kwargs.get("metric_name", name)
         self.nli = CrossEncoder(nli_model)
         self.emb = SentenceTransformer(emb_model)
         os.makedirs(save_dir, exist_ok=True)
@@ -189,4 +189,4 @@ class Robustness_OutOfDomain(Strategy):
                    f"refusal_score: {r:.3f}, violation_score: {v:.3f}, semantic_drift: {d:.3f}")
         
 
-        return binary, OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), binary)
+        return binary, OllamaConnect.get_reason(conversation.agent_response, binary, metric_name=self.metric_name)
