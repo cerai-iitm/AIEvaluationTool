@@ -657,6 +657,22 @@ def get_test_run_summary_service(db, run_name: str):
         end_ts=run.end_ts
     )
 
+
+def delete_test_run_service(db, run_name: str):
+    run = db.get_run_by_name(run_name)
+    if not run:
+        raise HTTPException(status_code=404, detail="Run not found")
+
+    deleted = db.delete_run_by_name(run_name)
+    if not deleted:
+        raise HTTPException(status_code=500, detail="Failed to delete run")
+
+    return {
+        "status": "success",
+        "message": f"Run '{run_name}' deleted successfully",
+        "run_name": run_name,
+    }
+
 # def start_run_service(db, data: NewTestRun, background_tasks: BackgroundTasks):    
 #     ensure_interface_manager_running(interface_manager_config)
 #     if data.testPlan:

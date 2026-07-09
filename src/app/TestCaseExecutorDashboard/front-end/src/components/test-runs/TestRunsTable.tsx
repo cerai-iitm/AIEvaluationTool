@@ -101,6 +101,8 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
     progress: number;
     phase: "generating" | "done";
   } | null>(null);
+  const [deletingRunName, setDeletingRunName] = useState<string | null>(null);
+  const [refreshRunsTick, setRefreshRunsTick] = useState(0);
   const [analyseModal, setAnalyseModal] = useState<{
     runName: string;
     hasScore: boolean;
@@ -184,6 +186,37 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
       console.error("Analysis failed:", err);
       setAnalyseLoading(false);
       setAnalyseModal(null);
+    }
+  };
+
+  const handleDeleteRun = async (runName: string) => {
+    const confirmed = window.confirm(
+      `Delete run "${runName}"? This will remove its conversations and test run details.`
+    );
+    if (!confirmed) return;
+
+    setDeletingRunName(runName);
+    try {
+      const res = await fetch(API_ENDPOINTS.DELETE_TEST_RUN(runName), {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+      if (res.status === 401) {
+        redirectToLogin();
+        throw new Error("Unauthorized");
+      }
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.detail || `Failed to delete run (${res.status})`);
+      }
+      setFilteredRuns((prev) => prev.filter((run) => run.run_name !== runName));
+      setRefreshRunsTick((prev) => prev + 1);
+    } catch (err) {
+      console.error("Run delete failed:", err);
+      alert(err instanceof Error ? err.message : "Failed to delete run");
+    } finally {
+      setDeletingRunName(null);
     }
   };
 
@@ -280,7 +313,7 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
       })
       .catch((err) => console.error("Error fetching test runs:", err))
       .finally(() => setLoading(false));
-  }, [filters, sortBy, order, loginUrl, currentPage, itemsPerPage, setSearchParams]);
+  }, [filters, sortBy, order, loginUrl, currentPage, itemsPerPage, refreshRunsTick, setSearchParams]);
   // alert(totalPage);
   // const indexOfLastRun = currentPage * itemsPerPage;
   // const indexOfFirstRun = indexOfLastRun - itemsPerPage;
@@ -539,6 +572,17 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
                           aria-label={`Download report for ${run.run_name}`}
                         >
                           <i className="bi bi-clipboard2-check"></i>
+                        </button>
+                        <button
+                          type="button"
+                          className="action-icon-button action-delete"
+                          data-tooltip="Delete"
+                          onClick={() => handleDeleteRun(run.run_name)}
+                          title="Delete"
+                          aria-label={`Delete ${run.run_name}`}
+                          disabled={deletingRunName === run.run_name}
+                        >
+                          <i className={`bi ${deletingRunName === run.run_name ? "bi-hourglass-split" : "bi-trash3"}`}></i>
                         </button>
                       </div>
                     </td>

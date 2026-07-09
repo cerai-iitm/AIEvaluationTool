@@ -17,6 +17,7 @@ from services.testruns import (
     RunEvaluationSummaryResponse,
     continue_run_service,
     continue_run_with_plan_service,
+    delete_test_run_service,
     download_evaluation_report_service,
     get_all_test_runs_service,
     get_metrics_by_plan_service,
@@ -75,6 +76,15 @@ def get_test_run(
 ):
     try:
         return get_test_run_service(db, run_name, metric, status)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/test-runs/{run_name}")
+def delete_test_run(run_name: str, db=Depends(get_db)):
+    try:
+        return delete_test_run_service(db=db, run_name=run_name)
     except HTTPException:
         raise
     except Exception as e:

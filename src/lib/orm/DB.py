@@ -2403,6 +2403,53 @@ class DB:
                 self.logger.error(f"TestRun with name '{run_name}' does not exist.")
                 return None
             return getattr(result, 'run_id')
+
+    def delete_run_by_name(self, run_name: str) -> bool:
+        """
+        Deletes a test run and its dependent records by run name.
+
+        The delete order follows the foreign-key dependency chain:
+        Conversations -> TestRunDetails -> TestRuns.
+
+        Args:
+            run_name (str): The name of the test run to delete.
+
+        Returns:
+            bool: True when the run was deleted, False when it was not found or failed.
+        """
+        if not run_name:
+            self.logger.error("Run name is required to delete a test run.")
+            return False
+
+        try:
+            with self.Session() as session:
+                run = session.query(TestRuns).filter_by(run_name=run_name).first()
+                if run is None:
+                    self.logger.error(f"TestRun with name '{run_name}' does not exist.")
+                    return False
+
+                detail_ids = [
+                    detail_id
+                    for (detail_id,) in session.query(TestRunDetails.detail_id)
+                    .filter(TestRunDetails.run_id == run.run_id)
+                    .all()
+                ]
+
+                if detail_ids:
+                    session.query(Conversations).filter(
+                        Conversations.detail_id.in_(detail_ids)
+                    ).delete(synchronize_session=False)
+                    session.query(TestRunDetails).filter(
+                        TestRunDetails.detail_id.in_(detail_ids)
+                    ).delete(synchronize_session=False)
+
+                session.delete(run)
+                session.commit()
+                self.logger.debug(f"Deleted TestRun '{run_name}' successfully.")
+                return True
+        except Exception as e:
+            self.logger.error(f"Failed to delete TestRun '{run_name}'. Error: {e}")
+            return False
         
     def get_testcase_strategy_name(self, testcase_name: str) -> Optional[str]:
         """
@@ -4059,4 +4106,3 @@ class DB:
                 .where(TestPlans.plan_name == plan_name)
             )
             return session.execute(sql).scalars().all()    
-
