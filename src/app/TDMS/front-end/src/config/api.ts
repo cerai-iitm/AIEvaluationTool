@@ -5,10 +5,11 @@ export const API_BASE_URL =
 export const WS_BASE_URL = API_BASE_URL.replace(/^http/i, "ws");
 
 export const AUTH_SERVICE_URL =
-  import.meta.env.VITE_AUTH_SERVICE_URL || "/auth";
+  import.meta.env.VITE_AUTH_SERVICE_URL || "http://localhost:7500";
 
 // Auth endpoints
 export const AUTH_PAGE_URL = `${AUTH_SERVICE_URL}/web/login`;
+export const AUTH_LOGOUT_URL = `${AUTH_SERVICE_URL}/web/logout`;
 
 // API endpoints
 export const API_ENDPOINTS = {

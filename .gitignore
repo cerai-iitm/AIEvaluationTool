@@ -61,3 +61,5 @@ data/AIEvaluationData.db
 reports/
 chrome-data/
 run_app.sh
+.venv/
+data/aievaluationtool.db

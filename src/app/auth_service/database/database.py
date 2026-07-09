@@ -23,13 +23,13 @@ except FileNotFoundError:
 db_cfg = config.get("db", {})
 engine_type = db_cfg.get("engine", db_cfg.get("engine_type", "sqlite")).lower()
 
-def _missing_mariadb_keys() -> list[str]:
-    required_keys = ("host", "port", "user", "password", "database")
-    return [key for key in required_keys if db_cfg.get(key) in (None, "")]
+# def _missing_mariadb_keys() -> list[str]:
+#     required_keys = ("host", "port", "user", "password", "database")
+#     return [key for key in required_keys if db_cfg.get(key) in (None, "")]
 
 
-if engine_type == "mariadb" and _missing_mariadb_keys() and db_cfg.get("file"):
-    engine_type = "sqlite"
+# if engine_type == "mariadb" and _missing_mariadb_keys() and db_cfg.get("file"):
+#     engine_type = "sqlite"
 
 if engine_type == "sqlite":
     db_file = db_cfg.get("file", "Auth.db")
@@ -48,10 +48,10 @@ if engine_type == "sqlite":
     SQLALCHEMY_DATABASE_URL = f"sqlite:///{db_path}".format(db_path=db_path)
 
 elif engine_type == "mariadb":
-    missing_keys = _missing_mariadb_keys()
-    if missing_keys:
-        missing = ", ".join(missing_keys)
-        raise ValueError(f"MariaDB database config is missing required key(s): {missing}")
+    # missing_keys = _missing_mariadb_keys()
+    # if missing_keys:
+    #     missing = ", ".join(missing_keys)
+    #     raise ValueError(f"MariaDB database config is missing required key(s): {missing}")
 
     SQLALCHEMY_DATABASE_URL = "mariadb+mariadbconnector://{user}:{password}@{host}:{port}/{database}".format(
         user=db_cfg.get("user"),

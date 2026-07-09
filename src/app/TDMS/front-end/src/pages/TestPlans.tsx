@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Sidebar from "@/components/Sidebar";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -290,10 +289,7 @@ const TestPlans = () => {
 
   return (
     <div className="flex min-h-screen">
-      <aside className="fixed top-0 left-0 h-screen w-224px bg-[#5252c2] z-20">
-        <Sidebar />
-      </aside>
-      <main className="flex-1 bg-background ml-[224px] ">
+      <main className="flex-1 bg-background ">
         <div className="p-8 flex flex-col h-screen">
           <PageHeaderWithBack title="Test Plans" />
           <div className="flex gap-4 mb-6">
@@ -373,15 +369,18 @@ const TestPlans = () => {
             </div>
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto">
-            <div className="bg-white rounded-lg shadow overflow-hidden  md:max-w-[500px] mx-left max-h-[67vh] overflow-y-auto">
-              <table className="w-full">
+            <div className="bg-white rounded-lg shadow overflow-hidden max-w-[1200px] md:max-w-[1200px] mx-left max-h-[67vh] overflow-y-auto">
+              <table className="w-full table-fixed">
                 <thead className="border-b-2">
                   <tr>
-                    <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-center">
+                    <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-center w-[20%]">
                       Plan ID
                     </th>
-                    <th className="sticky top-0 bg-white z-10 p-4 pl-12 font-semibold text-left">
+                    <th className="sticky top-0 bg-white z-10 p-4 pl-12 font-semibold text-left w-[40%]">
                       Plan Name
+                    </th>
+                    <th className="sticky top-0 bg-white z-10 p-4 pl-12 font-semibold text-left w-[80%]">
+                      Description
                     </th>
                   </tr>
                 </thead>
@@ -419,6 +418,7 @@ const TestPlans = () => {
                       >
                         <td className="p-2 pl-1 text-center">{testPlan.plan_id}</td>
                         <td className="p-2 pl-12 text-left capitalize">{testPlan.plan_name}</td>
+                        <td className="p-2 text-left truncate">{testPlan.plan_description}</td>
                       </tr>
                     ))
                   )}

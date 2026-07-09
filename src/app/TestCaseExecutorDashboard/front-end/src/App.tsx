@@ -10,7 +10,7 @@ import DevConfigPage from "./components/DevConfig/DevConfig";
 import ContinueRunPage from "./components/continue-test-run/ContinueTestRunPage";
 import Sidebar from "./components/common/sidebar/sidebar";
 import Analysis from "./components/Analysis/Analysis";
-import { redirectToLogin } from "./utils/auth";
+import { clearSession, hasSharedLogoutSignal, parseUrlTokens, redirectToLogin } from "./utils/auth";
 
 
 function App() {
@@ -18,24 +18,35 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const hash = window.location.hash.replace(/^#/, "");
-    if (hash) {
-      const values = Object.fromEntries(new URLSearchParams(hash));
-      if (values.access_token && values.refresh_token) {
-        localStorage.setItem("access_token", values.access_token);
-        localStorage.setItem("refresh_token", values.refresh_token);
-        if (values.user_name) localStorage.setItem("user_name", values.user_name);
-        if (values.role) localStorage.setItem("role", values.role);
-        window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
-        setIsAuthenticated(true);
-        setLoading(false);
-        return;
+    const handleSharedLogout = () => {
+      if (hasSharedLogoutSignal()) {
+        setIsAuthenticated(false);
+        redirectToLogin();
       }
+    };
+
+    window.addEventListener("focus", handleSharedLogout);
+    document.addEventListener("visibilitychange", handleSharedLogout);
+    const intervalId = window.setInterval(handleSharedLogout, 1000);
+
+    return () => {
+      window.removeEventListener("focus", handleSharedLogout);
+      document.removeEventListener("visibilitychange", handleSharedLogout);
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (parseUrlTokens()) {
+      setIsAuthenticated(true);
+      setLoading(false);
+      return;
     }
 
     const token = localStorage.getItem("access_token");
     if (!token) {
       setLoading(false);
+      redirectToLogin();
       return;
     }
 
@@ -53,17 +64,16 @@ function App() {
         });
 
         if (!response.ok) {
-          localStorage.removeItem("access_token");
-          localStorage.removeItem("refresh_token");
-          localStorage.removeItem("user_name");
-          localStorage.removeItem("role");
+          clearSession();
           setIsAuthenticated(false);
           setLoading(false);
+          redirectToLogin();
           return;
         }
         setIsAuthenticated(true);
       } catch (error) {
         setIsAuthenticated(false);
+        redirectToLogin();
       } finally {
         setLoading(false);
       }

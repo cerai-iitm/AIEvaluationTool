@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
 import {
@@ -21,6 +20,7 @@ import {
 import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
 import { hasPermission } from "@/utils/permissions";
+import { HistoryButton } from "@/components/HistoryButton";
 
 interface User {
   user_name: string;
@@ -222,23 +222,26 @@ const Users = () => {
 
   return (
     <div className="flex min-h-screen">
-      <aside className="fixed top-0 left-0 h-screen bg-background w-[220px] ">
-        <Sidebar />
-      </aside>
 
-      <main className="flex-1 bg-background ml-[224px]">
+      <main className="flex-1 bg-background">
         <div className="p-8">
           <h1 className="text-4xl font-bold mb-12 text-center">User's List</h1>
-          {hasPermission(currentUserRole, "canCreateUser") && (
-            <div className="mt-8 max-w-5xl mx-auto mb-4">
+          <div className="mt-8 max-w-5xl mx-auto mb-4 flex items-center justify-between gap-4">
+            {hasPermission(currentUserRole, "canCreateUser") && (
               <Button
                 className="bg-primary hover:bg-primary/90"
                 onClick={() => setShowCreateUser(true)}
               >
                 + Add User
               </Button>
-            </div>
-          )}
+            )}
+            <HistoryButton
+              entityType="User"
+              title="Users"
+              idField="testCaseId"
+              idLabel="User ID"
+            />
+          </div>
           {isLoading ? (
             <div className="text-center py-12">
               <p className="text-lg text-muted-foreground">Loading users...</p>
