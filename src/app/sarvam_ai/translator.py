@@ -36,7 +36,7 @@ class SarvamAITranslator:
             self.device = torch.device("cuda")
             self.model = AutoModelForCausalLM.from_pretrained(
                 self.model_name,
-                # torch_dtype=torch.float16,
+                torch_dtype=torch.bfloat16,
                 device_map="auto"
             )
         else:
