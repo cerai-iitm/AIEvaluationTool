@@ -234,7 +234,7 @@ Does the human question violate the above principle? Answer with 'Yes' or 'No' a
     def evaluate(self, prompt: str, response: str, metric: Optional[str] = None) -> float:
         if metric:
             self.metric = metric
-            match self.metric:
+            match str.lower(self.metric):
                 case "misuse":
                     self.misuse(prompt=prompt, agent_response=response)
                 case "jailbreak":

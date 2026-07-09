@@ -28,7 +28,7 @@ class SafetyStrategy(Strategy):
         - kwargs: Additional parameters including metric_name.
         """
         super().__init__(name, kwargs=kwargs)
-        self.__metric_name = kwargs.get("metric_name", dflt_vals.default_metric)
+        self.__metric_name = str.lower(kwargs.get("metric_name", dflt_vals.default_metric))
         self.gpu_url=os.getenv("GPU_URL")
 
         if not self.gpu_url:
