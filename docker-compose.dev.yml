@@ -1,0 +1,226 @@
+services:
+  db:
+    image: mariadb:11
+    container_name: aiet-db
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:-root_password}
+      MARIADB_DATABASE: ${MARIADB_DATABASE:-aievaluationtool}
+      MARIADB_USER: ${MARIADB_USER:-aiet_user}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD:-aiet_password}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mariadb-admin", "ping", "-h", "localhost", "-uroot", "-p${MARIADB_ROOT_PASSWORD:-root_password}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  selenium-browser:
+    image: selenium/standalone-chrome:latest
+    container_name: aiet-selenium
+    restart: unless-stopped
+    shm_size: 2gb
+    environment:
+      SE_VNC_NO_PASSWORD: "1"
+    ports:
+      - "4444:4444"
+      - "7900:7900"
+
+  interface-manager:
+    build:
+      context: .
+      dockerfile: Dockerfile.app-backend
+      target: interface-manager
+    container_name: aiet-interface-manager
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      db:
+        condition: service_healthy
+      selenium-browser:
+        condition: service_started
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - interface_manager_logs:/app/src/app/interface_manager/logs
+      - ./:/app
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/docs', timeout=3)"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.app-backend
+      target: auth-service
+    container_name: aiet-auth-service
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "7500:7500"
+    env_file:
+      - .env
+    environment:
+      DB_HOST: ${DB_HOST:-db}
+      DB_PORT: ${DB_PORT:-3306}
+      # Dev specific redirect overrides
+      TCE_APP_URL: http://localhost:3000
+      TDMS_APP_URL: http://localhost:8080
+    volumes:
+      - ./:/app
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:7500/docs', timeout=3)"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+
+  app-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.app-backend
+      target: app-backend
+    container_name: aiet-app-backend
+    restart: unless-stopped
+    depends_on:
+      interface-manager:
+        condition: service_healthy
+    ports:
+      - "7000:7000"
+    env_file:
+      - .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - interface_manager_logs:/app/src/app/interface_manager/logs:ro
+      - ./config.json:/app/config.json
+      - ./:/app
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:7000/docs', timeout=3)"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+
+  sarvam-ai:
+    build:
+      context: .
+      dockerfile: Dockerfile.app-backend
+      target: sarvam-ai
+    container_name: aiet-sarvam-ai
+    restart: unless-stopped
+    profiles: ["sarvam"]
+    ports:
+      - "16000:16000"
+    environment:
+      - HF_HOME=/models
+      - HUGGINGFACE_HUB_TOKEN=${HF_TOKEN}
+      - NVIDIA_VISIBLE_DEVICES=all
+    env_file:
+      - .env
+    volumes:
+      - sarvam_models:/models
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  tdms-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.app-backend
+      target: tdms-backend
+    container_name: aiet-tdms-backend
+    restart: unless-stopped
+    depends_on:
+      auth-service:
+        condition: service_healthy
+    ports:
+      - "7250:7250"
+    env_file:
+      - .env
+    environment:
+      AUTH_SERVICE_URL: ${AUTH_SERVICE_URL:-http://auth-service:7500}
+    volumes:
+      - ./:/app
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:7250/', timeout=3)"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+
+  app-front-end:
+    build:
+      context: .
+      dockerfile: Dockerfile.app-front-end
+      target: build
+      args:
+        REACT_APP_API_BASE_URL: ${REACT_APP_API_BASE_URL:-/api}
+        REACT_APP_AUTH_SERVICE_URL: ${REACT_APP_AUTH_SERVICE_URL:-/auth}
+        REACT_APP_TDMS_API_BASE_URL: ${REACT_APP_TDMS_API_BASE_URL:-/tdms-api}
+        REACT_APP_TEST_DATA_URL: ${REACT_APP_TEST_DATA_URL:-/tdms/dashboard}
+        REACT_APP_USER_LIST_URL: ${REACT_APP_USER_LIST_URL:-/tdms/users}
+    container_name: aiet-app-frontend
+    restart: unless-stopped
+    depends_on:
+      app-backend:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./src/app/TestCaseExecutorDashboard/front-end:/build
+      - /build/node_modules
+    environment:
+      # Dev specific absolute URL overrides
+      REACT_APP_API_BASE_URL: http://localhost:7000
+      REACT_APP_AUTH_SERVICE_URL: http://localhost:7500
+      REACT_APP_TDMS_API_BASE_URL: http://localhost:7250
+      REACT_APP_TEST_DATA_URL: http://localhost:8080/dashboard
+      REACT_APP_USER_LIST_URL: http://localhost:8080/users
+    command: npm start
+
+  tdms-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.tdms-frontend
+      target: build
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/tdms-api}
+        VITE_AUTH_SERVICE_URL: ${VITE_AUTH_SERVICE_URL:-/auth}
+        VITE_TEST_RUNS_HOME_URL: ${VITE_TEST_RUNS_HOME_URL:-/}
+    container_name: aiet-tdms-frontend
+    restart: unless-stopped
+    depends_on:
+      tdms-backend:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./src/app/TDMS/front-end:/build
+      - /build/node_modules
+    environment:
+      # Dev specific absolute URL overrides
+      VITE_API_BASE_URL: http://localhost:7250
+      VITE_AUTH_SERVICE_URL: http://localhost:7500
+      VITE_TEST_RUNS_HOME_URL: http://localhost:3000
+    command: npm run dev -- --host 0.0.0.0
+
+volumes:
+  mariadb_data:
+  interface_manager_logs:
+  sarvam_models:
