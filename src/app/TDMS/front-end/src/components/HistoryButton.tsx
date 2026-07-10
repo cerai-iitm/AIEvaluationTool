@@ -4,7 +4,6 @@ import { API_ENDPOINTS } from "@/config/api";
 import { canViewHistory, canViewActivity } from "@/utils/permissions";
 import historyIcon from "@/assets/icons8-history-60.png";
 
-
 interface Activity {
   description: string;
   type: string;
