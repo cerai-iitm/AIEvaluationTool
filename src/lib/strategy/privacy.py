@@ -65,7 +65,7 @@ class PrivacyStrategy(Strategy):
     def reason_for_score(self, agent_response:str, score:float, **kwargs):
         if(dflt_vals.model_reason):
             try:
-                return OllamaConnect.get_reason(agent_response, " ".join(self.__metric_name.split("_")), score)
+                return OllamaConnect.get_reason(agent_response, score, metric_name=self.__metric_name)
             except:
                 logger.error(f"Could not fetch the reason for score. \n Make sure Ollama is running with the specified model, OR change the model_reason to false for {self.name} in data/defaults.json")
                 return ""

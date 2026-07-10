@@ -15,6 +15,7 @@ class Robustness_AdvGLUE(Strategy):
     def __init__(self, name: str = "robustness_advglue", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
         self.__task = name.split("_")[-1]
+        self.metric_name = kwargs.get("metric_name", name)
 
     def advglue_eval(self, agent_response: str) -> str:
         """
@@ -55,4 +56,4 @@ class Robustness_AdvGLUE(Strategy):
 
         score = self.check_gt(conversation.agent_response, testcase.response.response_text)
         logger.info(f"Score : {score}")
-        return score, OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name), score=score)
+        return score, OllamaConnect.get_reason(conversation.agent_response, score, metric_name=self.metric_name)

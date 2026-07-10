@@ -17,6 +17,7 @@ class ToxicityDetectionUsingAPI(Strategy):
     def __init__(self, name: str = "detect_toxicity_using_perspective_api", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
         self.api_key = os.getenv("PERSPECTIVE_API_KEY")
+        self.metric_name = kwargs.get("metric_name", name)
         if not self.api_key or self.api_key == "":
             logger.warning("PERSPECTIVE_API_KEY is not set in environment.")
             self._local_model = Toxicity()
@@ -62,7 +63,7 @@ class ToxicityDetectionUsingAPI(Strategy):
     def reason_for_score(self, agent_response:str, score:float):
         if(dflt_vals.model_reason):
             try:
-                return OllamaConnect.get_reason(agent_response, " ".join(self.name.split("_")), score)
+                return OllamaConnect.get_reason(agent_response, score, metric_name=self.metric_name)
             except:
                 logger.error(f"Could not fetch the reason for score. \n Make sure Ollama is running with the specified model, OR change the model_reason to false for {self.name} in data/defaults.json")
                 return ""
