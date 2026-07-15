@@ -36,7 +36,7 @@ interface AllFiltersResponse {
 
 const ContinueRunPage: React.FC = () => {
 
-  const maxTestCases = ['5', '20', '30', '50', '100'];
+  const maxTestCases = ['5', '10', '20', '30', '50', '100'];
   const languages = ['English', 'Spanish', 'French', 'German', 'Chinese'];
   const [isRunning, setIsRunning] = useState(false);
   const [runFinished, setRunFinished] = useState(false);
@@ -407,6 +407,8 @@ const ContinueRunPage: React.FC = () => {
                       <CustomSelect
                         options={maxTestCases}
                         defaultText="Select Max"
+                        value={formData.maxTestCases}
+                        showDefaultOption={false}
                         onChange={(val) => handleChange("maxTestCases", val)}
                       />
                     </div>

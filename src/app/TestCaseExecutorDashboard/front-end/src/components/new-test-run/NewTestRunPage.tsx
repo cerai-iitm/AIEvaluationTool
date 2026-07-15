@@ -38,7 +38,7 @@ const NewTestRunPage: React.FC = () => {
   // const targets = ['Vaidya AI', 'Target 2', 'Target 3'];
   const testPlans = ['Plan 1', 'Plan 2', 'Plan 3'];
   const metrics = ['Accuracy', 'Precision', 'Recall', 'F1 Score'];
-  const maxTestCases = ['5', '20', '30', '50', '100'];
+  const maxTestCases = ['5', '10', '20', '30', '50', '100'];
   const domains = ['E-commerce', 'Healthcare', 'Finance', 'Education'];
   const languages = ['Tamil', 'Hindi', 'Assamese', 'Bengali', 'Sindhi', 'Bodo'];
   const [runName, setRunName] = useState("");
@@ -433,7 +433,9 @@ const NewTestRunPage: React.FC = () => {
             <label>Max test cases</label>
             <CustomSelect
               options={maxTestCases}
-              defaultText="10"
+              defaultText="Select Max"
+              value={formData.maxTestCases}
+              showDefaultOption={false}
               onChange={(val) => handleChange("maxTestCases", val)}
             />
           </div>
