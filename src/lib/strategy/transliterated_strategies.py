@@ -58,4 +58,4 @@ class TransliteratedStrategy(Strategy):
         logger.info("Evaluating transliterated text...")
         score = self.transliterate_text(conversation.agent_response, testcase.response.response_text)
         logger.info(f"Transliterated Score: {score}")
-        return score, OllamaConnect.get_reason(conversation.agent_response, score, metric_name=self.metric_name)
+        return round(float(score), 2), OllamaConnect.get_reason(conversation.agent_response, score, metric_name=self.metric_name)
