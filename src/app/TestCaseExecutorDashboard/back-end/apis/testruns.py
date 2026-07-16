@@ -20,6 +20,7 @@ from services.testruns import (
     delete_test_run_service,
     download_evaluation_report_service,
     get_all_test_runs_service,
+    get_interface_manager_status_service,
     get_metrics_by_plan_service,
     get_run_evaluation_summary_service,
     get_test_run_service,
@@ -30,6 +31,15 @@ from services.testruns import (
 from configuration.database import get_db
 
 router = APIRouter()
+
+@router.get("/interface-manager/status")
+def get_interface_manager_status():
+    try:
+        return get_interface_manager_status_service()
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/start-run")
 def start_run(data: NewTestRun, background_tasks: BackgroundTasks, db=Depends(get_db)):

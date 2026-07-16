@@ -23,6 +23,7 @@ interface RunFormData {
 
 interface FilterItem {
   filter_name: string;
+  extra_info?: string;
 }
 
 interface AllFiltersResponse {
@@ -33,6 +34,13 @@ interface AllFiltersResponse {
   metrics: FilterItem[];
   statuses: FilterItem[];
 }
+
+interface InterfaceManagerStatus {
+  docker: boolean;
+}
+
+const normalizeTargetName = (value?: string) =>
+  (value || "").replace(/\s*\(.*?\)\s*$/, "").trim().toLowerCase();
 
 const ContinueRunPage: React.FC = () => {
 
@@ -47,6 +55,8 @@ const ContinueRunPage: React.FC = () => {
   const [planMetrics, setPlanMetrics] = useState<string[]>([]);
   const [domainOptions, setDomainOptions] = useState<string[]>([]);
   const [languageOptions, setLanguageOptions] = useState<string[]>([]);
+  const [showSeleniumLink, setShowSeleniumLink] = useState(false);
+  const [hasContinuedRunStarted, setHasContinuedRunStarted] = useState(false);
   useNavigationBlocker(isRunning);
   const wsRef = useRef<WebSocket | null>(null);
   const [formData, setFormData] = useState<RunFormData>({
@@ -61,6 +71,16 @@ const ContinueRunPage: React.FC = () => {
   });
 
   const isStartDisabled = !formData.testPlan || isRunning;
+  const seleniumHref = "/selenium/";
+  const existingRunTarget = normalizeTargetName(existingRun?.target);
+  const selectedTarget = filters?.targets.find(
+    (target) => normalizeTargetName(target.filter_name) === existingRunTarget
+  );
+  const selectedTargetType = selectedTarget?.extra_info?.trim().toLowerCase();
+  const isSeleniumTarget =
+    selectedTargetType === "whatsapp" || selectedTargetType === "webapp";
+  const shouldShowSeleniumLink =
+    showSeleniumLink && hasContinuedRunStarted && isSeleniumTarget;
   
 
   const { runName } = useParams();
@@ -94,6 +114,34 @@ const ContinueRunPage: React.FC = () => {
       }
     };
     fetchFilters();
+  }, []);
+
+  useEffect(() => {
+    const fetchInterfaceManagerStatus = async () => {
+      try {
+        const res = await fetch(API_ENDPOINTS.GET_INTERFACE_MANAGER_STATUS, {
+          headers: getAuthHeaders(),
+          credentials: "include",
+        });
+
+        if (res.status === 401) {
+          redirectToLogin();
+          return;
+        }
+
+        if (!res.ok) {
+          throw new Error(`Failed to fetch interface manager status (${res.status})`);
+        }
+
+        const data: InterfaceManagerStatus = await res.json();
+        setShowSeleniumLink(Boolean(data.docker));
+      } catch (err) {
+        console.error("Failed to fetch interface manager status", err);
+        setShowSeleniumLink(false);
+      }
+    };
+
+    fetchInterfaceManagerStatus();
   }, []);
 
   useEffect(() => {
@@ -160,6 +208,7 @@ const ContinueRunPage: React.FC = () => {
       const data = await res.json();
       
       setExistingRun(data.run);
+      setHasContinuedRunStarted(false);
       if (data.run?.target) {
         fetchTargetMetadata(data.run.target);
       }
@@ -233,6 +282,7 @@ const ContinueRunPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setRunFinished(false);
+    setHasContinuedRunStarted(false);
 
     if (!formData.runName) {
       alert("Please enter a run name and fetch it first.");
@@ -265,6 +315,7 @@ const ContinueRunPage: React.FC = () => {
       }
 
       setTotalTestCases(data.totalTestCases);
+      setHasContinuedRunStarted(true);
       setIsRunning(true);
 
       const ws = new WebSocket(`${WS_BASE_URL}/ws/test-run`);
@@ -432,9 +483,23 @@ const ContinueRunPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <button type="submit" className="start-button" disabled={isStartDisabled}>
-                    Start Run
-                  </button>
+                  <div className="run-actions-row">
+                    <button type="submit" className="start-button" disabled={isStartDisabled}>
+                      Start Run
+                    </button>
+
+                    {shouldShowSeleniumLink && (
+                      <a
+                        className="selenium-link-button"
+                        href={seleniumHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <i className="bi bi-display" aria-hidden="true" />
+                        <span>View Test Execution </span>
+                      </a>
+                    )}
+                  </div>
                 </form>
               ) : (
                 <div className="text-center py-3 text-muted">

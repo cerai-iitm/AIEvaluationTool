@@ -40,6 +40,7 @@ export const AUTH_LOGOUT_URL = `${AUTH_SERVICE_URL}/web/logout`;
   `${API_BASE_URL}/report/${encodeURIComponent(runName)}`,
     
     CONTINUE_RUN: `${API_BASE_URL}/continue-run`,    
+    GET_INTERFACE_MANAGER_STATUS: `${API_BASE_URL}/interface-manager/status`,
     DEV_Config: `${API_BASE_URL}/__dev/config`,
 
     ANALYSE_HEALTH: `${API_BASE_URL}/analyse/health`,

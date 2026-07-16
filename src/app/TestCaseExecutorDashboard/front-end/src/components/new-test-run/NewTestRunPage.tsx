@@ -33,6 +33,13 @@ interface AllFiltersResponse {
   statuses: FilterItem[];
 }
 
+interface InterfaceManagerStatus {
+  docker: boolean;
+}
+
+const formatTargetOption = (target: FilterItem) =>
+  `${target.filter_name}${target.extra_info ? ` (${target.extra_info})` : ""}`;
+
 const NewTestRunPage: React.FC = () => {
   // Sample data for dropdowns
   // const targets = ['Vaidya AI', 'Target 2', 'Target 3'];
@@ -50,6 +57,7 @@ const NewTestRunPage: React.FC = () => {
   const [filters, setFilters] = useState<AllFiltersResponse | null>(null);
   const [planMetrics, setPlanMetrics] = useState<string[]>([]);
   const [liveEvents, setLiveEvents] = useState<TestRunEvent[]>([]);
+  const [showSeleniumLink, setShowSeleniumLink] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const wsConnectingRef = useRef<Promise<void> | null>(null);
   const activeRunIdRef = useRef<string | number | null>(null);
@@ -108,6 +116,16 @@ const NewTestRunPage: React.FC = () => {
 
   const isStartDisabled = !formData.testPlan || !formData.target  || isRunning;
   const isTargetSelected = !!formData.target;
+  const seleniumHref = "/selenium/";
+  const selectedTarget = filters?.targets.find(
+    (target) =>
+      formatTargetOption(target) === formData.target ||
+      target.filter_name === formData.target
+  );
+  const selectedTargetType = selectedTarget?.extra_info?.trim().toLowerCase();
+  const isSeleniumTarget =
+    selectedTargetType === "whatsapp" || selectedTargetType === "webapp";
+  const shouldShowSeleniumLink = showSeleniumLink && Boolean(runName) && isSeleniumTarget;
 
   const handleRunFinished = useCallback(() => {
     setRunCompleted(true);
@@ -236,6 +254,34 @@ const NewTestRunPage: React.FC = () => {
     };
 
     fetchFilters();
+  }, []);
+
+  useEffect(() => {
+    const fetchInterfaceManagerStatus = async () => {
+      try {
+        const res = await fetch(API_ENDPOINTS.GET_INTERFACE_MANAGER_STATUS, {
+          headers: getAuthHeaders(),
+          credentials: "include",
+        });
+
+        if (res.status === 401) {
+          redirectToLogin();
+          return;
+        }
+
+        if (!res.ok) {
+          throw new Error(`Failed to fetch interface manager status (${res.status})`);
+        }
+
+        const data: InterfaceManagerStatus = await res.json();
+        setShowSeleniumLink(Boolean(data.docker));
+      } catch (err) {
+        console.error("Failed to fetch interface manager status", err);
+        setShowSeleniumLink(false);
+      }
+    };
+
+    fetchInterfaceManagerStatus();
   }, []);
 
   useEffect(() => {
@@ -372,9 +418,7 @@ const NewTestRunPage: React.FC = () => {
             <label>Target</label>
             <CustomSelect
               options={
-                filters?.targets.map(
-                  t => `${t.filter_name}${t.extra_info ? ` (${t.extra_info})` : ""}`
-                ) ?? []
+                filters?.targets.map(formatTargetOption) ?? []
               }
               defaultText="Select Target"
               onChange={(val) => handleChange("target", val)}
@@ -469,9 +513,23 @@ const NewTestRunPage: React.FC = () => {
           </div>
         </div>
 
-        <button type="submit" className="start-button" disabled={isStartDisabled}>
-          Start Run
-        </button>
+        <div className="run-actions-row">
+          <button type="submit" className="start-button" disabled={isStartDisabled}>
+            Start Run
+          </button>
+
+          {shouldShowSeleniumLink && (
+            <a
+              className="selenium-link-button"
+              href={seleniumHref}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <i className="bi bi-display" aria-hidden="true" />
+              <span>View Test Execution</span>
+            </a>
+          )}
+        </div>
       </form>
       {(isRunning || runCompleted) && 
       <Loop isRunning={isRunning} 
