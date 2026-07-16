@@ -19,6 +19,12 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
+import { NameCharacterCounter } from "@/components/NameCharacterCounter";
+import {
+  isNameOverCharacterLimit,
+  isNameUsingAllowedCharacters,
+  NAME_ALLOWED_CHARACTERS_MESSAGE,
+} from "@/utils/nameValidation";
 
 interface TargetAddDialogProps {
   open: boolean;
@@ -135,8 +141,14 @@ export default function TargetAddDialog({
     );
   };
 
+  const hasInvalidNameCharacters =
+    name.trim().length > 0 && !isNameUsingAllowedCharacters(name);
+  const isNameInvalid =
+    isNameOverCharacterLimit(name) || hasInvalidNameCharacters;
+
   const isFormValid =
     name.trim() &&
+    !isNameInvalid &&
     type &&
     description.trim() &&
     url.trim() &&
@@ -149,6 +161,24 @@ export default function TargetAddDialog({
       toast({
         title: "Validation Error",
         description: "Target name is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isNameOverCharacterLimit(name)) {
+      toast({
+        title: "Validation Error",
+        description: "Target name must be 40 characters or fewer",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!isNameUsingAllowedCharacters(name)) {
+      toast({
+        title: "Validation Error",
+        description: NAME_ALLOWED_CHARACTERS_MESSAGE,
         variant: "destructive",
       });
       return;
@@ -297,8 +327,17 @@ export default function TargetAddDialog({
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter target name"
               required
-              className="bg-muted"
+              aria-invalid={isNameInvalid}
+              className={`bg-muted ${
+                isNameInvalid ? "border-red-500" : ""
+              }`}
             />
+            <NameCharacterCounter value={name} />
+            {hasInvalidNameCharacters && (
+              <p className="text-xs font-medium text-red-600">
+                {NAME_ALLOWED_CHARACTERS_MESSAGE}.
+              </p>
+            )}
           </div>
 
 
