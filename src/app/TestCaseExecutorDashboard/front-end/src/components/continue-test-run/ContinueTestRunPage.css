@@ -266,6 +266,42 @@ h1 {
   font-weight: 500;
 }
 
+.run-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+  width: 100%;
+}
+
+.selenium-link-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 42px;
+  padding: 0.7rem 1rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  background: #ffffff;
+  color: #1d4ed8;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.selenium-link-button:hover {
+  border-color: #93c5fd;
+  background: #eff6ff;
+  color: #1d4ed8;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.16);
+}
+
 /* Button */
 .start-button {
   background-color: #3b82f6;
@@ -277,7 +313,7 @@ h1 {
   border-radius: 0.5rem;
   cursor: pointer;
   transition: background-color 0.2s;
-  margin-top: 1rem;
+  margin-top: 0;
   width: 200px;
 }
 .start-button:disabled {
@@ -320,6 +356,16 @@ select:focus {
   .filters-row {
     flex-direction: column;
     gap: 1rem;
+  }
+
+  .run-actions-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .run-actions-row .start-button,
+  .run-actions-row .selenium-link-button {
+    width: 100%;
   }
   
   .filter-item {

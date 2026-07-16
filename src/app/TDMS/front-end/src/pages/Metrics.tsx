@@ -22,6 +22,8 @@ import { API_ENDPOINTS } from "@/config/api";
 import { hasPermission } from "@/utils/permissions";
 import { HistoryButton } from "@/components/HistoryButton";
 import { PageHeaderWithBack } from "@/components/PageHeaderWithBack";
+import { NameCharacterCounter } from "@/components/NameCharacterCounter";
+import { isNameOverCharacterLimit } from "@/utils/nameValidation";
 
 // Types
 interface Metric {
@@ -209,6 +211,15 @@ const Metrics: React.FC = () => {
       return;
     }
 
+    if (isNameOverCharacterLimit(newMetricName)) {
+      toast({
+        title: "Validation Error",
+        description: "Metric name must be 40 characters or fewer",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const token = localStorage.getItem("access_token");
       const headers: HeadersInit = {
@@ -280,6 +291,15 @@ const Metrics: React.FC = () => {
       toast({
         title: "Validation Error",
         description: "Metric name, description, source, domain, benchmark, and notes are required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isNameOverCharacterLimit(updateName)) {
+      toast({
+        title: "Validation Error",
+        description: "Metric name must be 40 characters or fewer",
         variant: "destructive",
       });
       return;
@@ -704,9 +724,13 @@ const Metrics: React.FC = () => {
               <Input
                 value={updateName}
                 onChange={e => setUpdateName(e.target.value)}
-                className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-lg flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
+                aria-invalid={isNameOverCharacterLimit(updateName)}
+                className={`bg-gray-100 rounded border px-3 md:px-4 py-2 text-sm md:text-lg flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200 ${
+                  isNameOverCharacterLimit(updateName) ? "border-red-500" : "border-gray-300"
+                }`}
                 required
               />
+              <NameCharacterCounter value={updateName} />
             </div>
             
             <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 gap-2 md:gap-0">
@@ -778,7 +802,8 @@ const Metrics: React.FC = () => {
                   !updateSource.trim() ||
                   !updateDomainName.trim() ||
                   !updateBenchmark.trim() ||
-                  !updateMessage.trim()
+                  !updateMessage.trim() ||
+                  isNameOverCharacterLimit(updateName)
                 }
                 onClick={handleUpdate}
               >
@@ -822,10 +847,13 @@ const Metrics: React.FC = () => {
                 <Input
                   value={newMetricName}
                   onChange={e => setNewMetricName(e.target.value)}
-                  className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
-                  maxLength={150}
+                  aria-invalid={isNameOverCharacterLimit(newMetricName)}
+                  className={`bg-gray-100 rounded border px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200 ${
+                    isNameOverCharacterLimit(newMetricName) ? "border-red-500" : "border-gray-300"
+                  }`}
                   required
                 />
+                <NameCharacterCounter value={newMetricName} />
               </div>
               
               <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 w-full gap-2 md:gap-0">
@@ -900,7 +928,8 @@ const Metrics: React.FC = () => {
                   !newMetricSource.trim() ||
                   !newDomainName.trim() ||
                   !newMetricBenchmark.trim() ||
-                  !addMessage.trim()
+                  !addMessage.trim() ||
+                  isNameOverCharacterLimit(newMetricName)
                 }
               >
                 Submit

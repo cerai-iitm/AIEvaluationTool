@@ -2,6 +2,7 @@ import math
 import os
 import sys
 import re
+import json
 from typing import Optional,List,Literal
 from fastapi import HTTPException, BackgroundTasks
 from datetime import datetime
@@ -22,6 +23,21 @@ from utils.port import ensure_interface_manager_port_running, reset_frontend_dis
 logger = get_logger(__name__)
 
 GAP_THRESHOLD_MS = 5000
+
+def _as_bool(value):
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "on"}
+    return bool(value)
+
+def get_interface_manager_status_service():
+    with open(interface_manager_config, "r") as f:
+        config = json.load(f)
+
+    return {
+        "docker": _as_bool(config.get("interface_manager", {}).get("docker", False)),
+    }
 
 def _parse_timeline_timestamp(value: Optional[str]) -> Optional[float]:
     if not value:

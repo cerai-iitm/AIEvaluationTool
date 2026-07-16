@@ -23,6 +23,8 @@ import { hasPermission } from "@/utils/permissions";
 import { HistoryButton } from "@/components/HistoryButton";
 import { PageHeaderWithBack } from "@/components/PageHeaderWithBack";
 import { set } from "date-fns";
+import { NameCharacterCounter } from "@/components/NameCharacterCounter";
+import { isNameOverCharacterLimit } from "@/utils/nameValidation";
 
 // Types
 interface Strategy {
@@ -162,6 +164,15 @@ const StrategyList: React.FC = () => {
       return;
     }
 
+    if (isNameOverCharacterLimit(newStrategyName)) {
+      toast({
+        title: "Validation Error",
+        description: "Strategy name must be 40 characters or fewer",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const token = localStorage.getItem("access_token");
       const headers: HeadersInit = {
@@ -216,6 +227,15 @@ const StrategyList: React.FC = () => {
       toast({
         title: "Validation Error",
         description: "Strategy name and notes are required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isNameOverCharacterLimit(updateName)) {
+      toast({
+        title: "Validation Error",
+        description: "Strategy name must be 40 characters or fewer",
         variant: "destructive",
       });
       return;
@@ -616,8 +636,12 @@ const StrategyList: React.FC = () => {
               <Input
                 value={updateName}
                 onChange={e => setUpdateName(e.target.value)}
-                className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-lg flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
+                aria-invalid={isNameOverCharacterLimit(updateName)}
+                className={`bg-gray-100 rounded border px-3 md:px-4 py-2 text-sm md:text-lg flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200 ${
+                  isNameOverCharacterLimit(updateName) ? "border-red-500" : "border-gray-300"
+                }`}
               />
+              <NameCharacterCounter value={updateName} />
             </div>
             
             <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 gap-2 md:gap-0">
@@ -639,7 +663,11 @@ const StrategyList: React.FC = () => {
               />
               <button
                 className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={!updateName.trim() || !updateMessage.trim()}
+                disabled={
+                  !updateName.trim() ||
+                  !updateMessage.trim() ||
+                  isNameOverCharacterLimit(updateName)
+                }
                 onClick={handleUpdate}
               >
                 Submit
@@ -679,9 +707,12 @@ const StrategyList: React.FC = () => {
                 <Input
                   value={newStrategyName}
                   onChange={e => setNewStrategyName(e.target.value)}
-                  className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
-                  maxLength={150}
+                  aria-invalid={isNameOverCharacterLimit(newStrategyName)}
+                  className={`bg-gray-100 rounded border px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200 ${
+                    isNameOverCharacterLimit(newStrategyName) ? "border-red-500" : "border-gray-300"
+                  }`}
                 />
+                <NameCharacterCounter value={newStrategyName} />
               </div>
               
               <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 w-full gap-2 md:gap-0">
@@ -706,7 +737,12 @@ const StrategyList: React.FC = () => {
                 type="button"
                 className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleAdd}
-                disabled={!newStrategyName.trim() || !newStrategyDescription.trim() || !addMessage.trim()}
+                disabled={
+                  !newStrategyName.trim() ||
+                  !newStrategyDescription.trim() ||
+                  !addMessage.trim() ||
+                  isNameOverCharacterLimit(newStrategyName)
+                }
               >
                 Submit
               </button>
