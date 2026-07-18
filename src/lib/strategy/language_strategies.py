@@ -145,7 +145,8 @@ class LanguageStrategies(Strategy):
             case "language_detect_gt" | "language_similarity_gt":
                 score =  asyncio.run(self.async_eval(conversation.agent_response, testcase.response.response_text))
                 logger.info(f"Score : {score}")
-                return score, OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), score)
+                logger.info(f"{self.metric_name} evaluation completed for strategy {self.__strategy_name}.")
+                return score, OllamaConnect.get_reason(conversation.agent_response, score, metric_name=self.metric_name)
             case _:
                 logger.error(f"Strategy name {self.__strategy_name} is not recognized.")
                 raise ValueError(f"Strategy {self.__strategy_name} is not defined.")

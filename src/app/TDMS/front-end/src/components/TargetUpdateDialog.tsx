@@ -20,6 +20,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
 import { hasPermission } from "@/utils/permissions";
+import { NameCharacterCounter } from "@/components/NameCharacterCounter";
+import {
+  isNameOverCharacterLimit,
+  isNameUsingAllowedCharacters,
+  NAME_ALLOWED_CHARACTERS_MESSAGE,
+} from "@/utils/nameValidation";
 
 
 interface Target {
@@ -70,6 +76,7 @@ export default function TargetUpdateDialog({
   onUpdateSuccess,
 }: TargetUpdateDialogProps) {
   const { toast } = useToast();
+  const [name, setName] = useState("");
   const [type, setType] = useState("");
   const [description, setDescription] = useState("");
   const [url, setUrl] = useState("");
@@ -165,6 +172,7 @@ export default function TargetUpdateDialog({
 
   useEffect(() => {
     if (target) {
+      setName(target.target_name);
       setType(target.target_type);
       setDescription(target.target_description);
       setUrl(target.target_url);
@@ -186,6 +194,7 @@ export default function TargetUpdateDialog({
   };
 
   const isChanged =
+    name !== (targetInitial.target_name || "") ||
     type !== (targetInitial.target_type || "") ||
     description !== (targetInitial.target_description || "") ||
     url !== (targetInitial.target_url || "") ||
@@ -198,6 +207,11 @@ export default function TargetUpdateDialog({
       prev.includes(lang) ? prev.filter((l) => l !== lang) : [...prev, lang],
     );
   };
+
+  const hasInvalidNameCharacters =
+    name.trim().length > 0 && !isNameUsingAllowedCharacters(name);
+  const isNameInvalid =
+    isNameOverCharacterLimit(name) || hasInvalidNameCharacters;
 
   const handleSubmit = async () => {
 
@@ -214,6 +228,33 @@ export default function TargetUpdateDialog({
       toast({
         title: "Error",
         description: "Target ID is missing",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!name.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Target name is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isNameOverCharacterLimit(name)) {
+      toast({
+        title: "Validation Error",
+        description: "Target name must be 40 characters or fewer",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!isNameUsingAllowedCharacters(name)) {
+      toast({
+        title: "Validation Error",
+        description: NAME_ALLOWED_CHARACTERS_MESSAGE,
         variant: "destructive",
       });
       return;
@@ -285,7 +326,7 @@ export default function TargetUpdateDialog({
 
       // Send all fields to match backend expectations
       const updatePayload: TargetUpdatePayload = {
-        target_name: target.target_name,
+        target_name: name.trim(),
         target_type: type || targetInitial.target_type,
         target_description: description,
         target_url: url.trim(),
@@ -380,11 +421,23 @@ export default function TargetUpdateDialog({
           <DialogTitle className="sr-only">Update Target</DialogTitle>
         </DialogHeader>
         <div className="overflow-y-auto flex-1  space-y-2 pb-5 p-1">
-          <div className="flex items-center justify-center gap-2 pb-4">
-            <Label className="text-base font-semibold">Target -</Label>
-            <Label className="text-xl font-semibold text-primary hover:text-primary/90">
-              {target.target_name}
-            </Label>
+          <div className="space-y-1 pb-4">
+            <Label className="text-base font-semibold">Target</Label>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              aria-invalid={isNameInvalid}
+              className={`bg-muted ${
+                isNameInvalid ? "border-red-500" : ""
+              }`}
+              required
+            />
+            <NameCharacterCounter value={name} />
+            {hasInvalidNameCharacters && (
+              <p className="text-xs font-medium text-red-600">
+                {NAME_ALLOWED_CHARACTERS_MESSAGE}.
+              </p>
+            )}
           </div>
           <div className="space-y-1 pb-4">
             <Label className="text-base font-semibold">Description</Label>
@@ -515,6 +568,8 @@ export default function TargetUpdateDialog({
             onClick={handleSubmit}
             className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={!isChanged || !notes.trim() || isLoading ||
+              !name.trim() ||
+              isNameInvalid ||
               !description.trim() ||
               !url.trim() ||
               selectedLanguages.length === 0 ||

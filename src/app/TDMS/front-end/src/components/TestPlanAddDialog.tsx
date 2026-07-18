@@ -12,6 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
+import { NameCharacterCounter } from "@/components/NameCharacterCounter";
+import { isNameOverCharacterLimit } from "@/utils/nameValidation";
 
 interface TestPlanAddDialogProps {
   open: boolean;
@@ -83,6 +85,7 @@ export default function TestPlanAddDialog({
 
   const isFormValid =
     name.trim() &&
+    !isNameOverCharacterLimit(name) &&
     description.trim() &&
     selectedMetrics.length > 0 &&
     notes.trim();
@@ -92,6 +95,15 @@ export default function TestPlanAddDialog({
       toast({
         title: "Validation Error",
         description: "Test plan name is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isNameOverCharacterLimit(name)) {
+      toast({
+        title: "Validation Error",
+        description: "Test plan name must be 40 characters or fewer",
         variant: "destructive",
       });
       return;
@@ -198,8 +210,12 @@ export default function TestPlanAddDialog({
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter test plan name"
               required
-              className="bg-muted"
+              aria-invalid={isNameOverCharacterLimit(name)}
+              className={`bg-muted ${
+                isNameOverCharacterLimit(name) ? "border-red-500" : ""
+              }`}
             />
+            <NameCharacterCounter value={name} />
           </div>
 
           <div className="space-y-2">

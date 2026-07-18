@@ -27,6 +27,8 @@ import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
 import { hasPermission } from "@/utils/permissions";
 import { set } from "date-fns";
+import { NameCharacterCounter } from "@/components/NameCharacterCounter";
+import { isNameOverCharacterLimit } from "@/utils/nameValidation";
 
 interface TestCaseAddDialogProps {
   open: boolean;
@@ -360,8 +362,9 @@ export const TestCaseAddDialog = ({
 
     const checkNameAvailability = async () => {
       const name = testCaseName.trim();
-      if (!name) {
+      if (!name || isNameOverCharacterLimit(testCaseName)) {
         setIsNameAvailable(null);
+        setIsCheckingName(false);
         return;
       }
 
@@ -495,6 +498,15 @@ export const TestCaseAddDialog = ({
       toast({
         title: "Validation Error",
         description: "Test case name is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isNameOverCharacterLimit(testCaseName)) {
+      toast({
+        title: "Validation Error",
+        description: "Test case name must be 40 characters or fewer",
         variant: "destructive",
       });
       return;
@@ -774,8 +786,15 @@ export const TestCaseAddDialog = ({
                     setShowRequestDetails(false);
                   }}
                   className={`bg-muted pr-24 ${
-                    isNameAvailable === false ? "border-destructive" : ""
+                    isNameAvailable === false ||
+                    isNameOverCharacterLimit(testCaseName)
+                      ? "border-destructive"
+                      : ""
                   }`}
+                  aria-invalid={
+                    isNameAvailable === false ||
+                    isNameOverCharacterLimit(testCaseName)
+                  }
                   required
                   disabled={isSubmitting}
                 />
@@ -797,6 +816,7 @@ export const TestCaseAddDialog = ({
                   </div>
                 )}
               </div>
+              <NameCharacterCounter value={testCaseName} />
             </div>
                
             <div className="space-y-1 pb-2">
@@ -1225,6 +1245,7 @@ export const TestCaseAddDialog = ({
                   isSubmitting || 
                   isCheckingName || 
                   isNameAvailable === false || 
+                  isNameOverCharacterLimit(testCaseName) ||
                   !isAdded || 
                   !notes ||
                   selectedMetrics.length === 0 ||
