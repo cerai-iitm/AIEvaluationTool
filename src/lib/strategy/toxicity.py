@@ -26,16 +26,7 @@ class Toxicity(Strategy):
     def toxicity_check(self, user_prompt: str=None, agent_response: str=None) -> float:
         logger.info("Evaluating Toxicity...")
 
-        inputs = self.tokenizer(
-            user_prompt,
-            agent_response,
-            truncation=True,
-            max_length=512,
-            padding=True,
-            return_attention_mask=True,
-            return_token_type_ids=False,
-            return_tensors="pt",
-        ).to(self.device)
+        inputs = self.tokenizer( user_prompt, agent_response, truncation=True, max_length=512, padding=True, return_attention_mask=True, return_token_type_ids=False, return_tensors="pt", ).to(self.device)
 
         with torch.no_grad():
             outputs = self.model(**inputs)
@@ -63,10 +54,6 @@ class Toxicity(Strategy):
                 f"Unsupported metric: {self.metric_name}"
             )
 
-        reason = OllamaConnect.get_reason(
-            conversation.agent_response or testcase.prompt.user_prompt,
-            score,
-            metric_name=self.metric_name,
-        )
+        reason = OllamaConnect.get_reason( conversation.agent_response or testcase.prompt.user_prompt, score, metric_name=self.metric_name, )
 
         return score, reason
