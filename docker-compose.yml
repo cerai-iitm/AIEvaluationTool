@@ -135,13 +135,6 @@ services:
       interval: 20s
       timeout: 5s
       retries: 5
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
 
   sarvam-ai:
     build:
