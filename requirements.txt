@@ -71,5 +71,5 @@ seaborn
 bert-extractive-summarizer
 #pkg_resources
 
-# mariadb
+mariadb
 emoji

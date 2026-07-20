@@ -1,4 +1,4 @@
-from src.lib.strategy.utils import language_detection
+from .utils import language_detection
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, pipeline
 from lib.data import TestCase, Conversation
