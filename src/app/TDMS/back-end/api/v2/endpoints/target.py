@@ -1,4 +1,6 @@
-from typing import List, Optional
+import json
+from pathlib import Path
+from typing import Dict, List, Optional
 
 from config.settings import settings
 from database.fastapi_deps import _get_db
@@ -10,6 +12,7 @@ from schemas.target import (
     TargetListResponse,
     TargetUpdateV2,
 )
+from pydantic import BaseModel, Field
 from sqlalchemy.exc import IntegrityError
 from utils.activity_logger import log_activity
 
@@ -19,6 +22,10 @@ from sqlalchemy.orm import joinedload
 from enum import Enum
 
 target_router = APIRouter(prefix="/api/v2/targets")
+
+
+class XPathApplicationConfig(BaseModel):
+    pages: Dict[str, Dict[str, str]] = Field(default_factory=dict)
 
 class TargetTypeEnum(str, Enum):
     WhatsApp = "WhatsApp"
@@ -49,6 +56,73 @@ def _get_username_from_token(authorization: Optional[str]) -> Optional[str]:
         return payload.get("user_name")
     except JWTError:
         return None
+
+
+def _xpaths_file_path() -> Path:
+    return Path(__file__).resolve().parents[5] / "interface_manager" / "xpaths.json"
+
+
+def _normalize_application_name(app_name: str) -> str:
+    return "_".join(app_name.strip().lower().split())
+
+
+def _load_xpaths_config() -> dict:
+    xpaths_path = _xpaths_file_path()
+    try:
+        with xpaths_path.open("r", encoding="utf-8") as file:
+            config = json.load(file)
+    except FileNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="XPath configuration file not found",
+        ) from exc
+    except json.JSONDecodeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="XPath configuration file contains invalid JSON",
+        ) from exc
+
+    if not isinstance(config.get("applications"), dict):
+        config["applications"] = {}
+    return config
+
+
+def _write_xpaths_config(config: dict) -> None:
+    xpaths_path = _xpaths_file_path()
+    temp_path = xpaths_path.with_suffix(".json.tmp")
+    with temp_path.open("w", encoding="utf-8") as file:
+        json.dump(config, file, indent=2)
+        file.write("\n")
+    temp_path.replace(xpaths_path)
+
+
+@target_router.get(
+    "/xpaths/applications/{app_name}",
+    summary="Get XPath configuration for an application",
+)
+def get_xpath_application_config(app_name: str):
+    application_name = _normalize_application_name(app_name)
+    config = _load_xpaths_config()
+    pages = config["applications"].get(application_name, {})
+    return {"application_name": application_name, "pages": pages}
+
+
+@target_router.put(
+    "/xpaths/applications/{app_name}",
+    summary="Update XPath configuration for an application",
+)
+def update_xpath_application_config(
+    app_name: str,
+    payload: XPathApplicationConfig,
+):
+    application_name = _normalize_application_name(app_name)
+    config = _load_xpaths_config()
+    config["applications"][application_name] = payload.pages
+    _write_xpaths_config(config)
+    return {
+        "application_name": application_name,
+        "pages": config["applications"][application_name],
+    }
 
 
 @target_router.get(

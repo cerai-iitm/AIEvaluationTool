@@ -52,6 +52,8 @@ export const API_ENDPOINTS = {
     `${API_BASE_URL}/api/v2/targets/update/${target_id}`,
   TARGET_DELETE_V2: (target_id: number) =>
     `${API_BASE_URL}/api/v2/targets/delete/${target_id}`,
+  TARGET_XPATHS_V2: (applicationName: string) =>
+    `${API_BASE_URL}/api/v2/targets/xpaths/applications/${encodeURIComponent(applicationName)}`,
 
   DOMAINS_V2: `${API_BASE_URL}/api/v2/domains`,
   DOMAIN_BY_ID_V2: (domain_id: number) =>
@@ -199,4 +201,5 @@ export const API_ENDPOINTS = {
 
   IMPORTER_RUN: `${API_BASE_URL}/api/importer/run`,
   IMPORTER_STATUS_WS: `${WS_BASE_URL}/api/importer/ws`,
+  TESTCASE_UPLOAD_JSON: `${API_BASE_URL}/api/v2/testcases/upload-json`,
 };

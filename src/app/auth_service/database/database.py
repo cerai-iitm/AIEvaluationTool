@@ -16,11 +16,11 @@ config_path = BASE_DIR / "config.json"
 local_config_path = Path(__file__).resolve().parent / "config.json"
 
 try:
-    with open(config_path, "r") as f:
+    with open(local_config_path, "r") as f:
         config = json.load(f)
 except FileNotFoundError:
     try:
-        with open(local_config_path, "r") as f:
+        with open(config_path, "r") as f:
             config = json.load(f)
     except FileNotFoundError:
         config = {}
@@ -44,7 +44,7 @@ engine_type = db_cfg.get("engine", db_cfg.get("engine_type", "sqlite")).lower()
 #     engine_type = "sqlite"
 
 if engine_type == "sqlite":
-    db_file = db_cfg.get("file", "Auth.db")
+    db_file = db_cfg.get("file", "AIEvaluationData.db")
     
     # project root: AIEvaluationTool
     project_root = str(BASE_DIR)

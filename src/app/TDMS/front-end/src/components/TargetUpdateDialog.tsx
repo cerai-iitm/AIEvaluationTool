@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
 import { hasPermission } from "@/utils/permissions";
@@ -26,6 +27,7 @@ import {
   isNameUsingAllowedCharacters,
   NAME_ALLOWED_CHARACTERS_MESSAGE,
 } from "@/utils/nameValidation";
+import XPathConfigurationEditor from "@/components/XPathConfigurationEditor";
 
 
 interface Target {
@@ -414,172 +416,204 @@ export default function TargetUpdateDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-3xl max-h-[90vh] overflow-y-auto"
+        className="max-w-5xl max-h-[90vh] overflow-y-auto"
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <DialogHeader>
           <DialogTitle className="sr-only">Update Target</DialogTitle>
         </DialogHeader>
-        <div className="overflow-y-auto flex-1  space-y-2 pb-5 p-1">
-          <div className="space-y-1 pb-4">
-            <Label className="text-base font-semibold">Target</Label>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              aria-invalid={isNameInvalid}
-              className={`bg-muted ${
-                isNameInvalid ? "border-red-500" : ""
-              }`}
-              required
-            />
-            <NameCharacterCounter value={name} />
-            {hasInvalidNameCharacters && (
-              <p className="text-xs font-medium text-red-600">
-                {NAME_ALLOWED_CHARACTERS_MESSAGE}.
-              </p>
-            )}
-          </div>
-          <div className="space-y-1 pb-4">
-            <Label className="text-base font-semibold">Description</Label>
-            <Textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="bg-muted min-h-[80px]"
-              required
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4 pb-4">
-            <div className="space-y-1 ">
-              <Label className="text-base font-semibold">Type</Label>
-              <Select
-                value={type}
-                onValueChange={setType}
-                disabled={isFetchingOptions}
-              >
-                <SelectTrigger className="bg-muted capitalize">
-                  <SelectValue
-                    placeholder={isFetchingOptions ? "Loading..." : "Select type"}
-                  />
-                </SelectTrigger>
-                <SelectContent className="bg-popover max-h-[300px]">
-                  {targetTypes.length === 0 && !isFetchingOptions ? (
-                    <SelectItem value="" disabled>
-                      No types available
-                    </SelectItem>
-                  ) : (
-                    targetTypes.map((t) => (
-                      <SelectItem key={t} value={t}>
-                        {t}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
 
+        <Tabs defaultValue="general">
+          <TabsList className="grid w-full grid-cols-2 sm:w-[420px]">
+            <TabsTrigger value="general">General</TabsTrigger>
+            <TabsTrigger value="xpaths">XPath Config</TabsTrigger>
+          </TabsList>
 
-            <div className="space-y-1">
-              <Label className="text-base font-semibold">Domain</Label>
-              <Select
-                value={domain}
-                onValueChange={setDomain}
-                disabled={isFetchingOptions}
-              >
-                <SelectTrigger className="bg-muted capitalize">
-                  <SelectValue
-                    placeholder={
-                      isFetchingOptions ? "Loading..." : "Select domain"
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent className="bg-popover max-h-[300px]">
-                  {domainOptions.length === 0 && !isFetchingOptions ? (
-                    <SelectItem value="" disabled>
-                      No domains available
-                    </SelectItem>
-                  ) : (
-                    domainOptions.map((d) => (
-                      <SelectItem key={d} value={d} className="capitalize">
-                        {d}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="space-y-1 pb-4">
-            <Label className="text-base font-semibold">URL</Label>
-            <Input
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              className="bg-muted"
-              required
-            />
-          </div>
-          <div className="space-y-1 pb-4">
-            <Label className="text-base font-semibold">Languages</Label>
-            <div className="bg-muted p-4 rounded-md max-h-[110px] overflow-y-auto">
-              {isFetchingOptions ? (
-                <div className="text-sm text-muted-foreground">
-                  Loading languages...
-                </div>
-              ) : languageOptions.length === 0 ? (
-                <div className="text-sm text-muted-foreground">
-                  No languages available
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {languageOptions.map((lang) => (
-                    <div key={lang} className="flex items-center space-x-2 capitalize">
-                      <Checkbox
-                        id={`lang-${lang}`}
-                        checked={selectedLanguages.includes(lang)}
-                        onCheckedChange={() => handleLanguageToggle(lang)}
+          <TabsContent value="general">
+            <div className="overflow-y-auto flex-1 space-y-2 pb-5 p-1 pt-4">
+              <div className="flex items-center justify-center gap-2 pb-4">
+                <Label className="text-base font-semibold">Target -</Label>
+                <Label className="text-xl font-semibold text-primary hover:text-primary/90">
+                  {target.target_name}
+                </Label>
+              </div>
+
+              <div className="space-y-1 pb-4">
+                <Label className="text-base font-semibold">Target</Label>
+                <Input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  aria-invalid={isNameInvalid}
+                  className={`bg-muted ${isNameInvalid ? "border-red-500" : ""}`}
+                  required
+                />
+                <NameCharacterCounter value={name} />
+                {hasInvalidNameCharacters && (
+                  <p className="text-xs font-medium text-red-600">
+                    {NAME_ALLOWED_CHARACTERS_MESSAGE}.
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-1 pb-4">
+                <Label className="text-base font-semibold">Description</Label>
+                <Textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="bg-muted min-h-[80px]"
+                  required
+                />
+              </div>
+
+              <div className="grid gap-4 pb-4 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <Label className="text-base font-semibold">Type</Label>
+                  <Select
+                    value={type}
+                    onValueChange={setType}
+                    disabled={isFetchingOptions}
+                  >
+                    <SelectTrigger className="bg-muted capitalize">
+                      <SelectValue
+                        placeholder={isFetchingOptions ? "Loading..." : "Select type"}
                       />
-                      <label
-                        htmlFor={`lang-${lang}`}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                      >
-                        {lang}
-                      </label>
-                    </div>
-                  ))}
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover max-h-[300px]">
+                      {targetTypes.length === 0 && !isFetchingOptions ? (
+                        <SelectItem value="" disabled>
+                          No types available
+                        </SelectItem>
+                      ) : (
+                        targetTypes.map((t) => (
+                          <SelectItem key={t} value={t}>
+                            {t}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
                 </div>
-              )}
-            </div>
-          </div>
-        </div>
 
-        <div className="flex justify-center items-center p-4 border-gray-300 bg-white sticky bottom-0 z-10">
-          <Label className="text-base font-bold mr-2">Notes </Label>
-          <Input
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            className="bg-gray-200 rounded px-4 py-1 mr-4 w-96"
-            required
-            placeholder="Enter notes"
-            disabled={
-              !hasPermission(currentUserRole, "canUpdateTables") &&
-              !hasPermission(currentUserRole, "canUpdateRecords")
-            }
-          />
-          <Button
-            onClick={handleSubmit}
-            className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={!isChanged || !notes.trim() || isLoading ||
-              !name.trim() ||
-              isNameInvalid ||
-              !description.trim() ||
-              !url.trim() ||
-              selectedLanguages.length === 0 ||
-              (!hasPermission(currentUserRole, "canUpdateTables") &&
-                !hasPermission(currentUserRole, "canUpdateRecords"))
-            }
-          >
-            {isLoading ? "Updating..." : "Submit"}
-          </Button>
-        </div>
+                <div className="space-y-1">
+                  <Label className="text-base font-semibold">Domain</Label>
+                  <Select
+                    value={domain}
+                    onValueChange={setDomain}
+                    disabled={isFetchingOptions}
+                  >
+                    <SelectTrigger className="bg-muted capitalize">
+                      <SelectValue
+                        placeholder={
+                          isFetchingOptions ? "Loading..." : "Select domain"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover max-h-[300px]">
+                      {domainOptions.length === 0 && !isFetchingOptions ? (
+                        <SelectItem value="" disabled>
+                          No domains available
+                        </SelectItem>
+                      ) : (
+                        domainOptions.map((d) => (
+                          <SelectItem key={d} value={d} className="capitalize">
+                            {d}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-1 pb-4">
+                <Label className="text-base font-semibold">URL</Label>
+                <Input
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  className="bg-muted"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1 pb-4">
+                <Label className="text-base font-semibold">Languages</Label>
+                <div className="bg-muted p-4 rounded-md max-h-[110px] overflow-y-auto">
+                  {isFetchingOptions ? (
+                    <div className="text-sm text-muted-foreground">
+                      Loading languages...
+                    </div>
+                  ) : languageOptions.length === 0 ? (
+                    <div className="text-sm text-muted-foreground">
+                      No languages available
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {languageOptions.map((lang) => (
+                        <div key={lang} className="flex items-center space-x-2 capitalize">
+                          <Checkbox
+                            id={`lang-${lang}`}
+                            checked={selectedLanguages.includes(lang)}
+                            onCheckedChange={() => handleLanguageToggle(lang)}
+                          />
+                          <label
+                            htmlFor={`lang-${lang}`}
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                          >
+                            {lang}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3 p-4 border-gray-300 bg-white sticky bottom-0 z-10 sm:flex-row sm:items-center sm:justify-center">
+              <Label className="text-base font-bold">Notes </Label>
+              <Input
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                className="bg-gray-200 rounded px-4 py-1 sm:mr-4 sm:w-96"
+                required
+                placeholder="Enter notes"
+                disabled={
+                  !hasPermission(currentUserRole, "canUpdateTables") &&
+                  !hasPermission(currentUserRole, "canUpdateRecords")
+                }
+              />
+              <Button
+                onClick={handleSubmit}
+                className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={
+                  !isChanged ||
+                  !notes.trim() ||
+                  isLoading ||
+                  !name.trim() ||
+                  isNameInvalid ||
+                  !description.trim() ||
+                  !url.trim() ||
+                  selectedLanguages.length === 0 ||
+                  (!hasPermission(currentUserRole, "canUpdateTables") &&
+                    !hasPermission(currentUserRole, "canUpdateRecords"))
+                }
+              >
+                {isLoading ? "Updating..." : "Submit"}
+              </Button>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="xpaths" className="pt-4">
+            <XPathConfigurationEditor
+              applicationName={target.target_name}
+              open={open}
+              disabled={
+                !hasPermission(currentUserRole, "canUpdateTables") &&
+                !hasPermission(currentUserRole, "canUpdateRecords")
+              }
+            />
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );
