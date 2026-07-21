@@ -402,17 +402,18 @@ const NewTestRunPage: React.FC = () => {
       
       
 
-      <form className="filters-container" onSubmit={handleSubmit}>
-        <div className="form-group">
-        <label>Test Run Name</label>
-        <input 
-          type="text" 
-          className="form-input" 
-          placeholder="Enter run name (optional)"
-          value={formData.runName}
-          onChange={(e) => handleChange("runName", e.target.value)}
-        />
-      </div>
+      <div className="filters-container">
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+          <label>Test Run Name</label>
+          <input 
+            type="text" 
+            className="form-input" 
+            placeholder="Enter run name (optional)"
+            value={formData.runName}
+            onChange={(e) => handleChange("runName", e.target.value)}
+          />
+        </div>
         <div className="filters-row">
           <div className="filter-item">
             <label>Target</label>
@@ -517,31 +518,22 @@ const NewTestRunPage: React.FC = () => {
           <button type="submit" className="start-button" disabled={isStartDisabled}>
             Start Run
           </button>
-
-          {shouldShowSeleniumLink && (
-            <a
-              className="selenium-link-button"
-              href={seleniumHref}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <i className="bi bi-display" aria-hidden="true" />
-              <span>View Test Execution</span>
-            </a>
-          )}
         </div>
-      </form>
-      {(isRunning || runCompleted) && 
-      <Loop isRunning={isRunning} 
-        totalTestCases={totalTestCases} 
-        stepsPerTestCase={4} 
-        stepNames={["Prepare", "Finding elements", "Execute", "Store"]} planName={formData.testPlan}   
-        metricName={formData.metric}
-        testCaseName={formData.testCaseId}
-        runName={runName}
-        liveEvents={liveEvents}
-        onRunFinished={handleRunFinished}
-      />}       
+        </form>
+        {(isRunning || runCompleted) && 
+        <Loop isRunning={isRunning} 
+          totalTestCases={totalTestCases} 
+          stepsPerTestCase={4} 
+          stepNames={["Prepare", "Finding elements", "Execute", "Store"]} planName={formData.testPlan}   
+          metricName={formData.metric}
+          testCaseName={formData.testCaseId}
+          runName={runName}
+          liveEvents={liveEvents}
+          onRunFinished={handleRunFinished}
+          showTestExecutionLink={shouldShowSeleniumLink}
+          seleniumHref={seleniumHref}
+        />}       
+      </div>
       
     </div>
   );

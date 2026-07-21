@@ -23,6 +23,8 @@ interface LoopProps {
   testCaseName?: string; 
   liveEvents?: TestRunEvent[];
   onRunFinished?: () => void;
+  showTestExecutionLink?: boolean;
+  seleniumHref?: string;
   
 }
 
@@ -38,7 +40,9 @@ type StepStatus = "PENDING" | "RUNNING" | "DONE" | "FAILED";
   metricName,
   testCaseName,
   liveEvents = [],
-  onRunFinished
+  onRunFinished,
+  showTestExecutionLink = false,
+  seleniumHref = "/selenium/"
   }) => {
   const [currentTestCase, setCurrentTestCase] = useState(0);
   const navigate = useNavigate();
@@ -172,10 +176,9 @@ type StepStatus = "PENDING" | "RUNNING" | "DONE" | "FAILED";
   return (
     <div style={{
       width: '100%',
-      background: '#FFFFFF',
-      borderRadius: 12,
-      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-      padding: '24px',
+      borderTop: '1px solid #E5E7EB',
+      marginTop: '24px',
+      paddingTop: '24px',
       fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
       color: '#111827',
     }}>
@@ -183,7 +186,9 @@ type StepStatus = "PENDING" | "RUNNING" | "DONE" | "FAILED";
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: '16px'
+        flexWrap: 'wrap',
+        gap: '16px',
+        marginBottom: '14px'
       }}>
         <h2 style={{
           margin: 0,
@@ -199,19 +204,58 @@ type StepStatus = "PENDING" | "RUNNING" | "DONE" | "FAILED";
           background: '#F3F4F6',
           padding: '4px 8px',
           borderRadius: '4px',
-          fontWeight: 500
+          fontWeight: 500,
+          textAlign: 'right'
         }}>
           {planName} {metricName && `• ${metricName}`} {testCaseName && `• ${testCaseName}`}
         </div>
       </div>
       
-      <p style={{
-        margin: '0 0 16px 0',
-        fontSize: '14px',
-        color: '#4B5563'
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '12px',
+        marginBottom: '16px'
       }}>
-        Executing test cases
-      </p>
+        <p style={{
+          margin: 0,
+          fontSize: '14px',
+          color: '#4B5563'
+        }}>
+          Executing test cases
+        </p>
+        {showTestExecutionLink && (
+          <a
+            href={seleniumHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              minHeight: '32px',
+              boxSizing: 'border-box',
+              padding: '0 12px',
+              border: '1px solid #cbd5e1',
+              borderRadius: '4px',
+              background: '#ffffff',
+              color: '#1d4ed8',
+              fontSize: '13px',
+              fontWeight: 500,
+              lineHeight: 1,
+              textDecoration: 'none',
+              whiteSpace: 'nowrap',
+              boxShadow: '0 1px 2px rgba(15, 23, 42, 0.08)',
+            }}
+          >
+            <i className="bi bi-display" aria-hidden="true" />
+            <span>View Test Execution</span>
+          </a>
+        )}
+      </div>
       
       <div style={{
         marginBottom: '16px',

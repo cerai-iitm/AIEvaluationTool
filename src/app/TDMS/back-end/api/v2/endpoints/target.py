@@ -4,7 +4,9 @@ from typing import Dict, List, Optional
 
 from config.settings import settings
 from database.fastapi_deps import _get_db
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, status, Body
+from fastapi.security import HTTPBearer
+
 from jose import JWTError, jwt
 from schemas.target import (
     TargetCreateV2,
@@ -21,7 +23,16 @@ from lib.orm.tables import Targets
 from sqlalchemy.orm import joinedload
 from enum import Enum
 
-target_router = APIRouter(prefix="/api/v2/targets")
+security = HTTPBearer()
+
+from pathlib import Path
+import json
+
+
+target_router = APIRouter(
+                prefix="/api/v2/targets",
+                dependencies=[Depends(security)],
+                )
 
 
 class XPathApplicationConfig(BaseModel):
@@ -31,6 +42,28 @@ class TargetTypeEnum(str, Enum):
     WhatsApp = "WhatsApp"
     WebApp = "WebApp"
     API = "API"
+
+def _load_xpaths():
+    path = (Path(__file__).parents[5] / "interface_manager" / "xpaths.json").resolve()
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="xpaths.json not found")
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=422, detail="xpaths.json is not valid JSON")
+    return path, data
+
+def _resolve_key(target, applications):
+    query = target.target_type.strip().lower()
+    if query == "whatsapp":
+        return "whatsapp_web"
+    if query == "webapp":
+        return target.target_name.strip().lower()
+    raise HTTPException(
+        status_code=404,
+        detail=f"'{target.target_type}' not found. Available: {list(applications)}",
+    )
 
 @target_router.get("/target/types", response_model=list[TargetTypeEnum], summary="Get all target types")
 def get_target_types(db: DB = Depends(_get_db)):
@@ -439,3 +472,38 @@ def delete_target(
         )
 
     return {"message": "Target deleted successfully"}
+
+@target_router.get("/get/{target_name}")
+def get_target(target_name: str, db: DB = Depends(_get_db)):
+    target = db.get_target_by_name(target_name)
+    if target is None:
+        raise HTTPException(status_code=404, detail=f"Target '{target_name}' not found")
+
+    _, data = _load_xpaths()
+    applications = data.get("applications", {})
+    print(applications)
+    key = _resolve_key(target, applications)
+    print(key)
+    if key not in applications:
+        raise HTTPException(status_code=404, detail=f"'{key}' not found. Available: {list(applications)}")
+    print(applications[key])
+    return applications[key]
+
+@target_router.post("/update/{target_name}")
+def update_target(target_name: str, payload: dict = Body(...), db: DB = Depends(_get_db)):
+    target = db.get_target_by_name(target_name)
+    if target is None:
+        raise HTTPException(status_code=404, detail=f"Target '{target_name}' not found")
+
+    path, data = _load_xpaths()
+    applications = data.setdefault("applications", {})
+    key = _resolve_key(target, applications)
+
+    # Replace this app's whole block with the posted value
+    applications[key] = payload
+
+    # Persist back to disk so the change is reflected
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
+    return applications[key]
