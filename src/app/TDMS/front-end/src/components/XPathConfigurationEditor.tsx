@@ -15,6 +15,7 @@ interface XPathConfigurationEditorProps {
   applicationName: string;
   open: boolean;
   disabled?: boolean;
+  targetName?: string;
 }
 
 const normalizeApplicationName = (value: string) =>
@@ -27,12 +28,16 @@ export default function XPathConfigurationEditor({
   applicationName,
   open,
   disabled = false,
+  targetName,
 }: XPathConfigurationEditorProps) {
   const { toast } = useToast();
   const appKey = useMemo(
     () => normalizeApplicationName(applicationName),
     [applicationName],
   );
+  const targetKey = useMemo(() => targetName?.trim() || "", [targetName]);
+  const usesTargetConfig = Boolean(targetKey);
+  const configLabel = usesTargetConfig ? targetKey : appKey;
   const [pages, setPages] = useState<XPathPages>({});
   const [activePage, setActivePage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -56,7 +61,7 @@ export default function XPathConfigurationEditor({
   }, []);
 
   const loadConfig = useCallback(async () => {
-    if (!open || !appKey) {
+    if (!open || !configLabel) {
       setPages({});
       setActivePage("");
       setLoadError(null);
@@ -66,9 +71,14 @@ export default function XPathConfigurationEditor({
     setIsLoading(true);
     setLoadError(null);
     try {
-      const response = await fetch(API_ENDPOINTS.TARGET_XPATHS_V2(appKey), {
-        headers: authHeaders(),
-      });
+      const response = await fetch(
+        usesTargetConfig
+          ? API_ENDPOINTS.TARGET_XPATHS_BY_TARGET_V2(targetKey)
+          : API_ENDPOINTS.TARGET_XPATHS_V2(appKey),
+        {
+          headers: authHeaders(),
+        },
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -76,9 +86,13 @@ export default function XPathConfigurationEditor({
       }
 
       const data = await response.json();
-      const nextPages = data?.pages && typeof data.pages === "object"
-        ? data.pages
-        : {};
+      const responsePages = usesTargetConfig ? data : data?.pages;
+      const nextPages =
+        responsePages &&
+        typeof responsePages === "object" &&
+        !Array.isArray(responsePages)
+          ? responsePages
+          : {};
       const nextPageNames = sortPages(nextPages);
       setPages(nextPages);
       setActivePage(nextPageNames[0] || "");
@@ -94,7 +108,7 @@ export default function XPathConfigurationEditor({
     } finally {
       setIsLoading(false);
     }
-  }, [appKey, authHeaders, open]);
+  }, [appKey, authHeaders, configLabel, open, targetKey, usesTargetConfig]);
 
   useEffect(() => {
     loadConfig();
@@ -206,15 +220,20 @@ export default function XPathConfigurationEditor({
   };
 
   const saveConfig = async () => {
-    if (!appKey || disabled) return;
+    if (!configLabel || disabled) return;
 
     setIsSaving(true);
     try {
-      const response = await fetch(API_ENDPOINTS.TARGET_XPATHS_V2(appKey), {
-        method: "PUT",
-        headers: authHeaders(),
-        body: JSON.stringify({ pages }),
-      });
+      const response = await fetch(
+        usesTargetConfig
+          ? API_ENDPOINTS.TARGET_XPATHS_UPDATE_BY_TARGET_V2(targetKey)
+          : API_ENDPOINTS.TARGET_XPATHS_V2(appKey),
+        {
+          method: usesTargetConfig ? "POST" : "PUT",
+          headers: authHeaders(),
+          body: JSON.stringify(usesTargetConfig ? pages : { pages }),
+        },
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -224,7 +243,7 @@ export default function XPathConfigurationEditor({
       setSavedSignature(JSON.stringify(pages));
       toast({
         title: "Success",
-        description: `XPath configuration saved for ${appKey}`,
+        description: `XPath configuration saved for ${configLabel}`,
       });
     } catch (error) {
       toast({
@@ -240,7 +259,7 @@ export default function XPathConfigurationEditor({
     }
   };
 
-  if (!appKey) {
+  if (!configLabel) {
     return (
       <div className="rounded-md border border-dashed p-6 text-sm text-muted-foreground">
         Target name required.
@@ -257,9 +276,9 @@ export default function XPathConfigurationEditor({
             <Label className="text-base font-semibold">XPath Configuration</Label>
           </div>
           <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-            <span>Shared application key</span>
+            <span>{usesTargetConfig ? "Target" : "Shared application key"}</span>
             <Badge variant="secondary" className="rounded-md font-mono">
-              {appKey}
+              {configLabel}
             </Badge>
           </div>
         </div>

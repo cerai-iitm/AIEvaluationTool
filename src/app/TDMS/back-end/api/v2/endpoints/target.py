@@ -59,7 +59,9 @@ def _resolve_key(target, applications):
     if query == "whatsapp":
         return "whatsapp_web"
     if query == "webapp":
-        return target.target_name.strip().lower()
+        normalized_name = _normalize_application_name(target.target_name)
+        lower_name = target.target_name.strip().lower()
+        return lower_name if lower_name in applications else normalized_name
     raise HTTPException(
         status_code=404,
         detail=f"'{target.target_type}' not found. Available: {list(applications)}",
@@ -481,12 +483,9 @@ def get_target(target_name: str, db: DB = Depends(_get_db)):
 
     _, data = _load_xpaths()
     applications = data.get("applications", {})
-    print(applications)
     key = _resolve_key(target, applications)
-    print(key)
     if key not in applications:
         raise HTTPException(status_code=404, detail=f"'{key}' not found. Available: {list(applications)}")
-    print(applications[key])
     return applications[key]
 
 @target_router.post("/update/{target_name}")

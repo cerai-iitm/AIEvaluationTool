@@ -606,6 +606,7 @@ export default function TargetUpdateDialog({
           <TabsContent value="xpaths" className="pt-4">
             <XPathConfigurationEditor
               applicationName={target.target_name}
+              targetName={target.target_name}
               open={open}
               disabled={
                 !hasPermission(currentUserRole, "canUpdateTables") &&

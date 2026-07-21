@@ -54,6 +54,10 @@ export const API_ENDPOINTS = {
     `${API_BASE_URL}/api/v2/targets/delete/${target_id}`,
   TARGET_XPATHS_V2: (applicationName: string) =>
     `${API_BASE_URL}/api/v2/targets/xpaths/applications/${encodeURIComponent(applicationName)}`,
+  TARGET_XPATHS_BY_TARGET_V2: (targetName: string) =>
+    `${API_BASE_URL}/api/v2/targets/get/${encodeURIComponent(targetName)}`,
+  TARGET_XPATHS_UPDATE_BY_TARGET_V2: (targetName: string) =>
+    `${API_BASE_URL}/api/v2/targets/update/${encodeURIComponent(targetName)}`,
 
   DOMAINS_V2: `${API_BASE_URL}/api/v2/domains`,
   DOMAIN_BY_ID_V2: (domain_id: number) =>
