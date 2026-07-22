@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, inspect
+from sqlalchemy import create_engine
 # from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from config import helpers
@@ -11,7 +11,7 @@ import os
 import json
 from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parents[4]
+BASE_DIR = Path(__file__).resolve().parents[5]
 config_path = BASE_DIR / "config.json"
 
 try:
@@ -74,9 +74,8 @@ def ensure_db_ready() -> None:
     if _schema_initialized:
         return
 
-    inspector = inspect(engine)
-    if not inspector.has_table(user.Users.__tablename__):
-        user.Base.metadata.create_all(bind=engine, checkfirst=True)
+    # Always create any missing tables defined in the metadata.
+    user.Base.metadata.create_all(bind=engine, checkfirst=True)
 
     with SessionLocal() as db:
         has_users = db.query(user.Users.user_id).first() is not None
