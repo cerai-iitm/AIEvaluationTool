@@ -54,6 +54,30 @@ def _load_xpaths():
         raise HTTPException(status_code=422, detail="xpaths.json is not valid JSON")
     return path, data
 
+def _load_credentials():
+
+    CREDENTIALS_PATH = (Path(__file__).parents[5] / "interface_manager" / "credentials.json").resolve()
+
+    try:
+        with open(CREDENTIALS_PATH, "r", encoding="utf-8") as f:
+            return CREDENTIALS_PATH, json.load(f)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="credentials.json not found")
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=422, detail="credentials.json is not valid JSON")
+
+def _resolve_credential_key(target) -> str:
+
+    # Credentials are webapp-only. Key = lowercased target name (e.g. "cpgrams").
+    target_type = target.target_type.strip().lower()
+
+    if target_type != "webapp":
+        raise HTTPException(
+            status_code=400,
+            detail=f"Credentials only apply to webapp targets, not '{target.target_type}'",
+        )
+    return target.target_name.strip().lower()
+
 def _resolve_key(target, applications):
     query = target.target_type.strip().lower()
     if query == "whatsapp":
@@ -475,6 +499,8 @@ def delete_target(
 
     return {"message": "Target deleted successfully"}
 
+#Xpaths configuration
+
 @target_router.get("/get/{target_name}")
 def get_target(target_name: str, db: DB = Depends(_get_db)):
     target = db.get_target_by_name(target_name)
@@ -624,4 +650,37 @@ def delete_page(
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
+    return applications[key]
+
+# Credentials configuration
+
+@target_router.get("/credentials/{target_name}")
+def get_credentials(target_name: str, db: DB = Depends(_get_db)):
+
+    target = db.get_target_by_name(target_name)
+    if target is None:
+        raise HTTPException(status_code=404, detail=f"Target '{target_name}' not found")
+
+    key = _resolve_credential_key(target)
+    _, data = _load_credentials()
+    applications = data.get("applications", {})
+
+    if key not in applications:
+        raise HTTPException(status_code=404, detail=f"No credentials for '{key}'. Available: {list(applications)}")
+    return applications[key]
+
+@target_router.api_route("/credentials/{target_name}", methods=["POST", "PUT"])
+def set_credentials(target_name: str, payload: dict = Body(...), db: DB = Depends(_get_db)):
+
+    target = db.get_target_by_name(target_name)
+    if target is None:
+        raise HTTPException(status_code=404, detail=f"Target '{target_name}' not found")
+
+    key = _resolve_credential_key(target)
+    path, data = _load_credentials()
+    applications = data.setdefault("applications", {})
+
+    applications[key] = payload
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
     return applications[key]

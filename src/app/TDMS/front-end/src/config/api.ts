@@ -60,6 +60,8 @@ export const API_ENDPOINTS = {
     `${API_BASE_URL}/api/v2/targets/update/${encodeURIComponent(targetName)}`,
   TARGET_XPATH_SEED_V2: (targetName: string) =>
     `${API_BASE_URL}/api/v2/targets/seed/${encodeURIComponent(targetName)}`,
+  TARGET_CREDENTIALS_V2: (targetName: string) =>
+    `${API_BASE_URL}/api/v2/targets/credentials/${encodeURIComponent(targetName)}`,
   TARGET_XPATH_ELEMENT_ADD_BY_TARGET_V2: (
     targetName: string,
     pageName: string,

@@ -56,21 +56,21 @@
       }
     },
     "bodhan-ai": {
-     "LoginPage": {
-         "email_input_element": "//input[@type='email' and @placeholder='arjun@school.edu']",
-         "password_input_element": "//input[@type='password' and @placeholder='••••••••']",
-         "login_button_element": "//button[@type='submit' and contains(normalize-space(.), 'Sign In')]"
-     },
-     "LogoutPage": {
-       "profile_pic_element": "//button[.//span[contains(@class,'text-foreground')]]",
-       "logout_button_element": "//button[normalize-space()='Sign out']"
-     },
-     "ChatPage": {
-       "prompt_input_box_element": "//textarea[@placeholder='Ask anything about your lesson, quiz, or subject…']",
-       "agent_response_element": "(//div[contains(@class,'md-body')])[last()]//p",
-       "send_button_element": "//button[@title='Send' and @aria-label='Send message']"
-     }
-   },
+      "LoginPage": {
+        "email_input_element": "//input[@type='email' and @placeholder='arjun@school.edu']",
+        "password_input_element": "//input[@type='password' and @placeholder='••••••••']",
+        "login_button_element": "//button[@type='submit' and contains(normalize-space(.), 'Sign In')]"
+      },
+      "LogoutPage": {
+        "profile_pic_element": "//button[.//span[contains(@class,'text-foreground')]]",
+        "logout_button_element": "//button[normalize-space()='Sign out']"
+      },
+      "ChatPage": {
+        "prompt_input_box_element": "//textarea[@placeholder='Ask anything about your lesson, quiz, or subject…']",
+        "agent_response_element": "(//div[contains(@class,'md-body')])[last()]//p",
+        "send_button_element": "//button[@title='Send' and @aria-label='Send message']"
+      }
+    },
     "farmerchat": {
       "ChatPage": {
         "shadow_root_element": "iframe",
@@ -79,6 +79,24 @@
         "mic_button_element": "div.input-right-buttons button.button-text-alt",
         "audio_message_element": ".gooey-incomingMsg audio[src]",
         "send_button_element": "button.button-text-alt svg"
+      }
+    },
+    "sstest": {
+      "LoginPage": {
+        "email_input_element": "ss",
+        "password_input_element": "ss",
+        "login_button_element": "ss"
+      },
+      "LogoutPage": {
+        "profile_pic_element": "ss",
+        "send_element": "ss",
+        "profile_element": "ss",
+        "logout_button_element": "ss"
+      },
+      "ChatPage": {
+        "profile_pic_element": "ss",
+        "prompt_input_box_element": "ss",
+        "agent_response_element": "ss"
       }
     }
   }

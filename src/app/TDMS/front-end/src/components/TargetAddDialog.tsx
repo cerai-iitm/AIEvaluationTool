@@ -27,6 +27,9 @@ import {
   NAME_ALLOWED_CHARACTERS_MESSAGE,
 } from "@/utils/nameValidation";
 import XPathConfigurationEditor from "@/components/XPathConfigurationEditor";
+import TargetCredentialsEditor, {
+  type TargetCredentials,
+} from "@/components/TargetCredentialsEditor";
 
 interface TargetAddDialogProps {
   open: boolean;
@@ -46,8 +49,15 @@ type XPathPages = Record<string, Record<string, string>>;
 
 const WHATSAPP_XPATH_TEMPLATE_KEY = "whatsapp_web";
 const WEB_APP_XPATH_TEMPLATE_KEY = "cpgrams";
+const emptyCredentials: TargetCredentials = {
+  username: "",
+  password: "",
+};
 
 const normalizeTargetType = (value: string) => value.trim().toLowerCase();
+
+const areCredentialsComplete = (credentials: TargetCredentials) =>
+  Boolean(credentials.username.trim() && credentials.password.trim());
 
 const getXPathTemplateKeyForTargetType = (targetType: string) => {
   const normalizedType = normalizeTargetType(targetType);
@@ -104,6 +114,9 @@ export default function TargetAddDialog({
   const [languageOptions, setLanguageOptions] = useState<string[]>([]);
   const [isFetchingOptions, setIsFetchingOptions] = useState(false);
   const [xpathPages, setXpathPages] = useState<XPathPages>({});
+  const [credentials, setCredentials] =
+    useState<TargetCredentials>(emptyCredentials);
+  const [activeTab, setActiveTab] = useState("general");
 
   // Fetch options from API
   const fetchOptions = useCallback(async () => {
@@ -179,6 +192,8 @@ export default function TargetAddDialog({
       setSelectedLanguages([]);
       setNotes("");
       setXpathPages({});
+      setCredentials(emptyCredentials);
+      setActiveTab("general");
     }
   }, [open, fetchOptions]);
 
@@ -204,14 +219,19 @@ export default function TargetAddDialog({
     notes.trim();
 
   const selectedTargetType = normalizeTargetType(type);
+  const isWebAppTarget = selectedTargetType === "webapp";
   const requiresXPathConfig =
-    selectedTargetType === "whatsapp" || selectedTargetType === "webapp";
+    selectedTargetType === "whatsapp" || isWebAppTarget;
   const xpathFieldCount = getXPathFieldCount(xpathPages);
   const missingXPathCount = getMissingXPathCount(xpathPages);
   const isXPathConfigComplete =
     xpathFieldCount > 0 && missingXPathCount === 0;
+  const areWebAppCredentialsComplete =
+    !isWebAppTarget || areCredentialsComplete(credentials);
   const canSubmit =
-    Boolean(isFormValid) && (!requiresXPathConfig || isXPathConfigComplete);
+    Boolean(isFormValid) &&
+    (!requiresXPathConfig || isXPathConfigComplete) &&
+    areWebAppCredentialsComplete;
 
   const buildHeaders = useCallback((): HeadersInit => {
     const headers: HeadersInit = {
@@ -272,6 +292,17 @@ export default function TargetAddDialog({
     };
   }, [buildHeaders, fetchXPathTemplateForType, open, type]);
 
+  useEffect(() => {
+    if (!open) return;
+
+    if (!isWebAppTarget) {
+      setCredentials(emptyCredentials);
+      if (activeTab === "credentials") {
+        setActiveTab("general");
+      }
+    }
+  }, [activeTab, isWebAppTarget, open]);
+
   const fetchWebAppXPathTemplate = async (
     headers: HeadersInit,
   ): Promise<XPathPages> => {
@@ -330,6 +361,37 @@ export default function TargetAddDialog({
       throw new Error(
         errorData.detail ||
           "Target created, but failed to seed the WebApp XPath config",
+      );
+    }
+  };
+
+  const saveWebAppCredentials = async (
+    targetName: string,
+    headers: HeadersInit,
+  ) => {
+    const payload = JSON.stringify({
+      username: credentials.username.trim(),
+      password: credentials.password.trim(),
+    });
+    let response = await fetch(API_ENDPOINTS.TARGET_CREDENTIALS_V2(targetName), {
+      method: "POST",
+      headers,
+      body: payload,
+    });
+
+    if (response.status === 405) {
+      response = await fetch(API_ENDPOINTS.TARGET_CREDENTIALS_V2(targetName), {
+        method: "PUT",
+        headers,
+        body: payload,
+      });
+    }
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.detail ||
+          "Target created, but failed to save the WebApp credentials",
       );
     }
   };
@@ -428,6 +490,15 @@ export default function TargetAddDialog({
       return;
     }
 
+    if (isWebAppTarget && !areCredentialsComplete(credentials)) {
+      toast({
+        title: "Validation Error",
+        description: "Username and password are required",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const headers = buildHeaders();
@@ -466,8 +537,9 @@ export default function TargetAddDialog({
       const createdTargetName =
         typeof data?.target_name === "string" ? data.target_name : name.trim();
 
-      if (normalizeTargetType(type) === "webapp") {
+      if (isWebAppTarget) {
         await seedWebAppXPaths(createdTargetName, headers);
+        await saveWebAppCredentials(createdTargetName, headers);
       }
 
       toast({
@@ -483,6 +555,8 @@ export default function TargetAddDialog({
       setDomain("");
       setSelectedLanguages([]);
       setNotes("");
+      setCredentials(emptyCredentials);
+      setActiveTab("general");
 
       // Close dialog
       onOpenChange(false);
@@ -511,10 +585,17 @@ export default function TargetAddDialog({
           <DialogTitle className="sr-only">Add Target</DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="general">
-          <TabsList className="grid w-full grid-cols-2 sm:w-[420px]">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList
+            className={`grid w-full ${
+              isWebAppTarget ? "grid-cols-3 sm:w-[620px]" : "grid-cols-2 sm:w-[420px]"
+            }`}
+          >
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="xpaths">XPath Config</TabsTrigger>
+            {isWebAppTarget ? (
+              <TabsTrigger value="credentials">Credentials</TabsTrigger>
+            ) : null}
           </TabsList>
 
           <TabsContent value="general">
@@ -670,7 +751,11 @@ export default function TargetAddDialog({
             </div>
           </TabsContent>
 
-          <TabsContent value="xpaths" className="pt-4">
+          <TabsContent
+            value="xpaths"
+            className="pt-4 data-[state=inactive]:hidden"
+            forceMount
+          >
             <XPathConfigurationEditor
               applicationName={name}
               targetType={type}
@@ -678,6 +763,17 @@ export default function TargetAddDialog({
               open={open}
             />
           </TabsContent>
+
+          {isWebAppTarget ? (
+            <TabsContent value="credentials" className="pt-4">
+              <TargetCredentialsEditor
+                open={open}
+                value={credentials}
+                onChange={setCredentials}
+                showSave={false}
+              />
+            </TabsContent>
+          ) : null}
         </Tabs>
       </DialogContent>
     </Dialog>

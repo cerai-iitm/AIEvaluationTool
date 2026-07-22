@@ -28,6 +28,9 @@ import {
   NAME_ALLOWED_CHARACTERS_MESSAGE,
 } from "@/utils/nameValidation";
 import XPathConfigurationEditor from "@/components/XPathConfigurationEditor";
+import TargetCredentialsEditor, {
+  type TargetCredentials,
+} from "@/components/TargetCredentialsEditor";
 
 
 interface Target {
@@ -71,6 +74,11 @@ interface ApiValidationError {
   msg?: string;
 }
 
+const emptyCredentials: TargetCredentials = {
+  username: "",
+  password: "",
+};
+
 export default function TargetUpdateDialog({
   target,
   open,
@@ -90,6 +98,9 @@ export default function TargetUpdateDialog({
   const [domainOptions, setDomainOptions] = useState<string[]>([]);
   const [languageOptions, setLanguageOptions] = useState<string[]>([]);
   const [isFetchingOptions, setIsFetchingOptions] = useState(false);
+  const [credentials, setCredentials] =
+    useState<TargetCredentials>(emptyCredentials);
+  const [activeTab, setActiveTab] = useState("general");
 
   const [currentUserRole, setCurrentUserRole] = useState<string>("");
 
@@ -181,6 +192,8 @@ export default function TargetUpdateDialog({
       setDomain(target.domain_name);
       setSelectedLanguages(target.lang_list || []);
       setNotes(target.notes || "");
+      setCredentials(emptyCredentials);
+      setActiveTab("general");
     }
   }, [target]);
 
@@ -203,6 +216,24 @@ export default function TargetUpdateDialog({
     domain !== (targetInitial.domain_name || "") ||
     selectedLanguages.join(",") !== (targetInitial.lang_list || []).join(",") ||
     notes !== (targetInitial.notes || "");
+  const isPersistedWebAppTarget =
+    targetInitial.target_type.trim().toLowerCase() === "webapp";
+  const isWebAppTarget =
+    type.trim().toLowerCase() === "webapp" && isPersistedWebAppTarget;
+  const isTargetUpdateDisabled =
+    !hasPermission(currentUserRole, "canUpdateTables") &&
+    !hasPermission(currentUserRole, "canUpdateRecords");
+
+  useEffect(() => {
+    if (!open) return;
+
+    if (!isWebAppTarget) {
+      setCredentials(emptyCredentials);
+      if (activeTab === "credentials") {
+        setActiveTab("general");
+      }
+    }
+  }, [activeTab, isWebAppTarget, open]);
 
   const handleLanguageToggle = (lang: string) => {
     setSelectedLanguages((prev) =>
@@ -423,10 +454,17 @@ export default function TargetUpdateDialog({
           <DialogTitle className="sr-only">Update Target</DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="general">
-          <TabsList className="grid w-full grid-cols-2 sm:w-[420px]">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList
+            className={`grid w-full ${
+              isWebAppTarget ? "grid-cols-3 sm:w-[620px]" : "grid-cols-2 sm:w-[420px]"
+            }`}
+          >
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="xpaths">XPath Config</TabsTrigger>
+            {isWebAppTarget ? (
+              <TabsTrigger value="credentials">Credentials</TabsTrigger>
+            ) : null}
           </TabsList>
 
           <TabsContent value="general">
@@ -578,8 +616,7 @@ export default function TargetUpdateDialog({
                 required
                 placeholder="Enter notes"
                 disabled={
-                  !hasPermission(currentUserRole, "canUpdateTables") &&
-                  !hasPermission(currentUserRole, "canUpdateRecords")
+                  isTargetUpdateDisabled
                 }
               />
               <Button
@@ -594,8 +631,7 @@ export default function TargetUpdateDialog({
                   !description.trim() ||
                   !url.trim() ||
                   selectedLanguages.length === 0 ||
-                  (!hasPermission(currentUserRole, "canUpdateTables") &&
-                    !hasPermission(currentUserRole, "canUpdateRecords"))
+                  isTargetUpdateDisabled
                 }
               >
                 {isLoading ? "Updating..." : "Submit"}
@@ -603,17 +639,32 @@ export default function TargetUpdateDialog({
             </div>
           </TabsContent>
 
-          <TabsContent value="xpaths" className="pt-4">
+          <TabsContent
+            value="xpaths"
+            className="pt-4 data-[state=inactive]:hidden"
+            forceMount
+          >
             <XPathConfigurationEditor
               applicationName={target.target_name}
               targetName={target.target_name}
               open={open}
               disabled={
-                !hasPermission(currentUserRole, "canUpdateTables") &&
-                !hasPermission(currentUserRole, "canUpdateRecords")
+                isTargetUpdateDisabled
               }
             />
           </TabsContent>
+
+          {isWebAppTarget ? (
+            <TabsContent value="credentials" className="pt-4">
+              <TargetCredentialsEditor
+                targetName={target.target_name}
+                open={open}
+                value={credentials}
+                onChange={setCredentials}
+                disabled={isTargetUpdateDisabled}
+              />
+            </TabsContent>
+          ) : null}
         </Tabs>
       </DialogContent>
     </Dialog>
