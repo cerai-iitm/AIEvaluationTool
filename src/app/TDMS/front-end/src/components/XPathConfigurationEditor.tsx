@@ -16,10 +16,21 @@ interface XPathConfigurationEditorProps {
   open: boolean;
   disabled?: boolean;
   targetName?: string;
+  targetType?: string;
+  onPagesChange?: (pages: XPathPages) => void;
 }
 
 const normalizeApplicationName = (value: string) =>
   value.trim().toLowerCase().replace(/\s+/g, "_");
+
+const normalizeTargetType = (value?: string) => value?.trim().toLowerCase() || "";
+
+const getTemplateKeyForTargetType = (targetType?: string) => {
+  const normalizedType = normalizeTargetType(targetType);
+  if (normalizedType === "whatsapp") return "whatsapp_web";
+  if (normalizedType === "webapp") return "cpgrams";
+  return "";
+};
 
 const sortPages = (pages: XPathPages) =>
   Object.keys(pages).sort((a, b) => a.localeCompare(b));
@@ -29,11 +40,23 @@ const toXPathPages = (value: unknown): XPathPages =>
     ? (value as XPathPages)
     : {};
 
+const toBlankXPathPages = (pages: XPathPages): XPathPages =>
+  Object.fromEntries(
+    Object.entries(pages).map(([pageName, elements]) => [
+      pageName,
+      Object.fromEntries(
+        Object.keys(elements || {}).map((elementName) => [elementName, ""]),
+      ),
+    ]),
+  );
+
 export default function XPathConfigurationEditor({
   applicationName,
   open,
   disabled = false,
   targetName,
+  targetType,
+  onPagesChange,
 }: XPathConfigurationEditorProps) {
   const { toast } = useToast();
   const appKey = useMemo(
@@ -42,7 +65,16 @@ export default function XPathConfigurationEditor({
   );
   const targetKey = useMemo(() => targetName?.trim() || "", [targetName]);
   const usesTargetConfig = Boolean(targetKey);
-  const configLabel = usesTargetConfig ? targetKey : appKey;
+  const usesTypeTemplate = !usesTargetConfig && targetType !== undefined;
+  const selectedTargetType = normalizeTargetType(targetType);
+  const shouldBlankTemplateValues =
+    usesTypeTemplate && selectedTargetType === "webapp";
+  const templateKey = useMemo(
+    () => getTemplateKeyForTargetType(targetType),
+    [targetType],
+  );
+  const configKey = usesTypeTemplate ? templateKey : appKey;
+  const configLabel = usesTargetConfig ? targetKey : configKey;
   const [pages, setPages] = useState<XPathPages>({});
   const [activePage, setActivePage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -65,6 +97,8 @@ export default function XPathConfigurationEditor({
   const hasChanges = JSON.stringify(pages) !== savedSignature;
   const isDeleting = Boolean(deletingPage || deletingElement);
   const isMutating = isDeleting || isAddingElement;
+  const canSaveTypeTemplate =
+    usesTypeTemplate && Boolean(appKey) && pageNames.length > 0;
 
   const authHeaders = useCallback((): HeadersInit => {
     const headers: HeadersInit = {
@@ -78,7 +112,11 @@ export default function XPathConfigurationEditor({
   }, []);
 
   const loadConfig = useCallback(async () => {
-    if (!open || !configLabel) {
+    if (
+      !open ||
+      !configLabel ||
+      (usesTypeTemplate && (!selectedTargetType || selectedTargetType === "api"))
+    ) {
       setPages({});
       setActivePage("");
       setLoadError(null);
@@ -91,7 +129,7 @@ export default function XPathConfigurationEditor({
       const response = await fetch(
         usesTargetConfig
           ? API_ENDPOINTS.TARGET_XPATHS_BY_TARGET_V2(targetKey)
-          : API_ENDPOINTS.TARGET_XPATHS_V2(appKey),
+          : API_ENDPOINTS.TARGET_XPATHS_V2(configKey),
         {
           headers: authHeaders(),
         },
@@ -104,7 +142,9 @@ export default function XPathConfigurationEditor({
 
       const data = await response.json();
       const responsePages = usesTargetConfig ? data : data?.pages;
-      const nextPages = toXPathPages(responsePages);
+      const nextPages = shouldBlankTemplateValues
+        ? toBlankXPathPages(toXPathPages(responsePages))
+        : toXPathPages(responsePages);
       const nextPageNames = sortPages(nextPages);
       setPages(nextPages);
       setActivePage(nextPageNames[0] || "");
@@ -120,11 +160,25 @@ export default function XPathConfigurationEditor({
     } finally {
       setIsLoading(false);
     }
-  }, [appKey, authHeaders, configLabel, open, targetKey, usesTargetConfig]);
+  }, [
+    authHeaders,
+    configKey,
+    configLabel,
+    open,
+    selectedTargetType,
+    shouldBlankTemplateValues,
+    targetKey,
+    usesTargetConfig,
+    usesTypeTemplate,
+  ]);
 
   useEffect(() => {
     loadConfig();
   }, [loadConfig]);
+
+  useEffect(() => {
+    onPagesChange?.(pages);
+  }, [onPagesChange, pages]);
 
   const addPage = () => {
     let index = pageNames.length + 1;
@@ -370,14 +424,16 @@ export default function XPathConfigurationEditor({
   };
 
   const saveConfig = async () => {
-    if (!configLabel || disabled) return;
+    if (!configLabel || disabled || (!usesTargetConfig && !appKey)) return;
+    const saveApplicationKey =
+      usesTypeTemplate && selectedTargetType === "whatsapp" ? configKey : appKey;
 
     setIsSaving(true);
     try {
       const response = await fetch(
         usesTargetConfig
           ? API_ENDPOINTS.TARGET_XPATHS_UPDATE_BY_TARGET_V2(targetKey)
-          : API_ENDPOINTS.TARGET_XPATHS_V2(appKey),
+          : API_ENDPOINTS.TARGET_XPATHS_V2(saveApplicationKey),
         {
           method: usesTargetConfig ? "POST" : "PUT",
           headers: authHeaders(),
@@ -410,9 +466,16 @@ export default function XPathConfigurationEditor({
   };
 
   if (!configLabel) {
+    const emptyMessage =
+      usesTypeTemplate && selectedTargetType === "api"
+        ? "XPath configuration is not required for API targets."
+        : usesTypeTemplate
+          ? "Select WhatsApp or WebApp to load XPath fields."
+          : "Target name required.";
+
     return (
       <div className="rounded-md border border-dashed p-6 text-sm text-muted-foreground">
-        Target name required.
+        {emptyMessage}
       </div>
     );
   }
@@ -426,7 +489,13 @@ export default function XPathConfigurationEditor({
             <Label className="text-base font-semibold">XPath Configuration</Label>
           </div>
           <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-            <span>{usesTargetConfig ? "Target" : "Shared application key"}</span>
+            <span>
+              {usesTargetConfig
+                ? "Target"
+                : usesTypeTemplate
+                  ? "XPath template"
+                  : "Shared application key"}
+            </span>
             <Badge variant="secondary" className="rounded-md font-mono">
               {configLabel}
             </Badge>
@@ -435,7 +504,14 @@ export default function XPathConfigurationEditor({
         <Button
           type="button"
           onClick={saveConfig}
-          disabled={disabled || isLoading || isSaving || isMutating || !hasChanges}
+          disabled={
+            disabled ||
+            (!usesTargetConfig && !appKey) ||
+            isLoading ||
+            isSaving ||
+            isMutating ||
+            (!hasChanges && !canSaveTypeTemplate)
+          }
           className="gap-2"
         >
           {isSaving ? (

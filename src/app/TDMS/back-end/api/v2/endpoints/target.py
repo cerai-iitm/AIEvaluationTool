@@ -538,6 +538,35 @@ def add_element(
 
     return applications[key]
 
+@target_router.post("/seed/{target_name}")
+def seed_target(
+    target_name: str,
+    payload: dict = Body(...),
+    db: DB = Depends(_get_db),
+):
+    target = db.get_target_by_name(target_name)
+    if target is None:
+        raise HTTPException(status_code=404, detail=f"Target '{target_name}' not found")
+
+    path, data = _load_xpaths()
+    applications = data.setdefault("applications", {})
+    target_type = target.target_type.strip().lower()
+
+    if target_type == "whatsapp":
+        key = "whatsapp_web"
+    elif target_type == "webapp":
+        key = target.target_name.strip().lower()
+    else:
+        raise HTTPException(status_code=404, detail=f"Unsupported target_type '{target.target_type}'")
+
+    # Whatever the frontend sent becomes this app's block
+    applications[key] = payload
+
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
+    return applications[key]
+
 @target_router.delete("/delete-element/{target_name}")
 def delete_element(
     target_name: str,

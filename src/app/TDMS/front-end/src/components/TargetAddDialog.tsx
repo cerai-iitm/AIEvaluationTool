@@ -42,6 +42,27 @@ interface LanguageOption {
   lang_name?: string;
 }
 
+type XPathPages = Record<string, Record<string, string>>;
+
+const WEB_APP_XPATH_TEMPLATE_KEY = "cpgrams";
+
+const normalizeTargetType = (value: string) => value.trim().toLowerCase();
+
+const toXPathPages = (value: unknown): XPathPages =>
+  value && typeof value === "object" && !Array.isArray(value)
+    ? (value as XPathPages)
+    : {};
+
+const toBlankXPathPages = (pages: XPathPages): XPathPages =>
+  Object.fromEntries(
+    Object.entries(pages).map(([pageName, elements]) => [
+      pageName,
+      Object.fromEntries(
+        Object.keys(elements || {}).map((elementName) => [elementName, ""]),
+      ),
+    ]),
+  );
+
 export default function TargetAddDialog({
   open,
   onOpenChange,
@@ -60,6 +81,7 @@ export default function TargetAddDialog({
   const [domainOptions, setDomainOptions] = useState<string[]>([]);
   const [languageOptions, setLanguageOptions] = useState<string[]>([]);
   const [isFetchingOptions, setIsFetchingOptions] = useState(false);
+  const [xpathPages, setXpathPages] = useState<XPathPages>({});
 
   // Fetch options from API
   const fetchOptions = useCallback(async () => {
@@ -134,8 +156,13 @@ export default function TargetAddDialog({
       setDomain("");
       setSelectedLanguages([]);
       setNotes("");
+      setXpathPages({});
     }
   }, [open, fetchOptions]);
+
+  useEffect(() => {
+    setXpathPages({});
+  }, [type]);
 
   const handleLanguageToggle = (lang: string) => {
     setSelectedLanguages((prev) =>
@@ -157,6 +184,68 @@ export default function TargetAddDialog({
     domain &&
     selectedLanguages.length > 0 &&
     notes.trim();
+
+  const fetchWebAppXPathTemplate = async (
+    headers: HeadersInit,
+  ): Promise<XPathPages> => {
+    const response = await fetch(
+      API_ENDPOINTS.TARGET_XPATHS_V2(WEB_APP_XPATH_TEMPLATE_KEY),
+      { headers },
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.detail ||
+          "Target created, but failed to load the WebApp XPath template",
+      );
+    }
+
+    const data = await response.json();
+    return toBlankXPathPages(toXPathPages(data?.pages));
+  };
+
+  const seedWebAppXPaths = async (
+    targetName: string,
+    headers: HeadersInit,
+  ) => {
+    const seedPages =
+      Object.keys(xpathPages).length > 0
+        ? xpathPages
+        : await fetchWebAppXPathTemplate(headers);
+
+    const response = await fetch(API_ENDPOINTS.TARGET_XPATH_SEED_V2(targetName), {
+      method: "POST",
+      headers,
+      body: JSON.stringify(seedPages),
+    });
+
+    if (response.status === 404) {
+      const fallbackResponse = await fetch(API_ENDPOINTS.TARGET_XPATHS_V2(targetName), {
+        method: "PUT",
+        headers,
+        body: JSON.stringify({ pages: seedPages }),
+      });
+
+      if (fallbackResponse.ok) {
+        return;
+      }
+
+      const fallbackErrorData = await fallbackResponse.json().catch(() => ({}));
+      throw new Error(
+        fallbackErrorData.detail ||
+          "Target created, but failed to save the WebApp XPath config",
+      );
+    }
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.detail ||
+          "Target created, but failed to seed the WebApp XPath config",
+      );
+    }
+  };
 
   const handleSubmit = async () => {
     if (!name.trim()) {
@@ -280,6 +369,13 @@ export default function TargetAddDialog({
 
       const data = await response.json();
       console.log("Target created successfully:", data);
+
+      const createdTargetName =
+        typeof data?.target_name === "string" ? data.target_name : name.trim();
+
+      if (normalizeTargetType(type) === "webapp") {
+        await seedWebAppXPaths(createdTargetName, headers);
+      }
 
       toast({
         title: "Success",
@@ -482,7 +578,12 @@ export default function TargetAddDialog({
           </TabsContent>
 
           <TabsContent value="xpaths" className="pt-4">
-            <XPathConfigurationEditor applicationName={name} open={open} />
+            <XPathConfigurationEditor
+              applicationName={name}
+              targetType={type}
+              onPagesChange={setXpathPages}
+              open={open}
+            />
           </TabsContent>
         </Tabs>
       </DialogContent>
