@@ -58,6 +58,20 @@ export const API_ENDPOINTS = {
     `${API_BASE_URL}/api/v2/targets/get/${encodeURIComponent(targetName)}`,
   TARGET_XPATHS_UPDATE_BY_TARGET_V2: (targetName: string) =>
     `${API_BASE_URL}/api/v2/targets/update/${encodeURIComponent(targetName)}`,
+  TARGET_XPATH_ELEMENT_ADD_BY_TARGET_V2: (
+    targetName: string,
+    pageName: string,
+    elementName: string,
+  ) =>
+    `${API_BASE_URL}/api/v2/targets/add-element/${encodeURIComponent(targetName)}?page=${encodeURIComponent(pageName)}&element=${encodeURIComponent(elementName)}`,
+  TARGET_XPATH_PAGE_DELETE_BY_TARGET_V2: (targetName: string, pageName: string) =>
+    `${API_BASE_URL}/api/v2/targets/delete-page/${encodeURIComponent(targetName)}?page=${encodeURIComponent(pageName)}`,
+  TARGET_XPATH_ELEMENT_DELETE_BY_TARGET_V2: (
+    targetName: string,
+    pageName: string,
+    elementName: string,
+  ) =>
+    `${API_BASE_URL}/api/v2/targets/delete-element/${encodeURIComponent(targetName)}?page=${encodeURIComponent(pageName)}&element=${encodeURIComponent(elementName)}`,
 
   DOMAINS_V2: `${API_BASE_URL}/api/v2/domains`,
   DOMAIN_BY_ID_V2: (domain_id: number) =>

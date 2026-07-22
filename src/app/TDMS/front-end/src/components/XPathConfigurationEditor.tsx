@@ -24,6 +24,11 @@ const normalizeApplicationName = (value: string) =>
 const sortPages = (pages: XPathPages) =>
   Object.keys(pages).sort((a, b) => a.localeCompare(b));
 
+const toXPathPages = (value: unknown): XPathPages =>
+  value && typeof value === "object" && !Array.isArray(value)
+    ? (value as XPathPages)
+    : {};
+
 export default function XPathConfigurationEditor({
   applicationName,
   open,
@@ -42,12 +47,24 @@ export default function XPathConfigurationEditor({
   const [activePage, setActivePage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isAddingElement, setIsAddingElement] = useState(false);
+  const [deletingPage, setDeletingPage] = useState("");
+  const [deletingElement, setDeletingElement] = useState("");
   const [loadError, setLoadError] = useState<string | null>(null);
   const [savedSignature, setSavedSignature] = useState("{}");
 
   const pageNames = useMemo(() => sortPages(pages), [pages]);
   const activeElements = activePage ? pages[activePage] || {} : {};
+  const savedPages = useMemo(() => {
+    try {
+      return toXPathPages(JSON.parse(savedSignature));
+    } catch {
+      return {};
+    }
+  }, [savedSignature]);
   const hasChanges = JSON.stringify(pages) !== savedSignature;
+  const isDeleting = Boolean(deletingPage || deletingElement);
+  const isMutating = isDeleting || isAddingElement;
 
   const authHeaders = useCallback((): HeadersInit => {
     const headers: HeadersInit = {
@@ -87,12 +104,7 @@ export default function XPathConfigurationEditor({
 
       const data = await response.json();
       const responsePages = usesTargetConfig ? data : data?.pages;
-      const nextPages =
-        responsePages &&
-        typeof responsePages === "object" &&
-        !Array.isArray(responsePages)
-          ? responsePages
-          : {};
+      const nextPages = toXPathPages(responsePages);
       const nextPageNames = sortPages(nextPages);
       setPages(nextPages);
       setActivePage(nextPageNames[0] || "");
@@ -148,26 +160,113 @@ export default function XPathConfigurationEditor({
     });
   };
 
-  const addElement = () => {
-    if (!activePage) return;
+  const persistDeletedPage = async (pageName: string) => {
+    if (!usesTargetConfig || savedPages[pageName] === undefined) {
+      deletePage(pageName);
+      return;
+    }
 
-    setPages((current) => {
-      const pageConfig = current[activePage] || {};
-      let index = Object.keys(pageConfig).length + 1;
-      let nextName = `element_${index}`;
-      while (pageConfig[nextName]) {
-        index += 1;
-        nextName = `element_${index}`;
+    setDeletingPage(pageName);
+    try {
+      const response = await fetch(
+        API_ENDPOINTS.TARGET_XPATH_PAGE_DELETE_BY_TARGET_V2(targetKey, pageName),
+        {
+          method: "DELETE",
+          headers: authHeaders(),
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || "Failed to delete page");
       }
 
-      return {
-        ...current,
-        [activePage]: {
-          ...pageConfig,
-          [nextName]: "",
+      const nextSavedPages = toXPathPages(await response.json());
+      setSavedSignature(JSON.stringify(nextSavedPages));
+      deletePage(pageName);
+      toast({
+        title: "Success",
+        description: `Deleted page ${pageName}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Failed to delete page",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingPage("");
+    }
+  };
+
+  const getNextElementName = (pageConfig: Record<string, string>) => {
+    let index = Object.keys(pageConfig).length + 1;
+    let nextName = `element_${index}`;
+    while (pageConfig[nextName]) {
+      index += 1;
+      nextName = `element_${index}`;
+    }
+    return nextName;
+  };
+
+  const addElementToPage = (pageName: string, elementName: string) => {
+    setPages((current) => ({
+      ...current,
+      [pageName]: {
+        ...(current[pageName] || {}),
+        [elementName]: "",
+      },
+    }));
+  };
+
+  const addElement = async () => {
+    if (!activePage) return;
+
+    const pageName = activePage;
+    const nextName = getNextElementName(pages[pageName] || {});
+    if (!usesTargetConfig || savedPages[pageName] === undefined) {
+      addElementToPage(pageName, nextName);
+      return;
+    }
+
+    setIsAddingElement(true);
+    try {
+      const response = await fetch(
+        API_ENDPOINTS.TARGET_XPATH_ELEMENT_ADD_BY_TARGET_V2(
+          targetKey,
+          pageName,
+          nextName,
+        ),
+        {
+          method: "POST",
+          headers: authHeaders(),
+          body: JSON.stringify({ xpath: "" }),
         },
-      };
-    });
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || "Failed to add element");
+      }
+
+      const nextSavedPages = toXPathPages(await response.json());
+      setSavedSignature(JSON.stringify(nextSavedPages));
+      addElementToPage(pageName, nextName);
+      toast({
+        title: "Success",
+        description: `Added element ${nextName}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Failed to add element",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAddingElement(false);
+    }
   };
 
   const renameElement = (oldName: string, newName: string) => {
@@ -217,6 +316,57 @@ export default function XPathConfigurationEditor({
         [activePage]: remaining,
       };
     });
+  };
+
+  const persistDeletedElement = async (elementName: string) => {
+    if (!activePage) return;
+
+    const pageName = activePage;
+    if (
+      !usesTargetConfig ||
+      savedPages[pageName]?.[elementName] === undefined
+    ) {
+      deleteElement(elementName);
+      return;
+    }
+
+    const deletingKey = `${pageName}/${elementName}`;
+    setDeletingElement(deletingKey);
+    try {
+      const response = await fetch(
+        API_ENDPOINTS.TARGET_XPATH_ELEMENT_DELETE_BY_TARGET_V2(
+          targetKey,
+          pageName,
+          elementName,
+        ),
+        {
+          method: "DELETE",
+          headers: authHeaders(),
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || "Failed to delete element");
+      }
+
+      const nextSavedPages = toXPathPages(await response.json());
+      setSavedSignature(JSON.stringify(nextSavedPages));
+      deleteElement(elementName);
+      toast({
+        title: "Success",
+        description: `Deleted element ${elementName}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Failed to delete element",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingElement("");
+    }
   };
 
   const saveConfig = async () => {
@@ -285,7 +435,7 @@ export default function XPathConfigurationEditor({
         <Button
           type="button"
           onClick={saveConfig}
-          disabled={disabled || isLoading || isSaving || !hasChanges}
+          disabled={disabled || isLoading || isSaving || isMutating || !hasChanges}
           className="gap-2"
         >
           {isSaving ? (
@@ -318,7 +468,7 @@ export default function XPathConfigurationEditor({
                 size="icon"
                 variant="outline"
                 onClick={addPage}
-                disabled={disabled}
+                disabled={disabled || isMutating}
                 aria-label="Add page"
               >
                 <Plus className="h-4 w-4" />
@@ -348,7 +498,7 @@ export default function XPathConfigurationEditor({
                           onBlur={(event) =>
                             renamePage(pageName, event.target.value)
                           }
-                          disabled={disabled}
+                          disabled={disabled || isMutating}
                           className="h-8 bg-background"
                         />
                       </div>
@@ -356,11 +506,15 @@ export default function XPathConfigurationEditor({
                         type="button"
                         size="icon"
                         variant="ghost"
-                        onClick={() => deletePage(pageName)}
-                        disabled={disabled}
+                        onClick={() => persistDeletedPage(pageName)}
+                        disabled={disabled || isMutating}
                         aria-label={`Delete ${pageName}`}
                       >
-                        <Trash2 className="h-4 w-4 text-destructive" />
+                        {deletingPage === pageName ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-destructive" />
+                        ) : (
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        )}
                       </Button>
                     </div>
                   ))
@@ -380,10 +534,14 @@ export default function XPathConfigurationEditor({
                 type="button"
                 variant="outline"
                 onClick={addElement}
-                disabled={disabled || !activePage}
+                disabled={disabled || isMutating || !activePage}
                 className="gap-2"
               >
-                <Plus className="h-4 w-4" />
+                {isAddingElement ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Plus className="h-4 w-4" />
+                )}
                 Add Element
               </Button>
             </div>
@@ -413,7 +571,7 @@ export default function XPathConfigurationEditor({
                           onBlur={(event) =>
                             renameElement(elementName, event.target.value)
                           }
-                          disabled={disabled}
+                          disabled={disabled || isMutating}
                           className="bg-background font-mono text-sm"
                         />
                       </div>
@@ -426,7 +584,7 @@ export default function XPathConfigurationEditor({
                           onChange={(event) =>
                             updateElementValue(elementName, event.target.value)
                           }
-                          disabled={disabled}
+                          disabled={disabled || isMutating}
                           className="min-h-[76px] bg-background font-mono text-sm"
                         />
                       </div>
@@ -435,11 +593,15 @@ export default function XPathConfigurationEditor({
                           type="button"
                           size="icon"
                           variant="ghost"
-                          onClick={() => deleteElement(elementName)}
-                          disabled={disabled}
+                          onClick={() => persistDeletedElement(elementName)}
+                          disabled={disabled || isMutating}
                           aria-label={`Delete ${elementName}`}
                         >
-                          <Trash2 className="h-4 w-4 text-destructive" />
+                          {deletingElement === `${activePage}/${elementName}` ? (
+                            <Loader2 className="h-4 w-4 animate-spin text-destructive" />
+                          ) : (
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          )}
                         </Button>
                       </div>
                     </div>

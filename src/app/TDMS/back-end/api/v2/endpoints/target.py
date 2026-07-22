@@ -506,3 +506,93 @@ def update_target(target_name: str, payload: dict = Body(...), db: DB = Depends(
         json.dump(data, f, indent=2, ensure_ascii=False)
 
     return applications[key]
+
+@target_router.post("/add-element/{target_name}")
+def add_element(
+    target_name: str,
+    page: str,
+    element: str,
+    xpath: str = Body(..., embed=True),
+    db: DB = Depends(_get_db),
+):
+    target = db.get_target_by_name(target_name)
+    if target is None:
+        raise HTTPException(status_code=404, detail=f"Target '{target_name}' not found")
+
+    path, data = _load_xpaths()
+    applications = data.setdefault("applications", {})
+    key= _resolve_key(target,applications)
+
+    if key not in applications:
+        raise HTTPException(status_code=404, detail=f"'{key}' not found. Available: {list(applications)}")
+    if page not in applications[key]:
+        raise HTTPException(status_code=404, detail=f"Page '{page}' not found in '{key}'. Available: {list(applications[key])}")
+    if element in applications[key][page]:
+        raise HTTPException(status_code=409, detail=f"Element '{element}' already exists in '{page}'")
+
+    # Add the new element with its xpath value
+    applications[key][page][element] = xpath
+
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
+    return applications[key]
+
+@target_router.delete("/delete-element/{target_name}")
+def delete_element(
+    target_name: str,
+    page: str,
+    element: str,
+    db: DB = Depends(_get_db),
+):
+    # Same as GET/update: resolve the name -> Target via the DB
+    target = db.get_target_by_name(target_name)
+    if target is None:
+        raise HTTPException(status_code=404, detail=f"Target '{target_name}' not found")
+
+    path, data = _load_xpaths()
+    applications = data.setdefault("applications", {})
+
+    # Same resolve logic (whatsapp -> whatsapp_web, webapp -> lowercased name)
+    key = _resolve_key(target, applications)
+
+    if key not in applications:
+        raise HTTPException(status_code=404, detail=f"'{key}' not found. Available: {list(applications)}")
+    if page not in applications[key]:
+        raise HTTPException(status_code=404, detail=f"Page '{page}' not found in '{key}'. Available: {list(applications[key])}")
+    if element not in applications[key][page]:
+        raise HTTPException(status_code=404, detail=f"Element '{element}' not found in '{page}'. Available: {list(applications[key][page])}")
+
+    del applications[key][page][element]
+
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
+    return applications[key]
+
+@target_router.delete("/delete-page/{target_name}")
+def delete_page(
+    target_name: str,
+    page: str,
+    db: DB = Depends(_get_db),
+):
+    target = db.get_target_by_name(target_name)
+    if target is None:
+        raise HTTPException(status_code=404, detail=f"Target '{target_name}' not found")
+
+    path, data = _load_xpaths()
+    applications = data.setdefault("applications", {})
+    key = _resolve_key(target, applications)
+
+    if key not in applications:
+        raise HTTPException(status_code=404, detail=f"'{key}' not found. Available: {list(applications)}")
+    if page not in applications[key]:
+        raise HTTPException(status_code=404, detail=f"Page '{page}' not found in '{key}'. Available: {list(applications[key])}")
+
+    # Delete the whole page (and every element inside it)
+    del applications[key][page]
+
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
+    return applications[key]
