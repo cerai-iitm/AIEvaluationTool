@@ -18,6 +18,7 @@ interface XPathConfigurationEditorProps {
   targetName?: string;
   targetType?: string;
   onPagesChange?: (pages: XPathPages) => void;
+  onValidityChange?: (isValid: boolean) => void;
 }
 
 const normalizeApplicationName = (value: string) =>
@@ -50,6 +51,20 @@ const toBlankXPathPages = (pages: XPathPages): XPathPages =>
     ]),
   );
 
+const getXPathFieldCount = (pages: XPathPages) =>
+  Object.values(pages).reduce(
+    (count, elements) => count + Object.keys(elements || {}).length,
+    0,
+  );
+
+const getMissingXPathCount = (pages: XPathPages) =>
+  Object.values(pages).reduce(
+    (count, elements) =>
+      count +
+      Object.values(elements || {}).filter((xpath) => !xpath.trim()).length,
+    0,
+  );
+
 export default function XPathConfigurationEditor({
   applicationName,
   open,
@@ -57,6 +72,7 @@ export default function XPathConfigurationEditor({
   targetName,
   targetType,
   onPagesChange,
+  onValidityChange,
 }: XPathConfigurationEditorProps) {
   const { toast } = useToast();
   const appKey = useMemo(
@@ -97,6 +113,9 @@ export default function XPathConfigurationEditor({
   const hasChanges = JSON.stringify(pages) !== savedSignature;
   const isDeleting = Boolean(deletingPage || deletingElement);
   const isMutating = isDeleting || isAddingElement;
+  const xpathFieldCount = useMemo(() => getXPathFieldCount(pages), [pages]);
+  const missingXPathCount = useMemo(() => getMissingXPathCount(pages), [pages]);
+  const isXPathConfigComplete = xpathFieldCount > 0 && missingXPathCount === 0;
   const canSaveTypeTemplate =
     usesTypeTemplate && Boolean(appKey) && pageNames.length > 0;
 
@@ -179,6 +198,10 @@ export default function XPathConfigurationEditor({
   useEffect(() => {
     onPagesChange?.(pages);
   }, [onPagesChange, pages]);
+
+  useEffect(() => {
+    onValidityChange?.(isXPathConfigComplete);
+  }, [isXPathConfigComplete, onValidityChange]);
 
   const addPage = () => {
     let index = pageNames.length + 1;
@@ -425,6 +448,18 @@ export default function XPathConfigurationEditor({
 
   const saveConfig = async () => {
     if (!configLabel || disabled || (!usesTargetConfig && !appKey)) return;
+    if (!isXPathConfigComplete) {
+      toast({
+        title: "Validation Error",
+        description:
+          xpathFieldCount === 0
+            ? "At least one XPath field is required"
+            : "All XPath fields are required",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const saveApplicationKey =
       usesTypeTemplate && selectedTargetType === "whatsapp" ? configKey : appKey;
 
@@ -507,6 +542,7 @@ export default function XPathConfigurationEditor({
           disabled={
             disabled ||
             (!usesTargetConfig && !appKey) ||
+            !isXPathConfigComplete ||
             isLoading ||
             isSaving ||
             isMutating ||
@@ -526,6 +562,16 @@ export default function XPathConfigurationEditor({
       {loadError ? (
         <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
           {loadError}
+        </div>
+      ) : null}
+
+      {!isLoading && !loadError && !isXPathConfigComplete ? (
+        <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+          {xpathFieldCount === 0
+            ? "At least one XPath field is required."
+            : `All XPath fields are required. ${missingXPathCount} field${
+                missingXPathCount === 1 ? "" : "s"
+              } empty.`}
         </div>
       ) : null}
 
@@ -661,7 +707,13 @@ export default function XPathConfigurationEditor({
                             updateElementValue(elementName, event.target.value)
                           }
                           disabled={disabled || isMutating}
-                          className="min-h-[76px] bg-background font-mono text-sm"
+                          required
+                          aria-invalid={!xpath.trim()}
+                          className={`min-h-[76px] bg-background font-mono text-sm ${
+                            !xpath.trim()
+                              ? "border-red-500 focus-visible:ring-red-500"
+                              : ""
+                          }`}
                         />
                       </div>
                       <div className="flex items-end">

@@ -44,9 +44,17 @@ interface LanguageOption {
 
 type XPathPages = Record<string, Record<string, string>>;
 
+const WHATSAPP_XPATH_TEMPLATE_KEY = "whatsapp_web";
 const WEB_APP_XPATH_TEMPLATE_KEY = "cpgrams";
 
 const normalizeTargetType = (value: string) => value.trim().toLowerCase();
+
+const getXPathTemplateKeyForTargetType = (targetType: string) => {
+  const normalizedType = normalizeTargetType(targetType);
+  if (normalizedType === "whatsapp") return WHATSAPP_XPATH_TEMPLATE_KEY;
+  if (normalizedType === "webapp") return WEB_APP_XPATH_TEMPLATE_KEY;
+  return "";
+};
 
 const toXPathPages = (value: unknown): XPathPages =>
   value && typeof value === "object" && !Array.isArray(value)
@@ -61,6 +69,20 @@ const toBlankXPathPages = (pages: XPathPages): XPathPages =>
         Object.keys(elements || {}).map((elementName) => [elementName, ""]),
       ),
     ]),
+  );
+
+const getXPathFieldCount = (pages: XPathPages) =>
+  Object.values(pages).reduce(
+    (count, elements) => count + Object.keys(elements || {}).length,
+    0,
+  );
+
+const getMissingXPathCount = (pages: XPathPages) =>
+  Object.values(pages).reduce(
+    (count, elements) =>
+      count +
+      Object.values(elements || {}).filter((xpath) => !xpath.trim()).length,
+    0,
   );
 
 export default function TargetAddDialog({
@@ -160,10 +182,6 @@ export default function TargetAddDialog({
     }
   }, [open, fetchOptions]);
 
-  useEffect(() => {
-    setXpathPages({});
-  }, [type]);
-
   const handleLanguageToggle = (lang: string) => {
     setSelectedLanguages((prev) =>
       prev.includes(lang) ? prev.filter((l) => l !== lang) : [...prev, lang]
@@ -184,6 +202,75 @@ export default function TargetAddDialog({
     domain &&
     selectedLanguages.length > 0 &&
     notes.trim();
+
+  const selectedTargetType = normalizeTargetType(type);
+  const requiresXPathConfig =
+    selectedTargetType === "whatsapp" || selectedTargetType === "webapp";
+  const xpathFieldCount = getXPathFieldCount(xpathPages);
+  const missingXPathCount = getMissingXPathCount(xpathPages);
+  const isXPathConfigComplete =
+    xpathFieldCount > 0 && missingXPathCount === 0;
+  const canSubmit =
+    Boolean(isFormValid) && (!requiresXPathConfig || isXPathConfigComplete);
+
+  const buildHeaders = useCallback((): HeadersInit => {
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+    };
+    const token = localStorage.getItem("access_token");
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    return headers;
+  }, []);
+
+  const fetchXPathTemplateForType = useCallback(
+    async (targetType: string, headers: HeadersInit): Promise<XPathPages> => {
+      const templateKey = getXPathTemplateKeyForTargetType(targetType);
+      if (!templateKey) return {};
+
+      const response = await fetch(API_ENDPOINTS.TARGET_XPATHS_V2(templateKey), {
+        headers,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || "Failed to load XPath template");
+      }
+
+      const data = await response.json();
+      const templatePages = toXPathPages(data?.pages);
+      return normalizeTargetType(targetType) === "webapp"
+        ? toBlankXPathPages(templatePages)
+        : templatePages;
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (!open || !type) {
+      setXpathPages({});
+      return;
+    }
+
+    let isCancelled = false;
+    fetchXPathTemplateForType(type, buildHeaders())
+      .then((templatePages) => {
+        if (!isCancelled) {
+          setXpathPages(templatePages);
+        }
+      })
+      .catch((error) => {
+        if (!isCancelled) {
+          console.error("Error loading XPath template:", error);
+          setXpathPages({});
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [buildHeaders, fetchXPathTemplateForType, open, type]);
 
   const fetchWebAppXPathTemplate = async (
     headers: HeadersInit,
@@ -329,15 +416,21 @@ export default function TargetAddDialog({
       return;
     }
 
+    if (requiresXPathConfig && !isXPathConfigComplete) {
+      toast({
+        title: "Validation Error",
+        description:
+          xpathFieldCount === 0
+            ? "XPath configuration is required"
+            : "All XPath fields are required",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      const token = localStorage.getItem("access_token");
-      const headers: HeadersInit = {
-        "Content-Type": "application/json",
-      };
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
-      }
+      const headers = buildHeaders();
 
       const payload = {
         target_name: name.trim(),
@@ -569,7 +662,7 @@ export default function TargetAddDialog({
                 <Button
                   className="bg-accent hover:bg-accent/90 text-accent-foreground px-8"
                   onClick={handleSubmit}
-                  disabled={!isFormValid || isSubmitting}
+                  disabled={!canSubmit || isSubmitting}
                 >
                   {isSubmitting ? "Submitting..." : "Submit"}
                 </Button>
