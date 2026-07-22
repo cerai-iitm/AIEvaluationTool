@@ -162,7 +162,7 @@ export default function TargetUpdateDialog({
 
   const isChanged =
     type !== (targetInitial.target_type || "") ||
-    description !== (targetInitial.target_description || "") ||
+    description.trim() !== (targetInitial.target_description || "") ||
     url !== (targetInitial.target_url || "") ||
     domain !== (targetInitial.domain_name || "") ||
     selectedLanguages.join(",") !== (targetInitial.lang_list || []).join(",") ||
@@ -479,6 +479,44 @@ export default function TargetUpdateDialog({
               </div>
             </div>
 
+            {/* <div className="flex flex-col gap-3 p-4 border-gray-300 bg-white sticky bottom-0 z-10 sm:flex-row sm:items-center sm:justify-center">
+              <Label className="text-base font-bold">Notes </Label>
+              <Input
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                className="bg-gray-200 rounded px-4 py-1 sm:mr-4 sm:w-96"
+                required
+                placeholder="Enter notes"
+                disabled={
+                  !hasPermission(currentUserRole, "canUpdateTables") &&
+                  !hasPermission(currentUserRole, "canUpdateRecords")
+                }
+              />
+              <Button
+                onClick={handleSubmit}
+                className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!isChanged || !notes.trim() || isLoading ||
+                  (!hasPermission(currentUserRole, "canUpdateTables") &&
+                    !hasPermission(currentUserRole, "canUpdateRecords"))
+                }
+              >
+                {isLoading ? "Updating..." : "Submit"}
+              </Button>
+            </div> */}
+          </TabsContent>
+
+          <TabsContent value="xpaths" className="pt-4">
+            <XPathConfigurationEditor
+              applicationName={target.target_name}
+              applicationType={type}
+              open={open}
+              disabled={
+                !hasPermission(currentUserRole, "canUpdateTables") &&
+                !hasPermission(currentUserRole, "canUpdateRecords")
+              }
+            />
+          </TabsContent>
+        </Tabs>
             <div className="flex flex-col gap-3 p-4 border-gray-300 bg-white sticky bottom-0 z-10 sm:flex-row sm:items-center sm:justify-center">
               <Label className="text-base font-bold">Notes </Label>
               <Input
@@ -503,19 +541,6 @@ export default function TargetUpdateDialog({
                 {isLoading ? "Updating..." : "Submit"}
               </Button>
             </div>
-          </TabsContent>
-
-          <TabsContent value="xpaths" className="pt-4">
-            <XPathConfigurationEditor
-              applicationName={target.target_name}
-              open={open}
-              disabled={
-                !hasPermission(currentUserRole, "canUpdateTables") &&
-                !hasPermission(currentUserRole, "canUpdateRecords")
-              }
-            />
-          </TabsContent>
-        </Tabs>
       </DialogContent>
     </Dialog>
   );

@@ -13,6 +13,7 @@ type XPathPages = Record<string, Record<string, string>>;
 
 interface XPathConfigurationEditorProps {
   applicationName: string;
+  applicationType?: string;
   open: boolean;
   disabled?: boolean;
 }
@@ -20,18 +21,34 @@ interface XPathConfigurationEditorProps {
 const normalizeApplicationName = (value: string) =>
   value.trim().toLowerCase().replace(/\s+/g, "_");
 
+const resolveApplicationKey = (name: string, type?: string) => {
+  const normalizedType = normalizeApplicationName(type || "");
+  const normalizedName = normalizeApplicationName(name);
+
+  if (
+    normalizedType === "whatsapp" ||
+    normalizedName === "whatsapp" ||
+    normalizedName === "whatsapp_web"
+  ) {
+    return "whatsapp_web";
+  }
+
+  return normalizedName;
+};
+
 const sortPages = (pages: XPathPages) =>
   Object.keys(pages).sort((a, b) => a.localeCompare(b));
 
 export default function XPathConfigurationEditor({
   applicationName,
+  applicationType,
   open,
   disabled = false,
 }: XPathConfigurationEditorProps) {
   const { toast } = useToast();
   const appKey = useMemo(
-    () => normalizeApplicationName(applicationName),
-    [applicationName],
+    () => resolveApplicationKey(applicationName, applicationType),
+    [applicationName, applicationType],
   );
   const [pages, setPages] = useState<XPathPages>({});
   const [activePage, setActivePage] = useState("");
@@ -250,9 +267,18 @@ export default function XPathConfigurationEditor({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-center sm:justify-center">
+              <div className="flex items-center justify-center gap-2 pb-4">
+                <Label className="text-base font-semibold">Target -</Label>
+                <Label className="text-xl font-semibold text-primary hover:text-primary/90">
+                  {/* {target.target_name} */}{appKey}
+                  {/* <Badge variant="secondary" className="rounded-md font-mono">
+                    {appKey}
+                  </Badge> */}
+                </Label>
+              </div>
         <div className="min-w-0 space-y-1">
-          <div className="flex items-center gap-2">
+          {/* <div className="flex items-center gap-2">
             <FileCode2 className="h-4 w-4 text-primary" />
             <Label className="text-base font-semibold">XPath Configuration</Label>
           </div>
@@ -261,7 +287,7 @@ export default function XPathConfigurationEditor({
             <Badge variant="secondary" className="rounded-md font-mono">
               {appKey}
             </Badge>
-          </div>
+          </div> */}
         </div>
         <Button
           type="button"
@@ -292,12 +318,12 @@ export default function XPathConfigurationEditor({
       ) : (
         <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
           <div className="rounded-md border">
-            <div className="flex items-center justify-between border-b p-3">
+            <div className="flex items-center justify-between border-b p-3 bg-white">
               <Label className="font-semibold">Pages</Label>
               <Button
                 type="button"
                 size="icon"
-                variant="outline"
+                // variant="outline"
                 onClick={addPage}
                 disabled={disabled}
                 aria-label="Add page"
@@ -305,7 +331,7 @@ export default function XPathConfigurationEditor({
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
-            <ScrollArea className="h-[320px]">
+            <ScrollArea className="h-[380px]">
               <div className="space-y-2 p-3">
                 {pageNames.length === 0 ? (
                   <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
@@ -315,8 +341,8 @@ export default function XPathConfigurationEditor({
                   pageNames.map((pageName) => (
                     <div
                       key={pageName}
-                      className={`flex items-center gap-2 rounded-md border p-2 ${
-                        activePage === pageName ? "border-primary bg-primary/5" : ""
+                      className={`flex items-center gap-2 rounded-md border p-2 bg-white ${
+                        activePage === pageName ? "border-primary bg-primary/5 bg-white" : ""
                       }`}
                     >
                       <div
@@ -351,7 +377,7 @@ export default function XPathConfigurationEditor({
           </div>
 
           <div className="rounded-md border">
-            <div className="flex flex-col gap-3 border-b p-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 border-b p-3 sm:flex-row sm:items-center sm:justify-between bg-white">
               <div>
                 <Label className="text-base font-semibold">
                   {activePage || "Select a page"}
@@ -359,7 +385,7 @@ export default function XPathConfigurationEditor({
               </div>
               <Button
                 type="button"
-                variant="outline"
+                // variant="outline"
                 onClick={addElement}
                 disabled={disabled || !activePage}
                 className="gap-2"
@@ -369,7 +395,7 @@ export default function XPathConfigurationEditor({
               </Button>
             </div>
 
-            <ScrollArea className="h-[320px]">
+            <ScrollArea className="h-[380px]">
               <div className="space-y-3 p-3">
                 {!activePage ? (
                   <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
@@ -383,7 +409,7 @@ export default function XPathConfigurationEditor({
                   Object.entries(activeElements).map(([elementName, xpath]) => (
                     <div
                       key={elementName}
-                      className="grid gap-3 rounded-md border p-3 xl:grid-cols-[220px_minmax(0,1fr)_40px]"
+                      className="grid gap-3 rounded-md border p-3 xl:grid-cols-[220px_minmax(0,1fr)_40px] bg-white"
                     >
                       <div className="space-y-1">
                         <Label className="text-xs text-muted-foreground">
@@ -408,7 +434,7 @@ export default function XPathConfigurationEditor({
                             updateElementValue(elementName, event.target.value)
                           }
                           disabled={disabled}
-                          className="min-h-[76px] bg-background font-mono text-sm"
+                          className="min-h-[48px] max-h-[73px] bg-background font-mono text-sm"
                         />
                       </div>
                       <div className="flex items-end">

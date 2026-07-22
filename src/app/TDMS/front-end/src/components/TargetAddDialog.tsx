@@ -422,7 +422,11 @@ export default function TargetAddDialog({
           </TabsContent>
 
           <TabsContent value="xpaths" className="pt-4">
-            <XPathConfigurationEditor applicationName={name} open={open} />
+            <XPathConfigurationEditor
+              applicationName={name}
+              applicationType={type}
+              open={open}
+            />
           </TabsContent>
         </Tabs>
       </DialogContent>
