@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useState,
+} from "react";
 import { FileCode2, Loader2, Plus, Save, Trash2 } from "lucide-react";
 import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
@@ -16,6 +23,11 @@ interface XPathConfigurationEditorProps {
   applicationType?: string;
   open: boolean;
   disabled?: boolean;
+  onDirtyChange?: (isDirty: boolean) => void;
+}
+
+export interface XPathConfigurationEditorHandle {
+  save: () => Promise<boolean>;
 }
 
 const normalizeApplicationName = (value: string) =>
@@ -39,12 +51,16 @@ const resolveApplicationKey = (name: string, type?: string) => {
 const sortPages = (pages: XPathPages) =>
   Object.keys(pages).sort((a, b) => a.localeCompare(b));
 
-export default function XPathConfigurationEditor({
+const XPathConfigurationEditor = forwardRef<
+  XPathConfigurationEditorHandle,
+  XPathConfigurationEditorProps
+>(function XPathConfigurationEditor({
   applicationName,
   applicationType,
   open,
   disabled = false,
-}: XPathConfigurationEditorProps) {
+  onDirtyChange,
+}, ref) {
   const { toast } = useToast();
   const appKey = useMemo(
     () => resolveApplicationKey(applicationName, applicationType),
@@ -116,6 +132,10 @@ export default function XPathConfigurationEditor({
   useEffect(() => {
     loadConfig();
   }, [loadConfig]);
+
+  useEffect(() => {
+    onDirtyChange?.(hasChanges);
+  }, [hasChanges, onDirtyChange]);
 
   const addPage = () => {
     let index = pageNames.length + 1;
@@ -222,8 +242,8 @@ export default function XPathConfigurationEditor({
     });
   };
 
-  const saveConfig = async () => {
-    if (!appKey || disabled) return;
+  const saveConfig = useCallback(async (showToast = true) => {
+    if (!appKey || disabled) return false;
 
     setIsSaving(true);
     try {
@@ -239,10 +259,14 @@ export default function XPathConfigurationEditor({
       }
 
       setSavedSignature(JSON.stringify(pages));
-      toast({
-        title: "Success",
-        description: `XPath configuration saved for ${appKey}`,
-      });
+      onDirtyChange?.(false);
+      if (showToast) {
+        toast({
+          title: "Success",
+          description: `XPath configuration saved for ${appKey}`,
+        });
+      }
+      return true;
     } catch (error) {
       toast({
         title: "Error",
@@ -252,10 +276,19 @@ export default function XPathConfigurationEditor({
             : "Failed to save XPath configuration",
         variant: "destructive",
       });
+      return false;
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [appKey, authHeaders, disabled, onDirtyChange, pages, toast]);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      save: () => saveConfig(false),
+    }),
+    [saveConfig],
+  );
 
   if (!appKey) {
     return (
@@ -289,9 +322,9 @@ export default function XPathConfigurationEditor({
             </Badge>
           </div> */}
         </div>
-        <Button
+        {/* <Button
           type="button"
-          onClick={saveConfig}
+          onClick={() => saveConfig()}
           disabled={disabled || isLoading || isSaving || !hasChanges}
           className="gap-2"
         >
@@ -301,7 +334,7 @@ export default function XPathConfigurationEditor({
             <Save className="h-4 w-4" />
           )}
           Save XPaths
-        </Button>
+        </Button> */}
       </div>
 
       {loadError ? (
@@ -459,4 +492,6 @@ export default function XPathConfigurationEditor({
       )}
     </div>
   );
-}
+});
+
+export default XPathConfigurationEditor;

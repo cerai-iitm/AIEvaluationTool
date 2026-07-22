@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -21,7 +21,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
 import { hasPermission } from "@/utils/permissions";
-import XPathConfigurationEditor from "@/components/XPathConfigurationEditor";
+import XPathConfigurationEditor, {
+  type XPathConfigurationEditorHandle,
+} from "@/components/XPathConfigurationEditor";
 
 
 interface Target {
@@ -60,6 +62,8 @@ export default function TargetUpdateDialog({
   const [domainOptions, setDomainOptions] = useState<string[]>([]);
   const [languageOptions, setLanguageOptions] = useState<string[]>([]);
   const [isFetchingOptions, setIsFetchingOptions] = useState(false);
+  const [hasXPathChanges, setHasXPathChanges] = useState(false);
+  const xpathEditorRef = useRef<XPathConfigurationEditorHandle>(null);
 
   const [currentUserRole, setCurrentUserRole] = useState<string>("");
 
@@ -146,6 +150,7 @@ export default function TargetUpdateDialog({
       setDomain(target.domain_name);
       setSelectedLanguages(target.lang_list || []);
       setNotes(target.notes || "");
+      setHasXPathChanges(false);
     }
   }, [target]);
 
@@ -160,13 +165,18 @@ export default function TargetUpdateDialog({
     notes: "",
   };
 
-  const isChanged =
-    type !== (targetInitial.target_type || "") ||
+  const sortedLanguages = (languages: string[] = []) =>
+    [...languages].sort((a, b) => a.localeCompare(b)).join(",");
+
+  const hasGeneralChanges = (
+    type.trim() !== (targetInitial.target_type || "") ||
     description.trim() !== (targetInitial.target_description || "") ||
-    url !== (targetInitial.target_url || "") ||
-    domain !== (targetInitial.domain_name || "") ||
-    selectedLanguages.join(",") !== (targetInitial.lang_list || []).join(",") ||
-    notes !== (targetInitial.notes || "");
+    url.trim() !== (targetInitial.target_url || "") ||
+    domain.trim() !== (targetInitial.domain_name || "") ||
+    sortedLanguages(selectedLanguages) !== sortedLanguages(targetInitial.lang_list || [])
+  );
+
+  const hasChanges = hasGeneralChanges || hasXPathChanges;
 
   const handleLanguageToggle = (lang: string) => {
     setSelectedLanguages((prev) =>
@@ -248,8 +258,33 @@ export default function TargetUpdateDialog({
       return;
     }
 
+    if (!hasChanges) {
+      toast({
+        title: "Validation Error",
+        description: "Change at least one field before submitting",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
+      if (hasXPathChanges) {
+        const saved = await xpathEditorRef.current?.save();
+        if (!saved) {
+          return;
+        }
+      }
+
+      if (!hasGeneralChanges) {
+        toast({
+          title: "Success",
+          description: "XPath configuration updated successfully",
+        });
+        onOpenChange(false);
+        return;
+      }
+
       const token = localStorage.getItem("access_token");
       const headers: HeadersInit = {
         "Content-Type": "application/json",
@@ -348,7 +383,7 @@ export default function TargetUpdateDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-5xl max-h-[90vh] overflow-y-auto"
+        className="max-w-5xl h-[80vh] overflow-y-auto"
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <DialogHeader>
@@ -457,7 +492,7 @@ export default function TargetUpdateDialog({
                       No languages available
                     </div>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="grid grid-cols-3 space-y-2">
                       {languageOptions.map((lang) => (
                         <div key={lang} className="flex items-center space-x-2 capitalize">
                           <Checkbox
@@ -505,11 +540,13 @@ export default function TargetUpdateDialog({
             </div> */}
           </TabsContent>
 
-          <TabsContent value="xpaths" className="pt-4">
+          <TabsContent value="xpaths" className="pt-4 data-[state=inactive]:hidden" forceMount>
             <XPathConfigurationEditor
+              ref={xpathEditorRef}
               applicationName={target.target_name}
               applicationType={type}
               open={open}
+              onDirtyChange={setHasXPathChanges}
               disabled={
                 !hasPermission(currentUserRole, "canUpdateTables") &&
                 !hasPermission(currentUserRole, "canUpdateRecords")
@@ -520,6 +557,7 @@ export default function TargetUpdateDialog({
             <div className="flex flex-col gap-3 p-4 border-gray-300 bg-white sticky bottom-0 z-10 sm:flex-row sm:items-center sm:justify-center">
               <Label className="text-base font-bold">Notes </Label>
               <Input
+                type="text"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 className="bg-gray-200 rounded px-4 py-1 sm:mr-4 sm:w-96"
@@ -533,7 +571,7 @@ export default function TargetUpdateDialog({
               <Button
                 onClick={handleSubmit}
                 className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={!isChanged || !notes.trim() || isLoading ||
+                disabled={!hasChanges || !notes.trim() || isLoading || selectedLanguages.length === 0 ||
                   (!hasPermission(currentUserRole, "canUpdateTables") &&
                     !hasPermission(currentUserRole, "canUpdateRecords"))
                 }
