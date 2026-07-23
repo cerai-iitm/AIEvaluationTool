@@ -276,15 +276,6 @@ export default function TargetUpdateDialog({
         }
       }
 
-      if (!hasGeneralChanges) {
-        toast({
-          title: "Success",
-          description: "XPath configuration updated successfully",
-        });
-        onOpenChange(false);
-        return;
-      }
-
       const token = localStorage.getItem("access_token");
       const headers: HeadersInit = {
         "Content-Type": "application/json",
@@ -304,6 +295,8 @@ export default function TargetUpdateDialog({
           selectedLanguages.length > 0
             ? selectedLanguages
             : targetInitial.lang_list || [],
+        xpath_config_changed: hasXPathChanges,
+        xpath_application_name: target.target_name,
         notes: notes.trim() || null,
       };
 

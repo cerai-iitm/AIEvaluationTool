@@ -124,19 +124,6 @@ def update_xpath_application_config(
     config["applications"][application_name] = payload.pages
     _write_xpaths_config(config)
 
-    username = _get_username_from_token(authorization)
-    if username:
-        target_label = payload.target_name or application_name
-        entity_id = str(payload.target_id) if payload.target_id is not None else application_name
-        log_activity(
-            username=username,
-            entity_type="Target",
-            entity_id=entity_id,
-            operation="update",
-            note=f"Target - {target_label} updated : XPath Config changed ({application_name})",
-            user_note=payload.notes,
-        )
-
     return {
         "application_name": application_name,
         "pages": config["applications"][application_name],
@@ -342,7 +329,10 @@ def update_target(
     db: DB = Depends(_get_db),
     authorization: Optional[str] = Header(None),
 ):
-    update_data = payload.model_dump(exclude_unset=True)
+    update_data = payload.model_dump(
+        exclude_unset=True,
+        exclude={"notes", "xpath_config_changed", "xpath_application_name"},
+    )
     # if not update_data:
     #     existing = db.get_target_by_id(target_id)
     #     if existing is None:
@@ -397,6 +387,11 @@ def update_target(
         updated_lang_names = sorted(payload.lang_list)
         if original_lang_names != updated_lang_names:
             changes.append("Languages changed")
+    if payload.xpath_config_changed:
+        application_name = _normalize_application_name(
+            payload.xpath_application_name or updated.target_name
+        )
+        changes.append(f"XPath Config changed")
 
     note = f"Target - {updated.target_name} updated"
     if changes:
