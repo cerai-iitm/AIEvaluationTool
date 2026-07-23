@@ -80,24 +80,7 @@
         "audio_message_element": ".gooey-incomingMsg audio[src]",
         "send_button_element": "button.button-text-alt svg"
       }
-    },
-    "sstest": {
-      "LoginPage": {
-        "email_input_element": "ss",
-        "password_input_element": "ss",
-        "login_button_element": "ss"
-      },
-      "LogoutPage": {
-        "profile_pic_element": "ss",
-        "send_element": "ss",
-        "profile_element": "ss",
-        "logout_button_element": "ss"
-      },
-      "ChatPage": {
-        "profile_pic_element": "ss",
-        "prompt_input_box_element": "ss",
-        "agent_response_element": "ss"
-      }
     }
+   
   }
 }
