@@ -239,6 +239,7 @@ export default function TargetUpdateDialog({
   const isWebAppTarget = selectedTargetType === "webapp";
   const requiresXPathConfig =
     selectedTargetType === "whatsapp" || isWebAppTarget;
+  const showXPathTab = requiresXPathConfig;
   const xpathFieldCount = getXPathFieldCount(xpathPages);
   const missingXPathCount = getMissingXPathCount(xpathPages);
   const isXPathConfigComplete =
@@ -266,13 +267,18 @@ export default function TargetUpdateDialog({
   useEffect(() => {
     if (!open) return;
 
+    if (!showXPathTab && activeTab === "xpaths") {
+      setActiveTab("general");
+      return;
+    }
+
     if (!isWebAppTarget) {
       setCredentials(emptyCredentials);
       if (activeTab === "credentials") {
         setActiveTab("general");
       }
     }
-  }, [activeTab, isWebAppTarget, open]);
+  }, [activeTab, isWebAppTarget, open, showXPathTab]);
 
   const handleLanguageToggle = (lang: string) => {
     setSelectedLanguages((prev) =>
@@ -572,11 +578,17 @@ export default function TargetUpdateDialog({
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList
             className={`grid w-full ${
-              isWebAppTarget ? "grid-cols-3 sm:w-[620px]" : "grid-cols-2 sm:w-[420px]"
+              isWebAppTarget
+                ? "grid-cols-3 sm:w-[620px]"
+                : showXPathTab
+                  ? "grid-cols-2 sm:w-[420px]"
+                  : "grid-cols-1 sm:w-[220px]"
             }`}
           >
             <TabsTrigger value="general">General</TabsTrigger>
-            <TabsTrigger value="xpaths">XPath Config</TabsTrigger>
+            {showXPathTab ? (
+              <TabsTrigger value="xpaths">XPath Config</TabsTrigger>
+            ) : null}
             {isWebAppTarget ? (
               <TabsTrigger value="credentials">Credentials</TabsTrigger>
             ) : null}
@@ -744,22 +756,24 @@ export default function TargetUpdateDialog({
             </div>
           </TabsContent>
 
-          <TabsContent
-            value="xpaths"
-            className="pt-4 data-[state=inactive]:hidden"
-            forceMount
-          >
-            <XPathConfigurationEditor
-              applicationName={target.target_name}
-              targetName={target.target_name}
-              open={open}
-              onPagesChange={setXpathPages}
-              showSave={false}
-              disabled={
-                isTargetUpdateDisabled
-              }
-            />
-          </TabsContent>
+          {showXPathTab ? (
+            <TabsContent
+              value="xpaths"
+              className="pt-4 data-[state=inactive]:hidden"
+              forceMount
+            >
+              <XPathConfigurationEditor
+                applicationName={target.target_name}
+                targetName={target.target_name}
+                open={open}
+                onPagesChange={setXpathPages}
+                showSave={false}
+                disabled={
+                  isTargetUpdateDisabled
+                }
+              />
+            </TabsContent>
+          ) : null}
 
           {isWebAppTarget ? (
             <TabsContent

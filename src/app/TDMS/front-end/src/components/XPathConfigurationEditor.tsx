@@ -217,17 +217,6 @@ export default function XPathConfigurationEditor({
     setActivePage(nextName);
   };
 
-  const renamePage = (oldName: string, newName: string) => {
-    const trimmedName = newName.trim();
-    if (!trimmedName || trimmedName === oldName || pages[trimmedName]) return;
-
-    setPages((current) => {
-      const { [oldName]: pageConfig, ...remaining } = current;
-      return { ...remaining, [trimmedName]: pageConfig };
-    });
-    setActivePage(trimmedName);
-  };
-
   const deletePage = (pageName: string) => {
     setPages((current) => {
       const { [pageName]: _deleted, ...remaining } = current;
@@ -610,29 +599,33 @@ export default function XPathConfigurationEditor({
                   pageNames.map((pageName) => (
                     <div
                       key={pageName}
-                      className={`flex items-center gap-2 rounded-md border p-2 ${
-                        activePage === pageName ? "border-primary bg-primary/5" : ""
+                      role="button"
+                      tabIndex={disabled || isMutating ? -1 : 0}
+                      aria-pressed={activePage === pageName}
+                      onClick={() => setActivePage(pageName)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          setActivePage(pageName);
+                        }
+                      }}
+                      className={`flex cursor-pointer items-center gap-2 rounded-md border p-2 transition hover:border-primary/60 hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                        activePage === pageName
+                          ? "border-primary bg-primary/5"
+                          : ""
                       }`}
                     >
-                      <div
-                        className="min-w-0 flex-1"
-                        onFocus={() => setActivePage(pageName)}
-                        onClick={() => setActivePage(pageName)}
-                      >
-                        <Input
-                          defaultValue={pageName}
-                          onBlur={(event) =>
-                            renamePage(pageName, event.target.value)
-                          }
-                          disabled={disabled || isMutating}
-                          className="h-8 bg-background"
-                        />
+                      <div className="flex h-8 min-w-0 flex-1 items-center rounded-md bg-background px-3 text-sm">
+                        <span className="truncate">{pageName}</span>
                       </div>
                       <Button
                         type="button"
                         size="icon"
                         variant="ghost"
-                        onClick={() => persistDeletedPage(pageName)}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          persistDeletedPage(pageName);
+                        }}
                         disabled={disabled || isMutating}
                         aria-label={`Delete ${pageName}`}
                       >
