@@ -26,6 +26,9 @@ target_router = APIRouter(prefix="/api/v2/targets")
 
 class XPathApplicationConfig(BaseModel):
     pages: Dict[str, Dict[str, str]] = Field(default_factory=dict)
+    target_id: Optional[int] = Field(None, description="Target ID for history logging.")
+    target_name: Optional[str] = Field(None, description="Target name for history logging.")
+    notes: Optional[str] = Field(None, description="User notes for this operation.")
 
 class TargetTypeEnum(str, Enum):
     WhatsApp = "WhatsApp"
@@ -114,11 +117,26 @@ def get_xpath_application_config(app_name: str):
 def update_xpath_application_config(
     app_name: str,
     payload: XPathApplicationConfig,
+    authorization: Optional[str] = Header(None),
 ):
     application_name = _normalize_application_name(app_name)
     config = _load_xpaths_config()
     config["applications"][application_name] = payload.pages
     _write_xpaths_config(config)
+
+    username = _get_username_from_token(authorization)
+    if username:
+        target_label = payload.target_name or application_name
+        entity_id = str(payload.target_id) if payload.target_id is not None else application_name
+        log_activity(
+            username=username,
+            entity_type="Target",
+            entity_id=entity_id,
+            operation="update",
+            note=f"Target - {target_label} updated : XPath Config changed ({application_name})",
+            user_note=payload.notes,
+        )
+
     return {
         "application_name": application_name,
         "pages": config["applications"][application_name],

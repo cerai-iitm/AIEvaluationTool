@@ -545,6 +545,9 @@ export default function TargetUpdateDialog({
               ref={xpathEditorRef}
               applicationName={target.target_name}
               applicationType={type}
+              targetId={target.target_id}
+              targetName={target.target_name}
+              notes={notes}
               open={open}
               onDirtyChange={setHasXPathChanges}
               disabled={

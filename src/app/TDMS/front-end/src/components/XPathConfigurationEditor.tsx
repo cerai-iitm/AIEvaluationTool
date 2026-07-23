@@ -21,6 +21,9 @@ type XPathPages = Record<string, Record<string, string>>;
 interface XPathConfigurationEditorProps {
   applicationName: string;
   applicationType?: string;
+  targetId?: number;
+  targetName?: string;
+  notes?: string;
   open: boolean;
   disabled?: boolean;
   onDirtyChange?: (isDirty: boolean) => void;
@@ -57,6 +60,9 @@ const XPathConfigurationEditor = forwardRef<
 >(function XPathConfigurationEditor({
   applicationName,
   applicationType,
+  targetId,
+  targetName,
+  notes,
   open,
   disabled = false,
   onDirtyChange,
@@ -250,7 +256,12 @@ const XPathConfigurationEditor = forwardRef<
       const response = await fetch(API_ENDPOINTS.TARGET_XPATHS_V2(appKey), {
         method: "PUT",
         headers: authHeaders(),
-        body: JSON.stringify({ pages }),
+        body: JSON.stringify({
+          pages,
+          target_id: targetId,
+          target_name: targetName || applicationName,
+          notes: notes?.trim() || null,
+        }),
       });
 
       if (!response.ok) {
@@ -280,7 +291,7 @@ const XPathConfigurationEditor = forwardRef<
     } finally {
       setIsSaving(false);
     }
-  }, [appKey, authHeaders, disabled, onDirtyChange, pages, toast]);
+  }, [appKey, applicationName, authHeaders, disabled, notes, onDirtyChange, pages, targetId, targetName, toast]);
 
   useImperativeHandle(
     ref,
