@@ -74,10 +74,31 @@ interface ApiValidationError {
   msg?: string;
 }
 
+type XPathPages = Record<string, Record<string, string>>;
+
 const emptyCredentials: TargetCredentials = {
   username: "",
   password: "",
 };
+
+const normalizeTargetType = (value: string) => value.trim().toLowerCase();
+
+const areCredentialsComplete = (credentials: TargetCredentials) =>
+  Boolean(credentials.username.trim() && credentials.password.trim());
+
+const getXPathFieldCount = (pages: XPathPages) =>
+  Object.values(pages).reduce(
+    (count, elements) => count + Object.keys(elements || {}).length,
+    0,
+  );
+
+const getMissingXPathCount = (pages: XPathPages) =>
+  Object.values(pages).reduce(
+    (count, elements) =>
+      count +
+      Object.values(elements || {}).filter((xpath) => !xpath.trim()).length,
+    0,
+  );
 
 export default function TargetUpdateDialog({
   target,
@@ -100,6 +121,7 @@ export default function TargetUpdateDialog({
   const [isFetchingOptions, setIsFetchingOptions] = useState(false);
   const [credentials, setCredentials] =
     useState<TargetCredentials>(emptyCredentials);
+  const [xpathPages, setXpathPages] = useState<XPathPages>({});
   const [activeTab, setActiveTab] = useState("general");
 
   const [currentUserRole, setCurrentUserRole] = useState<string>("");
@@ -193,6 +215,7 @@ export default function TargetUpdateDialog({
       setSelectedLanguages(target.lang_list || []);
       setNotes(target.notes || "");
       setCredentials(emptyCredentials);
+      setXpathPages({});
       setActiveTab("general");
     }
   }, [target]);
@@ -208,21 +231,37 @@ export default function TargetUpdateDialog({
     notes: "",
   };
 
-  const isChanged =
-    name !== (targetInitial.target_name || "") ||
-    type !== (targetInitial.target_type || "") ||
-    description !== (targetInitial.target_description || "") ||
-    url !== (targetInitial.target_url || "") ||
-    domain !== (targetInitial.domain_name || "") ||
-    selectedLanguages.join(",") !== (targetInitial.lang_list || []).join(",") ||
-    notes !== (targetInitial.notes || "");
-  const isPersistedWebAppTarget =
-    targetInitial.target_type.trim().toLowerCase() === "webapp";
-  const isWebAppTarget =
-    type.trim().toLowerCase() === "webapp" && isPersistedWebAppTarget;
+  const hasInvalidNameCharacters =
+    name.trim().length > 0 && !isNameUsingAllowedCharacters(name);
+  const isNameInvalid =
+    isNameOverCharacterLimit(name) || hasInvalidNameCharacters;
+  const selectedTargetType = normalizeTargetType(type);
+  const isWebAppTarget = selectedTargetType === "webapp";
+  const requiresXPathConfig =
+    selectedTargetType === "whatsapp" || isWebAppTarget;
+  const xpathFieldCount = getXPathFieldCount(xpathPages);
+  const missingXPathCount = getMissingXPathCount(xpathPages);
+  const isXPathConfigComplete =
+    xpathFieldCount > 0 && missingXPathCount === 0;
+  const isGeneralFormComplete =
+    name.trim() &&
+    !isNameInvalid &&
+    type.trim() &&
+    description.trim() &&
+    url.trim() &&
+    domain.trim() &&
+    selectedLanguages.length > 0 &&
+    notes.trim();
+  const areWebAppCredentialsComplete =
+    !isWebAppTarget || areCredentialsComplete(credentials);
   const isTargetUpdateDisabled =
     !hasPermission(currentUserRole, "canUpdateTables") &&
     !hasPermission(currentUserRole, "canUpdateRecords");
+  const canSubmit =
+    Boolean(isGeneralFormComplete) &&
+    (!requiresXPathConfig || isXPathConfigComplete) &&
+    areWebAppCredentialsComplete &&
+    !isTargetUpdateDisabled;
 
   useEffect(() => {
     if (!open) return;
@@ -241,10 +280,63 @@ export default function TargetUpdateDialog({
     );
   };
 
-  const hasInvalidNameCharacters =
-    name.trim().length > 0 && !isNameUsingAllowedCharacters(name);
-  const isNameInvalid =
-    isNameOverCharacterLimit(name) || hasInvalidNameCharacters;
+  const buildHeaders = useCallback((): HeadersInit => {
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+    };
+    const token = localStorage.getItem("access_token");
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    return headers;
+  }, []);
+
+  const saveTargetXPaths = async (
+    targetName: string,
+    headers: HeadersInit,
+  ) => {
+    const response = await fetch(
+      API_ENDPOINTS.TARGET_XPATHS_UPDATE_BY_TARGET_V2(targetName),
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify(xpathPages),
+      },
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || "Failed to save XPath configuration");
+    }
+  };
+
+  const saveTargetCredentials = async (
+    targetName: string,
+    headers: HeadersInit,
+  ) => {
+    const payload = JSON.stringify({
+      username: credentials.username.trim(),
+      password: credentials.password.trim(),
+    });
+    let response = await fetch(API_ENDPOINTS.TARGET_CREDENTIALS_V2(targetName), {
+      method: "POST",
+      headers,
+      body: payload,
+    });
+
+    if (response.status === 405) {
+      response = await fetch(API_ENDPOINTS.TARGET_CREDENTIALS_V2(targetName), {
+        method: "PUT",
+        headers,
+        body: payload,
+      });
+    }
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || "Failed to save credentials");
+    }
+  };
 
   const handleSubmit = async () => {
 
@@ -347,15 +439,30 @@ export default function TargetUpdateDialog({
       return;
     }
 
+    if (requiresXPathConfig && !isXPathConfigComplete) {
+      toast({
+        title: "Validation Error",
+        description:
+          xpathFieldCount === 0
+            ? "XPath configuration is required"
+            : "All XPath fields are required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isWebAppTarget && !areCredentialsComplete(credentials)) {
+      toast({
+        title: "Validation Error",
+        description: "Username and password are required",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const token = localStorage.getItem("access_token");
-      const headers: HeadersInit = {
-        "Content-Type": "application/json",
-      };
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
-      }
+      const headers = buildHeaders();
 
       // Send all fields to match backend expectations
       const updatePayload: TargetUpdatePayload = {
@@ -417,6 +524,14 @@ export default function TargetUpdateDialog({
           }
         }
         throw new Error(errorMessage);
+      }
+
+      const updatedTargetName = name.trim();
+      if (requiresXPathConfig) {
+        await saveTargetXPaths(updatedTargetName, headers);
+      }
+      if (isWebAppTarget) {
+        await saveTargetCredentials(updatedTargetName, headers);
       }
 
       toast({
@@ -622,17 +737,7 @@ export default function TargetUpdateDialog({
               <Button
                 onClick={handleSubmit}
                 className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={
-                  !isChanged ||
-                  !notes.trim() ||
-                  isLoading ||
-                  !name.trim() ||
-                  isNameInvalid ||
-                  !description.trim() ||
-                  !url.trim() ||
-                  selectedLanguages.length === 0 ||
-                  isTargetUpdateDisabled
-                }
+                disabled={!canSubmit || isLoading}
               >
                 {isLoading ? "Updating..." : "Submit"}
               </Button>
@@ -648,6 +753,8 @@ export default function TargetUpdateDialog({
               applicationName={target.target_name}
               targetName={target.target_name}
               open={open}
+              onPagesChange={setXpathPages}
+              showSave={false}
               disabled={
                 isTargetUpdateDisabled
               }
@@ -655,13 +762,22 @@ export default function TargetUpdateDialog({
           </TabsContent>
 
           {isWebAppTarget ? (
-            <TabsContent value="credentials" className="pt-4">
+            <TabsContent
+              value="credentials"
+              className="pt-4 data-[state=inactive]:hidden"
+              forceMount
+            >
               <TargetCredentialsEditor
-                targetName={target.target_name}
+                targetName={
+                  normalizeTargetType(targetInitial.target_type) === "webapp"
+                    ? target.target_name
+                    : undefined
+                }
                 open={open}
                 value={credentials}
                 onChange={setCredentials}
                 disabled={isTargetUpdateDisabled}
+                showSave={false}
               />
             </TabsContent>
           ) : null}

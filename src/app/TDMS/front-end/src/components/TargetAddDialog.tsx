@@ -365,6 +365,25 @@ export default function TargetAddDialog({
     }
   };
 
+  const saveWhatsAppXPaths = async (headers: HeadersInit) => {
+    const response = await fetch(
+      API_ENDPOINTS.TARGET_XPATHS_V2(WHATSAPP_XPATH_TEMPLATE_KEY),
+      {
+        method: "PUT",
+        headers,
+        body: JSON.stringify({ pages: xpathPages }),
+      },
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.detail ||
+          "Target created, but failed to save the WhatsApp XPath config",
+      );
+    }
+  };
+
   const saveWebAppCredentials = async (
     targetName: string,
     headers: HeadersInit,
@@ -537,7 +556,9 @@ export default function TargetAddDialog({
       const createdTargetName =
         typeof data?.target_name === "string" ? data.target_name : name.trim();
 
-      if (isWebAppTarget) {
+      if (selectedTargetType === "whatsapp") {
+        await saveWhatsAppXPaths(headers);
+      } else if (isWebAppTarget) {
         await seedWebAppXPaths(createdTargetName, headers);
         await saveWebAppCredentials(createdTargetName, headers);
       }
@@ -761,6 +782,7 @@ export default function TargetAddDialog({
               targetType={type}
               onPagesChange={setXpathPages}
               open={open}
+              showSave={false}
             />
           </TabsContent>
 

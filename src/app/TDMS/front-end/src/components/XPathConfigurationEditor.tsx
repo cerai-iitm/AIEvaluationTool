@@ -19,6 +19,7 @@ interface XPathConfigurationEditorProps {
   targetType?: string;
   onPagesChange?: (pages: XPathPages) => void;
   onValidityChange?: (isValid: boolean) => void;
+  showSave?: boolean;
 }
 
 const normalizeApplicationName = (value: string) =>
@@ -73,6 +74,7 @@ export default function XPathConfigurationEditor({
   targetType,
   onPagesChange,
   onValidityChange,
+  showSave = true,
 }: XPathConfigurationEditorProps) {
   const { toast } = useToast();
   const appKey = useMemo(
@@ -536,27 +538,29 @@ export default function XPathConfigurationEditor({
             </Badge>
           </div>
         </div>
-        <Button
-          type="button"
-          onClick={saveConfig}
-          disabled={
-            disabled ||
-            (!usesTargetConfig && !appKey) ||
-            !isXPathConfigComplete ||
-            isLoading ||
-            isSaving ||
-            isMutating ||
-            (!hasChanges && !canSaveTypeTemplate)
-          }
-          className="gap-2"
-        >
-          {isSaving ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Save className="h-4 w-4" />
-          )}
-          Save XPaths
-        </Button>
+        {showSave ? (
+          <Button
+            type="button"
+            onClick={saveConfig}
+            disabled={
+              disabled ||
+              (!usesTargetConfig && !appKey) ||
+              !isXPathConfigComplete ||
+              isLoading ||
+              isSaving ||
+              isMutating ||
+              (!hasChanges && !canSaveTypeTemplate)
+            }
+            className="gap-2"
+          >
+            {isSaving ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4" />
+            )}
+            Save XPaths
+          </Button>
+        ) : null}
       </div>
 
       {loadError ? (
