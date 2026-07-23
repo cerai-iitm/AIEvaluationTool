@@ -269,7 +269,7 @@ export default function TargetAddDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl h-[82vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="sr-only">Add Target</DialogTitle>
         </DialogHeader>
@@ -370,7 +370,7 @@ export default function TargetAddDialog({
 
             <div className="space-y-2">
               <Label className="text-base font-semibold">Languages</Label>
-              <div className="bg-muted p-4 rounded-md max-h-[110px] overflow-y-auto">
+              <div className="bg-muted p-4 rounded-md max-h-[95px] overflow-y-auto">
                 {isFetchingOptions ? (
                   <div className="text-sm text-muted-foreground">
                     Loading languages...
@@ -380,7 +380,7 @@ export default function TargetAddDialog({
                     No languages available
                   </div>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="space-y-2 grid grid-cols-3">
                     {languageOptions.map((lang) => (
                       <div key={lang} className="flex items-center space-x-2 capitalize">
                         <Checkbox
@@ -401,6 +401,34 @@ export default function TargetAddDialog({
               </div>
             </div>
 
+            {/* <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-center">
+              <Label className="text-base font-semibold">Notes</Label>
+              <Input
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Enter notes"
+                className="bg-gray-200 rounded px-4 py-1 sm:mr-4 sm:max-w-md"
+                required
+              />
+
+              <Button
+                className="bg-accent hover:bg-accent/90 text-accent-foreground px-8"
+                onClick={handleSubmit}
+                disabled={!isFormValid || isSubmitting}
+              >
+                {isSubmitting ? "Submitting..." : "Submit"}
+              </Button>
+            </div> */}
+          </TabsContent>
+
+          <TabsContent value="xpaths" className="pt-4 data-[state=inactive]:hidden" forceMount>
+            <XPathConfigurationEditor
+              applicationName={name}
+              applicationType={type}
+              open={open}
+            />
+          </TabsContent>
+        </Tabs>
             <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-center">
               <Label className="text-base font-semibold">Notes</Label>
               <Input
@@ -419,16 +447,6 @@ export default function TargetAddDialog({
                 {isSubmitting ? "Submitting..." : "Submit"}
               </Button>
             </div>
-          </TabsContent>
-
-          <TabsContent value="xpaths" className="pt-4">
-            <XPathConfigurationEditor
-              applicationName={name}
-              applicationType={type}
-              open={open}
-            />
-          </TabsContent>
-        </Tabs>
       </DialogContent>
     </Dialog>
   );
