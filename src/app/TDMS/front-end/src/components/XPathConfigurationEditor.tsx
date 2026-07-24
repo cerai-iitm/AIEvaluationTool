@@ -2,6 +2,17 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { FileCode2, Loader2, Plus, Save, Trash2 } from "lucide-react";
 import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -618,23 +629,42 @@ export default function XPathConfigurationEditor({
                       <div className="flex h-8 min-w-0 flex-1 items-center rounded-md bg-background px-3 text-sm">
                         <span className="truncate">{pageName}</span>
                       </div>
-                      <Button
-                        type="button"
-                        size="icon"
-                        variant="ghost"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          persistDeletedPage(pageName);
-                        }}
-                        disabled={disabled || isMutating}
-                        aria-label={`Delete ${pageName}`}
-                      >
-                        {deletingPage === pageName ? (
-                          <Loader2 className="h-4 w-4 animate-spin text-destructive" />
-                        ) : (
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        )}
-                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            onClick={(event) => event.stopPropagation()}
+                            disabled={disabled || isMutating}
+                            aria-label={`Delete ${pageName}`}
+                          >
+                            {deletingPage === pageName ? (
+                              <Loader2 className="h-4 w-4 animate-spin text-destructive" />
+                            ) : (
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            )}
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete page?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Do you want to delete the page "{pageName}" and all
+                              of its XPath elements?
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => persistDeletedPage(pageName)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Confirm Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   ))
                 )}
@@ -714,20 +744,42 @@ export default function XPathConfigurationEditor({
                         />
                       </div>
                       <div className="flex items-end">
-                        <Button
-                          type="button"
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => persistDeletedElement(elementName)}
-                          disabled={disabled || isMutating}
-                          aria-label={`Delete ${elementName}`}
-                        >
-                          {deletingElement === `${activePage}/${elementName}` ? (
-                            <Loader2 className="h-4 w-4 animate-spin text-destructive" />
-                          ) : (
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          )}
-                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="ghost"
+                              disabled={disabled || isMutating}
+                              aria-label={`Delete ${elementName}`}
+                            >
+                              {deletingElement ===
+                              `${activePage}/${elementName}` ? (
+                                <Loader2 className="h-4 w-4 animate-spin text-destructive" />
+                              ) : (
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              )}
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete element?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Do you want to delete the XPath element
+                                "{elementName}" from "{activePage}"?
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => persistDeletedElement(elementName)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Confirm Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </div>
                   ))
