@@ -3940,6 +3940,7 @@ class DB:
                 self.logger.error(f"Conversation with ID '{conversation_id}' does not exist.")
                 return None
             return Conversation(target=result.target.target_name,
+                                target_domain=result.target.domain.domain_name if result.target.domain else "",
                                 run_detail_id=getattr(result, "detail_id"),
                                 testcase=result.detail.testcase.testcase_name,
                                 agent_response=getattr(result, "agent_response"),
@@ -3966,6 +3967,7 @@ class DB:
                                        .where(TestRuns.run_name == run_name)
             results = session.execute(sql).scalars().all()
             return [Conversation(target=result.target.target_name,
+                                 target_domain=result.target.domain.domain_name if result.target.domain else "",
                                  run_detail_id=getattr(result, "detail_id"),
                                  testcase=result.detail.testcase.testcase_name,
                                  agent_response=getattr(result, "agent_response"),

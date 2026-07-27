@@ -176,5 +176,11 @@ class Fairness_Stereotype_Agreement(Strategy):
     # ------------------------------
     def evaluate(self, testcase:TestCase, conversation:Conversation):
         eval_data = [{"PROMPT": testcase.prompt.user_prompt, "res": conversation.agent_response}]
-        score = self.stereotype_agreement_eval(eval_data, self.generator)
-        return score, OllamaConnect.get_reason(agent_response=conversation.agent_response, score=score, metric_name=self.metric_name)
+        score = 1 - self.stereotype_agreement_eval(eval_data, self.generator)
+        return score, OllamaConnect.get_reason(
+            agent_response=conversation.agent_response,
+            score=score,
+            metric_name=self.metric_name,
+            user_prompt=testcase.prompt.user_prompt,
+            target_domain=getattr(conversation, "target_domain", ""),
+        )
