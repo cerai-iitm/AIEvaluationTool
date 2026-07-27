@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { FileCode2, Loader2, Plus, Save, Trash2 } from "lucide-react";
+import { FileCode2, Loader2, Pencil, Plus, Save, Trash2 } from "lucide-react";
 import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -111,6 +111,8 @@ export default function XPathConfigurationEditor({
   const [isAddingElement, setIsAddingElement] = useState(false);
   const [deletingPage, setDeletingPage] = useState("");
   const [deletingElement, setDeletingElement] = useState("");
+  const [editingPage, setEditingPage] = useState("");
+  const [editingPageName, setEditingPageName] = useState("");
   const [loadError, setLoadError] = useState<string | null>(null);
   const [savedSignature, setSavedSignature] = useState("{}");
 
@@ -125,7 +127,7 @@ export default function XPathConfigurationEditor({
   }, [savedSignature]);
   const hasChanges = JSON.stringify(pages) !== savedSignature;
   const isDeleting = Boolean(deletingPage || deletingElement);
-  const isMutating = isDeleting || isAddingElement;
+  const isMutating = isDeleting || isAddingElement || isSaving;
   const xpathFieldCount = useMemo(() => getXPathFieldCount(pages), [pages]);
   const missingXPathCount = useMemo(() => getMissingXPathCount(pages), [pages]);
   const isXPathConfigComplete = xpathFieldCount > 0 && missingXPathCount === 0;
@@ -180,6 +182,8 @@ export default function XPathConfigurationEditor({
       const nextPageNames = sortPages(nextPages);
       setPages(nextPages);
       setActivePage(nextPageNames[0] || "");
+      setEditingPage("");
+      setEditingPageName("");
       setSavedSignature(JSON.stringify(nextPages));
     } catch (error) {
       const message =
@@ -226,6 +230,88 @@ export default function XPathConfigurationEditor({
 
     setPages((current) => ({ ...current, [nextName]: {} }));
     setActivePage(nextName);
+    setEditingPage(nextName);
+    setEditingPageName(nextName);
+  };
+
+  const startEditingPage = (pageName: string) => {
+    if (disabled || isMutating) return;
+
+    setActivePage(pageName);
+    setEditingPage(pageName);
+    setEditingPageName(pageName);
+  };
+
+  const cancelPageEdit = () => {
+    setEditingPage("");
+    setEditingPageName("");
+  };
+
+  const persistPageRename = async (nextPages: XPathPages) => {
+    if (!usesTargetConfig) return true;
+
+    setIsSaving(true);
+    try {
+      const response = await fetch(
+        API_ENDPOINTS.TARGET_XPATHS_UPDATE_BY_TARGET_V2(targetKey),
+        {
+          method: "POST",
+          headers: authHeaders(),
+          body: JSON.stringify(nextPages),
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || "Failed to rename page");
+      }
+
+      setSavedSignature(JSON.stringify(nextPages));
+      return true;
+    } catch (error) {
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Failed to rename page",
+        variant: "destructive",
+      });
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const commitPageRename = async (oldName: string) => {
+    const trimmedName = editingPageName.trim();
+    if (!trimmedName || trimmedName === oldName) {
+      cancelPageEdit();
+      return;
+    }
+
+    if (pages[trimmedName]) {
+      toast({
+        title: "Validation Error",
+        description: "A page with this name already exists",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const pageConfig = pages[oldName];
+    if (!pageConfig) {
+      cancelPageEdit();
+      return;
+    }
+
+    const { [oldName]: _renamed, ...remaining } = pages;
+    const nextPages = { ...remaining, [trimmedName]: pageConfig };
+    const didPersist = await persistPageRename(nextPages);
+    if (!didPersist) return;
+
+    setPages(nextPages);
+    onPagesChange?.(nextPages);
+    setActivePage(trimmedName);
+    cancelPageEdit();
   };
 
   const deletePage = (pageName: string) => {
@@ -626,9 +712,47 @@ export default function XPathConfigurationEditor({
                           : ""
                       }`}
                     >
-                      <div className="flex h-8 min-w-0 flex-1 items-center rounded-md bg-background px-3 text-sm">
-                        <span className="truncate">{pageName}</span>
-                      </div>
+                      {editingPage === pageName ? (
+                        <Input
+                          autoFocus
+                          value={editingPageName}
+                          onChange={(event) =>
+                            setEditingPageName(event.target.value)
+                          }
+                          onClick={(event) => event.stopPropagation()}
+                          onKeyDown={(event) => {
+                            event.stopPropagation();
+                            if (event.key === "Enter") {
+                              commitPageRename(pageName);
+                            }
+                            if (event.key === "Escape") {
+                              cancelPageEdit();
+                            }
+                          }}
+                          onBlur={() => commitPageRename(pageName)}
+                          disabled={disabled || isMutating}
+                          className="h-8 min-w-0 flex-1 bg-background text-sm"
+                        />
+                      ) : (
+                        <>
+                          <div className="flex h-8 min-w-0 flex-1 items-center rounded-md bg-background px-3 text-sm">
+                            <span className="truncate">{pageName}</span>
+                          </div>
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              startEditingPage(pageName);
+                            }}
+                            disabled={disabled || isMutating}
+                            aria-label={`Edit ${pageName}`}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button
