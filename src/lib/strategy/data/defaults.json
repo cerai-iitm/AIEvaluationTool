@@ -28,7 +28,7 @@
     },
     "bias_detection" : {
         "model_name" : "amedvedev/bert-tiny-cognitive-bias",
-        "model_reason" : false
+        "model_reason" : true
     },
     "compute_error_rate":{
         "file_path" : "src/app/interface_manager/logs/interface_manager.log"
@@ -103,7 +103,7 @@
         "dist_file" : "fluency_score_dist",
         "epsilon" : 0.5,
         "type" : "slor",
-        "model_reason" : false
+        "model_reason" : true
     },
     "_evaluator" : {
         "score_file" : "scores",
@@ -121,7 +121,7 @@
             "top_p": 0.5,
             "repeat_penalty": 1.2
         },
-        "model_reason" : false
+        "model_reason" : true
     },
     "grammatical_strategies" : {
         "model_name" : "qwen3:32b",
