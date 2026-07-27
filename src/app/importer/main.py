@@ -149,10 +149,11 @@ for plan_metrics in descriptions.values():
 
 # import all the strategies.
 logger.debug("Importing strategies...")
-for item in strategies.keys():
-    strategy_name = strategies[item]
+for strategy_id, strategy_data in strategies.items():
+    strategy_name = strategy_data["name"]
+    strategy_description = strategy_data.get("description")
     logger.debug(f"Adding strategy: {strategy_name}")
-    db.add_or_get_strategy_id(strategy_name=strategy_name)
+    db.add_or_get_strategy_id(strategy_name=strategy_name,strategy_description=strategy_description)
 
 domain_general = db.add_or_get_domain_id(domain_name="general")
 lang_auto = db.add_or_get_language_id(language_name="auto")
@@ -243,7 +244,7 @@ for met in prompts.keys():
                     f"Strategy '{strategy}' not found in strategies. Skipping..."
                 )
                 continue
-            strategy = strategies[strategy_id[0]].lower()
+            strategy = strategies[strategy_id[0]]["name"].lower()
 
         judge_prompt = None
         if "LLM_AS_JUDGE" in case and case["LLM_AS_JUDGE"] != "No":
