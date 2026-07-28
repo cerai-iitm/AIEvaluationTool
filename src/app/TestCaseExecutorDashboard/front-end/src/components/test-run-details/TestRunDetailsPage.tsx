@@ -68,6 +68,8 @@ const RunDetails: React.FC = () => {
       hasScore: boolean;
       hasFailedCases: boolean;
     } | null>(null);  
+  const [showTestCaseSelection, setShowTestCaseSelection] = useState(false);
+  const [selectedAnalysisDetailIds, setSelectedAnalysisDetailIds] = useState<number[]>([]);
   const [cardHeight, setCardHeight] = useState<number | null>(null);
   const summaryCardRef = useRef<HTMLDivElement | null>(null);
   const tableScrollRef = useRef<HTMLDivElement | null>(null);
@@ -141,20 +143,26 @@ const RunDetails: React.FC = () => {
     });
     setOpenFilterColumn(null);
   };
-  const startAnalysis = async (mode: string, runName: string) => {
+  const startAnalysis = async (mode: string, runName: string, detailIds: number[] = []) => {
       setAnalyseLoading(true);
       try {
-        const url = API_ENDPOINTS.ANALYSE_RUN(runName, mode);
-        await fetch(url, {
+        const url = API_ENDPOINTS.ANALYSE_RUN(runName, mode, detailIds);
+        const response = await fetch(url, {
           method: "GET",
           headers: getAuthHeaders(),
           credentials: "include",
         });
-        navigate(`/analyse/${encodeURIComponent(runName)}?mode=${mode}`);
+        if (!response.ok) {
+          const body = await response.json().catch(() => null);
+          throw new Error(body?.detail || `Analysis request failed (${response.status})`);
+        }
+        const params = new URLSearchParams({ mode });
+        if (detailIds.length) params.set("detail_ids", detailIds.join(","));
+        navigate(`/analyse/${encodeURIComponent(runName)}?${params.toString()}`);
       } catch (err) {
         console.error("Analysis failed:", err);
+        alert(err instanceof Error ? err.message : "Analysis failed");
         setAnalyseLoading(false);
-        setAnalyseModal(null);
       }
     };
   useEffect(() => {
@@ -365,11 +373,15 @@ const RunDetails: React.FC = () => {
                           type="button"
                           className={`${styles.actionIconButton} ${styles.actionAnalyse}`}
                           data-tooltip="Analyse"
-                          onClick={() => setAnalyseModal({
-                            runName: summary.run_name,
-                            hasScore: typeof summary.average_score === "number",
-                            hasFailedCases,
-                          })}
+                          onClick={() => {
+                            setAnalyseModal({
+                              runName: summary.run_name,
+                              hasScore: typeof summary.average_score === "number",
+                              hasFailedCases,
+                            });
+                            setShowTestCaseSelection(false);
+                            setSelectedAnalysisDetailIds([]);
+                          }}
                           title="Analyse"
                           aria-label={`Analyse ${summary.run_name}`}
                         >
@@ -642,7 +654,13 @@ const RunDetails: React.FC = () => {
         </div>
       )}             
       {analyseModal && (
-        <div className="download-overlay" onClick={() => { if (!analyseLoading) setAnalyseModal(null); }}>
+        <div className="download-overlay" onClick={() => {
+          if (!analyseLoading) {
+            setAnalyseModal(null);
+            setShowTestCaseSelection(false);
+            setSelectedAnalysisDetailIds([]);
+          }
+        }}>
           <div className="download-overlay-card analyse-modal" onClick={(e) => e.stopPropagation()}>
             {analyseLoading ? (
               <>
@@ -659,6 +677,62 @@ const RunDetails: React.FC = () => {
                   <p className="download-overlay-title" style={{ margin: 0 }}>Analyse Run</p>
                   <p className="download-overlay-sub" style={{ marginTop: 4 }}>{analyseModal.runName}</p>
                 </div>
+                {showTestCaseSelection ? (
+                  <>
+                    <div className="analyse-selection-heading">
+                      <button
+                        type="button"
+                        className="analyse-back-btn"
+                        onClick={() => setShowTestCaseSelection(false)}
+                        aria-label="Back to analysis options"
+                      >
+                        <i className="bi bi-arrow-left"></i>
+                      </button>
+                      <div>
+                        <p className="analyse-option-title">Select test cases</p>
+                        <p className="analyse-option-sub">Failed test cases cannot be selected</p>
+                      </div>
+                    </div>
+                    <div className="analyse-testcase-list">
+                      {details.map((detail) => {
+                        const isFailed = detail.status.toUpperCase() === "FAILED";
+                        const isChecked = selectedAnalysisDetailIds.includes(detail.detail_id);
+                        return (
+                          <label
+                            key={detail.detail_id}
+                            className={`analyse-testcase-row${isFailed ? " is-disabled" : ""}`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              disabled={isFailed}
+                              onChange={() =>
+                                setSelectedAnalysisDetailIds((current) =>
+                                  current.includes(detail.detail_id)
+                                    ? current.filter((id) => id !== detail.detail_id)
+                                    : [...current, detail.detail_id]
+                                )
+                              }
+                            />
+                            <span>
+                              <strong>{detail.testcase_name}</strong>
+                              <small>{detail.metric_name} · {detail.status}</small>
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                    <button
+                      className="analyse-run-selected-btn"
+                      disabled={selectedAnalysisDetailIds.length === 0}
+                      onClick={() =>
+                        startAnalysis("selected", analyseModal.runName, selectedAnalysisDetailIds)
+                      }
+                    >
+                      Re-run selected ({selectedAnalysisDetailIds.length})
+                    </button>
+                  </>
+                ) : (
                 <div className="analyse-modal-options">
                   {analyseModal.hasScore && analyseModal.hasFailedCases && (
                     <button
@@ -682,8 +756,23 @@ const RunDetails: React.FC = () => {
                       <p className="analyse-option-sub">Run all test cases </p>
                     </div>
                   </button>
+                  <button
+                    className="analyse-option-btn"
+                    onClick={() => setShowTestCaseSelection(true)}
+                  >
+                    <i className="bi bi-check2-square"></i>
+                    <div>
+                      <p className="analyse-option-title">Select Test Cases</p>
+                      <p className="analyse-option-sub">Choose specific successful test cases to re-run</p>
+                    </div>
+                  </button>
                 </div>
-                <button className="analyse-cancel-btn" onClick={() => setAnalyseModal(null)}>
+                )}
+                <button className="analyse-cancel-btn" onClick={() => {
+                  setAnalyseModal(null);
+                  setShowTestCaseSelection(false);
+                  setSelectedAnalysisDetailIds([]);
+                }}>
                   Cancel
                 </button>
               </>
