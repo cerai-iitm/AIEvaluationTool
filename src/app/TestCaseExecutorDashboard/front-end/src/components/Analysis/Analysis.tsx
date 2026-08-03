@@ -306,6 +306,16 @@ const Analysis: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const mode = searchParams.get("mode") ?? "rerun_all";
+  const selectedDetailIdsParam = searchParams.get("detail_ids") ?? "";
+  const selectedDetailIds = useMemo(
+    () =>
+      selectedDetailIdsParam
+        .split(",")
+        .filter((value) => value.trim() !== "")
+        .map(Number)
+        .filter(Number.isInteger),
+    [selectedDetailIdsParam]
+  );
 
   const [loading, setLoading] = useState(true);
   const [isAnalysing, setIsAnalysing] = useState(false);
@@ -364,6 +374,10 @@ const Analysis: React.FC = () => {
         }
         // Before analysis: only show COMPLETED test cases, reset to PENDING
         serverDetails = serverDetails.filter((d) => d.status === "COMPLETED");
+        if (mode === "selected") {
+          const selectedIds = new Set(selectedDetailIds);
+          serverDetails = serverDetails.filter((d) => selectedIds.has(d.detail_id));
+        }
         setDetails(serverDetails.map((d) => ({ ...d, status: "PENDING", score: null })));
       } else if (filterToProcessed) {
         // After analysis: only show items the backend actually processed
@@ -377,7 +391,7 @@ const Analysis: React.FC = () => {
 
       if (!silent) setLoading(false);
     },
-    [mode]
+    [mode, selectedDetailIds]
   );
 
   // ── Apply a WS progress message ──────────────────────────────────────────
@@ -480,10 +494,13 @@ const Analysis: React.FC = () => {
         await fetchDetails(runName, false, true, false);
         if (!isMounted) return;
 
-        const analyseRes = await fetch(API_ENDPOINTS.ANALYSE_RUN(runName, mode), {
+        const analyseRes = await fetch(
+          API_ENDPOINTS.ANALYSE_RUN(runName, mode, selectedDetailIds),
+          {
           headers: getAuthHeaders(),
           credentials: "include",
-        });
+          }
+        );
         if (analyseRes.status === 401) {
           redirectToLogin();
           return;
@@ -592,7 +609,7 @@ const Analysis: React.FC = () => {
       if (keepAliveTimer) window.clearInterval(keepAliveTimer);
       if (ws) ws.close();
     };
-  }, [runName, mode, applyProgress, fetchDetails]);
+  }, [runName, mode, selectedDetailIds, applyProgress, fetchDetails]);
 
   useEffect(() => {
     if (!isCompleted) {

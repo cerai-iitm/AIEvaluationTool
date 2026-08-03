@@ -1,11 +1,12 @@
-from typing import List, Optional
+from typing import Any, List, Optional
 import json
 import time
 from config.settings import settings
 from database.fastapi_deps import _get_db
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, File, Header, HTTPException, UploadFile, status
 from fastapi.responses import StreamingResponse
 from jose import JWTError, jwt
+from pydantic import ValidationError
 from schemas import (
     TestCaseCreateV2,
     TestCaseDetailResponse,
@@ -320,13 +321,11 @@ def create_testcase(
                 # Add all metrics from the list
                 for metric_name in payload.metric_name_list:
                     metric = session.query(Metrics).filter(Metrics.metric_name == metric_name).first()
-                    if metric:
-                        testcase_in_session.metrics.append(metric)
-                    else:
-                        raise HTTPException(
-                            status_code=status.HTTP_400_BAD_REQUEST,
-                            detail=f"Metric '{metric_name}' not found.",
-                        )
+                    if not metric:
+                        metric = Metrics(metric_name=metric_name, domain_id=domain_id)
+                        session.add(metric)
+                        session.flush()
+                    testcase_in_session.metrics.append(metric)
                 session.commit()
                 session.refresh(testcase_in_session)
 
@@ -578,6 +577,198 @@ def update_testcase(
         "response_text": updated.response.response_text if updated.response else None,
         "metric_name": metric_name,  # Comma-separated for backward compatibility
         "metric_name_list": metric_name_list,  # List of metric names
+    }
+
+
+def _format_validation_location(location: tuple[Any, ...]) -> str:
+    return ".".join(str(part) for part in location)
+
+
+def _extract_testcases_from_json(payload: Any) -> list[Any]:
+    if isinstance(payload, list):
+        return payload
+    if isinstance(payload, dict) and isinstance(payload.get("test_cases"), list):
+        return payload["test_cases"]
+    raise HTTPException(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        detail={
+            "message": "JSON must be an array of test cases or an object with a test_cases array.",
+            "errors": [],
+        },
+    )
+
+
+@testcase_router.post(
+    "/upload-json",
+    summary="Bulk upload test cases from JSON (v2)",
+)
+async def upload_testcases_json(
+    file: UploadFile = File(...),
+    db: DB = Depends(_get_db),
+    authorization: Optional[str] = Header(None),
+):
+    if not file.filename or not file.filename.lower().endswith(".json"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Please upload a .json file.",
+        )
+
+    try:
+        raw_payload = json.loads((await file.read()).decode("utf-8"))
+    except UnicodeDecodeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="JSON file must be UTF-8 encoded.",
+        ) from exc
+    except json.JSONDecodeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid JSON: {exc.msg} at line {exc.lineno}, column {exc.colno}.",
+        ) from exc
+
+    rows = _extract_testcases_from_json(raw_payload)
+    if not rows:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "message": "JSON file does not contain any test cases.",
+                "errors": [],
+            },
+        )
+
+    validated_rows: list[TestCaseCreateV2] = []
+    errors: list[dict[str, Any]] = []
+    seen_names: set[str] = set()
+    required_text_fields = (
+        "testcase_name",
+        "user_prompt",
+        "language_name",
+        "domain_name",
+        "strategy_name",
+    )
+
+    for index, row in enumerate(rows, start=1):
+        if not isinstance(row, dict):
+            errors.append(
+                {
+                    "row": index,
+                    "field": "",
+                    "message": "Each test case must be a JSON object.",
+                }
+            )
+            continue
+
+        try:
+            testcase_payload = TestCaseCreateV2.model_validate(row)
+        except ValidationError as exc:
+            for error in exc.errors():
+                errors.append(
+                    {
+                        "row": index,
+                        "field": _format_validation_location(error["loc"]),
+                        "message": error["msg"],
+                    }
+                )
+            continue
+
+        for field_name in required_text_fields:
+            value = getattr(testcase_payload, field_name)
+            if isinstance(value, str):
+                setattr(testcase_payload, field_name, value.strip())
+            if not value or not value.strip():
+                errors.append(
+                    {
+                        "row": index,
+                        "field": field_name,
+                        "message": "Field is required.",
+                    }
+                )
+
+        testcase_payload.metric_name_list = [
+            metric_name.strip() for metric_name in testcase_payload.metric_name_list
+        ]
+        if not testcase_payload.metric_name_list:
+            errors.append(
+                {
+                    "row": index,
+                    "field": "metric_name_list",
+                    "message": "At least one metric is required.",
+                }
+            )
+        else:
+            seen_metrics: set[str] = set()
+            for metric_name in testcase_payload.metric_name_list:
+                normalized_metric = metric_name.strip().lower()
+                if not normalized_metric:
+                    errors.append(
+                        {
+                            "row": index,
+                            "field": "metric_name_list",
+                            "message": "Metric names cannot be blank.",
+                        }
+                    )
+                    continue
+                if normalized_metric in seen_metrics:
+                    errors.append(
+                        {
+                            "row": index,
+                            "field": "metric_name_list",
+                            "message": f"Duplicate metric '{metric_name}' in the same test case.",
+                        }
+                    )
+                seen_metrics.add(normalized_metric)
+
+        normalized_name = testcase_payload.testcase_name.strip().lower()
+        if normalized_name in seen_names:
+            errors.append(
+                {
+                    "row": index,
+                    "field": "testcase_name",
+                    "message": f"Duplicate testcase_name '{testcase_payload.testcase_name}' in uploaded JSON.",
+                }
+            )
+        seen_names.add(normalized_name)
+        validated_rows.append(testcase_payload)
+
+    metric_names = sorted({metric for row in validated_rows for metric in row.metric_name_list})
+    with db.Session() as session:
+        existing_testcase_names = {
+            name
+            for (name,) in session.query(TestCases.testcase_name)
+            .filter(TestCases.testcase_name.in_([row.testcase_name for row in validated_rows]))
+            .all()
+        }
+
+    if errors:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "message": "JSON upload validation failed.",
+                "errors": errors,
+            },
+        )
+
+    created: list[dict[str, Any]] = []
+    skipped: list[str] = []
+
+    for testcase_payload in validated_rows:
+        if testcase_payload.testcase_name in existing_testcase_names:
+            skipped.append(testcase_payload.testcase_name)
+            continue
+
+        created_response = create_testcase(
+            payload=testcase_payload,
+            db=db,
+            authorization=authorization,
+        )
+        created.append(created_response.model_dump())
+
+    return {
+        "message": f"Imported {len(created)} test case(s). Skipped {len(skipped)} duplicate(s).",
+        "created_count": len(created),
+        "skipped_count": len(skipped),
+        "skipped_duplicates": skipped,
+        "created": created,
     }
 
 

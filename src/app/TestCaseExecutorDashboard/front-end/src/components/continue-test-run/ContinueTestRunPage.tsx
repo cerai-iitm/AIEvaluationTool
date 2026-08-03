@@ -397,8 +397,9 @@ const ContinueRunPage: React.FC = () => {
             </Accordion.Header>
             <Accordion.Body>
               {existingRun ? (
-                <form className="filters-container" onSubmit={handleSubmit}>
-                  <div className="filters-row">
+                <div className="filters-container">
+                  <form onSubmit={handleSubmit}>
+                    <div className="filters-row">
                     {/* <div className="filter-item">
                       <label>Target</label>
                       <CustomSelect
@@ -487,36 +488,27 @@ const ContinueRunPage: React.FC = () => {
                     <button type="submit" className="start-button" disabled={isStartDisabled}>
                       Start Run
                     </button>
-
-                    {shouldShowSeleniumLink && (
-                      <a
-                        className="selenium-link-button"
-                        href={seleniumHref}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <i className="bi bi-display" aria-hidden="true" />
-                        <span>View Test Execution </span>
-                      </a>
-                    )}
-                  </div>
-                </form>
+                    </div>
+                  </form>
+                  {(isRunning || runFinished) && (
+                    <Loop
+                      isRunning={isRunning}
+                      totalTestCases={totalTestCases}
+                      stepsPerTestCase={4}
+                      stepNames={["Prepare", "Finding elements", "Execute", "Store"]}
+                      planName={formData.testPlan}
+                      metricName={formData.metric}
+                      testCaseName={formData.testCaseId}
+                      onRunFinished={handleRunFinished}
+                      showTestExecutionLink={shouldShowSeleniumLink}
+                      seleniumHref={seleniumHref}
+                    />
+                  )}
+                </div>
               ) : (
                 <div className="text-center py-3 text-muted">
                   Please wait while we fetch the run details...
                 </div>
-              )}
-              {(isRunning || runFinished) && (
-                <Loop
-                  isRunning={isRunning}
-                  totalTestCases={totalTestCases}
-                  stepsPerTestCase={4}
-                  stepNames={["Prepare", "Finding elements", "Execute", "Store"]}
-                  planName={formData.testPlan}
-                  metricName={formData.metric}
-                  testCaseName={formData.testCaseId}
-                  onRunFinished={handleRunFinished}
-                />
               )}
             </Accordion.Body>
           </Accordion.Item>
