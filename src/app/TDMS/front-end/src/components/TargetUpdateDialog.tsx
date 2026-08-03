@@ -123,6 +123,7 @@ export default function TargetUpdateDialog({
     useState<TargetCredentials>(emptyCredentials);
   const [xpathPages, setXpathPages] = useState<XPathPages>({});
   const [activeTab, setActiveTab] = useState("general");
+  const [hasXPathChanges, setHasXPathChanges] = useState(false);
 
   const [currentUserRole, setCurrentUserRole] = useState<string>("");
 
@@ -216,6 +217,7 @@ export default function TargetUpdateDialog({
       setNotes(target.notes || "");
       setCredentials(emptyCredentials);
       setXpathPages({});
+      setHasXPathChanges(false);
       setActiveTab("general");
     }
   }, [target]);
@@ -230,6 +232,21 @@ export default function TargetUpdateDialog({
     lang_list: [],
     notes: "",
   };
+
+  const sortedLanguages = (languages: string[] = []) =>
+    [...languages].sort((a, b) => a.localeCompare(b)).join(",");
+
+  const hasGeneralChanges =
+    name.trim() !== (targetInitial.target_name || "") ||
+    type.trim() !== (targetInitial.target_type || "") ||
+    description.trim() !== (targetInitial.target_description || "") ||
+    url.trim() !== (targetInitial.target_url || "") ||
+    domain.trim() !== (targetInitial.domain_name || "") ||
+    notes.trim() !== (targetInitial.notes || "") ||
+    sortedLanguages(selectedLanguages) !==
+      sortedLanguages(targetInitial.lang_list || []);
+
+  const hasChanges = hasGeneralChanges || hasXPathChanges;
 
   const hasInvalidNameCharacters =
     name.trim().length > 0 && !isNameUsingAllowedCharacters(name);
@@ -262,6 +279,7 @@ export default function TargetUpdateDialog({
     Boolean(isGeneralFormComplete) &&
     (!requiresXPathConfig || isXPathConfigComplete) &&
     areWebAppCredentialsComplete &&
+    hasChanges &&
     !isTargetUpdateDisabled;
 
   useEffect(() => {
@@ -285,6 +303,11 @@ export default function TargetUpdateDialog({
       prev.includes(lang) ? prev.filter((l) => l !== lang) : [...prev, lang],
     );
   };
+
+  const handleXPathPagesChange = useCallback((pages: XPathPages) => {
+    setXpathPages(pages);
+    setHasXPathChanges(true);
+  }, []);
 
   const buildHeaders = useCallback((): HeadersInit => {
     const headers: HeadersInit = {
@@ -466,6 +489,15 @@ export default function TargetUpdateDialog({
       return;
     }
 
+    if (!hasChanges) {
+      toast({
+        title: "Validation Error",
+        description: "Change at least one field before submitting",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
       const headers = buildHeaders();
@@ -533,7 +565,7 @@ export default function TargetUpdateDialog({
       }
 
       const updatedTargetName = name.trim();
-      if (requiresXPathConfig) {
+      if (requiresXPathConfig && hasXPathChanges) {
         await saveTargetXPaths(updatedTargetName, headers);
       }
       if (isWebAppTarget) {
@@ -712,7 +744,7 @@ export default function TargetUpdateDialog({
                       No languages available
                     </div>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="grid grid-cols-3 space-y-2">
                       {languageOptions.map((lang) => (
                         <div key={lang} className="flex items-center space-x-2 capitalize">
                           <Checkbox
@@ -766,7 +798,7 @@ export default function TargetUpdateDialog({
                 applicationName={target.target_name}
                 targetName={target.target_name}
                 open={open}
-                onPagesChange={setXpathPages}
+                onPagesChange={handleXPathPagesChange}
                 showSave={false}
                 disabled={
                   isTargetUpdateDisabled

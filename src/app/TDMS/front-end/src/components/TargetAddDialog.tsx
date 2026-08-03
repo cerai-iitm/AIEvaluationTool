@@ -742,7 +742,7 @@ export default function TargetAddDialog({
                       No languages available
                     </div>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="space-y-2 grid grid-cols-3">
                       {languageOptions.map((lang) => (
                         <div key={lang} className="flex items-center space-x-2 capitalize">
                           <Checkbox

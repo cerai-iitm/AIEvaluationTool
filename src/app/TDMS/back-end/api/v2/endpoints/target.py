@@ -37,6 +37,9 @@ target_router = APIRouter(
 
 class XPathApplicationConfig(BaseModel):
     pages: Dict[str, Dict[str, str]] = Field(default_factory=dict)
+    target_id: Optional[int] = Field(None, description="Target ID for history logging.")
+    target_name: Optional[str] = Field(None, description="Target name for history logging.")
+    notes: Optional[str] = Field(None, description="User notes for this operation.")
 
 class TargetTypeEnum(str, Enum):
     WhatsApp = "WhatsApp"
@@ -173,11 +176,13 @@ def get_xpath_application_config(app_name: str):
 def update_xpath_application_config(
     app_name: str,
     payload: XPathApplicationConfig,
+    authorization: Optional[str] = Header(None),
 ):
     application_name = _normalize_application_name(app_name)
     config = _load_xpaths_config()
     config["applications"][application_name] = payload.pages
     _write_xpaths_config(config)
+
     return {
         "application_name": application_name,
         "pages": config["applications"][application_name],
@@ -383,7 +388,10 @@ def update_target(
     db: DB = Depends(_get_db),
     authorization: Optional[str] = Header(None),
 ):
-    update_data = payload.model_dump(exclude_unset=True)
+    update_data = payload.model_dump(
+        exclude_unset=True,
+        exclude={"notes", "xpath_config_changed", "xpath_application_name"},
+    )
     # if not update_data:
     #     existing = db.get_target_by_id(target_id)
     #     if existing is None:
@@ -438,6 +446,11 @@ def update_target(
         updated_lang_names = sorted(payload.lang_list)
         if original_lang_names != updated_lang_names:
             changes.append("Languages changed")
+    if payload.xpath_config_changed:
+        application_name = _normalize_application_name(
+            payload.xpath_application_name or updated.target_name
+        )
+        changes.append(f"XPath Config changed")
 
     note = f"Target - {updated.target_name} updated"
     if changes:
