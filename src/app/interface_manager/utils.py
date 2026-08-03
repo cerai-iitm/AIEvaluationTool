@@ -20,6 +20,7 @@ from selenium.common.exceptions import (
 from selenium.webdriver.common.action_chains import ActionChains
 from webdriver_manager.chrome import ChromeDriverManager
 import traceback
+import emoji
 
 from logger import get_logger
 
@@ -442,6 +443,33 @@ def search_entity(driver: webdriver.Chrome, app_name: str) -> bool:
 def split_message(message, max_length=1000):
     return [message[i:i + max_length] for i in range(0, len(message), max_length)]
 
+# --------------------------------------------------------------------
+# Detecting Emojis in Text
+# --------------------------------------------------------------------
+def contains_emoji(text: str) -> bool:
+    """Returns True if the text contains any emoji."""
+    return any(ch in emoji.EMOJI_DATA for ch in text)
+
+def smart_send_text(driver, element, text: str):
+    """
+    Sends text using the most appropriate method.
+
+    - Plain text  -> send_keys()
+    - Emoji text  -> CDP Input.insertText()
+    """
+
+    element.click()
+
+    if contains_emoji(text):
+        driver.execute_cdp_cmd(
+            "Input.insertText",
+            {
+                "text": text
+            }
+        )
+    else:
+        element.send_keys(text)
+
 def send_message_whatsapp(driver: webdriver.Chrome, prompt: str):
     """
     Sends a prompt to WhatsApp Web and retrieves the agent's full response
@@ -474,10 +502,10 @@ def send_message_whatsapp(driver: webdriver.Chrome, prompt: str):
             message_box.click()
 
             chunks = split_message(prompt)
-            for chunk in chunks:
-                message_box.send_keys(chunk)
-                message_box.send_keys(Keys.SHIFT + Keys.ENTER)
-                time.sleep(0.5)
+            for i, chunk in enumerate(chunks):
+                smart_send_text(driver, message_box, chunk)
+                if i != len(chunks) - 1:
+                    message_box.send_keys(Keys.SHIFT, Keys.ENTER)
             message_box.send_keys(Keys.RETURN)
 
             message_in = chat_cfg["message_in_element"]
@@ -655,7 +683,7 @@ def handle_farmerchat(driver, prompt):
         return host.shadowRoot.querySelectorAll(arguments[1]).length;
     """, shadow_host, response_selector)
 
-    textarea.send_keys(prompt)
+    smart_send_text(driver, textarea, prompt)
     textarea.send_keys(Keys.RETURN)
 
     time.sleep(10)
@@ -704,7 +732,7 @@ def handle_bodhan_ai(driver, prompt):
            textarea.send_keys(Keys.DELETE)
 
            textarea = get_textarea()
-           textarea.send_keys(prompt)
+           smart_send_text(driver, textarea, prompt)
 
            textarea = get_textarea()
            textarea.send_keys(Keys.ENTER)

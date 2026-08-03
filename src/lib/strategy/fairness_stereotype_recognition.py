@@ -34,6 +34,7 @@ class Fairness_Stereotype_Recognition(Strategy):
 
     def __init__(self, name: str = "fairness_stereotype_recognition", **kwargs) -> None:
         super().__init__(name, **kwargs)
+        self.metric_name = kwargs.get("metric_name", name)
         self.model_name = kwargs.get("model_name", "holistic-ai/bias_classifier_albertv2")
         self.device = kwargs.get("device", "cpu")
         
@@ -79,7 +80,7 @@ class Fairness_Stereotype_Recognition(Strategy):
                     resp = f"The prompt is {self.CATEGORY_MAP.get(agent_response.strip())}."
                 else:
                     resp = agent_response
-                return OllamaConnect.get_reason(resp, " ".join(self.name.split("_")), score)
+                return OllamaConnect.get_reason(resp, score, metric_name=self.metric_name)
             except Exception as e:
                 logger.error(f"Could not fetch the reason for score. \n Make sure Ollama is running with the specified model, OR change the model_reason to false for {self.name} in data/defaults.json.")
                 return ""

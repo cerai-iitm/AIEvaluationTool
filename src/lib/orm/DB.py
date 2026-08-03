@@ -315,7 +315,7 @@ class DB:
             stats = {row.lang_id : row.judge_prompt_count for row in result}
             return stats
     
-    def add_or_get_strategy_id(self, strategy_name: str) -> int:
+    def add_or_get_strategy_id(self, strategy_name: str, strategy_description: Optional[str] = None) -> int:
         """
         Fetches the ID of a strategy by its name.
         
@@ -329,12 +329,15 @@ class DB:
             # Check if the strategy already exists in the database.
             existing_strategy = session.query(Strategies).filter_by(strategy_name=strategy_name).first()
             if existing_strategy:
+                if strategy_description and not existing_strategy.strategy_description:
+                    existing_strategy.strategy_description = strategy_description
+                    session.commit()
                 self.logger.debug(f"Returning the existing strategy ID: {existing_strategy.strategy_id}")
                 # Return the ID of the existing strategy
                 return getattr(existing_strategy, "strategy_id") 
             self.logger.debug(f"Adding new strategy: {strategy_name}")
             # If the strategy does not exist, create a new one
-            new_strategy = Strategies(strategy_name=strategy_name)
+            new_strategy = Strategies(strategy_name=strategy_name, strategy_description=strategy_description)
             session.add(new_strategy)
             session.commit()
             # Ensure strategy_id is populated
@@ -3940,6 +3943,7 @@ class DB:
                 self.logger.error(f"Conversation with ID '{conversation_id}' does not exist.")
                 return None
             return Conversation(target=result.target.target_name,
+                                target_domain=result.target.domain.domain_name if result.target.domain else "",
                                 run_detail_id=getattr(result, "detail_id"),
                                 testcase=result.detail.testcase.testcase_name,
                                 agent_response=getattr(result, "agent_response"),
@@ -3966,6 +3970,7 @@ class DB:
                                        .where(TestRuns.run_name == run_name)
             results = session.execute(sql).scalars().all()
             return [Conversation(target=result.target.target_name,
+                                 target_domain=result.target.domain.domain_name if result.target.domain else "",
                                  run_detail_id=getattr(result, "detail_id"),
                                  testcase=result.detail.testcase.testcase_name,
                                  agent_response=getattr(result, "agent_response"),

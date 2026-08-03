@@ -5,34 +5,33 @@ from config.settings import settings
 import os
 import json
 from pathlib import Path
+import logging
+
+logger = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).resolve().parents[4]
 config_path = BASE_DIR / "config.json"
-local_config_path = Path(__file__).resolve().parent / "config.json"
-from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parents[4]
-config_path = BASE_DIR / "config.json"
-local_config_path = Path(__file__).resolve().parent / "config.json"
-
+# Ensure `config` exists even if the file is missing
+config = {}
 try:
     with open(local_config_path, "r") as f:
         config = json.load(f)
 except FileNotFoundError:
-    try:
+  
+ try:
         with open(config_path, "r") as f:
             config = json.load(f)
     except FileNotFoundError:
-        config = {}
-        config = json.load(f)
-except FileNotFoundError:
-    try:
-        with open(local_config_path, "r") as f:
-            config = json.load(f)
-    except FileNotFoundError:
-        config = {}
-    
+        logger.warning(f"Config file not found at {config_path}. Trying local config.")
+        try:
+            with open(local_config_path, "r") as f:
+                config = json.load(f)
+        except FileNotFoundError:
+            logger.warning(f"Local config file not found at {local_config_path}. Using default settings.")
+            config = {}
 db_cfg = config.get("db", {})
+
 engine_type = db_cfg.get("engine", db_cfg.get("engine_type", "sqlite")).lower()
 
 # def _missing_mariadb_keys() -> list[str]:

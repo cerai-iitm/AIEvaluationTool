@@ -16,6 +16,7 @@ dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), 
 class LexicalDiversity(Strategy):
     def __init__(self, name: str = "lexicaldiversity", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
+        self.metric_name = kwargs.get("metric_name", name)
 
     def lexical_diversity_calculate(self, agent_response: str) -> float:
         """
@@ -32,7 +33,7 @@ class LexicalDiversity(Strategy):
     def reason_for_score(self, agent_response:str, score:float):
         if(dflt_vals.model_reason):
             try:
-                return OllamaConnect.get_reason(agent_response, " ".join(self.name.split("_")), score)
+                return OllamaConnect.get_reason(agent_response, score, metric_name=self.metric_name)
             except:
                 logger.error(f"Could not fetch the reason for score. \n Make sure Ollama is running with the specified model, OR change the model_reason to false for {self.name} in data/defaults.json")
                 return ""

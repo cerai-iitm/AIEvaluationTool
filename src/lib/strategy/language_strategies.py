@@ -20,6 +20,7 @@ dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), 
 class LanguageStrategies(Strategy):
     def __init__(self, name:str = "language", **kwargs):
         super().__init__(name, **kwargs)
+        self.metric_name = kwargs.get("metric_name", name)
         self.__strategy_name = name
         self.gpu_url=os.getenv("GPU_URL")
         self.embedding_model = SentenceTransformer(dflt_vals.embed_model)
@@ -140,11 +141,12 @@ class LanguageStrategies(Strategy):
             case "language_detect_langdetect" | "language_similarity_sarvam":
                 score =  self.sync_eval(conversation.agent_response, testcase.response.response_text)
                 logger.info(f"Score : {score}")
-                return score, OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), score)
+                return score, OllamaConnect.get_reason(conversation.agent_response, score, metric_name=self.metric_name)
             case "language_detect_gt" | "language_similarity_gt":
                 score =  asyncio.run(self.async_eval(conversation.agent_response, testcase.response.response_text))
                 logger.info(f"Score : {score}")
-                return score, OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), score)
+                logger.info(f"{self.metric_name} evaluation completed for strategy {self.__strategy_name}.")
+                return score, OllamaConnect.get_reason(conversation.agent_response, score, metric_name=self.metric_name)
             case _:
                 logger.error(f"Strategy name {self.__strategy_name} is not recognized.")
                 raise ValueError(f"Strategy {self.__strategy_name} is not defined.")
