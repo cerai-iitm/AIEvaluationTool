@@ -20,6 +20,7 @@ class TransliteratedStrategy(Strategy):
     def __init__(self, name: str = "transliterated_language_strategy", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
         self.gpu_url = os.getenv("GPU_URL")
+        self.metric_name = kwargs.get("metric_name", name)
         if not self.gpu_url:
             logger.warning("GPU_URL is not set in environment.")
         else:
@@ -33,7 +34,9 @@ class TransliteratedStrategy(Strategy):
         """
         language = language_detection(text)
         if language == "en":
-            translated_language = requests.post(f"{self.gpu_url}/translate",params={"input_text": text,"target_language": language})
+            response = requests.post(f"{self.gpu_url}/translate",params={"input_text": text,"target_language": language})
+            response.raise_for_status()
+            translated_language = response.json()["translated"]
             sentences = [translated_language, expected_response]
         else:
             sentences = [text, expected_response]
@@ -55,4 +58,4 @@ class TransliteratedStrategy(Strategy):
         logger.info("Evaluating transliterated text...")
         score = self.transliterate_text(conversation.agent_response, testcase.response.response_text)
         logger.info(f"Transliterated Score: {score}")
-        return score, OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), score)
+        return round(float(score), 2), OllamaConnect.get_reason(conversation.agent_response, score, metric_name=self.metric_name)

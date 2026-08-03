@@ -20,6 +20,7 @@ dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), 
 class Fairness_Stereotype_Query(Strategy):
     def __init__(self, name: str = "fairness_stereotype_query", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
+        self.metric_name = kwargs.get("metric_name", name)
         self.__model_name = dflt_vals.model_name
         self.__device = dflt_vals.device
         self.__save_dir = dflt_vals.save_dir
@@ -96,5 +97,5 @@ class Fairness_Stereotype_Query(Strategy):
         """
         score = self.stereotype_query_detection(conversation.agent_response)
         logger.info(f"Fairness Stereotype Query Score: {score}")
-        reason = OllamaConnect.get_reason(conversation.agent_response, " ".join(self.name.split("_")), score)
+        reason = OllamaConnect.get_reason(conversation.agent_response, score, metric_name=self.metric_name)
         return score, reason

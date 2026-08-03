@@ -21,6 +21,7 @@ dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), 
 class IndianLangGrammaticalCheck(Strategy):
     def __init__(self, model=None, tokenizer=None, name="indian_lang_grammatical_check", **kwargs):
         super().__init__(name, **kwargs)
+        self.metric_name = kwargs.get("metric_name", name)
         self.gpu_url=os.getenv("GPU_URL")
         self.nlp = None
 
@@ -113,7 +114,7 @@ class IndianLangGrammaticalCheck(Strategy):
     def reason_for_score(self, agent_response:str, score:float):
         if(dflt_vals.model_reason):
             try:
-                return OllamaConnect.get_reason(agent_response, " ".join(self.name.split("_")), score)
+                return OllamaConnect.get_reason(agent_response, score, metric_name=self.metric_name)
             except:
                 logger.error(f"Could not fetch the reason for score. \n Make sure Ollama is running with the specified model, OR change the model_reason to false for {self.name} in data/defaults.json")
                 return ""
