@@ -565,17 +565,10 @@ def send_message_whatsapp(driver: webdriver.Chrome, prompt: str):
                     "Messages after last outgoing: %d", len(responses_after)
                 )
 
-                # Keep only genuine incoming messages
-                responses = []
-                for msg in responses_after:
-                    try:
-                        msg.find_element(
-                            By.XPATH,
-                            ".//span[@aria-label and @aria-label!='You:']"
-                        )
-                        responses.append(msg)
-                    except Exception:
-                        continue
+                # message_in_element already restricts all_messages to genuine
+                # incoming bubbles, so everything after our last outgoing
+                # message is already a real incoming response.
+                responses = responses_after
 
                 logger.info("Incoming responses found: %d", len(responses))
 
