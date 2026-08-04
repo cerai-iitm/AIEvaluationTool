@@ -48,7 +48,7 @@ class Toxicity(Strategy):
         elif self.metric_name == "Toxicity_Level": 
             user_prompt = testcase.prompt.user_prompt
             agent_response = conversation.agent_response
-            score = self.toxicity_check(user_prompt=user_prompt, agent_response=agent_response)
+            score = 1 - self.toxicity_check(user_prompt=user_prompt, agent_response=agent_response)
         else:
             raise ValueError(
                 f"Unsupported metric: {self.metric_name}"
