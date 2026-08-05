@@ -426,7 +426,7 @@ const StrategyList: React.FC = () => {
           </div>
           
           <div className="flex-1 min-h-0 overflow-y-auto">
-            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[73vh] max-w-[850px] mx-left overflow-y-auto">
+            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[73vh] w-full overflow-y-auto">
               {isLoading ? (
                 <div className="flex items-center justify-center p-8">
                   <span>Loading...</span>
@@ -435,9 +435,9 @@ const StrategyList: React.FC = () => {
                 <table className="w-full table-fixed">
                   <thead className="border-b-2">
                     <tr>
-                      <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left w-[15%] ">Strategy ID</th>
-                      <th className="sticky top-0 bg-white z-10 p-2 font-semibold text-left w-[30%]">Strategy Name</th>
-                      <th className="sticky top-0 z-10 pl-8 p-2 font-semibold text-left ">Strategy Description</th>
+                      <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left w-[120px]">Strategy ID</th>
+                      <th className="sticky top-0 bg-white z-10 p-2 font-semibold text-left w-[260px]">Strategy Name</th>
+                      <th className="sticky top-0 z-10 pl-8 p-2 font-semibold text-left">Strategy Description</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -462,7 +462,7 @@ const StrategyList: React.FC = () => {
                         >
                           <td className="p-2 pl-12">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                           <td className="p-2 truncate">{row.strategy_name}</td>
-                          <td className="p-2 max-w-md truncate">{row.strategy_description}</td>
+                          <td className="p-2 truncate">{row.strategy_description}</td>
                         </tr>
                       ))
                     )}
@@ -495,7 +495,7 @@ const StrategyList: React.FC = () => {
             setUpdateMessage("");
           }}
         >
-          <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-md"
+          <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-[90vw] max-w-4xl"
             onClick={(e) => e.stopPropagation()}
           >
             <button 
@@ -517,7 +517,7 @@ const StrategyList: React.FC = () => {
               {selectedStrategy.strategy_description && (
                 <div className="flex flex-col gap-1">
                   <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy</label>
-                  <Textarea className="text-sm md:text-base min-h-[80px] flex-1 w-full md:w-auto resize-none bg-muted" readOnly>{selectedStrategy.strategy_description}</Textarea>
+                  <Textarea className="text-sm md:text-base min-h-[140px] w-full resize-none bg-muted" readOnly>{selectedStrategy.strategy_description}</Textarea>
                 </div>
               )}
               {/* <div className="flex flex-col gap-2 md:gap-3">
