@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback,useRef } from 'react';
 import './ContinueTestRunPage.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Accordion, Button } from 'react-bootstrap';
@@ -7,6 +7,8 @@ import Loop from './Loop/Loop';
 import { API_BASE_URL, API_ENDPOINTS, WS_BASE_URL } from "../../config/api";
 import { useParams } from 'react-router-dom';
 import { getAuthHeaders, redirectToLogin } from '../../utils/auth';
+import { useNavigationBlocker } from "../../hooks/useNavigationBlocker";
+
 
 interface RunFormData {
   runName: string;
@@ -21,6 +23,7 @@ interface RunFormData {
 
 interface FilterItem {
   filter_name: string;
+  extra_info?: string;
 }
 
 interface AllFiltersResponse {
@@ -32,11 +35,19 @@ interface AllFiltersResponse {
   statuses: FilterItem[];
 }
 
+interface InterfaceManagerStatus {
+  docker: boolean;
+}
+
+const normalizeTargetName = (value?: string) =>
+  (value || "").replace(/\s*\(.*?\)\s*$/, "").trim().toLowerCase();
+
 const ContinueRunPage: React.FC = () => {
 
-  const maxTestCases = ['5', '20', '30', '50', '100'];
+  const maxTestCases = ['5', '10', '20', '30', '50', '100'];
   const languages = ['English', 'Spanish', 'French', 'German', 'Chinese'];
   const [isRunning, setIsRunning] = useState(false);
+  const [runFinished, setRunFinished] = useState(false);
   const [totalTestCases, setTotalTestCases] = useState(0);
   const [filters, setFilters] = useState<AllFiltersResponse | null>(null);
   const [existingRun, setExistingRun] = useState<any>(null);
@@ -44,7 +55,10 @@ const ContinueRunPage: React.FC = () => {
   const [planMetrics, setPlanMetrics] = useState<string[]>([]);
   const [domainOptions, setDomainOptions] = useState<string[]>([]);
   const [languageOptions, setLanguageOptions] = useState<string[]>([]);
-  
+  const [showSeleniumLink, setShowSeleniumLink] = useState(false);
+  const [hasContinuedRunStarted, setHasContinuedRunStarted] = useState(false);
+  useNavigationBlocker(isRunning);
+  const wsRef = useRef<WebSocket | null>(null);
   const [formData, setFormData] = useState<RunFormData>({
     runName: "",
     // target: "",
@@ -57,9 +71,24 @@ const ContinueRunPage: React.FC = () => {
   });
 
   const isStartDisabled = !formData.testPlan || isRunning;
+  const seleniumHref = "/selenium/";
+  const existingRunTarget = normalizeTargetName(existingRun?.target);
+  const selectedTarget = filters?.targets.find(
+    (target) => normalizeTargetName(target.filter_name) === existingRunTarget
+  );
+  const selectedTargetType = selectedTarget?.extra_info?.trim().toLowerCase();
+  const isSeleniumTarget =
+    selectedTargetType === "whatsapp" || selectedTargetType === "webapp";
+  const shouldShowSeleniumLink =
+    showSeleniumLink && hasContinuedRunStarted && isSeleniumTarget;
   
 
   const { runName } = useParams();
+
+  const handleRunFinished = useCallback(() => {
+    setRunFinished(true);
+    setIsRunning(false);
+  }, []);
 
   useEffect(() => {
     const fetchFilters = async () => {
@@ -88,11 +117,49 @@ const ContinueRunPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    const fetchInterfaceManagerStatus = async () => {
+      try {
+        const res = await fetch(API_ENDPOINTS.GET_INTERFACE_MANAGER_STATUS, {
+          headers: getAuthHeaders(),
+          credentials: "include",
+        });
+
+        if (res.status === 401) {
+          redirectToLogin();
+          return;
+        }
+
+        if (!res.ok) {
+          throw new Error(`Failed to fetch interface manager status (${res.status})`);
+        }
+
+        const data: InterfaceManagerStatus = await res.json();
+        setShowSeleniumLink(Boolean(data.docker));
+      } catch (err) {
+        console.error("Failed to fetch interface manager status", err);
+        setShowSeleniumLink(false);
+      }
+    };
+
+    fetchInterfaceManagerStatus();
+  }, []);
+
+  useEffect(() => {
     if (runName) {
       handleChange("runName", runName);
       handleFetchRun(runName);
     }
   }, [runName]);
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+        if (wsRef.current) {
+            wsRef.current.close();
+        }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+}, []);
 
   const fetchMetricsByPlan = async (planName: string) => {
     try {
@@ -141,6 +208,7 @@ const ContinueRunPage: React.FC = () => {
       const data = await res.json();
       
       setExistingRun(data.run);
+      setHasContinuedRunStarted(false);
       if (data.run?.target) {
         fetchTargetMetadata(data.run.target);
       }
@@ -201,16 +269,20 @@ const ContinueRunPage: React.FC = () => {
     setFormData(prev => ({
       ...prev,
       [key]: value,
-      ...(key === "testPlan" && { metric: "" })
+      ...(key === "testPlan" && { metric: "", testCaseId: "" }),
+      ...(key === "metric"   && value && { testCaseId: "" }),   // ← new
+      ...(key === "testCaseId" && value && { metric: "" }),     // ← new
     }));
 
     if (key === "testPlan") {
       fetchMetricsByPlan(value);
     }
   };
-
+ 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setRunFinished(false);
+    setHasContinuedRunStarted(false);
 
     if (!formData.runName) {
       alert("Please enter a run name and fetch it first.");
@@ -243,10 +315,11 @@ const ContinueRunPage: React.FC = () => {
       }
 
       setTotalTestCases(data.totalTestCases);
+      setHasContinuedRunStarted(true);
       setIsRunning(true);
 
       const ws = new WebSocket(`${WS_BASE_URL}/ws/test-run`);
-
+      wsRef.current = ws;  
       ws.onopen = () => {
         console.log("WebSocket connected for continue");
         ws.send(JSON.stringify(data));
@@ -324,8 +397,9 @@ const ContinueRunPage: React.FC = () => {
             </Accordion.Header>
             <Accordion.Body>
               {existingRun ? (
-                <form className="filters-container" onSubmit={handleSubmit}>
-                  <div className="filters-row">
+                <div className="filters-container">
+                  <form onSubmit={handleSubmit}>
+                    <div className="filters-row">
                     {/* <div className="filter-item">
                       <label>Target</label>
                       <CustomSelect
@@ -346,9 +420,16 @@ const ContinueRunPage: React.FC = () => {
                       <div className="filter-item">
                       <label>Metric</label>
                       <CustomSelect
+                        key={formData.testCaseId}   // ← add this line
                         options={planMetrics}
-                        defaultText={formData.testPlan ? "All Metrics" : "Select Test Plan first"}
-                        disabled={!formData.testPlan}
+                        defaultText={
+                          !formData.testPlan
+                            ? "Select Test Plan first"
+                            : formData.testCaseId
+                            ? "Test case selected"
+                            : "All Metrics"
+                        }
+                        disabled={!formData.testPlan || !!formData.testCaseId}
                         onChange={(val) => handleChange("metric", val)}
                       />
                     </div>
@@ -357,10 +438,14 @@ const ContinueRunPage: React.FC = () => {
                       <input
                         type="text"
                         placeholder={
-                          formData.testPlan ? "Enter TestCase Name" : "Select Test Plan first"
+                          !formData.testPlan
+                          ? "Select Test Plan first"
+                          : formData.metric
+                          ? "Metric selected"
+                          : "Enter Test Case Name"
                         }
                         value={formData.testCaseId ?? ""}
-                        disabled={!formData.testPlan}
+                        disabled={!formData.testPlan || !!formData.metric}
                         onChange={(e) => handleChange("testCaseId", e.target.value)}
                       />
                     </div>
@@ -374,6 +459,8 @@ const ContinueRunPage: React.FC = () => {
                       <CustomSelect
                         options={maxTestCases}
                         defaultText="Select Max"
+                        value={formData.maxTestCases}
+                        showDefaultOption={false}
                         onChange={(val) => handleChange("maxTestCases", val)}
                       />
                     </div>
@@ -397,24 +484,31 @@ const ContinueRunPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <button type="submit" className="start-button" disabled={isStartDisabled}>
-                    Start Run
-                  </button>
-                </form>
+                  <div className="run-actions-row">
+                    <button type="submit" className="start-button" disabled={isStartDisabled}>
+                      Start Run
+                    </button>
+                    </div>
+                  </form>
+                  {(isRunning || runFinished) && (
+                    <Loop
+                      isRunning={isRunning}
+                      totalTestCases={totalTestCases}
+                      stepsPerTestCase={4}
+                      stepNames={["Prepare", "Finding elements", "Execute", "Store"]}
+                      planName={formData.testPlan}
+                      metricName={formData.metric}
+                      testCaseName={formData.testCaseId}
+                      onRunFinished={handleRunFinished}
+                      showTestExecutionLink={shouldShowSeleniumLink}
+                      seleniumHref={seleniumHref}
+                    />
+                  )}
+                </div>
               ) : (
                 <div className="text-center py-3 text-muted">
                   Please wait while we fetch the run details...
                 </div>
-              )}
-              {isRunning && (
-                <Loop
-                  isRunning={isRunning}
-                  totalTestCases={totalTestCases}
-                  stepsPerTestCase={4}
-                  stepNames={["Prepare", "Finding elements", "Execute", "Store"]}
-                  planName={formData.testPlan}
-                  metricName={formData.metric}
-                />
               )}
             </Accordion.Body>
           </Accordion.Item>

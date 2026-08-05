@@ -1,12 +1,12 @@
 {
-    "db": {
+   "db": {
         "engine": "mariadb",
         "host": "db",
         "port": 3306,
         "user": "aiet_user",
         "password": "aiet_password",
         "database": "aievaluationtool"
-        },
+    },
     "examples":{
         "db_1":{
             "engine": "mariadb",
@@ -24,7 +24,8 @@
     "files": {
         "plans": "data/plans.json",
         "testcases": "data/updated_datapoints.json",
-        "strategies": "data/strategy_id.json"
+        "strategies": "data/strategy_id.json",
+        "descriptions": "data/metrics_and_submetrics.json"
     },
     "target": {
         "application_type": "WHATSAPP_WEB",

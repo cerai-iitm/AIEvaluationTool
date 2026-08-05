@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, inspect
+from sqlalchemy import create_engine
 # from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from config import helpers
@@ -29,7 +29,7 @@ db_cfg = config.get("db", {})
 engine_type = db_cfg.get("engine", "sqlite").lower()
 
 if engine_type == "sqlite":
-    db_file = db_cfg.get("file", "TDMS.db")
+    db_file = db_cfg.get("file", "AIEvaluationData.db")
     
     # project root: AIEvaluationTool
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../.."))
@@ -74,9 +74,8 @@ def ensure_db_ready() -> None:
     if _schema_initialized:
         return
 
-    inspector = inspect(engine)
-    if not inspector.has_table(user.Users.__tablename__):
-        user.Base.metadata.create_all(bind=engine, checkfirst=True)
+    # Always create any missing tables defined in the metadata.
+    user.Base.metadata.create_all(bind=engine, checkfirst=True)
 
     with SessionLocal() as db:
         has_users = db.query(user.Users.user_id).first() is not None

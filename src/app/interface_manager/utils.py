@@ -20,6 +20,7 @@ from selenium.common.exceptions import (
 from selenium.webdriver.common.action_chains import ActionChains
 from webdriver_manager.chrome import ChromeDriverManager
 import traceback
+import emoji
 
 from logger import get_logger
 
@@ -442,9 +443,37 @@ def search_entity(driver: webdriver.Chrome, app_name: str) -> bool:
 def split_message(message, max_length=1000):
     return [message[i:i + max_length] for i in range(0, len(message), max_length)]
 
+# --------------------------------------------------------------------
+# Detecting Emojis in Text
+# --------------------------------------------------------------------
+def contains_emoji(text: str) -> bool:
+    """Returns True if the text contains any emoji."""
+    return any(ch in emoji.EMOJI_DATA for ch in text)
+
+def smart_send_text(driver, element, text: str):
+    """
+    Sends text using the most appropriate method.
+
+    - Plain text  -> send_keys()
+    - Emoji text  -> CDP Input.insertText()
+    """
+
+    element.click()
+
+    if contains_emoji(text):
+        driver.execute_cdp_cmd(
+            "Input.insertText",
+            {
+                "text": text
+            }
+        )
+    else:
+        element.send_keys(text)
+
 def send_message_whatsapp(driver: webdriver.Chrome, prompt: str):
     """
-    Sends a prompt to WhatsApp Web and retrieves responses after the last sent message.
+    Sends a prompt to WhatsApp Web and retrieves the agent's full response
+    after the last sent message, waiting until the response is stable.
     """
     attempt = 0
     max_retries: int = 3
@@ -452,95 +481,160 @@ def send_message_whatsapp(driver: webdriver.Chrome, prompt: str):
     app_cfg = load_xpaths()["applications"][app_name.lower()]
     chat_cfg = app_cfg["ChatPage"]
 
+    # Tunables
+    POLL_INTERVAL = 2          # seconds between polls
+    MAX_WAIT = 60              # total seconds to wait for a response
+    STABLE_CYCLES_REQUIRED = 4 # consecutive unchanged polls => ~8s quiet
+
     while attempt < max_retries:
         try:
             if not check_and_recover_connection():
                 logger.warning("No internet connection available.")
                 return "No response received"
-            
+
             logger.info(f"Sending prompt to the bot: {prompt}")
-            # @bugfix.  The XPath has changed! -- Sudar 02.08.2025
-            #message_box_xpath = '//div[@aria-label="Type a message" and @contenteditable="true"]'
+
             message_box_xpath = chat_cfg["prompt_input_box_element"]
             message_box = WebDriverWait(driver, 2).until(
                 EC.presence_of_element_located((By.XPATH, message_box_xpath))
             )
             message_box.clear()
             message_box.click()
+
             chunks = split_message(prompt)
-            
-            for chunk in chunks:
-                message_box.send_keys(chunk)
-                message_box.send_keys(Keys.SHIFT + Keys.ENTER)
-                time.sleep(0.5)
+            for i, chunk in enumerate(chunks):
+                smart_send_text(driver, message_box, chunk)
+                if i != len(chunks) - 1:
+                    message_box.send_keys(Keys.SHIFT, Keys.ENTER)
             message_box.send_keys(Keys.RETURN)
 
-            #time.sleep(5)  # Wait for the message to be sent and responses to arrive
-            old_response_texts = []
-            response_texts = []
+            message_in = chat_cfg["message_in_element"]
+            message_out = chat_cfg["message_out_element"]
+            selectable_text = chat_cfg["agent_response_element"]
 
-            # setup the wait time counter.
-            wait_time = 0 # seconds
+            last_seen_response = ""
+            last_seen_count = -1
+            stable_count = 0
+            wait_time = 0
+            start = time.time()
 
-            # wait for the responses from the agent for a maximum of 30 seconds
-            while "".join(old_response_texts) != "".join(response_texts) or len(response_texts) == 0:
-                if wait_time > 30:
-                    logger.warning("No new responses received after 30 seconds. Exiting response retrieval loop.")
-                    break
-                time.sleep(2)  # Wait for responses to appear
-                wait_time += 2
+            while wait_time <= MAX_WAIT:
+                time.sleep(POLL_INTERVAL)
+                wait_time += POLL_INTERVAL
 
                 wait = WebDriverWait(driver, 30)
-                message_in = chat_cfg["message_in_element"]
-                message_out = chat_cfg["message_out_element"]
+
+                # All messages in order (incoming + outgoing)
                 all_messages = wait.until(
                     EC.presence_of_all_elements_located(
                         (By.XPATH, f"{message_in} | {message_out}")
                     )
                 )
 
+                logger.info(
+                    "Total message containers: %d",
+                    len(all_messages)
+                )
+
                 outgoing_msgs = driver.find_elements(By.XPATH, message_out)
+
+                logger.info(
+                    "Outgoing messages: %d",
+                    len(outgoing_msgs)
+                )
+
                 if not outgoing_msgs:
                     raise Exception("No outgoing messages found.")
 
                 last_outgoing = outgoing_msgs[-1]
 
+                # Find the index of our last sent message
                 try:
-                    last_index = next(
-                        i for i, msg in enumerate(all_messages) if msg == last_outgoing
+                    last_index = max(
+                        i for i, msg in enumerate(all_messages)
+                        if msg == last_outgoing
                     )
-                except StopIteration:
+                except ValueError:
                     raise Exception(
                         "Last outgoing message not found in all_messages list."
                     )
 
+                # Everything after our last outgoing message
                 responses_after = all_messages[last_index + 1:]
-                responses = [
-                    msg
-                    for msg in responses_after
-                    if "message-in" in str(msg.get_attribute("class"))
-                ]
+                logger.info(
+                    "Messages after last outgoing: %d", len(responses_after)
+                )
 
-                old_response_texts = response_texts.copy()
+                # message_in_element already restricts all_messages to genuine
+                # incoming bubbles, so everything after our last outgoing
+                # message is already a real incoming response.
+                responses = responses_after
+
+                logger.info("Incoming responses found: %d", len(responses))
+
+                # Extract and combine text from every incoming bubble, in order
                 response_texts = []
-                selectable_text = chat_cfg["agent_response_element"]
                 for msg in responses:
                     try:
-                        text_elem = msg.find_element(By.XPATH, selectable_text)
-                        text = text_elem.text.strip()
+                        text_elems = msg.find_elements(
+                            By.XPATH,
+                            selectable_text
+                        )
+
+                        parts = []
+
+                        for elem in text_elems:
+                            txt = elem.text.strip()
+
+                            if txt:
+                                parts.append(txt)
+
+                        text = "\n".join(parts)
+
+                        logger.info(
+                            "Found %d text elements, extracted: %s",
+                            len(text_elems),
+                            text
+                        )
+
                         if text:
                             response_texts.append(text)
-                            logger.info(f"(Waited:{wait_time}) Received response from WhatsApp: %s", text)
-                    except Exception as e:
-                        logger.debug("Could not read response message: %s", e)
-                        continue
 
-            if response_texts:
-                combined_response = " ".join(response_texts)
-                return combined_response
-            else:
-                logger.warning("No response message received from whatsapp.")
-                return "No response received"
+                    except Exception as e:
+                        logger.debug(
+                            "Could not read response message: %s",
+                            e
+                        )
+
+                full_text = "\n".join(response_texts)
+                current_count = len(response_texts)
+
+                logger.info(
+                    f"(Waited:{int(time.time() - start)}) "
+                    f"Received: {full_text}"
+                )
+
+                # Stable only if BOTH the text and the number of bubbles
+                # are unchanged since the last poll.
+                if (full_text == last_seen_response
+                        and current_count == last_seen_count):
+                    stable_count += 1
+                else:
+                    stable_count = 0
+                    last_seen_response = full_text
+                    last_seen_count = current_count
+
+                if full_text and stable_count >= STABLE_CYCLES_REQUIRED:
+                    logger.info("Response stabilized. Returning final response.")
+                    return full_text
+
+            # Timeout fallback
+            if last_seen_response:
+                logger.info("Returning last collected response after timeout.")
+                return last_seen_response
+
+            logger.warning("No response message received from whatsapp.")
+            return "No response received"
 
         except Exception as e:
             attempt += 1
@@ -582,7 +676,7 @@ def handle_farmerchat(driver, prompt):
         return host.shadowRoot.querySelectorAll(arguments[1]).length;
     """, shadow_host, response_selector)
 
-    textarea.send_keys(prompt)
+    smart_send_text(driver, textarea, prompt)
     textarea.send_keys(Keys.RETURN)
 
     time.sleep(10)
@@ -594,9 +688,96 @@ def handle_farmerchat(driver, prompt):
         "content": text
     }
 
+def handle_bodhan_ai(driver, prompt):
+   cfg = load_xpaths()["applications"]["bodhan-ai"]["ChatPage"]
+
+   prompt_xpath = cfg["prompt_input_box_element"]
+   response_xpath = cfg["agent_response_element"]
+
+   if not prompt_xpath or not response_xpath:
+       raise RuntimeError("Prompt input box or response XPath not configured.")
+
+   wait = WebDriverWait(driver, 30)
+
+   def get_textarea():
+       return wait.until(
+           EC.element_to_be_clickable((By.XPATH, prompt_xpath))
+       )
+
+   def get_response_text():
+       elements = driver.find_elements(By.XPATH, response_xpath)
+       return "\n".join(
+           e.text.strip()
+           for e in elements
+           if e.text.strip()
+       )
+
+   # Current response before sending prompt
+   previous_response = get_response_text()
+
+   # Retry in case React replaces the textarea
+   for _ in range(3):
+       try:
+           textarea = get_textarea()
+
+           textarea.click()
+           textarea.send_keys(Keys.CONTROL, "a")
+           textarea.send_keys(Keys.DELETE)
+
+           textarea = get_textarea()
+           smart_send_text(driver, textarea, prompt)
+
+           textarea = get_textarea()
+           textarea.send_keys(Keys.ENTER)
+
+           break
+
+       except StaleElementReferenceException:
+           time.sleep(0.5)
+   else:
+       raise RuntimeError("Textarea became stale repeatedly.")
+
+   # Wait until response starts changing
+   try:
+       wait.until(
+           lambda d: get_response_text() != previous_response
+       )
+   except TimeoutException:
+       raise RuntimeError("No response received from Bodhan AI.")
+
+   # Wait until streaming finishes
+   last_text = ""
+   stable_count = 0
+   timeout = time.time() + 120
+
+   while time.time() < timeout:
+       try:
+           current_text = get_response_text()
+
+           if current_text == last_text and current_text:
+               stable_count += 1
+           else:
+               stable_count = 0
+               last_text = current_text
+
+           # 4 consecutive stable reads (~2 seconds)
+           if stable_count >= 4:
+               break
+
+           time.sleep(0.5)
+
+       except StaleElementReferenceException:
+           continue
+
+   return {
+       "type": "text",
+       "content": last_text.strip()
+   }
+
 
 APP_HANDLERS = {
     "farmerchat": handle_farmerchat,
+    "bodhan-ai": handle_bodhan_ai
 }
 
 # Sending Message to Web applications

@@ -29,6 +29,34 @@ services:
       - "4444"
       - "7900"
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: aiet-ollama
+    restart: unless-stopped
+    profiles: ["prod"]
+    expose:
+      - "11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  ollama-init:
+    image: ollama/ollama:latest
+    container_name: aiet-ollama-init
+    profiles: ["prod"]
+    depends_on:
+      - ollama
+    environment:
+      - OLLAMA_HOST=ollama:11434 
+    command: ["pull", "${OLLAMA_MODEL:-qwen3:32b}"]
+    
+
   interface-manager:
     build:
       context: .
@@ -74,6 +102,8 @@ services:
       TDMS_APP_URL: ${TDMS_APP_URL:-/tdms/dashboard}
       DB_HOST: ${DB_HOST:-db}
       DB_PORT: ${DB_PORT:-3306}
+    volumes:
+      - ./data:/app/data
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:7500/docs', timeout=3)"]
       interval: 20s
@@ -115,7 +145,7 @@ services:
       target: sarvam-ai
     container_name: aiet-sarvam-ai
     restart: unless-stopped
-    profiles: ["sarvam"]
+    profiles: ["sarvam", "prod"]
     expose:
       - "16000"
     environment:
@@ -150,6 +180,8 @@ services:
       - .env
     environment:
       AUTH_SERVICE_URL: ${AUTH_SERVICE_URL:-http://auth-service:7500}
+    volumes:
+      - ./data:/app/data
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:7250/', timeout=3)"]
       interval: 20s
@@ -220,3 +252,6 @@ services:
 volumes:
   mariadb_data:
   interface_manager_logs:
+  ollama_data:
+  sarvam_models:
+  app:

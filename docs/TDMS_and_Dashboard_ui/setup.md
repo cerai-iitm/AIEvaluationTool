@@ -33,6 +33,25 @@ Use this guide to run TDMS and the Test Case Execution Tool (Dashboard) locally 
 - `Ollama` for local LLM serving
 - GPU drivers when running accelerated inference
 
+## Install MariaDB For Python
+
+Skip this section if you are using SQLite.
+
+On Ubuntu, install MariaDB Server and the Python connector dependency:
+
+```bash
+sudo apt update
+sudo apt install mariadb-server libmariadb-dev
+```
+
+Then install the Python connector in the same Python environment used for the backends:
+
+```bash
+pip install mariadb
+```
+
+  > Note - Check the official MariaDB documentation for any changes to packages or installation instructions before proceeding.
+
 ## Create Required `.env` Files
 
 Create and populate all required `.env` files before starting services.

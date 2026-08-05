@@ -27,6 +27,8 @@ import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
 import { hasPermission } from "@/utils/permissions";
 import { set } from "date-fns";
+import { NameCharacterCounter } from "@/components/NameCharacterCounter";
+import { isNameOverCharacterLimit } from "@/utils/nameValidation";
 
 interface TestCaseAddDialogProps {
   open: boolean;
@@ -360,8 +362,9 @@ export const TestCaseAddDialog = ({
 
     const checkNameAvailability = async () => {
       const name = testCaseName.trim();
-      if (!name) {
+      if (!name || isNameOverCharacterLimit(testCaseName)) {
         setIsNameAvailable(null);
+        setIsCheckingName(false);
         return;
       }
 
@@ -495,6 +498,15 @@ export const TestCaseAddDialog = ({
       toast({
         title: "Validation Error",
         description: "Test case name is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isNameOverCharacterLimit(testCaseName)) {
+      toast({
+        title: "Validation Error",
+        description: "Test case name must be 40 characters or fewer",
         variant: "destructive",
       });
       return;
@@ -768,13 +780,21 @@ export const TestCaseAddDialog = ({
                   placeholder="Enter new test case name"
                   value={testCaseName}
                   onChange={(e) => setTestCaseName(e.target.value)}
+                  onMouseDown={(e) => e.currentTarget.focus()}
                   onFocus={() => {
                     setShowDetails(false);
                     setShowRequestDetails(false);
                   }}
                   className={`bg-muted pr-24 ${
-                    isNameAvailable === false ? "border-destructive" : ""
+                    isNameAvailable === false ||
+                    isNameOverCharacterLimit(testCaseName)
+                      ? "border-destructive"
+                      : ""
                   }`}
+                  aria-invalid={
+                    isNameAvailable === false ||
+                    isNameOverCharacterLimit(testCaseName)
+                  }
                   required
                   disabled={isSubmitting}
                 />
@@ -796,6 +816,7 @@ export const TestCaseAddDialog = ({
                   </div>
                 )}
               </div>
+              <NameCharacterCounter value={testCaseName} />
             </div>
                
             <div className="space-y-1 pb-2">
@@ -815,6 +836,7 @@ export const TestCaseAddDialog = ({
                     }}
                     placeholder="Enter user prompt or Search "
                     onChange={(e) => setUserPrompts(e.target.value)}
+                    onMouseDown={(e) => e.currentTarget.focus()}
                     onFocus={() => {
                       setFocusedField("userPrompt");
                       setShowRequestDetails(false);
@@ -860,6 +882,7 @@ export const TestCaseAddDialog = ({
                             setErrors(prev => ({ ...prev, systemPrompts: false }));
                           }
                         }}
+                        onMouseDown={(e) => e.currentTarget.focus()}
                         onFocus={() => setFocusedField("systemPrompt")}
                         onBlur={() => setFocusedField(null)}
                         className={`bg-muted min-h-[73px] pr-10 ${
@@ -978,14 +1001,16 @@ export const TestCaseAddDialog = ({
                     placeholder="Enter response or Search "
                     className="bg-muted min-h-[73px] pr-10"
                     onChange={(e) => setResponseText(e.target.value)}
+                    onMouseDown={(e) => e.currentTarget.focus()}
                     onFocus={() => {
                       setFocusedField("response");
                       setShowDetails(false);
+                       setShowRequestDetails(true); // response details show
                     }}
                     onBlur={() => setFocusedField(null)}
                     onClick={() => {
-                      setShowRequestDetails(true);
-                      setShowDetails(false);
+                      setShowRequestDetails(true); // response details show
+                      setShowDetails(false); // user prompt details hide
                     }}
                   />
                   { focusedField === "response" && (
@@ -1131,6 +1156,7 @@ export const TestCaseAddDialog = ({
                             setErrors(prev => ({ ...prev, llmPrompt: false }));
                           }
                         }}
+                    onMouseDown={(e) => e.currentTarget.focus()}
                     onFocus={() => {
                       setFocusedField("llm");
                       setShowDetails(false);
@@ -1219,6 +1245,7 @@ export const TestCaseAddDialog = ({
                   isSubmitting || 
                   isCheckingName || 
                   isNameAvailable === false || 
+                  isNameOverCharacterLimit(testCaseName) ||
                   !isAdded || 
                   !notes ||
                   selectedMetrics.length === 0 ||

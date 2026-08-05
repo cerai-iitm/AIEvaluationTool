@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { type ChangeEvent, type DragEvent, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Sidebar from "@/components/Sidebar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { MoreVertical, FileText, Target, Globe, Layers, Languages, MessageSquare, PenTool, Scale, ClipboardList, BarChart3, Users, Upload, Loader } from "lucide-react";
@@ -86,9 +85,12 @@ const Dashboard = () => {
   const [importerMessage, setImporterMessage] = useState("");
   const [importerLogs, setImporterLogs] = useState<string[]>([]);
   const importerSocketRef = useRef<WebSocket | null>(null);
+  const importerFileInputRef = useRef<HTMLInputElement | null>(null);
   const importerSocketClosingRef = useRef(false);
   const importerLoadingRef = useRef(false);
   const importerReloadTimerRef = useRef<number | null>(null);
+  const [selectedJsonFile, setSelectedJsonFile] = useState<File | null>(null);
+  const [isJsonDragActive, setIsJsonDragActive] = useState(false);
 
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -395,6 +397,127 @@ const Dashboard = () => {
     }
   };
 
+  const pickJsonFile = (file?: File | null) => {
+    if (!file) {
+      return;
+    }
+
+    if (!file.name.toLowerCase().endsWith(".json")) {
+      setSelectedJsonFile(null);
+      setImporterStatus("idle");
+      setImporterMessage("Please select a .json file.");
+      return;
+    }
+
+    setSelectedJsonFile(file);
+    setImporterStatus("idle");
+    setImporterMessage("");
+  };
+
+  const handleJsonFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    pickJsonFile(event.target.files?.[0]);
+  };
+
+  const handleJsonDragOver = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsJsonDragActive(true);
+  };
+
+  const handleJsonDragLeave = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsJsonDragActive(false);
+  };
+
+  const handleJsonDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsJsonDragActive(false);
+    pickJsonFile(event.dataTransfer.files?.[0]);
+  };
+
+  const formatUploadError = async (response: Response) => {
+    try {
+      const data = await response.json();
+      const detail = data.detail;
+
+      if (typeof detail === "string") {
+        return detail;
+      }
+
+      if (detail?.errors?.length) {
+        const firstErrors = detail.errors
+          .slice(0, 5)
+          .map((error: { row?: number | null; field?: string; message?: string }) => {
+            const row = error.row ? `Row ${error.row}` : "File";
+            const field = error.field ? ` ${error.field}` : "";
+            return `${row}${field}: ${error.message}`;
+          })
+          .join("\n");
+        const remaining = detail.errors.length > 5 ? `\n...and ${detail.errors.length - 5} more error(s).` : "";
+        return `${detail.message || "JSON upload validation failed."}\n${firstErrors}${remaining}`;
+      }
+
+      return detail?.message || data.message || "JSON upload failed.";
+    } catch (error) {
+      return "JSON upload failed.";
+    }
+  };
+
+  const uploadJsonFile = async () => {
+    if (!selectedJsonFile) {
+      setImporterStatus("error");
+      setImporterMessage("Select a JSON file before importing.");
+      return;
+    }
+
+    setImporterLoading(true);
+    setImporterStatus("loading");
+    setImporterMessage("Uploading JSON test cases...");
+    setImporterLogs([]);
+
+    try {
+      const token = await getValidAccessToken(API_ENDPOINTS.REFRESH);
+      if (!token) {
+        setImporterStatus("error");
+        setImporterMessage("Authentication failed");
+        setImporterLoading(false);
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", selectedJsonFile);
+
+      const response = await fetch(API_ENDPOINTS.TESTCASE_UPLOAD_JSON, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        setImporterStatus("error");
+        setImporterMessage(await formatUploadError(response));
+        setImporterLoading(false);
+        return;
+      }
+
+      const data = await response.json();
+      setImporterStatus("success");
+      setImporterMessage(data.message || "JSON test cases imported successfully.");
+      setImporterLoading(false);
+      importerReloadTimerRef.current = window.setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    } catch (error) {
+      setImporterStatus("error");
+      setImporterMessage(`Error: ${error instanceof Error ? error.message : "An unexpected error occurred"}`);
+      setImporterLoading(false);
+    }
+  };
+
   const statCardHandlers = (stat: typeof stats[0]) => ({
     open: () => stat.onClick && stat.onClick(),
     history: () => fetchHistory(stat.title),
@@ -403,10 +526,7 @@ const Dashboard = () => {
   return (
     <>
       <div className="flex min-h-screen">
-        <aside className="fixed top-0 left-0 h-screen w-[220px] bg-[#5252c2] z-20">
-          <Sidebar />
-        </aside>
-        <main className="flex-1 ml-[220px] min-h-screen flex flex-col pt-28 pb-28">
+        <main className="flex-1 min-h-screen flex flex-col pt-28 pb-28">
           {/* Centered Title */}
           <div className="flex items-center justify-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold text-black">
@@ -424,7 +544,7 @@ const Dashboard = () => {
                     className={`relative shadow-lg hover:shadow-xl transition-shadow hovershadow-md ${stat.onClick ? "cursor-pointer" : ""}`}
                     onClick={() => stat.onClick && stat.onClick()}
                   >
-                    <button
+                    {/* <button
                       className="absolute top-4 right-4 text-muted-foreground hover:text-foreground z-10"
                       onClick={(e) => {
                         e.stopPropagation();
@@ -432,7 +552,7 @@ const Dashboard = () => {
                       }}
                     >
                       <MoreVertical className="w-5 h-5" />
-                    </button>
+                    </button> */}
                     {menuOpen === idx && (
                       <div className="absolute top-12 right-4 z-20 bg-white border rounded-lg shadow-lg flex flex-col min-w-[150px]">
                         {MENU_OPTIONS.filter(opt => {
@@ -478,6 +598,8 @@ const Dashboard = () => {
             setImporterStatus("idle");
             setImporterMessage("");
             setImporterLogs([]);
+            setSelectedJsonFile(null);
+            setIsJsonDragActive(false);
             setImporterDialogOpen(true);
           }}
           disabled={importerLoading}
@@ -598,11 +720,40 @@ const Dashboard = () => {
             )}
 
             {importerStatus === "idle" && (
-              <div className="flex flex-col items-center gap-4">
-                <Upload className="w-12 h-12 text-blue-600" />
-                <p className="text-foreground">
-                  This will import all test data into the database. Continue?
-                </p>
+              <div
+                className={`flex flex-col items-center gap-4 rounded-lg border-2 border-dashed px-6 py-8 transition-colors ${
+                  isJsonDragActive ? "border-blue-600 bg-blue-50" : "border-gray-300 bg-white"
+                }`}
+                onDragOver={handleJsonDragOver}
+                onDragLeave={handleJsonDragLeave}
+                onDrop={handleJsonDrop}
+              >
+                <input
+                  ref={importerFileInputRef}
+                  type="file"
+                  accept="application/json,.json"
+                  className="hidden"
+                  onChange={handleJsonFileChange}
+                />
+                <button
+                  type="button"
+                  onClick={() => importerFileInputRef.current?.click()}
+                  className="rounded-full p-3 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                  aria-label="Choose JSON file"
+                >
+                  <Upload className="w-12 h-12 text-blue-600" />
+                </button>
+                <div className="space-y-1">
+                  <p className="text-foreground font-medium">
+                    {selectedJsonFile ? selectedJsonFile.name : "Click the upload icon or drop a JSON file here"}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Missing fields will be reported before import. Existing test case names are skipped.
+                  </p>
+                  {importerMessage && (
+                    <p className="text-sm text-red-600 whitespace-pre-line">{importerMessage}</p>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -616,7 +767,9 @@ const Dashboard = () => {
                 Cancel
               </button>
               <button
+                // onClick={uploadJsonFile}
                 onClick={runImporter}
+                // disabled={importerLoading || !selectedJsonFile}
                 disabled={importerLoading}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-400"
               >
@@ -629,7 +782,7 @@ const Dashboard = () => {
             <div className="flex gap-4 justify-end pt-4">
               <button
                 onClick={() => {
-                  setImporterDialogOpen(false);
+                  setImporterDialogOpen(true);
                   setImporterStatus("idle");
                 }}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"

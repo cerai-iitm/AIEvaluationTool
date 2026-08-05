@@ -21,6 +21,7 @@ class Truthfulness_Internal(Strategy):
     def __init__(self, name: str = "truthfulness_internal", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
         self.model_name = dflt_vals.model_name
+        self.metric_name = kwargs.get("metric_name", name)
         self.base_url = os.getenv("OLLAMA_URL")
         self.data_src = name.split("_")[-1] if len(name.split("_")) > 2 else dflt_vals.data_src
 
@@ -51,8 +52,8 @@ class Truthfulness_Internal(Strategy):
         """
         prediction = re.findall(r"\d+", response)[0] if re.findall(r"\d+", response) else "-1"
         #print(f"Prediction: {prediction}, Expected Answer: {expected_answer}")
-        if expected_answer == prediction: return 1, OllamaConnect.get_reason(response, " ".join(self.name.split("_")), 1, add_info=f"expected_answer is {expected_answer}")
-        else: return 0, OllamaConnect.get_reason(response, " ".join(self.name.split("_")), 0, add_info=f"expected_answer is {expected_answer}")
+        if expected_answer == prediction: return 1, OllamaConnect.get_reason(response, 1, metric_name=self.metric_name, add_info=f"expected_answer is {expected_answer}")
+        else: return 0, OllamaConnect.get_reason(response, 0, metric_name=self.metric_name, add_info=f"expected_answer is {expected_answer}")
         
     def eval_internal_llm_as_judge(self, testcase:TestCase, conversation:Conversation):
         """

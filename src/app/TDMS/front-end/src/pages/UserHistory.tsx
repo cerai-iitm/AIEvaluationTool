@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import Sidebar from "@/components/Sidebar";
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -46,6 +46,36 @@ interface User {
   role: string;
 }
 
+const normalizeRole = (role: string) => role.trim().toLowerCase();
+
+const formatLocalTimestamp = (timestamp: string) => {
+  const trimmedTimestamp = timestamp.trim();
+  const hasTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(trimmedTimestamp);
+  const normalizedTimestamp = trimmedTimestamp.replace(" ", "T");
+  const date = new Date(hasTimezone ? normalizedTimestamp : `${normalizedTimestamp}Z`);
+
+  if (Number.isNaN(date.getTime())) {
+    return timestamp;
+  }
+
+  const parts = new Intl.DateTimeFormat(undefined, {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+
+  const getPart = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? "";
+
+  return `${getPart("year")}-${getPart("month")}-${getPart("day")} ${getPart("hour")}:${getPart("minute")}`;
+};
+
+
+
+
 const UserHistory = () => {
   const { username } = useParams();
   const navigate = useNavigate();
@@ -62,7 +92,7 @@ const UserHistory = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  
+  const [resetPassword, setResetPassword] = useState(false);
   // Update form state
   const [updateForm, setUpdateForm] = useState({
     user_name: "",
@@ -70,6 +100,21 @@ const UserHistory = () => {
     role: "",
     password: "",
   });
+
+  function getBasePath(): string {
+    return window.location.pathname.startsWith("/tdms") ? "/tdms" : "";
+  }
+  const validateUserName = (value: string): string | null => {
+  const v = value.trim();
+    if (v.length < 3) return "Username must be at least 3 characters long";
+    if (v.length > 30) return "Username must be 30 characters or fewer";
+    
+    if (!/^[a-zA-Z0-9._-]+$/.test(v)) return "Special characters are not allowed";
+    if (!/^[a-zA-Z0-9]/.test(v)) return "Username must start with a letter or number";
+    if (!/[a-zA-Z0-9]$/.test(v)) return "Username must end with a letter or number";
+    if (/[._-]{2,}/.test(v)) return "No consecutive special characters (e.g. .. __ --)";
+    return null;
+  };
 
   // Fetch current logged-in user data
   useEffect(() => {
@@ -126,7 +171,7 @@ const UserHistory = () => {
             setUpdateForm({
               user_name: foundUser.user_name,
               email: foundUser.email,
-              role: foundUser.role,
+              role: normalizeRole(foundUser.role),
               password: "",
             });
           } else {
@@ -215,6 +260,12 @@ const UserHistory = () => {
       return;
     }
 
+    const userNameError = validateUserName(updateForm.user_name);
+      if (userNameError) {
+        toast({ title: "Invalid Username", description: userNameError, variant: "destructive" });
+        return;
+      }
+      
     setIsUpdating(true);
     try {
       const token = localStorage.getItem("access_token");
@@ -250,7 +301,12 @@ const UserHistory = () => {
         });
         setUpdateDialogOpen(false);
         // Refresh user data and activities
-        window.location.reload();
+        if (updateForm.user_name !== user.user_name) {
+          window.location.href = `${getBasePath()}/user-history/${updateForm.user_name}`;
+        } else {
+          window.location.reload();
+        }
+
       } else {
         const errorData = await response.json().catch(() => ({}));
         toast({
@@ -269,6 +325,20 @@ const UserHistory = () => {
     } finally {
       setIsUpdating(false);
     }
+  };
+
+  const handleUpdateDialogOpenChange = (open: boolean) => {
+    if (open && user) {
+      setUpdateForm({
+        user_name: user.user_name,
+        email: user.email,
+        role: normalizeRole(user.role),
+        password: "",
+      });
+      setShowPassword(false);
+    }
+
+    setUpdateDialogOpen(open);
   };
 
   const handleDelete = async () => {
@@ -369,11 +439,8 @@ const UserHistory = () => {
 
   return (
     <div className="flex min-h-screen">
-      <aside className="fixed top-0 left-0 h-screen w-[220px] z-20">
-        <Sidebar />
-      </aside>
 
-      <main className="flex-1 ml-[220px] p-28 min-h-screen items-center justify-center">
+      <main className="flex-1 p-28 min-h-screen items-center justify-center ">
         <div className="sticky top-0 bg-white rounded-lg px-4 py-4 shadow-md max-w-5xl z-10 mb-12">
           <div className="flex items-center justify-between">
             <h1 className="text-4xl font-bold">
@@ -386,7 +453,7 @@ const UserHistory = () => {
                 <>
                   <Button
                     className="bg-primary hover:bg-primary/90"
-                    onClick={() => setUpdateDialogOpen(true)}
+                    onClick={() => handleUpdateDialogOpenChange(true)}
                     disabled={isLoadingUser || !user}
                   >
                     Update
@@ -459,13 +526,13 @@ const UserHistory = () => {
                 </div>
                 <div className="text-right">
                   <div className="flex items-center gap-2 justify-end mb-1">
-                    <span className="font-medium">{activity.testCaseId}</span>
-                    <span className="text-xl">-</span>
                     <span className={`font-semibold ${getStatusColor(activity.status)}`}>
                       {activity.status}
                     </span>
                   </div>
-                  <p className="text-sm text-muted-foreground">{activity.timestamp}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {formatLocalTimestamp(activity.timestamp)}
+                  </p>
                 </div>
               </div>
             </div>
@@ -475,7 +542,7 @@ const UserHistory = () => {
       </main>
 
       {/* Update User Dialog */}
-      <Dialog open={updateDialogOpen} onOpenChange={setUpdateDialogOpen}>
+      <Dialog open={updateDialogOpen} onOpenChange={handleUpdateDialogOpenChange}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="text-3xl font-bold text-center">Update User</DialogTitle>
@@ -525,12 +592,12 @@ const UserHistory = () => {
                   <SelectItem value="admin">Admin</SelectItem>
                   <SelectItem value="manager">Manager</SelectItem>
                   <SelectItem value="curator">Curator</SelectItem>
-                  <SelectItem value="user">User</SelectItem>
+                  <SelectItem value="viewer">Viewer</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-
-            <div className="grid grid-cols-[200px_1fr] items-center gap-4">
+            {resetPassword && (
+              <div className="grid grid-cols-[200px_1fr] items-center gap-4">
               <Label htmlFor="update-password" className="text-right font-semibold">
                 Password :
               </Label>
@@ -556,7 +623,9 @@ const UserHistory = () => {
                 </button>
               </div>
             </div>
-
+            )}
+            
+                    
             <div className="flex justify-center gap-4 pt-6">
               <Button
                 variant="outline"
@@ -564,6 +633,15 @@ const UserHistory = () => {
                 disabled={isUpdating}
               >
                 Cancel
+              </Button>
+               <Button
+                variant="outline"
+                className="border-yellow-500 text-yellow-600 "
+                type="button"
+                onClick={() => setResetPassword(!resetPassword)}
+                disabled={isUpdating}
+              >
+                {resetPassword ? "Cancel Reset" : "Reset Password"}
               </Button>
               <Button
                 className="bg-primary hover:bg-primary/90 px-6"

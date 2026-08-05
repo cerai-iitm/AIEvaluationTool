@@ -353,7 +353,15 @@ export const TestCaseUpdateDialog = ({
   const hasExistingLLMPrompt = testCaseInitial.llmPrompt && testCaseInitial.llmPrompt.trim() !== "";
   const showLLMPrompt = selectedStrategyRequiresLLM || hasExistingLLMPrompt;
 
-
+  const hasRequiredFieldValues =
+    Boolean(userPrompts?.trim()) &&
+    Boolean(systemPrompts?.trim()) &&
+    Boolean(responseText?.trim()) &&
+    Boolean(strategy?.trim()) &&
+    selectedMetrics.length > 0 &&
+    Boolean(notes.trim()) &&
+    (!selectedStrategyRequiresLLM ||
+      (Boolean(llmPrompt?.trim()) && llmPrompt.trim() !== "None"));
 
   const handleSubmit = async () => {
     // Check if user has permission to update
@@ -412,6 +420,33 @@ export const TestCaseUpdateDialog = ({
         variant: "destructive",
       });
       newErrors.responseText = true;
+      hasErrors = true;
+    }
+
+    if (!strategy || !strategy.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Strategy is required",
+        variant: "destructive",
+      });
+      hasErrors = true;
+    }
+
+    if (selectedMetrics.length === 0) {
+      toast({
+        title: "Validation Error",
+        description: "At least one metric is required",
+        variant: "destructive",
+      });
+      hasErrors = true;
+    }
+
+    if (!notes || !notes.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Notes are required",
+        variant: "destructive",
+      });
       hasErrors = true;
     }
 
@@ -579,9 +614,12 @@ export const TestCaseUpdateDialog = ({
 
           <div className = "overflow-y-auto flex-1 pr-1 pl-1">
 
-            <div className=" pb-4 flex flex-row align-center justify-center">
-              <Label className="text-base font-semibold">Test Case -</Label>
-              <Label className="text-base font-semibold text-xl pl-2 text-primary hover:text-primary/90">{testCase.name}</Label>
+             <div className="flex items-center justify-center gap-2 flex-wrap text-center w-full">
+                <Label className="text-base font-semibold whitespace-nowrap">
+                  Test Case -
+                </Label>
+
+              <Label className="text-xl font-semibold text-primary hover:text-primary/90 break-all min-w-0 max-w-full">{testCase.name}</Label>
               {/* <Input
                 value={testCase.name}
                 readOnly
@@ -602,6 +640,7 @@ export const TestCaseUpdateDialog = ({
                       minHeight: "75px",
                       overflowY: "auto"
                     }}
+                    onMouseDown={(e) => e.currentTarget.focus()}
                     onFocus={() => setFocusedField("userPrompt")}
                     onBlur={() => setFocusedField(null)}
                     onChange={(e) => {
@@ -650,6 +689,7 @@ export const TestCaseUpdateDialog = ({
                     className={`bg-muted min-h-[73px] pr-10 ${
                       errors.systemPrompts ? 'border-red-500 ring-2 ring-red-200' : ''
                     }`}
+                    onMouseDown={(e) => e.currentTarget.focus()}
                     onFocus={() => setFocusedField("systemPrompt")}
                     onBlur={() => setFocusedField(null)}
                     // tabIndex = {-1}
@@ -683,6 +723,7 @@ export const TestCaseUpdateDialog = ({
                       overflowY: "auto"
                   }}
                   // readOnly = {responseText === "None"}
+                  onMouseDown={(e) => e.currentTarget.focus()}
                   onFocus = { () => setFocusedField("response")}
                   onBlur={() => setFocusedField(null)}
                   onChange={(e) => {
@@ -747,6 +788,7 @@ export const TestCaseUpdateDialog = ({
                         overflowY: "auto"
                     }}
                     placeholder="Enter prompt or Search"
+                    onMouseDown={(e) => e.currentTarget.focus()}
                     onFocus={() => setFocusedField("llm")}
                     onBlur = {() => setTimeout(() => setFocusedField(null), 100)}
                     onChange={(e) => {
@@ -864,11 +906,10 @@ export const TestCaseUpdateDialog = ({
                 className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleSubmit}
                 disabled={
-                  !isChanged || 
-                  !notes.trim() || 
+                  !isChanged ||
+                  !hasRequiredFieldValues ||
                   isLoading ||
-                  selectedMetrics.length === 0 ||
-                  (!hasPermission(currentUserRole, "canUpdateTables") && 
+                  (!hasPermission(currentUserRole, "canUpdateTables") &&
                    !hasPermission(currentUserRole, "canUpdateRecords"))
                 }
               >

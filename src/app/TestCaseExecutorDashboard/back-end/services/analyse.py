@@ -16,6 +16,18 @@ gpu_url = os.getenv("GPU_URL")
 analysis_jobs = {}
 analysis_jobs_lock = Lock()
 
+ollama_url = os.getenv("OLLAMA_URL")
+NO_FAILED_TESTCASES_MESSAGE = "No failed testcases found"
+
+def check_analyse_health_service():
+    try:
+        response = requests.get(ollama_url, timeout=3)
+        if response.status_code < 400:
+            return {"status": "ok"}
+        raise HTTPException(status_code=503, detail="Ollama is not healthy")
+    except requests.exceptions.RequestException:
+        raise HTTPException(status_code=503, detail="Ollama is not reachable")
+
 # def check_service(url: str, name: str):
 #     try:
 #         response = requests.get(url, timeout=3)
@@ -49,7 +61,55 @@ def get_analyse_status_service(run_name: str):
         return {"run_name": run_name, **state}
 
 
-def start_analyse_service(run_name: str, db, background_tasks: BackgroundTasks, mode: str = "rerun_all"):
+def _is_retry_failed_candidate(db, detail) -> bool:
+    if getattr(detail, "status", None) != "COMPLETED":
+        return False
+
+    conversation_id = getattr(detail, "conversation_id", None)
+    if not conversation_id:
+        return False
+
+    conversation = db.get_conversation_by_id(conversation_id)
+    if not conversation:
+        return False
+
+    reason = getattr(conversation, "evaluation_reason", None) or ""
+    return reason.strip() == ""
+
+
+def _parse_selected_detail_ids(selected_detail_ids):
+    if not selected_detail_ids:
+        return set()
+    try:
+        return {int(value) for value in selected_detail_ids.split(",") if value.strip()}
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="detail_ids must be comma-separated integers")
+
+
+def _filter_run_details(run_details, mode: str, selected_detail_ids, db):
+    if mode == "retry_failed":
+        return [detail for detail in run_details if _is_retry_failed_candidate(db, detail)]
+    if mode == "selected":
+        selected_ids = _parse_selected_detail_ids(selected_detail_ids)
+        if not selected_ids:
+            raise HTTPException(status_code=400, detail="Select at least one test case")
+        return [
+            detail
+            for detail in run_details
+            if getattr(detail, "detail_id", None) in selected_ids
+        ]
+    if mode != "rerun_all":
+        raise HTTPException(status_code=400, detail=f"Unsupported analysis mode: {mode}")
+    return run_details
+
+
+def start_analyse_service(
+    run_name: str,
+    db,
+    background_tasks: BackgroundTasks,
+    mode: str = "rerun_all",
+    selected_detail_ids=None,
+):
     logger.info(f"[SERVICE] Starting analysis service for run '{run_name}' with mode '{mode}'")
     try:
         run = db.get_run_by_name(run_name=run_name)
@@ -76,22 +136,22 @@ def start_analyse_service(run_name: str, db, background_tasks: BackgroundTasks, 
             rd for rd in run_details if rd.status == "COMPLETED"
         ]
 
-        if mode == "retry_failed":
+        if mode in ("retry_failed", "selected"):
             logger.info("Running only failed test cases...")
-            filtered_run_details = []
-            for detail in run_details:
-                conversation = db.get_conversation_by_id(detail.conversation_id)
-                if not conversation:
-                    continue
-                reason = conversation.evaluation_reason or ""
-                if reason.strip() == "":
-                    filtered_run_details.append(detail)
+            filtered_run_details = _filter_run_details(
+                run_details, mode, selected_detail_ids, db
+            )
             logger.info(f"Filtered Run Details: {filtered_run_details}")
             logger.info(f"Retry Failed: {len(filtered_run_details)} / {len(run_details)} selected")
             run_details = filtered_run_details
             if not run_details:
                 logger.info("No failed test cases to retry")
-                return
+                message = (
+                    NO_FAILED_TESTCASES_MESSAGE
+                    if mode == "retry_failed"
+                    else "None of the selected test cases can be re-executed"
+                )
+                raise HTTPException(status_code=400, detail=message)
         total_items = len(run_details) if run_details else 0
         _set_analysis_job(
             run_name,
@@ -104,7 +164,13 @@ def start_analyse_service(run_name: str, db, background_tasks: BackgroundTasks, 
             last_update=None,
         )
 
-        background_tasks.add_task(run_analyse_background_service, run_name, db, mode)
+        background_tasks.add_task(
+            run_analyse_background_service,
+            run_name,
+            db,
+            mode,
+            selected_detail_ids,
+        )
         return {
             "run_name": run_name,
             "status": "started",
@@ -150,7 +216,9 @@ def _stringify_error(e: Exception) -> str:
         return "Unknown error"
 
 
-async def run_analyse_background_service(run_name: str, db, mode: str = "rerun_all"):
+async def run_analyse_background_service(
+    run_name: str, db, mode: str = "rerun_all", selected_detail_ids=None
+):
     analysis_start_ts = datetime.now()
     try:
         await _safe_ws_send({
@@ -171,21 +239,16 @@ async def run_analyse_background_service(run_name: str, db, mode: str = "rerun_a
             rd for rd in run_details if rd.status == "COMPLETED"
         ]
         
-        if mode == "retry_failed":
+        if mode in ("retry_failed", "selected"):
             logger.info("Running only failed test cases...")
-            filtered_run_details = []
-            for detail in run_details:
-                conversation = db.get_conversation_by_id(detail.conversation_id)
-                if not conversation:
-                    continue
-                reason = conversation.evaluation_reason or ""
-                if reason.strip() == "":
-                    filtered_run_details.append(detail)
+            filtered_run_details = _filter_run_details(
+                run_details, mode, selected_detail_ids, db
+            )
             logger.info(f"Retry Failed: {len(filtered_run_details)} / {len(run_details)} selected")
             run_details = filtered_run_details
             if not run_details:
                 logger.info("No failed test cases to retry")
-                return        
+                raise ValueError(NO_FAILED_TESTCASES_MESSAGE)
         if not run_details:
             logger.error(f"No run details found for run '{run_name}'.")
             raise HTTPException(
@@ -285,6 +348,7 @@ async def run_analyse_background_service(run_name: str, db, mode: str = "rerun_a
                 status = "FAILED"
                 failed += 1
                 error = _stringify_error(e)
+                score = None
                 # Best-effort: persist failure reason to conversation (if available)
                 try:
                     if conversation is None and conversation_id:

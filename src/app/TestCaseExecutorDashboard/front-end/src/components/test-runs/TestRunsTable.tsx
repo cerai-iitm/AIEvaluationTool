@@ -1,12 +1,14 @@
 import React, { useEffect, useState, useRef } from "react";
 import "./TestRunsTable.css";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { API_BASE_URL, API_ENDPOINTS, LOGIN_URL } from "../../config/api";
 import { AllFilters, FilterOption } from "../../types/Filters";
 import { getAuthHeaders, redirectToLogin } from "../../utils/auth";
+import { createPortal } from "react-dom";
 
 interface TestRun {
   run_id: number;
+  totalPages : number;
   run_name: string;
   target: string;
   status: string;
@@ -16,6 +18,15 @@ interface TestRun {
   duration_ms?: number;
   average_score?: number | null;
   evaluation_ts?: string;
+  analysis_status?: string;
+  has_failed_cases?: boolean;
+}
+
+interface SelectableRunDetail {
+  detail_id: number;
+  testcase_name: string;
+  metric_name: string;
+  status: string;
 }
 
 interface HeaderConfig {
@@ -32,24 +43,83 @@ interface Props {
   onFilterChange?: (filterType: string, value: string) => void;
 }
 
+const getPageFromSearchParams = (searchParams: URLSearchParams) => {
+  const page = Number(searchParams.get("page"));
+  return Number.isInteger(page) && page > 0 ? page : 1;
+};
+
+const FilterDropdownPortal: React.FC<{
+  anchorEl: HTMLElement | null;
+  children: React.ReactNode;
+  setRef: (el: HTMLDivElement | null) => void;
+}> = ({ anchorEl, children, setRef }) => {
+  const [style, setStyle] = useState<React.CSSProperties>({ visibility: "hidden" });
+
+  useEffect(() => {
+    const updatePosition = () => {
+      if (!anchorEl) return;
+      const rect = anchorEl.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const dropdownWidth = 220;
+
+      let left = rect.left;
+      if (left + dropdownWidth > viewportWidth - 8) {
+        left = Math.max(8, rect.right - dropdownWidth);
+      }
+
+      setStyle({
+        position: "fixed",
+        top: rect.bottom + 4,
+        left,
+        width: dropdownWidth,
+        zIndex: 9999,
+        visibility: "visible",
+      });
+    };
+
+    updatePosition();
+    window.addEventListener("scroll", updatePosition, true);
+    window.addEventListener("resize", updatePosition);
+    return () => {
+      window.removeEventListener("scroll", updatePosition, true);
+      window.removeEventListener("resize", updatePosition);
+    };
+  }, [anchorEl]);
+
+  return createPortal(
+    <div className="filter-dropdown" style={style} ref={setRef}>
+      {children}
+    </div>,
+    document.body
+  );
+};
+
 const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const loginUrl = LOGIN_URL;
-  const [runs, setRuns] = useState<TestRun[]>([]);
   const [filteredRuns, setFilteredRuns] = useState<TestRun[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(() => getPageFromSearchParams(searchParams));
   const [itemsPerPage] = useState(10);
   const [downloadState, setDownloadState] = useState<{
     runName: string;
     progress: number;
     phase: "generating" | "done";
   } | null>(null);
+  const [deletingRunName, setDeletingRunName] = useState<string | null>(null);
+  const [refreshRunsTick, setRefreshRunsTick] = useState(0);
   const [analyseModal, setAnalyseModal] = useState<{
     runName: string;
     hasScore: boolean;
+    hasFailedCases: boolean;
   } | null>(null);
   const [analyseLoading, setAnalyseLoading] = useState(false);
+  const [showTestCaseSelection, setShowTestCaseSelection] = useState(false);
+  const [selectionLoading, setSelectionLoading] = useState(false);
+  const [selectableDetails, setSelectableDetails] = useState<SelectableRunDetail[]>([]);
+  const [selectedAnalysisDetailIds, setSelectedAnalysisDetailIds] = useState<number[]>([]);
   const [availableFilters, setAvailableFilters] = useState<AllFilters>({
     domains: [],
     languages: [],
@@ -60,7 +130,9 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
   });
   const [filtersLoading, setFiltersLoading] = useState(true);
   const [openFilterColumn, setOpenFilterColumn] = useState<string | null>(null);
-  const filterRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const [totalPages, setTotalPages] = useState(1);
+  const filterTriggerRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const filterPortalRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const [sortBy, setSortBy] = useState<"start_ts" | "end_ts">("end_ts");
   const [order, setOrder] = useState<"asc" | "desc">("desc");
@@ -96,21 +168,99 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
     { key: "domain", label: "Domain", filterable: true, filterType: "domain" },
     { key: "actions", label: "Actions", filterable: false },
   ];
-
-  const startAnalysis = async (mode: string, runName: string) => {
+  const handleAnalyseClick = async (runName: string, hasScore: boolean, hasFailedCases: boolean) => {
+  try {
+    const res = await fetch(API_ENDPOINTS.ANALYSE_HEALTH, {  // ✅ no ()
+      headers: getAuthHeaders(),
+      credentials: "include",
+    });
+    if (!res.ok) {
+      alert("Ollama is not running. Please start Ollama and try again.");
+      return;
+    }
+    setAnalyseModal({ runName, hasScore, hasFailedCases });
+    setShowTestCaseSelection(false);
+    setSelectableDetails([]);
+    setSelectedAnalysisDetailIds([]);
+  } catch (err) {
+    alert("Ollama is not running. Please start Ollama and try again.");
+  }
+};
+  const startAnalysis = async (mode: string, runName: string, detailIds: number[] = []) => {
     setAnalyseLoading(true);
     try {
-      const url = API_ENDPOINTS.ANALYSE_RUN(runName, mode);
-      await fetch(url, {
+      const url = API_ENDPOINTS.ANALYSE_RUN(runName, mode, detailIds);
+      const response = await fetch(url, {
         method: "GET",
         headers: getAuthHeaders(),
         credentials: "include",
       });
-      navigate(`/analyse/${encodeURIComponent(runName)}?mode=${mode}`);
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.detail || `Analysis request failed (${response.status})`);
+      }
+      const params = new URLSearchParams({ mode });
+      if (detailIds.length) params.set("detail_ids", detailIds.join(","));
+      navigate(`/analyse/${encodeURIComponent(runName)}?${params.toString()}`);
     } catch (err) {
       console.error("Analysis failed:", err);
+      alert(err instanceof Error ? err.message : "Analysis failed");
       setAnalyseLoading(false);
-      setAnalyseModal(null);
+    }
+  };
+
+  const openTestCaseSelection = async (runName: string) => {
+    setShowTestCaseSelection(true);
+    if (selectableDetails.length) return;
+    setSelectionLoading(true);
+    try {
+      const response = await fetch(API_ENDPOINTS.GET_TEST_RUN_DETAILS(runName, ""), {
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+      if (response.status === 401) {
+        redirectToLogin();
+        return;
+      }
+      if (!response.ok) throw new Error(`Failed to load test cases (${response.status})`);
+      const data = await response.json();
+      setSelectableDetails(data.details ?? []);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to load test cases");
+      setShowTestCaseSelection(false);
+    } finally {
+      setSelectionLoading(false);
+    }
+  };
+
+  const handleDeleteRun = async (runName: string) => {
+    const confirmed = window.confirm(
+      `Delete run "${runName}"? This will remove its conversations and test run details.`
+    );
+    if (!confirmed) return;
+
+    setDeletingRunName(runName);
+    try {
+      const res = await fetch(API_ENDPOINTS.DELETE_TEST_RUN(runName), {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+      if (res.status === 401) {
+        redirectToLogin();
+        throw new Error("Unauthorized");
+      }
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.detail || `Failed to delete run (${res.status})`);
+      }
+      setFilteredRuns((prev) => prev.filter((run) => run.run_name !== runName));
+      setRefreshRunsTick((prev) => prev + 1);
+    } catch (err) {
+      console.error("Run delete failed:", err);
+      alert(err instanceof Error ? err.message : "Failed to delete run");
+    } finally {
+      setDeletingRunName(null);
     }
   };
 
@@ -131,12 +281,13 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (openFilterColumn && filterRefs.current[openFilterColumn]) {
-        const filterElement = filterRefs.current[openFilterColumn];
-        if (filterElement && !filterElement.contains(event.target as Node)) {
-          setOpenFilterColumn(null);
-        }
-      }
+      if (!openFilterColumn) return;
+      const target = event.target as Node;
+      const trigger = filterTriggerRefs.current[openFilterColumn];
+      const portal = filterPortalRefs.current[openFilterColumn];
+      if (trigger && trigger.contains(target)) return;
+      if (portal && portal.contains(target)) return;
+      setOpenFilterColumn(null);
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -144,11 +295,13 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
 
   const handleFilterChange = (filterType: string, value: string) => {
     onFilterChange?.(filterType, value);
+    paginate(1);
     setOpenFilterColumn(null);
   };
 
   const handleFilterClear = (filterType: string) => {
     onFilterChange?.(filterType, "");
+    paginate(1);
     setOpenFilterColumn(null);
   };
 
@@ -163,14 +316,22 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
       setSortBy(sortKey);
       setOrder("desc");
     }
-    setCurrentPage(1);
+    paginate(1);
   };
+
+  useEffect(() => {
+    const page = getPageFromSearchParams(searchParams);
+    setCurrentPage((prevPage) => (prevPage === page ? prevPage : page));
+  }, [searchParams]);
 
   useEffect(() => {
     setLoading(true);
     const params = new URLSearchParams(filters);
     params.append("sort_by", sortBy);
     params.append("order", order);
+    params.append("page", String(currentPage));
+    params.append("page_size", String(itemsPerPage));
+    
     const url = `${API_BASE_URL}${API_ENDPOINTS.GET_ALL_TEST_RUNS}?${params.toString()}`;
     fetch(url, { headers: getAuthHeaders(), credentials: "include" })
       .then((res) => {
@@ -180,20 +341,40 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
       })
       .then((data: TestRun[] | { detail?: string }) => {
         const safeRuns = Array.isArray(data) ? data : [];
-        setRuns(safeRuns);
+        const nextTotalPages = safeRuns[0]?.totalPages ?? 1;
         setFilteredRuns(safeRuns);
-        setCurrentPage(1);
+        setTotalPages(nextTotalPages);
+        if (currentPage > nextTotalPages) {
+          const nextPage = Math.max(1, nextTotalPages);
+          setCurrentPage(nextPage);
+          setSearchParams((prevParams) => {
+            const nextParams = new URLSearchParams(prevParams);
+            nextParams.set("page", String(nextPage));
+            return nextParams;
+          });
+        }
+        
       })
       .catch((err) => console.error("Error fetching test runs:", err))
       .finally(() => setLoading(false));
-  }, [filters, sortBy, order, loginUrl]);
+  }, [filters, sortBy, order, loginUrl, currentPage, itemsPerPage, refreshRunsTick, setSearchParams]);
+  // alert(totalPage);
+  // const indexOfLastRun = currentPage * itemsPerPage;
+  // const indexOfFirstRun = indexOfLastRun - itemsPerPage;
+  function paginate(pageNumber: number) {
+    const nextPage = Math.max(1, pageNumber);
+    setCurrentPage(nextPage);
+    setSearchParams((prevParams) => {
+      const nextParams = new URLSearchParams(prevParams);
+      nextParams.set("page", String(nextPage));
+      return nextParams;
+    });
+  }
 
-  const indexOfLastRun = currentPage * itemsPerPage;
-  const indexOfFirstRun = indexOfLastRun - itemsPerPage;
   const safeFilteredRuns = Array.isArray(filteredRuns) ? filteredRuns : [];
-  const currentRuns = safeFilteredRuns.slice(indexOfFirstRun, indexOfLastRun);
-  const totalPages = Math.ceil(safeFilteredRuns.length / itemsPerPage);
-  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+  // const currentRuns = safeFilteredRuns.slice(indexOfFirstRun, indexOfLastRun);
+  const currentRuns = safeFilteredRuns;
+  // const totalPages = Math.ceil(safeFilteredRuns.length / itemsPerPage);
 
   useEffect(() => {
     if (totalPages <= 5) return;
@@ -208,6 +389,19 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
 
   const SortIcon = ({ columnKey }: { columnKey: "start_ts" | "end_ts" }) => {
     const isActive = sortBy === columnKey;
+    if (columnKey === "start_ts") {
+      const isAscending = isActive && order === "asc";
+      return (
+        <i
+          className={`bi ${isAscending ? "bi-chevron-down" : "bi-chevron-up"}`}
+          style={{
+            fontSize: '22px',
+            color: '#ffffff',
+            fontWeight: 'bold',
+          }}
+        ></i>
+      );
+    }
     if (!isActive) return <i className="bi bi-chevron-expand" style={{ fontSize: '22px', color: 'rgba(255,255,255,0.35)' }}></i>;
     return order === "asc"
       ? <i className="bi bi-chevron-up" style={{ fontSize: '22px', color: '#ffffff', fontWeight: 'bold' }}></i>
@@ -241,13 +435,21 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
                       ) : (
                         <span>{header.label}</span>
                       )}
-                      {header.filterable && header.filterType && (
-                        <div className="filter-wrapper" ref={(el) => { filterRefs.current[header.key] = el; }}>
-                          <button className="filter-trigger" onClick={() => toggleFilterDropdown(header.key)} title={`Filter by ${header.label}`}>
+                     {header.filterable && header.filterType && (
+                        <div className="filter-wrapper">
+                          <button
+                            ref={(el) => { filterTriggerRefs.current[header.key] = el; }}
+                            className="filter-trigger"
+                            onClick={() => toggleFilterDropdown(header.key)}
+                            title={`Filter by ${header.label}`}
+                          >
                             <i className={`bi bi-funnel${filters[header.filterType] ? "-fill" : ""}`}></i>
                           </button>
                           {openFilterColumn === header.key && (
-                            <div className="filter-dropdown">
+                            <FilterDropdownPortal
+                              anchorEl={filterTriggerRefs.current[header.key]}
+                              setRef={(el) => { filterPortalRefs.current[header.key] = el; }}
+                            >
                               <div className="filter-options">
                                 <select
                                   className="form-select form-select-sm"
@@ -266,7 +468,7 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
                                   </button>
                                 )}
                               </div>
-                            </div>
+                            </FilterDropdownPortal>
                           )}
                         </div>
                       )}
@@ -301,7 +503,9 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
                         alert("Run is not completed yet");
                         return;
                       }
-                      navigate(`/test-runs/${run.run_name}`);
+                      const detailParams = new URLSearchParams(location.search);
+                      detailParams.set("page", String(currentPage));
+                      navigate(`/test-runs/${encodeURIComponent(run.run_name)}?${detailParams.toString()}`);
                     }}
                   >
                     <td className="col-run-id cell-center nowrap">{run.run_id}</td>
@@ -320,7 +524,7 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
                       {run.duration_ms != null ? formatDuration(run.duration_ms) : "-"}
                     </td>
                     <td className="col-score cell-center nowrap" onClick={(e) => e.stopPropagation()}>
-                      {typeof run.average_score === "number" ? run.average_score.toFixed(2) : "-"}
+                      {typeof run.average_score === "number" ? run.average_score.toFixed(2) : "Analysis not completed"}
                     </td>
                     <td className="col-evaluation nowrap">
                       {run.evaluation_ts != null ? (
@@ -358,7 +562,11 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
                           type="button"
                           className="action-icon-button action-analyse"
                           data-tooltip="Analyse"
-                          onClick={() => setAnalyseModal({ runName: run.run_name, hasScore: typeof run.average_score === "number" })}
+                          onClick={() => handleAnalyseClick(
+                            run.run_name,
+                            typeof run.average_score === "number",
+                            run.has_failed_cases === true
+                          )}
                           title="Analyse"
                           aria-label={`Analyse ${run.run_name}`}
                         >
@@ -369,6 +577,10 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
                           className="action-icon-button action-report"
                           data-tooltip="Report"
                           onClick={async () => {
+                            if (run.analysis_status === "failed") {
+                              alert("Please complete the Analysis first.");
+                              return;
+                            }
                             if (downloadState) return;
                             setDownloadState({ runName: run.run_name, progress: 0, phase: "generating" });
                             let p = 0;
@@ -404,6 +616,17 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
                           aria-label={`Download report for ${run.run_name}`}
                         >
                           <i className="bi bi-clipboard2-check"></i>
+                        </button>
+                        <button
+                          type="button"
+                          className="action-icon-button action-delete"
+                          data-tooltip="Delete"
+                          onClick={() => handleDeleteRun(run.run_name)}
+                          title="Delete"
+                          aria-label={`Delete ${run.run_name}`}
+                          disabled={deletingRunName === run.run_name}
+                        >
+                          <i className={`bi ${deletingRunName === run.run_name ? "bi-hourglass-split" : "bi-trash3"}`}></i>
                         </button>
                       </div>
                     </td>
@@ -448,7 +671,7 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
           </div>
         )}
         <div className="table-footer">
-          Showing {currentRuns.length} of {safeFilteredRuns.length} test runs
+          Showing {currentRuns.length} of {safeFilteredRuns[0]?.totalPages! * itemsPerPage} test runs
         </div>
       </div>
 
@@ -481,7 +704,13 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
 
       {/* Analyse modal */}
       {analyseModal && (
-        <div className="download-overlay" onClick={() => { if (!analyseLoading) setAnalyseModal(null); }}>
+        <div className="download-overlay" onClick={() => {
+          if (!analyseLoading) {
+            setAnalyseModal(null);
+            setShowTestCaseSelection(false);
+            setSelectedAnalysisDetailIds([]);
+          }
+        }}>
           <div className="download-overlay-card analyse-modal" onClick={(e) => e.stopPropagation()}>
             {analyseLoading ? (
               <>
@@ -498,8 +727,68 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
                   <p className="download-overlay-title" style={{ margin: 0 }}>Analyse Run</p>
                   <p className="download-overlay-sub" style={{ marginTop: 4 }}>{analyseModal.runName}</p>
                 </div>
+                {showTestCaseSelection ? (
+                  <>
+                    <div className="analyse-selection-heading">
+                      <button
+                        type="button"
+                        className="analyse-back-btn"
+                        onClick={() => setShowTestCaseSelection(false)}
+                        aria-label="Back to analysis options"
+                      >
+                        <i className="bi bi-arrow-left"></i>
+                      </button>
+                      <div>
+                        <p className="analyse-option-title">Select test cases</p>
+                        <p className="analyse-option-sub">Failed test cases cannot be selected</p>
+                      </div>
+                    </div>
+                    {selectionLoading ? (
+                      <div className="download-big-spinner" />
+                    ) : (
+                      <div className="analyse-testcase-list">
+                        {selectableDetails.map((detail) => {
+                          const isFailed = detail.status.toUpperCase() === "FAILED";
+                          const isChecked = selectedAnalysisDetailIds.includes(detail.detail_id);
+                          return (
+                            <label
+                              key={detail.detail_id}
+                              className={`analyse-testcase-row${isFailed ? " is-disabled" : ""}`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                disabled={isFailed}
+                                onChange={() =>
+                                  setSelectedAnalysisDetailIds((current) =>
+                                    current.includes(detail.detail_id)
+                                      ? current.filter((id) => id !== detail.detail_id)
+                                      : [...current, detail.detail_id]
+                                  )
+                                }
+                              />
+                              <span>
+                                <strong>{detail.testcase_name}</strong>
+                                <small>{detail.metric_name} · {detail.status}</small>
+                              </span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    )}
+                    <button
+                      className="analyse-run-selected-btn"
+                      disabled={selectionLoading || selectedAnalysisDetailIds.length === 0}
+                      onClick={() =>
+                        startAnalysis("selected", analyseModal.runName, selectedAnalysisDetailIds)
+                      }
+                    >
+                      Re-run selected ({selectedAnalysisDetailIds.length})
+                    </button>
+                  </>
+                ) : (
                 <div className="analyse-modal-options">
-                  {analyseModal.hasScore && (
+                  {analyseModal.hasScore && analyseModal.hasFailedCases && (
                     <button
                       className="analyse-option-btn"
                       onClick={() => startAnalysis("retry_failed", analyseModal.runName)}
@@ -521,8 +810,23 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
                       <p className="analyse-option-sub">Run all test cases </p>
                     </div>
                   </button>
+                  <button
+                    className="analyse-option-btn"
+                    onClick={() => openTestCaseSelection(analyseModal.runName)}
+                  >
+                    <i className="bi bi-check2-square"></i>
+                    <div>
+                      <p className="analyse-option-title">Select Test Cases</p>
+                      <p className="analyse-option-sub">Choose specific successful test cases to re-run</p>
+                    </div>
+                  </button>
                 </div>
-                <button className="analyse-cancel-btn" onClick={() => setAnalyseModal(null)}>
+                )}
+                <button className="analyse-cancel-btn" onClick={() => {
+                  setAnalyseModal(null);
+                  setShowTestCaseSelection(false);
+                  setSelectedAnalysisDetailIds([]);
+                }}>
                   Cancel
                 </button>
               </>
@@ -538,16 +842,12 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
 export default TestRunsTable;
 
 function formatDuration(ms: number): string {
-  const seconds = Math.floor(ms / 1000);
-  if (seconds < 1) return '0s';
-  if (seconds < 60) return `${seconds}s`;
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-  if (minutes < 60) return remainingSeconds > 0 ? `${minutes}m ${remainingSeconds}s` : `${minutes}m`;
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
-  if (hours < 24) return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
-  const days = Math.floor(hours / 24);
-  const remainingHours = hours % 24;
-  return remainingHours > 0 ? `${days}d ${remainingHours}h` : `${days}d`;
+  if (!Number.isFinite(ms) || ms <= 0) return "-";
+  const totalSeconds = Math.floor(ms / 1000);
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  if (h > 0) return `${h}h ${m}m ${s}s`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
 }

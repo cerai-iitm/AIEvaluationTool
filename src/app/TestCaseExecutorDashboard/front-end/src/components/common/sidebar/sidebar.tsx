@@ -2,7 +2,7 @@ import { Home, Users, LogOut, DatabaseIcon, User } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import ceraiLogo from "../../../assets/logo/cerai-logo.png";
-import { LOGIN_URL, AUTH_LOGOUT_URL } from "../../../config/api";
+import { clearSession, getLoginUrl, logoutAndRedirect, redirectToLogin } from "../../../utils/auth";
 import "./sidebar.css";
 
 
@@ -27,9 +27,8 @@ interface SidebarProps {
 const Sidebar = ({ onLogout }: SidebarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [userInfo, setUserInfo] = useState<UserInfo>({ user_name: "UserName", email: "", role: "Admin" });
+  const [userInfo, setUserInfo] = useState<UserInfo>({ user_name: "", email: "", role: "" });
   const [isLoading, setIsLoading] = useState(true);
-  const loginUrl = LOGIN_URL;
   const testDataUrl = process.env.REACT_APP_TEST_DATA_URL || "/tdms/dashboard";
   const userListUrl = process.env.REACT_APP_USER_LIST_URL || "/tdms/users";
   const tdmsBaseUrl =
@@ -37,35 +36,8 @@ const Sidebar = ({ onLogout }: SidebarProps) => {
   const currentUserUrl =
     process.env.REACT_APP_CURRENT_USER_URL ||
     `${tdmsBaseUrl}/api/users/me`;
-  const authLoginUrl = process.env.REACT_APP_AUTH_SERVICE_URL
-    ? `${process.env.REACT_APP_AUTH_SERVICE_URL}/web/login`
-    : "/auth/web/login";
-
-  const clearSession = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-    localStorage.removeItem("user_name");
-    localStorage.removeItem("role");
-  };
-
-  const redirectToLogin = () => {
-    clearSession();
-    window.location.href = `${authLoginUrl}`;
-  };
-
-  const handleLogout = async () => {
-    try {
-      await fetch(AUTH_LOGOUT_URL, {
-        method: "GET",
-        credentials: "include",
-      });
-    } catch (error) {
-      console.warn("Logout request failed", error);
-    }
-
-    clearSession();
-    onLogout?.();
-    redirectToLogin();
+  const handleLogout = () => {
+    logoutAndRedirect();
   };
 
   useEffect(() => {
@@ -140,7 +112,7 @@ const Sidebar = ({ onLogout }: SidebarProps) => {
       <nav className="sidebar-nav">
         {navItems
           .filter((item) => {
-            const normalizedRole = userInfo.role.toLowerCase();
+            const normalizedRole = userInfo.role.trim().toLowerCase();
             if (item.allowedRoles && !item.allowedRoles.includes(normalizedRole)) {
               return false;
             }
@@ -154,7 +126,7 @@ const Sidebar = ({ onLogout }: SidebarProps) => {
             return (
               <a
                 key={`${item.label}-${item.externalUrl}`}
-                href={item.externalUrl}
+                href={getLoginUrl(item.externalUrl)}
                 className="sidebar-nav-item sidebar-nav-item-link"
               >
                 <Icon className="sidebar-nav-icon" />

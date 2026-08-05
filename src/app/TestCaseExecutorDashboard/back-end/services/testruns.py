@@ -1,6 +1,8 @@
+import math
 import os
 import sys
 import re
+import json
 from typing import Optional,List,Literal
 from fastapi import HTTPException, BackgroundTasks
 from datetime import datetime
@@ -16,11 +18,99 @@ from lib.data import Run
 from schemas import TestRunFullResponse, TestRunSummaryResponse, TestRunDetailsResponse,TestRunResponse, NewTestRun, FilterResponse, EvaluationItemResponse, RunEvaluationSummaryResponse
 from fastapi.responses import FileResponse
 from tasks.test_run_tasks import execute_testcases
-from utils.port import ensure_interface_manager_port_running
+from utils.port import ensure_interface_manager_port_running, reset_frontend_disconnect_state
 
 logger = get_logger(__name__)
 
+GAP_THRESHOLD_MS = 5000
+
+def _as_bool(value):
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "on"}
+    return bool(value)
+
+def get_interface_manager_status_service():
+    with open(interface_manager_config, "r") as f:
+        config = json.load(f)
+
+    return {
+        "docker": _as_bool(config.get("interface_manager", {}).get("docker", False)),
+    }
+
+def _parse_timeline_timestamp(value: Optional[str]) -> Optional[float]:
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value).timestamp() * 1000
+    except ValueError:
+        return None
+
+def _calculate_timeline_duration_ms(timeline) -> Optional[int]:
+    timed_events = []
+
+    for event in timeline:
+        start = _parse_timeline_timestamp(getattr(event, "prompt_ts", None))
+        end = _parse_timeline_timestamp(getattr(event, "response_ts", None))
+
+        if start is None or end is None or end <= start:
+            continue
+
+        timed_events.append({
+            "plan_name": getattr(event, "plan_name", "") or "",
+            "start": start,
+            "end": end,
+        })
+
+    if not timed_events:
+        return None
+
+    timed_events.sort(key=lambda event: event["start"])
+    plan_blocks = []
+
+    for event in timed_events:
+        last_block = plan_blocks[-1] if plan_blocks else None
+
+        if last_block and last_block["plan_name"] == event["plan_name"]:
+            last_response_time = max(item["end"] for item in last_block["events"])
+            if event["start"] - last_response_time < GAP_THRESHOLD_MS:
+                last_block["events"].append(event)
+                continue
+
+        plan_blocks.append({
+            "plan_name": event["plan_name"],
+            "events": [event],
+        })
+
+    total_ms = 0
+    for block in plan_blocks:
+        starts = [event["start"] for event in block["events"]]
+        ends = [event["end"] for event in block["events"]]
+        total_ms += max(ends) - min(starts)
+
+    return int(total_ms) if total_ms > 0 else None
+
+def _has_failed_cases(db, details) -> bool:
+    for d in details:
+        if getattr(d, "status", None) != "COMPLETED":
+            continue
+
+        conversation_id = getattr(d, "conversation_id", None)
+        if not conversation_id:
+            continue
+
+        conv = db.get_conversation_by_id(conversation_id)
+        if not conv:
+            continue
+
+        evaluation_reason = conv.evaluation_reason or ""
+        if not evaluation_reason.strip():
+            return True
+    return False
+
 def start_run_service(db, data: NewTestRun, background_tasks: BackgroundTasks):
+    reset_frontend_disconnect_state()
     ensure_interface_manager_port_running(interface_manager_config)
     if data.testPlan:
         logger.info("Starting new test run...")
@@ -31,7 +121,8 @@ def start_run_service(db, data: NewTestRun, background_tasks: BackgroundTasks):
         test_case_id = data.testCaseId
         metric_name = data.metric
         domain_name = data.domain if data.domain else None
-        lang_name = data.language if data.language else None
+        lang_name = [data.language] if data.language else None
+        
         provided_run_name = data.runName.strip() if data.runName else None
         if test_case_id and metric_name:
             raise HTTPException(
@@ -120,12 +211,14 @@ def start_run_service(db, data: NewTestRun, background_tasks: BackgroundTasks):
             )
 
         else:
+            
             testcases = db.get_testcases_by_testplan(
                 plan_name=plan_name,
                 n=max_test_cases,
                 lang_names=lang_name,
                 domain_name=domain_name,
             )
+            
             if not testcases:
                 raise HTTPException(
                     status_code=404,
@@ -170,6 +263,7 @@ def continue_run_service(db, run_name: str):
 
 
 def continue_run_with_plan_service(db, data: NewTestRun, background_tasks: BackgroundTasks):
+    reset_frontend_disconnect_state()
     ensure_interface_manager_port_running(interface_manager_config)
     run = db.get_run_by_name(data.runName)
 
@@ -255,35 +349,16 @@ def get_test_run_service(db, run_name: str, metric: Optional[str] = None, status
         if not run:
             raise HTTPException(status_code=404, detail="Run not found")
         timeline = db.get_run_timeline(run_name) or []
-            
+        duration_ms = _calculate_timeline_duration_ms(timeline)
+        analysis_status="failed"   # default status
         if timeline:
-            events_by_plan = {}
-            total_seconds = 0
-
-            for e in timeline:
-                events_by_plan.setdefault(e.plan_name, []).append(e)
-
-                for plan_events in events_by_plan.values():
-                    start_times = [
-                        datetime.fromisoformat(e.prompt_ts).timestamp()
-                        for e in plan_events if e.prompt_ts
-                    ]
-
-                    end_times = [
-                        datetime.fromisoformat(e.response_ts).timestamp()
-                        for e in plan_events if e.response_ts
-                    ]
-
-                    if start_times and end_times:
-                        total_seconds += (max(end_times) - min(start_times))
-
-                duration_ms = int(total_seconds * 1000)    
-
             scores = []
             for e in timeline:
                 if e.evaluation_score is not None:
                     scores.append(float(e.evaluation_score))
-
+            if scores:
+                analysis_status="completed"
+            print(analysis_status)
             average_score = (
                 round(sum(scores) / len(scores), 4)
                 if scores
@@ -305,6 +380,7 @@ def get_test_run_service(db, run_name: str, metric: Optional[str] = None, status
             start_ts=run.start_ts,
             end_ts=run.end_ts,
             average_score=average_score,
+            analysis_status=analysis_status
         )
         logger.info(f"Run summary: {summary}")
         details = db.get_all_run_details_by_run_name(run_name)
@@ -316,14 +392,18 @@ def get_test_run_service(db, run_name: str, metric: Optional[str] = None, status
         if status:
             details = [d for d in details if d.status == status]
 
+        has_failed_cases = _has_failed_cases(db, details)
+
         for d in details:
             score = None
+            evaluation_reason = ""
             if d.conversation_id:
                 conv = db.get_conversation_by_id(d.conversation_id)
                 if conv and conv.evaluation_score is not None:
                     score = float(conv.evaluation_score)
                 if conv:
                     evaluation_reason = conv.evaluation_reason or ""  # ← add this
+
             details_response.append(
                 TestRunDetailsResponse(
                     run_name=d.run_name,
@@ -334,10 +414,11 @@ def get_test_run_service(db, run_name: str, metric: Optional[str] = None, status
                     status=d.status,
                     detail_id=d.detail_id,
                     score=score,
-                    evaluation_reason=evaluation_reason  
+                    evaluation_reason=evaluation_reason,
+                    has_failed_cases=has_failed_cases
                 )
             )
-
+        print(has_failed_cases)    
         return TestRunFullResponse(
             summary=summary,
             details=details_response
@@ -355,13 +436,20 @@ def get_all_test_runs_service(
     status: Optional[str] = None,
     sort_by: Literal["end_ts", "start_ts"] = "end_ts",
     order: Literal["asc", "desc"] = "desc",
+    page: int = 1,
+    page_size: int = 10,
 ) -> List[TestRunResponse]:
     try:
         runs = db.get_all_runs(domain=domain, target=target, status=status)
-            
+        total_count = len(runs)    
         response: List[TestRunResponse] = []
-
+        reverse = order == "desc"
+        runs.sort(key=lambda r: getattr(r, sort_by) or "", reverse=reverse)
+        start_idx = (page - 1) * page_size
+        runs = runs[start_idx : start_idx + page_size]
+        
         for r in runs:
+            analysis_status = "failed"   # reset for each run
             domain_name = None
 
             target_id = (
@@ -378,34 +466,19 @@ def get_all_test_runs_service(
             timeline = db.get_run_timeline(r.run_name) or []
             
             if timeline:
-                events_by_plan = {}
-                total_seconds = 0
-
-                for e in timeline:
-                    events_by_plan.setdefault(e.plan_name, []).append(e)
-
-                for plan_events in events_by_plan.values():
-                    start_times = [
-                        datetime.fromisoformat(e.prompt_ts).timestamp()
-                        for e in plan_events if e.prompt_ts
-                    ]
-
-                    end_times = [
-                        datetime.fromisoformat(e.response_ts).timestamp()
-                        for e in plan_events if e.response_ts
-                    ]
-
-                    if start_times and end_times:
-                        total_seconds += (max(end_times) - min(start_times))
-
-                duration_ms = int(total_seconds * 1000)    
+                duration_ms = _calculate_timeline_duration_ms(timeline)
 
             scores = []
             count = 0
             for e in timeline:
+                
                 if (e.evaluation_score is not None) and (e.evaluation_score <= 1):
                     count += 1
                     scores.append(float(e.evaluation_score))
+                    
+            
+            if scores:
+                analysis_status="completed"
 
             average_score = (
                 round(sum(scores) / count, 4)
@@ -415,7 +488,8 @@ def get_all_test_runs_service(
             evaluation_ts = max(
                 (e.evaluation_ts for e in timeline if e.evaluation_ts),
                 default=None
-            )    
+            )
+            run_details = db.get_all_run_details_by_run_name(r.run_name)
             # print("evaluation time stamp", evaluation_ts)   
             response.append(
                 TestRunResponse(
@@ -428,16 +502,19 @@ def get_all_test_runs_service(
                     domain=domain_name,
                     duration_ms=duration_ms,
                     average_score=average_score,
-                    evaluation_ts=evaluation_ts
+                    evaluation_ts=evaluation_ts,
+                    analysis_status=analysis_status,
+                    has_failed_cases=_has_failed_cases(db, run_details),
+                    totalPages= math.ceil(total_count / page_size) if page_size else 1
                 )
             )
 
-        # 🔹 Sorting
-        reverse = order == "desc"
-        response.sort(
-            key=lambda x: getattr(x, sort_by) or "",
-            reverse=reverse
-        )
+        # # 🔹 Sorting
+        # reverse = order == "desc"
+        # response.sort(
+        #     key=lambda x: getattr(x, sort_by) or "",
+        #     reverse=reverse
+        # )
 
         return response
 
@@ -595,6 +672,22 @@ def get_test_run_summary_service(db, run_name: str):
         start_ts=run.start_ts,
         end_ts=run.end_ts
     )
+
+
+def delete_test_run_service(db, run_name: str):
+    run = db.get_run_by_name(run_name)
+    if not run:
+        raise HTTPException(status_code=404, detail="Run not found")
+
+    deleted = db.delete_run_by_name(run_name)
+    if not deleted:
+        raise HTTPException(status_code=500, detail="Failed to delete run")
+
+    return {
+        "status": "success",
+        "message": f"Run '{run_name}' deleted successfully",
+        "run_name": run_name,
+    }
 
 # def start_run_service(db, data: NewTestRun, background_tasks: BackgroundTasks):    
 #     ensure_interface_manager_running(interface_manager_config)

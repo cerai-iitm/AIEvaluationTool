@@ -2,7 +2,7 @@ export const API_BASE_URL =
   process.env.REACT_APP_API_BASE_URL !;
 
 export const AUTH_SERVICE_URL =
-  process.env.REACT_APP_AUTH_SERVICE_URL || "/auth";
+  process.env.REACT_APP_AUTH_SERVICE_URL || "http://localhost:7500";
 
 export const AUTH_PAGE_URL = `${AUTH_SERVICE_URL}/web/login`;
 export const LOGIN_URL = process.env.REACT_APP_LOGIN_URL || AUTH_PAGE_URL;
@@ -11,9 +11,13 @@ export const AUTH_LOGOUT_URL = `${AUTH_SERVICE_URL}/web/logout`;
  export const API_ENDPOINTS = {
     GET_ALL_FILTERS: "/get_all_filters",
     GET_ALL_TEST_RUNS: "/get_all_test_runs",
-   ANALYSE_RUN: (runName: string, mode?: string) =>
+   ANALYSE_RUN: (runName: string, mode?: string, detailIds?: number[]) =>
     `${API_BASE_URL}/analyse/${encodeURIComponent(runName)}${
-      mode ? `?mode=${mode}` : ""
+      mode
+        ? `?mode=${encodeURIComponent(mode)}${
+            detailIds?.length ? `&detail_ids=${detailIds.join(",")}` : ""
+          }`
+        : ""
     }`,
     ANALYSE_DETAILS: (runName: string, mode: string) =>
     `${API_BASE_URL}/analyse/${encodeURIComponent(runName)}/details?mode=${mode}`,
@@ -29,6 +33,8 @@ export const AUTH_LOGOUT_URL = `${AUTH_SERVICE_URL}/web/logout`;
     `${API_BASE_URL}/test-runs/${encodeURIComponent(runName)}${
       query ? `?${query}` : ""
     }`,
+    DELETE_TEST_RUN: (runName: string) =>
+    `${API_BASE_URL}/test-runs/${encodeURIComponent(runName)}`,
     GET_METRICS_BY_PLAN: (planName: string) =>
     `${API_BASE_URL}/get_metrics_by_plan/${planName}`,
     GET_TARGET_METADATA: (targetName: string) =>
@@ -38,7 +44,10 @@ export const AUTH_LOGOUT_URL = `${AUTH_SERVICE_URL}/web/logout`;
   `${API_BASE_URL}/report/${encodeURIComponent(runName)}`,
     
     CONTINUE_RUN: `${API_BASE_URL}/continue-run`,    
+    GET_INTERFACE_MANAGER_STATUS: `${API_BASE_URL}/interface-manager/status`,
     DEV_Config: `${API_BASE_URL}/__dev/config`,
+
+    ANALYSE_HEALTH: `${API_BASE_URL}/analyse/health`,
 }  
 
 

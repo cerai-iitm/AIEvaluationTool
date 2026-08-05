@@ -65,6 +65,10 @@ EXPOSE 7500
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7500"]
 
 FROM runtime-base AS sarvam-ai
+RUN pip install --extra-index-url https://download.pytorch.org/whl/cu121 \
+    torch==2.5.1 \
+    torchvision==0.20.1 \
+    torchaudio==2.5.1
 WORKDIR /app/src/app/sarvam_ai
 EXPOSE 16000
 CMD ["python", "main.py"]

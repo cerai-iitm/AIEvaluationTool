@@ -44,7 +44,7 @@ from apis.analyse import router as analyse_router
 from apis.conversations import router as conversations_router
 from apis.report import router as report_router
 
-from utils.port import check_service, ensure_interface_manager_port_running, stop_interface_manager, watch_chrome_and_kill_im, watch_im_process
+from utils.port import check_service, ensure_interface_manager_port_running, stop_interface_manager, watch_chrome_and_kill_im, watch_im_process,on_frontend_disconnect
 
 from middleware.auth import AuthMiddleware
 
@@ -122,13 +122,23 @@ def load_config():
 
 @app.websocket("/ws/test-run")
 async def websocket_endpoint(websocket: WebSocket):
+    
     await ws_manager.connect(websocket)
     try:
         while True:
-            # keep connection alive
-            await websocket.receive_text()
+            try:
+                await asyncio.wait_for(websocket.receive_text(), timeout=15)
+            except asyncio.TimeoutError:
+                await ws_manager.send_one(websocket, {"type": "HEARTBEAT"})
     except WebSocketDisconnect:
         ws_manager.disconnect(websocket)
+        if ws_manager.is_empty():
+            on_frontend_disconnect(interface_manager_config)
+    except Exception:
+        ws_manager.disconnect(websocket)
+        
+        if ws_manager.is_empty():
+            on_frontend_disconnect(interface_manager_config)
          
 @app.get(
     "/testcases/{testcase_name}",

@@ -17,8 +17,10 @@ from services.testruns import (
     RunEvaluationSummaryResponse,
     continue_run_service,
     continue_run_with_plan_service,
+    delete_test_run_service,
     download_evaluation_report_service,
     get_all_test_runs_service,
+    get_interface_manager_status_service,
     get_metrics_by_plan_service,
     get_run_evaluation_summary_service,
     get_test_run_service,
@@ -29,6 +31,15 @@ from services.testruns import (
 from configuration.database import get_db
 
 router = APIRouter()
+
+@router.get("/interface-manager/status")
+def get_interface_manager_status():
+    try:
+        return get_interface_manager_status_service()
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/start-run")
 def start_run(data: NewTestRun, background_tasks: BackgroundTasks, db=Depends(get_db)):
@@ -80,6 +91,15 @@ def get_test_run(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.delete("/test-runs/{run_name}")
+def delete_test_run(run_name: str, db=Depends(get_db)):
+    try:
+        return delete_test_run_service(db=db, run_name=run_name)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.get(
     "/get_all_test_runs",
     response_model=List[TestRunResponse],
@@ -90,6 +110,8 @@ def get_all_test_runs(
     status: Optional[str] = Query(None),
     sort_by: Literal["end_ts", "start_ts"] = Query("end_ts"),
     order: Literal["asc", "desc"] = Query("desc"),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=10, ge=1, le=100),
     db=Depends(get_db),
 ):
     try:
@@ -100,6 +122,8 @@ def get_all_test_runs(
             status=status,
             sort_by=sort_by,
             order=order,
+            page=page, 
+            page_size=page_size
         )
     except HTTPException:
         raise

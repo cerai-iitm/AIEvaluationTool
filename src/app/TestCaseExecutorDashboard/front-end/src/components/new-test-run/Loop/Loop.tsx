@@ -1,28 +1,53 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {WS_BASE_URL,} from "../../../config/api"
+
+export interface TestRunEvent {
+  type: "RUN_STARTED" | "STEP_UPDATE" | "TESTCASE_FINISHED" | "RUN_FINISHED";
+  runId?: string | number;
+  total?: number;
+  testcaseIndex?: number;
+  step?: number;
+  status?: StepStatus | string;
+  current?: number;
+  error?: string;
+}
+
 interface LoopProps {
   isRunning: boolean;
   totalTestCases: number;
   stepsPerTestCase: number; // 👈 how many steps each TC has
   stepNames?: string[]; // 👈 Names for each step
   planName?: string;     // 👈 add
+  runName?: string;   // <-- ADD THIS
   metricName?: string;   // 👈 add
+  testCaseName?: string; 
+  liveEvents?: TestRunEvent[];
+  onRunFinished?: () => void;
+  showTestExecutionLink?: boolean;
+  seleniumHref?: string;
   
 }
 
 type StepStatus = "PENDING" | "RUNNING" | "DONE" | "FAILED";
 
-const Loop: React.FC<LoopProps> = ({
-  isRunning,
+  const Loop: React.FC<LoopProps> = ({
+     isRunning,
   totalTestCases,
   stepsPerTestCase,
   stepNames: propStepNames,
   planName,
-  metricName
-}) => {
+  runName,
+  metricName,
+  testCaseName,
+  liveEvents = [],
+  onRunFinished,
+  showTestExecutionLink = false,
+  seleniumHref = "/selenium/"
+  }) => {
   const [currentTestCase, setCurrentTestCase] = useState(0);
   const navigate = useNavigate();
+  const activeTestCaseRef = useRef(0);
+  const processedEventCountRef = useRef(0);
   // Track status for each step individually
   const [stepStatuses, setStepStatuses] = useState<StepStatus[]>(
     Array(stepsPerTestCase).fill("PENDING")
@@ -51,56 +76,80 @@ const Loop: React.FC<LoopProps> = ({
   useEffect(() => {
     if (!isRunning) return;
 
-    const ws = new WebSocket(`${WS_BASE_URL}/ws/test-run`);
-
-    ws.onopen = () => {
-      console.log("✅ WebSocket connected");
-    };
-
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      console.log("📩 WS EVENT:", data);
-
-      switch (data.type) {
-        case "RUN_STARTED":
-          setCurrentTestCase(0);
-          setStepStatuses(Array(stepsPerTestCase).fill("PENDING"));
-          break;
-
-        case "STEP_UPDATE":
-          console.log('STEP_UPDATE received:', { step: data.step, status: data.status });
-          setCurrentTestCase(data.testcaseIndex);
-          setStepStatuses((prev) => {
-            const next = [...prev];
-            // Convert 1-based step to 0-based index
-            const stepIndex = data.step - 1;
-            if (stepIndex >= 0 && stepIndex < next.length) {
-              next[stepIndex] = data.status;
-            } else {
-              console.warn(`Invalid step index: ${stepIndex}, max allowed: ${next.length - 1}`);
-            }
-            console.log('Updated step statuses:', next);
-            return next;
-          });
-          break;
-
-        case "TESTCASE_FINISHED":
-          setStepStatuses(Array(stepsPerTestCase).fill("PENDING"));
-          
-          setCurrentTestCase(data.current + 1);
-          break;
-        case "RUN_FINISHED":
-          setRunCompleted(true);
-          console.log("🏁 Run completed");
-          ws.close();
-          break;
-      }
-    };
-
-    ws.onclose = () => console.log("❌ WebSocket closed");
-
-    return () => ws.close();
+    activeTestCaseRef.current = 0;
+    processedEventCountRef.current = 0;
+    setCurrentTestCase(0);
+    setRunCompleted(false);
+    setStepStatuses(Array(stepsPerTestCase).fill("PENDING"));
   }, [isRunning, stepsPerTestCase]);
+
+  useEffect(() => {
+    const nextEvents = liveEvents.slice(processedEventCountRef.current);
+    if (nextEvents.length === 0) return;
+
+    processedEventCountRef.current = liveEvents.length;
+
+    nextEvents.forEach((liveEvent) => {
+      switch (liveEvent.type) {
+      case "RUN_STARTED":
+        activeTestCaseRef.current = 0;
+        setRunCompleted(false);
+        setCurrentTestCase(0);
+        setStepStatuses(Array(stepsPerTestCase).fill("PENDING"));
+        break;
+
+      case "STEP_UPDATE": {
+        const testcaseIndex = Number(liveEvent.testcaseIndex ?? 0);
+        const stepIndex = Number(liveEvent.step ?? 0) - 1;
+        const status = liveEvent.status as StepStatus;
+        const previousTestCase = activeTestCaseRef.current;
+
+        if (testcaseIndex < previousTestCase) {
+          return;
+        }
+
+        activeTestCaseRef.current = testcaseIndex;
+        setCurrentTestCase((prev) => Math.max(prev, testcaseIndex));
+        setStepStatuses((prev) => {
+          const next =
+            testcaseIndex === previousTestCase
+              ? [...prev]
+              : Array(stepsPerTestCase).fill("PENDING");
+
+          if (stepIndex >= 0 && stepIndex < next.length) {
+            next[stepIndex] = status;
+          } else {
+            console.warn(`Invalid step index: ${stepIndex}, max allowed: ${next.length - 1}`);
+          }
+
+          return next;
+        });
+        break;
+      }
+
+      case "TESTCASE_FINISHED": {
+        const finishedTestCase = Number(liveEvent.current ?? 0);
+
+        if (finishedTestCase < activeTestCaseRef.current) {
+          return;
+        }
+
+        activeTestCaseRef.current = finishedTestCase + 1;
+        setStepStatuses(Array(stepsPerTestCase).fill("PENDING"));
+        setCurrentTestCase(Math.min(finishedTestCase + 1, totalTestCases));
+        break;
+      }
+
+      case "RUN_FINISHED":
+        activeTestCaseRef.current = totalTestCases;
+        setCurrentTestCase(totalTestCases);
+        setRunCompleted(true);
+        onRunFinished?.();
+        console.log("🏁 Run completed");
+        break;
+      }
+    });
+  }, [liveEvents, onRunFinished, stepsPerTestCase, totalTestCases]);
 
   /* ---------- UI HELPERS ---------- */
 
@@ -127,10 +176,9 @@ const Loop: React.FC<LoopProps> = ({
   return (
     <div style={{
       width: '100%',
-      background: '#FFFFFF',
-      borderRadius: 12,
-      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-      padding: '24px',
+      borderTop: '1px solid #E5E7EB',
+      marginTop: '24px',
+      paddingTop: '24px',
       fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
       color: '#111827',
     }}>
@@ -138,7 +186,9 @@ const Loop: React.FC<LoopProps> = ({
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: '16px'
+        flexWrap: 'wrap',
+        gap: '16px',
+        marginBottom: '14px'
       }}>
         <h2 style={{
           margin: 0,
@@ -154,19 +204,58 @@ const Loop: React.FC<LoopProps> = ({
           background: '#F3F4F6',
           padding: '4px 8px',
           borderRadius: '4px',
-          fontWeight: 500
+          fontWeight: 500,
+          textAlign: 'right'
         }}>
-          {planName} {metricName && `• ${metricName}`}
+          {planName} {metricName && `• ${metricName}`} {testCaseName && `• ${testCaseName}`}
         </div>
       </div>
       
-      <p style={{
-        margin: '0 0 16px 0',
-        fontSize: '14px',
-        color: '#4B5563'
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '12px',
+        marginBottom: '16px'
       }}>
-        Executing test cases
-      </p>
+        <p style={{
+          margin: 0,
+          fontSize: '14px',
+          color: '#4B5563'
+        }}>
+          Executing test cases
+        </p>
+        {showTestExecutionLink && (
+          <a
+            href={seleniumHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              minHeight: '32px',
+              boxSizing: 'border-box',
+              padding: '0 12px',
+              border: '1px solid #cbd5e1',
+              borderRadius: '4px',
+              background: '#ffffff',
+              color: '#1d4ed8',
+              fontSize: '13px',
+              fontWeight: 500,
+              lineHeight: 1,
+              textDecoration: 'none',
+              whiteSpace: 'nowrap',
+              boxShadow: '0 1px 2px rgba(15, 23, 42, 0.08)',
+            }}
+          >
+            <i className="bi bi-display" aria-hidden="true" />
+            <span>View Test Execution</span>
+          </a>
+        )}
+      </div>
       
       <div style={{
         marginBottom: '16px',
@@ -291,7 +380,7 @@ const Loop: React.FC<LoopProps> = ({
           </span>
 
           <button
-            onClick={() => navigate("/")}
+            onClick={() => navigate(`/test-runs/${runName}`)}
             style={{
               padding: "8px 14px",
               borderRadius: "6px",
@@ -302,7 +391,7 @@ const Loop: React.FC<LoopProps> = ({
               cursor: "pointer",
             }}
           >
-            View Test Runs
+            View Test Run Details
           </button>
         </div>
       )}

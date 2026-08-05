@@ -28,17 +28,26 @@ class SarvamAITranslator:
         self.model_name = model_name
         self.logger.debug(f"Loading Sarvam AI translation model: {self.model_name}")
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+
         if torch.cuda.is_available() and not self.force_cpu:
             current_device = torch.cuda.current_device()
             print(f"Current CUDA device ID: {current_device}")
             self.logger.info("using GPU for inferring from Sarvam translation model")
             self.device = torch.device("cuda")
+            self.model = AutoModelForCausalLM.from_pretrained(
+                self.model_name,
+                torch_dtype=torch.bfloat16,
+                device_map="auto"
+            )
         else:
             self.logger.info("using CPU for inferring from Sarvam translation model")
             self.device = torch.device("cpu")
+            self.model = AutoModelForCausalLM.from_pretrained(
+                self.model_name,
+                torch_dtype=torch.float32
+            )
+            self.model.to(self.device)
 
-        self.model = AutoModelForCausalLM.from_pretrained(self.model_name)
-        self.model.to(self.device)
         self.model_loaded = True
 
     def translate(self, input_text, target_language):
