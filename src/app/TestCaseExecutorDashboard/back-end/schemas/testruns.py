@@ -62,6 +62,7 @@ class NewTestRun(BaseModel):
     target: Optional[str] = None  # 👈 optional now
     testPlan: str          # ✅ NAME, not ID
     testCaseId: Optional[str] = None
+    testCaseIds: Optional[List[str]] = None
     metric: str            # ✅ NAME
     metric: str
     maxTestCases: str
