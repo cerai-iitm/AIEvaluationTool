@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).resolve().parents[4]
 config_path = BASE_DIR / "config.json"
-
+local_config_path = BASE_DIR / "local_config.json"
 # Ensure `config` exists even if the file is missing
 config = {}
 try:
@@ -19,7 +19,7 @@ try:
         config = json.load(f)
 except FileNotFoundError:
   
- try:
+    try:
         with open(config_path, "r") as f:
             config = json.load(f)
     except FileNotFoundError:

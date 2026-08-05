@@ -104,14 +104,14 @@ export default function TargetCredentialsEditor({
   const saveCredentials = async () => {
     if (!targetName || disabled) return;
 
-    if (!areCredentialsComplete(value)) {
-      toast({
-        title: "Validation Error",
-        description: "Username and password are required",
-        variant: "destructive",
-      });
-      return;
-    }
+    // if (!areCredentialsComplete(value)) {
+    //   toast({
+    //     title: "Validation Error",
+    //     description: "Username and password are required",
+    //     variant: "destructive",
+    //   });
+    //   return;
+    // }
 
     setIsSaving(true);
     try {
@@ -205,14 +205,19 @@ export default function TargetCredentialsEditor({
           <div className="space-y-2">
             <Label className="text-base font-semibold">Username</Label>
             <Input
+              // name="target-credential-username"
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="none"
+              spellCheck={false}
               value={value.username}
               onChange={(event) => updateField("username", event.target.value)}
               disabled={disabled}
-              required
+              // required
               aria-invalid={!value.username.trim()}
-              className={`bg-muted ${
-                !value.username.trim() ? "border-red-500" : ""
-              }`}
+              // className={`bg-muted ${
+              //   !value.username.trim() ? "border-red-500" : ""
+              // }`}
             />
           </div>
           <div className="space-y-2">
@@ -220,18 +225,23 @@ export default function TargetCredentialsEditor({
             <div className="relative">
               <Input
                 type={isPasswordVisible ? "text" : "password"}
+                // name="target-credential-password"
+                autoComplete="new-password"
+                autoCorrect="off"
+                autoCapitalize="none"
+                spellCheck={false}
                 value={value.password}
                 onChange={(event) => updateField("password", event.target.value)}
                 disabled={disabled}
-                required
+                // required
                 aria-invalid={!value.password.trim()}
-                className={`bg-muted pr-10 ${
-                  !value.password.trim() ? "border-red-500" : ""
-                }`}
+                // className={`bg-muted pr-10 ${
+                //   !value.password.trim() ? "border-red-500" : ""
+                // }`}
               />
               <Button
                 type="button"
-                variant="ghost"
+                variant="link"
                 size="icon"
                 onClick={() => setIsPasswordVisible((current) => !current)}
                 className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 text-muted-foreground"

@@ -35,6 +35,12 @@ class TargetUpdateV2(BaseModel):
     lang_list: Optional[List[str]] = Field(
         None, description="The new list of supported languages."
     )
+    xpath_config_changed: Optional[bool] = Field(
+        False, description="Whether the target XPath configuration was changed."
+    )
+    xpath_application_name: Optional[str] = Field(
+        None, description="The XPath application key that was changed."
+    )
     notes: Optional[str] = Field(None, description="User notes for this operation.")
 
 

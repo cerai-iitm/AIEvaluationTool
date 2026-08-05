@@ -5,6 +5,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -117,6 +127,8 @@ export default function TargetAddDialog({
   const [credentials, setCredentials] =
     useState<TargetCredentials>(emptyCredentials);
   const [activeTab, setActiveTab] = useState("general");
+  const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false);
+  const [xpathInitialSignature, setXpathInitialSignature] = useState<string | null>(null);
 
   // Fetch options from API
   const fetchOptions = useCallback(async () => {
@@ -192,8 +204,10 @@ export default function TargetAddDialog({
       setSelectedLanguages([]);
       setNotes("");
       setXpathPages({});
+      setXpathInitialSignature(null);
       setCredentials(emptyCredentials);
       setActiveTab("general");
+      setDiscardConfirmOpen(false);
     }
   }, [open, fetchOptions]);
 
@@ -227,6 +241,9 @@ export default function TargetAddDialog({
   const missingXPathCount = getMissingXPathCount(xpathPages);
   const isXPathConfigComplete =
     xpathFieldCount > 0 && missingXPathCount === 0;
+  const hasXPathChanges =
+    xpathInitialSignature !== null &&
+    JSON.stringify(xpathPages) !== xpathInitialSignature;
   const areWebAppCredentialsComplete =
     !isWebAppTarget || areCredentialsComplete(credentials);
   const canSubmit =
@@ -278,12 +295,14 @@ export default function TargetAddDialog({
     fetchXPathTemplateForType(type, buildHeaders())
       .then((templatePages) => {
         if (!isCancelled) {
+          setXpathInitialSignature(JSON.stringify(templatePages));
           setXpathPages(templatePages);
         }
       })
       .catch((error) => {
         if (!isCancelled) {
           console.error("Error loading XPath template:", error);
+          setXpathInitialSignature(JSON.stringify({}));
           setXpathPages({});
         }
       });
@@ -308,6 +327,45 @@ export default function TargetAddDialog({
       }
     }
   }, [activeTab, isWebAppTarget, open, showXPathTab]);
+
+  const hasUnsavedChanges = Boolean(
+    name.trim() ||
+      description.trim() ||
+      url.trim() ||
+      selectedLanguages.length > 0 ||
+      notes.trim() ||
+      credentials.username.trim() ||
+      credentials.password.trim() ||
+      hasXPathChanges,
+  );
+
+  const handleDialogOpenChange = (nextOpen: boolean) => {
+    if (nextOpen) {
+      onOpenChange(true);
+      return;
+    }
+
+    if (isSubmitting) {
+      return;
+    }
+
+    if (hasUnsavedChanges) {
+      setDiscardConfirmOpen(true);
+      return;
+    }
+
+    onOpenChange(false);
+  };
+
+  const discardChangesAndClose = () => {
+    setDiscardConfirmOpen(false);
+    onOpenChange(false);
+  };
+
+  const handleXPathPagesChange = useCallback((pages: XPathPages) => {
+    setXpathPages(pages);
+    setXpathInitialSignature((current) => current ?? JSON.stringify(pages));
+  }, []);
 
   const fetchWebAppXPathTemplate = async (
     headers: HeadersInit,
@@ -586,7 +644,7 @@ export default function TargetAddDialog({
       setActiveTab("general");
 
       // Close dialog
-      onOpenChange(false);
+      discardChangesAndClose();
 
       // Trigger refresh in parent component
       if (onSuccess) {
@@ -606,7 +664,8 @@ export default function TargetAddDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <>
+    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="sr-only">Add Target</DialogTitle>
@@ -742,7 +801,7 @@ export default function TargetAddDialog({
                       No languages available
                     </div>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="space-y-2 grid grid-cols-3">
                       {languageOptions.map((lang) => (
                         <div key={lang} className="flex items-center space-x-2 capitalize">
                           <Checkbox
@@ -793,7 +852,7 @@ export default function TargetAddDialog({
               <XPathConfigurationEditor
                 applicationName={name}
                 targetType={type}
-                onPagesChange={setXpathPages}
+                onPagesChange={handleXPathPagesChange}
                 open={open}
                 showSave={false}
               />
@@ -813,5 +872,25 @@ export default function TargetAddDialog({
         </Tabs>
       </DialogContent>
     </Dialog>
+    <AlertDialog open={discardConfirmOpen} onOpenChange={setDiscardConfirmOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Discard changes?</AlertDialogTitle>
+          <AlertDialogDescription>
+            You have unsaved target changes. Do you want to discard them and close this dialog?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={discardChangesAndClose}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            Discard
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
