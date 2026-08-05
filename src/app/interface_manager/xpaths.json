@@ -58,7 +58,7 @@
     "bodhan-ai": {
       "LoginPage": {
         "email_input_element": "//input[@type='email' and @placeholder='arjun@school.edu']",
-        "password_input_element": "//input[@type='password' and @placeholder='••••••••']",
+        "password_input_element": "//input[@type='password' and @placeholder='\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022']",
         "login_button_element": "//button[@type='submit' and contains(normalize-space(.), 'Sign In')]"
       },
       "LogoutPage": {
@@ -66,7 +66,7 @@
         "logout_button_element": "//button[normalize-space()='Sign out']"
       },
       "ChatPage": {
-        "prompt_input_box_element": "//textarea[@placeholder='Ask anything about your lesson, quiz, or subject…']",
+        "prompt_input_box_element": "//textarea[@placeholder='Ask anything about your lesson, quiz, or subject\u2026']",
         "agent_response_element": "(//div[contains(@class,'md-body')])[last()]//p",
         "send_button_element": "//button[@title='Send' and @aria-label='Send message']"
       }
