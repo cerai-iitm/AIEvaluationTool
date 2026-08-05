@@ -157,14 +157,18 @@ async def web_login(
     cerai_logo_url = with_auth_base("/web-assets/cerai-logo.png")
     iit_logo_url = with_auth_base("/web-assets/iit-logo.png")
     background_url = with_auth_base("/web-assets/iit-background.jpeg")
+    AIEvaluLogo_url = with_auth_base("/web-assets/logo.png")
 
     html = f"""
     <!DOCTYPE html>
     <html lang='en'>
     <head>
       <meta charset='UTF-8' />
+      <link rel="icon" type="image/png" href="{AIEvaluLogo_url}" />
+      <link rel="apple-touch-icon" type="image/png" href="{AIEvaluLogo_url}" />
+      
       <meta name='viewport' content='width=device-width, initial-scale=1.0' />
-      <title>Central Login</title>
+      <title>AI Evaluation Tool</title>
       <style>
         * {{ box-sizing: border-box; }}
         body {{
