@@ -22,6 +22,13 @@ interface TestRun {
   has_failed_cases?: boolean;
 }
 
+interface SelectableRunDetail {
+  detail_id: number;
+  testcase_name: string;
+  metric_name: string;
+  status: string;
+}
+
 interface HeaderConfig {
   key: string;
   label: string;
@@ -109,6 +116,10 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
     hasFailedCases: boolean;
   } | null>(null);
   const [analyseLoading, setAnalyseLoading] = useState(false);
+  const [showTestCaseSelection, setShowTestCaseSelection] = useState(false);
+  const [selectionLoading, setSelectionLoading] = useState(false);
+  const [selectableDetails, setSelectableDetails] = useState<SelectableRunDetail[]>([]);
+  const [selectedAnalysisDetailIds, setSelectedAnalysisDetailIds] = useState<number[]>([]);
   const [availableFilters, setAvailableFilters] = useState<AllFilters>({
     domains: [],
     languages: [],
@@ -168,24 +179,57 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
       return;
     }
     setAnalyseModal({ runName, hasScore, hasFailedCases });
+    setShowTestCaseSelection(false);
+    setSelectableDetails([]);
+    setSelectedAnalysisDetailIds([]);
   } catch (err) {
     alert("Ollama is not running. Please start Ollama and try again.");
   }
 };
-  const startAnalysis = async (mode: string, runName: string) => {
+  const startAnalysis = async (mode: string, runName: string, detailIds: number[] = []) => {
     setAnalyseLoading(true);
     try {
-      const url = API_ENDPOINTS.ANALYSE_RUN(runName, mode);
-      await fetch(url, {
+      const url = API_ENDPOINTS.ANALYSE_RUN(runName, mode, detailIds);
+      const response = await fetch(url, {
         method: "GET",
         headers: getAuthHeaders(),
         credentials: "include",
       });
-      navigate(`/analyse/${encodeURIComponent(runName)}?mode=${mode}`);
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.detail || `Analysis request failed (${response.status})`);
+      }
+      const params = new URLSearchParams({ mode });
+      if (detailIds.length) params.set("detail_ids", detailIds.join(","));
+      navigate(`/analyse/${encodeURIComponent(runName)}?${params.toString()}`);
     } catch (err) {
       console.error("Analysis failed:", err);
+      alert(err instanceof Error ? err.message : "Analysis failed");
       setAnalyseLoading(false);
-      setAnalyseModal(null);
+    }
+  };
+
+  const openTestCaseSelection = async (runName: string) => {
+    setShowTestCaseSelection(true);
+    if (selectableDetails.length) return;
+    setSelectionLoading(true);
+    try {
+      const response = await fetch(API_ENDPOINTS.GET_TEST_RUN_DETAILS(runName, ""), {
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+      if (response.status === 401) {
+        redirectToLogin();
+        return;
+      }
+      if (!response.ok) throw new Error(`Failed to load test cases (${response.status})`);
+      const data = await response.json();
+      setSelectableDetails(data.details ?? []);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to load test cases");
+      setShowTestCaseSelection(false);
+    } finally {
+      setSelectionLoading(false);
     }
   };
 
@@ -660,7 +704,13 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
 
       {/* Analyse modal */}
       {analyseModal && (
-        <div className="download-overlay" onClick={() => { if (!analyseLoading) setAnalyseModal(null); }}>
+        <div className="download-overlay" onClick={() => {
+          if (!analyseLoading) {
+            setAnalyseModal(null);
+            setShowTestCaseSelection(false);
+            setSelectedAnalysisDetailIds([]);
+          }
+        }}>
           <div className="download-overlay-card analyse-modal" onClick={(e) => e.stopPropagation()}>
             {analyseLoading ? (
               <>
@@ -677,6 +727,66 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
                   <p className="download-overlay-title" style={{ margin: 0 }}>Analyse Run</p>
                   <p className="download-overlay-sub" style={{ marginTop: 4 }}>{analyseModal.runName}</p>
                 </div>
+                {showTestCaseSelection ? (
+                  <>
+                    <div className="analyse-selection-heading">
+                      <button
+                        type="button"
+                        className="analyse-back-btn"
+                        onClick={() => setShowTestCaseSelection(false)}
+                        aria-label="Back to analysis options"
+                      >
+                        <i className="bi bi-arrow-left"></i>
+                      </button>
+                      <div>
+                        <p className="analyse-option-title">Select test cases</p>
+                        <p className="analyse-option-sub">Failed test cases cannot be selected</p>
+                      </div>
+                    </div>
+                    {selectionLoading ? (
+                      <div className="download-big-spinner" />
+                    ) : (
+                      <div className="analyse-testcase-list">
+                        {selectableDetails.map((detail) => {
+                          const isFailed = detail.status.toUpperCase() === "FAILED";
+                          const isChecked = selectedAnalysisDetailIds.includes(detail.detail_id);
+                          return (
+                            <label
+                              key={detail.detail_id}
+                              className={`analyse-testcase-row${isFailed ? " is-disabled" : ""}`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                disabled={isFailed}
+                                onChange={() =>
+                                  setSelectedAnalysisDetailIds((current) =>
+                                    current.includes(detail.detail_id)
+                                      ? current.filter((id) => id !== detail.detail_id)
+                                      : [...current, detail.detail_id]
+                                  )
+                                }
+                              />
+                              <span>
+                                <strong>{detail.testcase_name}</strong>
+                                <small>{detail.metric_name} · {detail.status}</small>
+                              </span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    )}
+                    <button
+                      className="analyse-run-selected-btn"
+                      disabled={selectionLoading || selectedAnalysisDetailIds.length === 0}
+                      onClick={() =>
+                        startAnalysis("selected", analyseModal.runName, selectedAnalysisDetailIds)
+                      }
+                    >
+                      Re-run selected ({selectedAnalysisDetailIds.length})
+                    </button>
+                  </>
+                ) : (
                 <div className="analyse-modal-options">
                   {analyseModal.hasScore && analyseModal.hasFailedCases && (
                     <button
@@ -700,8 +810,23 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
                       <p className="analyse-option-sub">Run all test cases </p>
                     </div>
                   </button>
+                  <button
+                    className="analyse-option-btn"
+                    onClick={() => openTestCaseSelection(analyseModal.runName)}
+                  >
+                    <i className="bi bi-check2-square"></i>
+                    <div>
+                      <p className="analyse-option-title">Select Test Cases</p>
+                      <p className="analyse-option-sub">Choose specific successful test cases to re-run</p>
+                    </div>
+                  </button>
                 </div>
-                <button className="analyse-cancel-btn" onClick={() => setAnalyseModal(null)}>
+                )}
+                <button className="analyse-cancel-btn" onClick={() => {
+                  setAnalyseModal(null);
+                  setShowTestCaseSelection(false);
+                  setSelectedAnalysisDetailIds([]);
+                }}>
                   Cancel
                 </button>
               </>

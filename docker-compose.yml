@@ -102,6 +102,8 @@ services:
       TDMS_APP_URL: ${TDMS_APP_URL:-/tdms/dashboard}
       DB_HOST: ${DB_HOST:-db}
       DB_PORT: ${DB_PORT:-3306}
+    volumes:
+      - ./data:/app/data
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:7500/docs', timeout=3)"]
       interval: 20s
@@ -178,6 +180,8 @@ services:
       - .env
     environment:
       AUTH_SERVICE_URL: ${AUTH_SERVICE_URL:-http://auth-service:7500}
+    volumes:
+      - ./data:/app/data
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:7250/', timeout=3)"]
       interval: 20s

@@ -236,7 +236,7 @@ async def web_login(
         input {{
           width: 100%;
           height: 48px;
-          padding: 0 14px;
+          padding: 0 44px 0 14px;
           border: 1px solid rgba(148, 163, 184, 0.55);
           border-radius: 4px;
           background: rgba(255, 255, 255, 0.95);
@@ -258,11 +258,22 @@ async def web_login(
           border: 0;
           padding: 4px;
           margin: 0;
-          width: auto;
+          width: 32px;
+          height: 32px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
           background: transparent;
           color: #6b7280;
           cursor: pointer;
-          font-size: 1.05rem;
+        }}
+        .toggle-password:hover {{
+          color: #374151;
+        }}
+        .toggle-password svg {{
+          width: 20px;
+          height: 20px;
+          stroke: currentColor;
         }}
         .login-btn {{
           display: block;
@@ -331,7 +342,12 @@ async def web_login(
               <label class='label' for='password'>Password :</label>
               <div class='password-wrap'>
                 <input id='password' name='password' type='password' autocomplete='current-password' required />
-                <button class='toggle-password' id='toggle-password' type='button' aria-label='Show password'>◉</button>
+                <button class='toggle-password' id='toggle-password' type='button' aria-label='Show password'>
+                  <svg class='eye-icon' viewBox='0 0 24 24' fill='none' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+                    <path d='M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z'></path>
+                    <circle cx='12' cy='12' r='3'></circle>
+                  </svg>
+                </button>
               </div>
             </div>
             <button class='login-btn' type='submit'>Login</button>
@@ -362,10 +378,25 @@ async def web_login(
       }};
       const passwordInput = document.getElementById('password');
       const togglePassword = document.getElementById('toggle-password');
+      const eyeIcon = `
+        <svg class='eye-icon' viewBox='0 0 24 24' fill='none' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+          <path d='M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z'></path>
+          <circle cx='12' cy='12' r='3'></circle>
+        </svg>
+      `;
+      const eyeOffIcon = `
+        <svg class='eye-icon' viewBox='0 0 24 24' fill='none' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'>
+          <path d='M9.88 9.88a3 3 0 1 0 4.24 4.24'></path>
+          <path d='M10.73 5.08A10.43 10.43 0 0 1 12 5c6.5 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68'></path>
+          <path d='M6.61 6.61A13.53 13.53 0 0 0 2 12s3.5 7 10 7a9.74 9.74 0 0 0 5.39-1.61'></path>
+          <path d='M2 2l20 20'></path>
+        </svg>
+      `;
       togglePassword.onclick = () => {{
         const isPassword = passwordInput.type === 'password';
         passwordInput.type = isPassword ? 'text' : 'password';
         togglePassword.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
+        togglePassword.innerHTML = isPassword ? eyeOffIcon : eyeIcon;
       }};
       document.getElementById('login-form').onsubmit = async (e) => {{
         e.preventDefault();

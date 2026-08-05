@@ -15,12 +15,23 @@ config_path = BASE_DIR / "config.json"
 # Ensure `config` exists even if the file is missing
 config = {}
 try:
-    with open(config_path, "r") as f:
+    with open(local_config_path, "r") as f:
         config = json.load(f)
 except FileNotFoundError:
-    logger.warning(f"Config file not found at {config_path}. Using default settings.")
-
+  
+ try:
+        with open(config_path, "r") as f:
+            config = json.load(f)
+    except FileNotFoundError:
+        logger.warning(f"Config file not found at {config_path}. Trying local config.")
+        try:
+            with open(local_config_path, "r") as f:
+                config = json.load(f)
+        except FileNotFoundError:
+            logger.warning(f"Local config file not found at {local_config_path}. Using default settings.")
+            config = {}
 db_cfg = config.get("db", {})
+
 engine_type = db_cfg.get("engine", db_cfg.get("engine_type", "sqlite")).lower()
 
 # def _missing_mariadb_keys() -> list[str]:
@@ -32,7 +43,7 @@ engine_type = db_cfg.get("engine", db_cfg.get("engine_type", "sqlite")).lower()
 #     engine_type = "sqlite"
 
 if engine_type == "sqlite":
-    db_file = db_cfg.get("file", "Auth.db")
+    db_file = db_cfg.get("file", "AIEvaluationData.db")
     
     # project root: AIEvaluationTool
     project_root = str(BASE_DIR)

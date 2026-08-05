@@ -29,7 +29,7 @@ db_cfg = config.get("db", {})
 engine_type = db_cfg.get("engine", "sqlite").lower()
 
 if engine_type == "sqlite":
-    db_file = db_cfg.get("file", "TDMS.db")
+    db_file = db_cfg.get("file", "AIEvaluationData.db")
     
     # project root: AIEvaluationTool
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../.."))
