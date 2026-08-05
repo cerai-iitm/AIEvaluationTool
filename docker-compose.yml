@@ -33,6 +33,8 @@ services:
     image: ollama/ollama:latest
     container_name: aiet-ollama
     restart: unless-stopped
+    environment:
+      - OLLAMA_KEEP_ALIVE=-1
     profiles: ["prod"]
     expose:
       - "11434"
@@ -55,6 +57,18 @@ services:
     environment:
       - OLLAMA_HOST=ollama:11434 
     command: ["pull", "${OLLAMA_MODEL:-qwen3:32b}"]
+
+  ollama-warmup:
+    image: curlimages/curl:latest
+    depends_on:
+      ollama-init:
+        condition: service_completed_successfully
+    restart: "no"
+    command: >
+      sh -c "
+      curl http://ollama:11434/api/generate
+      -d '{\"model\":\"${OLLAMA_MODEL:-qwen3:32b}\",\"prompt\":\"hi\",\"stream\":false}'
+      "
     
 
   interface-manager:
