@@ -28,7 +28,7 @@ def _normalize_legacy_activity_operations(db: Session) -> None:
     changed = False
     for legacy, current in updates:
         result = db.execute(
-            text('UPDATE "ActivityLog" SET operation = :current WHERE lower(operation) = :legacy'),
+            text('UPDATE ActivityLog SET operation = :current WHERE lower(operation) = :legacy'),
             {"current": current, "legacy": legacy},
         )
         changed = changed or (result.rowcount or 0) > 0
