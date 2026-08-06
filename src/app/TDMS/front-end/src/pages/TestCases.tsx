@@ -574,7 +574,7 @@ const TestCases = () => {
                     </td>
                   </tr>
                 ) : (
-                  paginatedCases.map((testCase,index) => (
+                  paginatedCases.map((testCase) => (
                     <tr
                       key={testCase.id}
                       className={`border-b cursor-pointer transition-colors duration-200 ${
@@ -587,7 +587,7 @@ const TestCases = () => {
                         setHighlightedRowId(testCase.id);
                       }}
                     >
-                      <td className="p-2 pl-12">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                      <td className="p-2 pl-12">{testCase.id}</td>
                       <td className="p-2 pl-12 max-w-[200px] whitespace-normal break-words">{testCase.name}</td>
                       <td className="p-2 truncate">{testCase.strategyName}</td>
                       <td className="p-2 pl-6 capitalize first-letter">{testCase.domainName}</td>

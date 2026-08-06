@@ -519,7 +519,7 @@ const Metrics: React.FC = () => {
                         </td>
                       </tr>
                     ) : (
-                      PaginatedMetrics.map((row, index) => (
+                      PaginatedMetrics.map((row) => (
                         <tr 
                           key={row.metric_id}
                           className={`border-b cursor-pointer transition-colors duration-200 ${
@@ -531,7 +531,7 @@ const Metrics: React.FC = () => {
                             setHighlightedRowId(row.metric_id);
                           }}
                         >
-                          <td className="p-2 pl-16">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                          <td className="p-2 pl-16">{row.metric_id}</td>
                           <td className="p-2 truncate">{row.metric_name}</td>
                           <td className="p-2 truncate ">{row.metric_description}</td>
                         </tr>

@@ -303,7 +303,7 @@ const LlmPrompts = () => {
                         </td>
                       </tr>
                     ) : (
-                      paginatedPrompts.map((row, index) => (
+                      paginatedPrompts.map((row) => (
                         <tr
                           key={row.llmPromptId}
                           className={`border-b cursor-pointer transition-colors duration-200 ${
@@ -311,7 +311,7 @@ const LlmPrompts = () => {
                           }`}
                           onClick={() => {setSelectedPrompt(row); setHighlightedRowId(row.llmPromptId);}}
                         >
-                          <td className="p-2 text-center">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                          <td className="p-2 text-center">{row.llmPromptId}</td>
                           <td className="p-2 truncate max-w-[650px] pr-8 mr-2">
                             {row.prompt}
                           </td>
