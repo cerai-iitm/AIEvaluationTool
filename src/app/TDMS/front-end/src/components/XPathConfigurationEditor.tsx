@@ -611,7 +611,7 @@ export default function XPathConfigurationEditor({
             <FileCode2 className="h-4 w-4 text-primary" />
             <Label className="text-base font-semibold">XPath Configuration</Label>
           </div>
-          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+          {/* <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
             <span>
               {usesTargetConfig
                 ? "Target"
@@ -622,7 +622,7 @@ export default function XPathConfigurationEditor({
             <Badge variant="secondary" className="rounded-md font-mono">
               {configLabel}
             </Badge>
-          </div>
+          </div> */}
         </div>
         {showSave ? (
           <Button

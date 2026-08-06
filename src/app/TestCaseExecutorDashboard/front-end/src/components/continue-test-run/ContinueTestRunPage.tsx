@@ -43,6 +43,12 @@ interface InterfaceManagerStatus {
 const normalizeTargetName = (value?: string) =>
   (value || "").replace(/\s*\(.*?\)\s*$/, "").trim().toLowerCase();
 
+const formatRunTimestamp = (timestamp?: string | null, fallback = "N/A") => {
+  if (!timestamp) return fallback;
+  const date = new Date(timestamp);
+  return Number.isNaN(date.getTime()) ? fallback : date.toLocaleString();
+};
+
 const ContinueRunPage: React.FC = () => {
 
   const maxTestCases = ['5', '10', '20', '30', '50', '100', 'Custom'];
@@ -392,8 +398,8 @@ const ContinueRunPage: React.FC = () => {
                       </p>
                     </div>
                     <div className="col-md-6">
-                      <p><strong>Start Time:</strong> {existingRun.start_ts || 'N/A'}</p>
-                      <p><strong>End Time:</strong> {existingRun.end_ts || 'In Progress'}</p>
+                      <p><strong>Start Time:</strong> {formatRunTimestamp(existingRun.start_ts)}</p>
+                      <p><strong>End Time:</strong> {formatRunTimestamp(existingRun.end_ts, 'In Progress')}</p>
                     </div>
                   </div>
                   

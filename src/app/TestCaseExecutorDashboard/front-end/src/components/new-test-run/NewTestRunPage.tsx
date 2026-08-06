@@ -55,6 +55,7 @@ const NewTestRunPage: React.FC = () => {
   const [domainOptions, setDomainOptions] = useState<string[]>([]);
   const [languageOptions, setLanguageOptions] = useState<string[]>([]);
   const [isRunning, setIsRunning] = useState(false);
+  const [isStopping, setIsStopping] = useState(false);
   const [runCompleted, setRunCompleted] = useState(false);
   const [totalTestCases, setTotalTestCases] = useState(0);
   const [filters, setFilters] = useState<AllFiltersResponse | null>(null);
@@ -134,6 +135,7 @@ const NewTestRunPage: React.FC = () => {
   const handleRunFinished = useCallback(() => {
     setRunCompleted(true);
     setIsRunning(false);
+    setIsStopping(false);
   }, []);
 
   const handleWsMessage = useCallback((event: MessageEvent) => {
@@ -157,6 +159,7 @@ const NewTestRunPage: React.FC = () => {
     if (data.type === "RUN_FINISHED") {
       setRunCompleted(true);
       setIsRunning(false);
+      setIsStopping(false);
       activeRunIdRef.current = null;
     }
   }, []);
@@ -364,6 +367,7 @@ const NewTestRunPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setRunCompleted(false);
+    setIsStopping(false);
     setLiveEvents([]);
     activeRunIdRef.current = null;
     pendingEventsRef.current = [];
@@ -422,6 +426,33 @@ const NewTestRunPage: React.FC = () => {
     }
 
     setIsRunning(true); // now we can start the Loop component
+  };
+
+  const handleStopRun = async () => {
+    const runId = activeRunIdRef.current;
+    if (runId === null || isStopping) return;
+
+    setIsStopping(true);
+    try {
+      const res = await fetch(API_ENDPOINTS.STOP_RUN(runId), {
+        method: "POST",
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+
+      if (res.status === 401) {
+        redirectToLogin();
+        return;
+      }
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail || "Failed to stop run");
+      }
+    } catch (err) {
+      console.error("Failed to stop run:", err);
+      alert(err instanceof Error ? err.message : "Failed to stop run");
+      setIsStopping(false);
+    }
   };
 
   return (
@@ -593,6 +624,16 @@ const NewTestRunPage: React.FC = () => {
           <button type="submit" className="start-button" disabled={isStartDisabled}>
             Start Run
           </button>
+          {isRunning && (
+            <button
+              type="button"
+              className="stop-button"
+              onClick={handleStopRun}
+              disabled={isStopping}
+            >
+              {isStopping ? "Stopping…" : "Stop Run"}
+            </button>
+          )}
         </div>
         </form>
         {(isRunning || runCompleted) && 
