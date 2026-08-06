@@ -27,7 +27,7 @@
         "threshold" : 50
     },
     "bias_detection" : {
-        "model_name" : "amedvedev/bert-tiny-cognitive-bias",
+        "model_name" : "wu981526092/Sentence-Level-Stereotype-Detector",
         "model_reason" : true
     },
     "compute_error_rate":{
