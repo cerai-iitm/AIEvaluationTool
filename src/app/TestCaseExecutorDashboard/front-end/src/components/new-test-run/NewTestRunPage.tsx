@@ -512,7 +512,7 @@ const NewTestRunPage: React.FC = () => {
             />
           </div>
           <div className="filter-item">
-            <label>Test Case Name</label>
+            <label>Test Case</label>
             <div className="test-case-entry">
               <input
                 type="text"

@@ -377,7 +377,7 @@ const TestPlans = () => {
                       Plan ID
                     </th>
                     <th className="sticky top-0 bg-white z-10 p-4 pl-12 font-semibold text-left w-[40%]">
-                      Plan Name
+                      Test Plan
                     </th>
                     <th className="sticky top-0 bg-white z-10 p-4 pl-12 font-semibold text-left w-[80%]">
                       Description
@@ -575,7 +575,7 @@ const TestPlans = () => {
                     Plan ID: {testPlanToDelete.plan_id}
                   </p>
                   <p className="font-semibold">
-                    Plan Name: {testPlanToDelete.plan_name}
+                    Plan: {testPlanToDelete.plan_name}
                   </p>
                 </div>
               )}

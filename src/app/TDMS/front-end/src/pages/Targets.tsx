@@ -295,9 +295,9 @@ const Targets = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="target">Target Name</SelectItem>
+                <SelectItem value="target">Target </SelectItem>
                 <SelectItem value="type">Target Type</SelectItem>
-                <SelectItem value="domain">Domain Name</SelectItem>
+                <SelectItem value="domain">Domain </SelectItem>
               </SelectContent>
             </Select>
             <Input
@@ -377,13 +377,13 @@ const Targets = () => {
                       Target ID
                     </th>
                     <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">
-                      Target Name
+                      Target 
                     </th>
                     <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">
                       Target Type 
                     </th>
                     <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">
-                      Domain Name
+                      Domain 
                     </th>
                   </tr>
                 </thead>
@@ -604,7 +604,7 @@ const Targets = () => {
                     Target ID: {targetToDelete.target_id}
                   </p>
                   <p className="font-semibold">
-                    Target Name: {targetToDelete.target_name}
+                    Target: {targetToDelete.target_name}
                   </p>
                 </div>
               )}

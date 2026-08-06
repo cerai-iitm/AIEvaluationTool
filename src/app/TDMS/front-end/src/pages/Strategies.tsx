@@ -436,7 +436,7 @@ const StrategyList: React.FC = () => {
                   <thead className="border-b-2">
                     <tr>
                       <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left w-[15%] ">Strategy ID</th>
-                      <th className="sticky top-0 bg-white z-10 p-2 font-semibold text-left w-[30%]">Strategy Name</th>
+                      <th className="sticky top-0 bg-white z-10 p-2 font-semibold text-left w-[30%]">Strategy </th>
                       <th className="sticky top-0 z-10 pl-8 p-2 font-semibold text-left ">Strategy Description</th>
                     </tr>
                   </thead>
@@ -585,7 +585,7 @@ const StrategyList: React.FC = () => {
               </p>
               <div className="mb-6">
                 <p className="text-sm md:text-base text-center capitalize font-semibold">
-                  <span className="font-medium">Strategy Name :</span> {selectedStrategy.strategy_name}
+                  <span className="font-medium">Strategy  :</span> {selectedStrategy.strategy_name}
                 </p>
               </div>
               <div className="flex gap-4 justify-center">

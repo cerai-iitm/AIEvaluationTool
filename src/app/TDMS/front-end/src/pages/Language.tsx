@@ -419,7 +419,7 @@ const LanguageList: React.FC = () => {
                                     <thead className="border-b-2">
                                         <tr>
                                             <th className="sticky top-0 bg-white z-10 p-2 md:p-4 font-semibold text-center text-xs md:text-base">Language ID</th>
-                                            <th className="sticky top-0 bg-white z-10 p-2 md:p-4 font-semibold text-left text-xs md:text-base">Language Name</th>
+                                            <th className="sticky top-0 bg-white z-10 p-2 md:p-4 font-semibold text-left text-xs md:text-base">Language </th>
                                         </tr>
                                     </thead>
                                     <tbody>

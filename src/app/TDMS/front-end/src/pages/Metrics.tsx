@@ -507,7 +507,7 @@ const Metrics: React.FC = () => {
                   <thead className="border-b-2">
                     <tr>
                       <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left pl-10 w-[20%] ">Metric Id</th>
-                      <th className="sticky top-0 bg-white z-10 p-2 font-semibold text-left pl-4 w-[40%]">Metric Name</th>
+                      <th className="sticky top-0 bg-white z-10 p-2 font-semibold text-left pl-4 w-[40%]">Metric</th>
                       <th className="sticky top-0 bg-white z-10 p-2 font-semibold text-left pl-4 w-[80%]">Description</th>
                     </tr>
                   </thead>
@@ -686,7 +686,7 @@ const Metrics: React.FC = () => {
               </p>
               <div className="mb-6">
                 <p className="text-sm md:text-base text-center capitalize font-semibold">
-                  <span className="font-medium">Metric Name :</span> {selectedMetric.metric_name}
+                  <span className="font-medium">Metric :</span> {selectedMetric.metric_name}
                 </p>
               </div>
               <div className="flex gap-4 justify-center">
