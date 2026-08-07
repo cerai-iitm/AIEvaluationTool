@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { type ChangeEvent, type DragEvent, useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,7 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, X, Loader2 } from "lucide-react";
+import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, X, Loader2, Upload, CircleCheck, CircleX } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { TestCaseUpdateDialog } from "@/components/TestCaseUpdateDialog";
@@ -34,7 +34,7 @@ import { useToast } from "@/hooks/use-toast";
 import { hasPermission } from "@/utils/permissions";
 import { HistoryButton } from "@/components/HistoryButton";
 import { PageHeaderWithBack } from "@/components/PageHeaderWithBack";
-import { set } from "date-fns";
+import { getValidAccessToken } from "@/utils/auth";
 
 interface TestCase {
   id: number;
@@ -66,6 +66,14 @@ const TestCases = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentUserRole, setCurrentUserRole] = useState<string>("");
   const [highlightedRowId, setHighlightedRowId] = useState<number | null>(null);
+  const [importerDialogOpen, setImporterDialogOpen] = useState(false);
+  const [importerLoading, setImporterLoading] = useState(false);
+  const [importerStatus, setImporterStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [importerMessage, setImporterMessage] = useState("");
+  const [selectedJsonFile, setSelectedJsonFile] = useState<File | null>(null);
+  const [isJsonDragActive, setIsJsonDragActive] = useState(false);
+  const importerFileInputRef = useRef<HTMLInputElement | null>(null);
+  const importerRefreshTimerRef = useRef<number | null>(null);
   
   // Refs for textareas to enable auto-scroll
   const userPromptsRef = useRef<HTMLTextAreaElement>(null);
@@ -283,6 +291,147 @@ const TestCases = () => {
         setHighlightedRowId(currentHighlightedId);
       }
     }, 100);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (importerRefreshTimerRef.current !== null) {
+        window.clearTimeout(importerRefreshTimerRef.current);
+      }
+    };
+  }, []);
+
+  const resetImporter = () => {
+    setImporterStatus("idle");
+    setImporterMessage("");
+    setSelectedJsonFile(null);
+    setIsJsonDragActive(false);
+
+    if (importerFileInputRef.current) {
+      importerFileInputRef.current.value = "";
+    }
+  };
+
+  const pickJsonFile = (file?: File | null) => {
+    if (!file) {
+      return;
+    }
+
+    if (!file.name.toLowerCase().endsWith(".json")) {
+      setSelectedJsonFile(null);
+      setImporterStatus("idle");
+      setImporterMessage("Please select a .json file.");
+      return;
+    }
+
+    setSelectedJsonFile(file);
+    setImporterStatus("idle");
+    setImporterMessage("");
+  };
+
+  const handleJsonFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    pickJsonFile(event.target.files?.[0]);
+  };
+
+  const handleJsonDragOver = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsJsonDragActive(true);
+  };
+
+  const handleJsonDragLeave = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsJsonDragActive(false);
+  };
+
+  const handleJsonDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsJsonDragActive(false);
+    pickJsonFile(event.dataTransfer.files?.[0]);
+  };
+
+  const formatUploadError = async (response: Response) => {
+    try {
+      const data = await response.json();
+      const detail = data.detail;
+
+      if (typeof detail === "string") {
+        return detail;
+      }
+
+      if (detail?.errors?.length) {
+        const firstErrors = detail.errors
+          .slice(0, 5)
+          .map((error: { row?: number | null; field?: string; message?: string }) => {
+            const row = error.row ? `Row ${error.row}` : "File";
+            const field = error.field ? ` ${error.field}` : "";
+            return `${row}${field}: ${error.message}`;
+          })
+          .join("\n");
+        const remaining = detail.errors.length > 5 ? `\n...and ${detail.errors.length - 5} more error(s).` : "";
+        return `${detail.message || "JSON upload validation failed."}\n${firstErrors}${remaining}`;
+      }
+
+      return detail?.message || data.message || "JSON upload failed.";
+    } catch (error) {
+      return "JSON upload failed.";
+    }
+  };
+
+  const uploadJsonFile = async () => {
+    if (!selectedJsonFile) {
+      setImporterStatus("error");
+      setImporterMessage("Select a JSON file before importing.");
+      return;
+    }
+
+    setImporterLoading(true);
+    setImporterStatus("loading");
+    setImporterMessage("Uploading JSON test cases...");
+
+    try {
+      const token = await getValidAccessToken(API_ENDPOINTS.REFRESH);
+      if (!token) {
+        setImporterStatus("error");
+        setImporterMessage("Authentication failed");
+        setImporterLoading(false);
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", selectedJsonFile);
+
+      const response = await fetch(API_ENDPOINTS.TESTCASE_UPLOAD_JSON, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        setImporterStatus("error");
+        setImporterMessage(await formatUploadError(response));
+        setImporterLoading(false);
+        return;
+      }
+
+      const data = await response.json();
+      setImporterStatus("success");
+      setImporterMessage(data.message || "JSON test cases imported successfully.");
+      setImporterLoading(false);
+      importerRefreshTimerRef.current = window.setTimeout(() => {
+        setRefreshKey((prev) => prev + 1);
+        setImporterDialogOpen(false);
+        resetImporter();
+      }, 1500);
+    } catch (error) {
+      setImporterStatus("error");
+      setImporterMessage(`Error: ${error instanceof Error ? error.message : "An unexpected error occurred"}`);
+      setImporterLoading(false);
+    }
   };
 
   const handleDeleteClick = (testCase: TestCase) => {
@@ -614,6 +763,27 @@ const TestCases = () => {
         </div>
       </main>
 
+      <button
+        onClick={() => {
+          resetImporter();
+          setImporterDialogOpen(true);
+        }}
+        disabled={importerLoading}
+        className="fixed bottom-8 right-8 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-6 py-3 rounded-full shadow-lg hover:shadow-xl transition-all flex items-center gap-2 z-30"
+      >
+        {importerLoading ? (
+          <>
+            <Loader2 className="w-5 h-5 animate-spin" />
+            <span>Importing...</span>
+          </>
+        ) : (
+          <>
+            <Upload className="w-5 h-5" />
+            <span>Import Data</span>
+          </>
+        )}
+      </button>
+
       <Dialog open={!!selectedCase} onOpenChange={() => setSelectedCase(null)}>
         <DialogContent 
           className="max-w-3xl max-h-[90vh] overflow-y-auto"
@@ -779,6 +949,121 @@ const TestCases = () => {
         onOpenChange={setAddDialogOpen}
         onSuccess={handleUpdateSuccess}
       />
+
+      <Dialog open={importerDialogOpen} onOpenChange={setImporterDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {importerStatus === "loading" && "Importing Test Cases..."}
+              {importerStatus === "success" && "Import Successful"}
+              {importerStatus === "error" && "Import Failed"}
+              {importerStatus === "idle" && "Import Test Cases"}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="py-6 text-center">
+            {importerStatus === "loading" && (
+              <div className="flex flex-col items-center gap-4">
+                <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
+                <p className="text-foreground font-medium">{importerMessage}</p>
+              </div>
+            )}
+
+            {importerStatus === "success" && (
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                  <CircleCheck className="w-7 h-7 text-green-600" />
+                </div>
+                <p className="text-foreground font-medium">{importerMessage}</p>
+              </div>
+            )}
+
+            {importerStatus === "error" && (
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                  <CircleX className="w-7 h-7 text-red-600" />
+                </div>
+                <p className="text-foreground font-medium whitespace-pre-line">{importerMessage}</p>
+              </div>
+            )}
+
+            {importerStatus === "idle" && (
+              <div
+                className={`flex flex-col items-center gap-4 rounded-lg border-2 border-dashed px-6 py-8 transition-colors ${
+                  isJsonDragActive ? "border-blue-600 bg-blue-50" : "border-gray-300 bg-white"
+                }`}
+                onDragOver={handleJsonDragOver}
+                onDragLeave={handleJsonDragLeave}
+                onDrop={handleJsonDrop}
+              >
+                <input
+                  ref={importerFileInputRef}
+                  type="file"
+                  accept="application/json,.json"
+                  className="hidden"
+                  onChange={handleJsonFileChange}
+                />
+                <button
+                  type="button"
+                  onClick={() => importerFileInputRef.current?.click()}
+                  className="rounded-full p-3 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                  aria-label="Choose JSON file"
+                >
+                  <Upload className="w-12 h-12 text-blue-600" />
+                </button>
+                <div className="space-y-1">
+                  <p className="text-foreground font-medium">
+                    {selectedJsonFile ? selectedJsonFile.name : "Click the upload icon or drop a JSON file here"}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Missing fields will be reported before import. Existing test case names are skipped.
+                  </p>
+                  {importerMessage && (
+                    <p className="text-sm text-red-600 whitespace-pre-line">{importerMessage}</p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {importerStatus === "idle" && (
+            <div className="flex gap-4 justify-end pt-4">
+              <button
+                onClick={() => setImporterDialogOpen(false)}
+                className="px-4 py-2 border rounded-md hover:bg-gray-100"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={uploadJsonFile}
+                disabled={importerLoading || !selectedJsonFile}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-400"
+              >
+                Import
+              </button>
+            </div>
+          )}
+
+          {(importerStatus === "error" || importerStatus === "success") && (
+            <div className="flex gap-4 justify-end pt-4">
+              <button
+                onClick={() => {
+                  if (importerStatus === "success") {
+                    setImporterDialogOpen(false);
+                    resetImporter();
+                    return;
+                  }
+
+                  setImporterStatus("idle");
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                Close
+              </button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>

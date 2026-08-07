@@ -8,7 +8,7 @@
         "logout_button_element": "//button[.//div[text()='Log out']]",
         "prompt_input_box_element": "//div[@aria-placeholder='Type a message' and @contenteditable='true']",
         "agent_response_element": ".//span[@data-testid='selectable-text' and not(ancestor::span[@data-testid='selectable-text'])]",
-        "message_in_element": "//div[@data-testid='msg-container'][.//span[@aria-label and @aria-label!='You:']]",
+        "message_in_element": "//div[@data-testid='msg-container'][.//div[@data-pre-plain-text] and not(.//span[@aria-label='You:'])]",
         "message_out_element": "//div[@data-testid='msg-container'][.//span[@aria-label='You:']]",
         "audio_record_button_element": "//span[contains(@data-icon,'mic')]",
         "send_button_element": "//button[@aria-label='Send']",
@@ -58,7 +58,7 @@
     "bodhan-ai": {
       "LoginPage": {
         "email_input_element": "//input[@type='email' and @placeholder='arjun@school.edu']",
-        "password_input_element": "//input[@type='password' and @placeholder='••••••••']",
+        "password_input_element": "//input[@type='password' and @placeholder='\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022']",
         "login_button_element": "//button[@type='submit' and contains(normalize-space(.), 'Sign In')]"
       },
       "LogoutPage": {
@@ -66,7 +66,7 @@
         "logout_button_element": "//button[normalize-space()='Sign out']"
       },
       "ChatPage": {
-        "prompt_input_box_element": "//textarea[@placeholder='Ask anything about your lesson, quiz, or subject…']",
+        "prompt_input_box_element": "//textarea[@placeholder='Ask anything about your lesson, quiz, or subject\u2026']",
         "agent_response_element": "(//div[contains(@class,'md-body')])[last()]//p",
         "send_button_element": "//button[@title='Send' and @aria-label='Send message']"
       }
