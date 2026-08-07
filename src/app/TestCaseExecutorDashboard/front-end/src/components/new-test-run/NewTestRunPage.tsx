@@ -119,7 +119,8 @@ const NewTestRunPage: React.FC = () => {
     }
   };
 
-  const isStartDisabled = !formData.testPlan || !formData.target  || isRunning;
+  const hasPendingTestCase = testCaseInput.trim().length > 0;
+  const isStartDisabled = !formData.testPlan || !formData.target || isRunning;
   const isTargetSelected = !!formData.target;
   const hasSelectedTestCases = formData.testCaseIds.length > 0;
   const seleniumHref = "/selenium/";
@@ -367,6 +368,12 @@ const NewTestRunPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (testCaseInput.trim()) {
+      alert("Click Add to include the entered test case before starting the run.");
+      return;
+    }
+
     setRunCompleted(false);
     setIsStopping(false);
     setLiveEvents([]);
