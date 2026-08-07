@@ -81,6 +81,7 @@ const ContinueRunPage: React.FC = () => {
   });
 
   const isStartDisabled = !formData.testPlan || isRunning;
+  const hasSelectedTestCases = formData.testCaseIds.length > 0;
   const seleniumHref = "/selenium/";
   const existingRunTarget = normalizeTargetName(existingRun?.target);
   const selectedTarget = filters?.targets.find(
@@ -532,6 +533,7 @@ const ContinueRunPage: React.FC = () => {
                         defaultText="Select Max"
                         value={maxTestCasesSelection}
                         showDefaultOption={false}
+                        disabled={hasSelectedTestCases}
                         onChange={handleMaxTestCasesChange}
                       />
                       {maxTestCasesSelection === "Custom" && (
@@ -542,6 +544,7 @@ const ContinueRunPage: React.FC = () => {
                           step="1"
                           placeholder="Enter max test cases"
                           value={formData.maxTestCases}
+                          disabled={hasSelectedTestCases}
                           onChange={(e) => handleChange("maxTestCases", e.target.value)}
                           required
                         />
@@ -554,6 +557,7 @@ const ContinueRunPage: React.FC = () => {
                        options={domainOptions }
                         defaultText="All Domains"
                         onChange={(val) => handleChange("domain", val)}
+                        disabled={hasSelectedTestCases}
                       />
                     </div>
 
@@ -563,6 +567,7 @@ const ContinueRunPage: React.FC = () => {
                         options={languageOptions}
                         defaultText="All Languages"
                         onChange={(val) => handleChange("language", val)}
+                        disabled={hasSelectedTestCases}
                       />
                     </div>
                   </div>

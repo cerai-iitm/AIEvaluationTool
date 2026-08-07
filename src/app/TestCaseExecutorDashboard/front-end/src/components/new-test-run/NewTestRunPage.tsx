@@ -121,6 +121,7 @@ const NewTestRunPage: React.FC = () => {
 
   const isStartDisabled = !formData.testPlan || !formData.target  || isRunning;
   const isTargetSelected = !!formData.target;
+  const hasSelectedTestCases = formData.testCaseIds.length > 0;
   const seleniumHref = "/selenium/";
   const selectedTarget = filters?.targets.find(
     (target) =>
@@ -575,6 +576,7 @@ const NewTestRunPage: React.FC = () => {
               defaultText="Select Max"
               value={maxTestCasesSelection}
               showDefaultOption={false}
+              disabled={hasSelectedTestCases}
               onChange={handleMaxTestCasesChange}
             />
             {maxTestCasesSelection === "Custom" && (
@@ -585,6 +587,7 @@ const NewTestRunPage: React.FC = () => {
                 step="1"
                 placeholder="Enter max test cases"
                 value={formData.maxTestCases}
+                disabled={hasSelectedTestCases}
                 onChange={(e) => handleChange("maxTestCases", e.target.value)}
                 required
               />
@@ -601,7 +604,7 @@ const NewTestRunPage: React.FC = () => {
                   : "Please select target first"
               }
               onChange={(val) => handleChange("domain", val)}
-              disabled={!isTargetSelected}
+              disabled={!isTargetSelected || hasSelectedTestCases}
             />
           </div>
 
@@ -615,7 +618,7 @@ const NewTestRunPage: React.FC = () => {
                   : "Please select target first"
               }
               onChange={(val) => handleChange("language", val)}
-              disabled={!isTargetSelected}
+              disabled={!isTargetSelected || hasSelectedTestCases}
             />
           </div>
         </div>
