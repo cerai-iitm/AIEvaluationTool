@@ -21,12 +21,15 @@ type XPathPages = Record<string, Record<string, string>>;
 interface XPathConfigurationEditorProps {
   applicationName: string;
   applicationType?: string;
+  targetType?: string;
   targetId?: number;
   targetName?: string;
   notes?: string;
   open: boolean;
   disabled?: boolean;
   onDirtyChange?: (isDirty: boolean) => void;
+  onPagesChange?: (pages: XPathPages) => void;
+  showSave?: boolean;
 }
 
 export interface XPathConfigurationEditorHandle {
@@ -60,18 +63,22 @@ const XPathConfigurationEditor = forwardRef<
 >(function XPathConfigurationEditor({
   applicationName,
   applicationType,
+  targetType,
   targetId,
   targetName,
   notes,
   open,
   disabled = false,
   onDirtyChange,
+  onPagesChange,
 }, ref) {
   const { toast } = useToast();
+  const resolvedApplicationType = applicationType ?? targetType;
   const appKey = useMemo(
-    () => resolveApplicationKey(applicationName, applicationType),
-    [applicationName, applicationType],
+    () => resolveApplicationKey(applicationName, resolvedApplicationType),
+    [applicationName, resolvedApplicationType],
   );
+  const targetKey = targetName?.trim() || "";
   const [pages, setPages] = useState<XPathPages>({});
   const [activePage, setActivePage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -105,9 +112,17 @@ const XPathConfigurationEditor = forwardRef<
     setIsLoading(true);
     setLoadError(null);
     try {
-      const response = await fetch(API_ENDPOINTS.TARGET_XPATHS_V2(appKey), {
+      // Existing targets must be resolved by the backend. In particular, the
+      // target name and the key used in xpaths.json are not always identical
+      // (for example WhatsApp targets use the shared `whatsapp_web` key).
+      const response = await fetch(
+        targetKey
+          ? API_ENDPOINTS.TARGET_XPATHS_BY_TARGET_V2(targetKey)
+          : API_ENDPOINTS.TARGET_XPATHS_V2(appKey),
+        {
         headers: authHeaders(),
-      });
+        },
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -115,8 +130,9 @@ const XPathConfigurationEditor = forwardRef<
       }
 
       const data = await response.json();
-      const nextPages = data?.pages && typeof data.pages === "object"
-        ? data.pages
+      const responsePages = targetKey ? data : data?.pages;
+      const nextPages = responsePages && typeof responsePages === "object"
+        ? responsePages
         : {};
       const nextPageNames = sortPages(nextPages);
       setPages(nextPages);
@@ -133,7 +149,7 @@ const XPathConfigurationEditor = forwardRef<
     } finally {
       setIsLoading(false);
     }
-  }, [appKey, authHeaders, open]);
+  }, [appKey, authHeaders, open, targetKey]);
 
   useEffect(() => {
     loadConfig();
@@ -142,6 +158,10 @@ const XPathConfigurationEditor = forwardRef<
   useEffect(() => {
     onDirtyChange?.(hasChanges);
   }, [hasChanges, onDirtyChange]);
+
+  useEffect(() => {
+    onPagesChange?.(pages);
+  }, [onPagesChange, pages]);
 
   const addPage = () => {
     let index = pageNames.length + 1;

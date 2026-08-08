@@ -77,6 +77,8 @@ services:
       - .env
     volumes:
       - interface_manager_logs:/app/src/app/interface_manager/logs
+      - ./src/app/interface_manager/xpaths.json:/app/src/app/interface_manager/xpaths.json:ro
+      - ./src/app/interface_manager/credentials.json:/app/src/app/interface_manager/credentials.json:ro
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/docs', timeout=3)"]
       interval: 20s
@@ -132,6 +134,8 @@ services:
     volumes:
       - interface_manager_logs:/app/src/app/interface_manager/logs:ro
       - ./config.json:/app/config.json
+      - ./src/app/interface_manager/xpaths.json:/app/src/app/interface_manager/xpaths.json:ro
+      - ./src/app/interface_manager/credentials.json:/app/src/app/interface_manager/credentials.json:ro
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:7000/docs', timeout=3)"]
       interval: 20s
@@ -182,6 +186,8 @@ services:
       AUTH_SERVICE_URL: ${AUTH_SERVICE_URL:-http://auth-service:7500}
     volumes:
       - ./data:/app/data
+      - ./src/app/interface_manager/xpaths.json:/app/src/app/interface_manager/xpaths.json
+      - ./src/app/interface_manager/credentials.json:/app/src/app/interface_manager/credentials.json
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:7250/', timeout=3)"]
       interval: 20s
