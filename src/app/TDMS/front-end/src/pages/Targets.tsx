@@ -295,9 +295,9 @@ const Targets = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="target">Target Name</SelectItem>
+                <SelectItem value="target">Target </SelectItem>
                 <SelectItem value="type">Target Type</SelectItem>
-                <SelectItem value="domain">Domain Name</SelectItem>
+                <SelectItem value="domain">Domain </SelectItem>
               </SelectContent>
             </Select>
             <Input
@@ -377,13 +377,13 @@ const Targets = () => {
                       Target ID
                     </th>
                     <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">
-                      Target Name
+                      Target 
                     </th>
                     <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">
                       Target Type 
                     </th>
                     <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">
-                      Domain Name
+                      Domain 
                     </th>
                   </tr>
                 </thead>
@@ -410,7 +410,7 @@ const Targets = () => {
                       </td>
                     </tr>
                   ) : (
-                    paginatedTargets.map((target,index) => (
+                    paginatedTargets.map((target) => (
                       <tr
                         key={target.target_id}
                         className={`border-b cursor-pointer transition-colors duration-200 ${highlightedRowId === target.target_id ? "bg-primary/10 hover:bg-primary/15 border-primary//30" : "hover:bg-muted/50"}`}
@@ -419,7 +419,7 @@ const Targets = () => {
                           setHighlightedRowId(target.target_id);
                         }}
                       >
-                        <td className="p-2 pl-12">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                        <td className="p-2 pl-12">{target.target_id}</td>
                         <td className="p-2 pl-6 capitalize">{target.target_name}</td>
                         <td className="p-2 pl-12">
                           <span
@@ -604,7 +604,7 @@ const Targets = () => {
                     Target ID: {targetToDelete.target_id}
                   </p>
                   <p className="font-semibold">
-                    Target Name: {targetToDelete.target_name}
+                    Target: {targetToDelete.target_name}
                   </p>
                 </div>
               )}

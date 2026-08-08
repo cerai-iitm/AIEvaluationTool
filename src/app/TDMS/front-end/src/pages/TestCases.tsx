@@ -603,9 +603,9 @@ const TestCases = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="testcase">Testcase Name</SelectItem>
-                <SelectItem value="strategy">Strategy Name</SelectItem>
-                <SelectItem value="domain">Domain Name</SelectItem>
+                <SelectItem value="testcase">Testcase </SelectItem>
+                <SelectItem value="strategy">Strategy </SelectItem>
+                <SelectItem value="domain">Domain </SelectItem>
               </SelectContent>
             </Select>
 
@@ -702,10 +702,10 @@ const TestCases = () => {
             <table className="w-full table-fixed">
               <thead className="border-b-2">
                 <tr>
-                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">Testcase ID</th>
-                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">Testcase Name</th>
-                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">Strategy Name</th>
-                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold   text-left">Domain Name</th>
+                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">Test Case ID</th>
+                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">Test Case </th>
+                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">Strategy </th>
+                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold   text-left">Domain </th>
                   <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">Language</th>
                 </tr>
               </thead>
@@ -723,7 +723,7 @@ const TestCases = () => {
                     </td>
                   </tr>
                 ) : (
-                  paginatedCases.map((testCase,index) => (
+                  paginatedCases.map((testCase) => (
                     <tr
                       key={testCase.id}
                       className={`border-b cursor-pointer transition-colors duration-200 ${
@@ -736,7 +736,7 @@ const TestCases = () => {
                         setHighlightedRowId(testCase.id);
                       }}
                     >
-                      <td className="p-2 pl-12">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                      <td className="p-2 pl-12">{testCase.id}</td>
                       <td className="p-2 pl-12 max-w-[200px] whitespace-normal break-words">{testCase.name}</td>
                       <td className="p-2 truncate">{testCase.strategyName}</td>
                       <td className="p-2 pl-6 capitalize first-letter">{testCase.domainName}</td>
@@ -1084,7 +1084,7 @@ const TestCases = () => {
               {testCaseToDelete && (
                 <div className="mt-4 p-4 bg-muted rounded-md">
                   <p className="font-semibold">Test Case ID: {testCaseToDelete.id}</p>
-                  <p className="font-semibold">Test Case Name: {testCaseToDelete.name}</p>
+                  <p className="font-semibold">Test Case: {testCaseToDelete.name}</p>
                 </div>
               )}
             </AlertDialogDescription>

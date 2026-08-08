@@ -101,13 +101,15 @@ async def execute_testcases(
     try:
         
         stop_watcher = threading.Event()
-        set_active_stop_watcher(stop_watcher)
+        set_active_stop_watcher(stop_watcher, run_id)
 
         def stop_requested() -> bool:
             return is_frontend_disconnect_requested(stop_watcher)
 
         async def finish_aborted_run(rundetail=None):
-            logger.info(f"Frontend disconnected; aborting run {run_id}")
+            stopped_from_frontend = ws_manager.disconnected_by_frontend
+            stop_reason = "Frontend disconnected" if stopped_from_frontend else "Run stopped by user"
+            logger.info(f"{stop_reason}; aborting run {run_id}")
             stop_watcher.set()
             if rundetail is not None:
                 rundetail.status = "FAILED"
@@ -120,7 +122,7 @@ async def execute_testcases(
                     "type": "RUN_FINISHED",
                     "runId": run_id,
                     "status": "FAILED",
-                    "error": "Frontend disconnected",
+                    "error": stop_reason,
                 }
             )
 
