@@ -54,6 +54,7 @@ const ContinueRunPage: React.FC = () => {
   const maxTestCases = ['5', '10', '20', '30', '50', '100', 'Custom'];
   const languages = ['English', 'Spanish', 'French', 'German', 'Chinese'];
   const [isRunning, setIsRunning] = useState(false);
+  const [isStopping, setIsStopping] = useState(false);
   const [testCaseInput, setTestCaseInput] = useState("");
   const [maxTestCasesSelection, setMaxTestCasesSelection] = useState("10");
   const [runFinished, setRunFinished] = useState(false);
@@ -68,6 +69,7 @@ const ContinueRunPage: React.FC = () => {
   const [hasContinuedRunStarted, setHasContinuedRunStarted] = useState(false);
   useNavigationBlocker(isRunning);
   const wsRef = useRef<WebSocket | null>(null);
+  const activeRunIdRef = useRef<string | number | null>(null);
   const [formData, setFormData] = useState<RunFormData>({
     runName: "",
     // target: "",
@@ -99,6 +101,8 @@ const ContinueRunPage: React.FC = () => {
   const handleRunFinished = useCallback(() => {
     setRunFinished(true);
     setIsRunning(false);
+    setIsStopping(false);
+    activeRunIdRef.current = null;
   }, []);
 
   useEffect(() => {
@@ -351,6 +355,7 @@ const ContinueRunPage: React.FC = () => {
       }
 
       setTotalTestCases(data.totalTestCases);
+      activeRunIdRef.current = data.runId;
       setHasContinuedRunStarted(true);
       setIsRunning(true);
 
@@ -374,6 +379,33 @@ const ContinueRunPage: React.FC = () => {
     } catch (err) {
       console.error("Error continuing run:", err);
       setIsRunning(false);
+    }
+  };
+
+  const handleStopRun = async () => {
+    const runId = activeRunIdRef.current;
+    if (runId === null || isStopping) return;
+
+    setIsStopping(true);
+    try {
+      const res = await fetch(API_ENDPOINTS.STOP_RUN(runId), {
+        method: "POST",
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+
+      if (res.status === 401) {
+        redirectToLogin();
+        return;
+      }
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail || "Failed to stop run");
+      }
+    } catch (err) {
+      console.error("Failed to stop run:", err);
+      alert(err instanceof Error ? err.message : "Failed to stop run");
+      setIsStopping(false);
     }
   };
 
@@ -576,6 +608,16 @@ const ContinueRunPage: React.FC = () => {
                     <button type="submit" className="start-button" disabled={isStartDisabled}>
                       Start Run
                     </button>
+                    {isRunning && (
+                      <button
+                        type="button"
+                        className="stop-button"
+                        onClick={handleStopRun}
+                        disabled={isStopping}
+                      >
+                        {isStopping ? "Stopping…" : "Stop Run"}
+                      </button>
+                    )}
                     </div>
                   </form>
                   {(isRunning || runFinished) && (

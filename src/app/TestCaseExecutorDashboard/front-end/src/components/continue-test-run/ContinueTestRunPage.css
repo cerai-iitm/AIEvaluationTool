@@ -353,6 +353,28 @@ h1 {
   width: 100%;
 }
 
+.stop-button {
+  width: 200px;
+  padding: 0.85rem 2rem;
+  border: none;
+  border-radius: 0.5rem;
+  background-color: #dc2626;
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.stop-button:hover:not(:disabled) {
+  background-color: #b91c1c;
+}
+
+.stop-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .selenium-link-button {
   display: inline-flex;
   align-items: center;
@@ -442,6 +464,7 @@ select:focus {
   }
 
   .run-actions-row .start-button,
+  .run-actions-row .stop-button,
   .run-actions-row .selenium-link-button {
     width: 100%;
   }
