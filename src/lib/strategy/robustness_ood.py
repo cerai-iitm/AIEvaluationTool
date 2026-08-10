@@ -27,7 +27,7 @@ class Robustness_OutOfDomain(Strategy):
 
     def evaluate(self, testcase: TestCase, conversation: Conversation):
         if not testcase.judge_prompt:
-            testcase.judge_prompt = LLMJudgePrompt(dflt_vals.definition)
+            testcase.judge_prompt = LLMJudgePrompt(dflt_vals.judge_prompt)
 
         logger.info("Evaluating out-of-domain robustness via LLM judge.")
         judge_score, judge_reason = self.llm_judge.evaluate(testcase, conversation)
