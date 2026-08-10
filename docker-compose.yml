@@ -60,6 +60,7 @@ services:
 
   ollama-warmup:
     image: curlimages/curl:latest
+    profiles: ["prod"]
     depends_on:
       ollama-init:
         condition: service_completed_successfully
