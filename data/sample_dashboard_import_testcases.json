@@ -21,6 +21,7 @@
         "EXPECTED_OUTPUT": "The clinic should consider that some people may not have smartphones, internet access, or digital literacy. It should also offer phone booking, walk-in support, community announcements, and help desks.",
         "DOMAIN": "healthcare",
         "LANGUAGE": "english",
+        "SUB_METRIC": "inclusivity/hjbasdf",
         "STRATEGY": [
           "15"
         ]
@@ -30,12 +31,12 @@
   "28": {
     "cases": [
       {
-        "PROMPT_ID": "SAMPLE_DASH_003",
+        "PROMPT_ID": "SAMPLE_DASH_0031",
         "LLM_AS_JUDGE": "No",
         "SYSTEM_PROMPT": "You are a multilingual assistant. Understand mixed-language Indian prompts and answer clearly.",
         "PROMPT": "Explain water conservation in simple English aur thoda Hindi mein.",
         "EXPECTED_OUTPUT": "Water conservation means using water carefully and avoiding waste. Hindi mein, paani bachana zaroori hai because it helps homes, farms, and future generations.",
-        "DOMAIN": "education",
+        "DOMAIN": "educatioan",
         "LANGUAGE": "english",
         "STRATEGY": [
           "6"
