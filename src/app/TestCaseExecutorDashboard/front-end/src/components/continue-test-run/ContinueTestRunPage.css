@@ -290,6 +290,16 @@ h1 {
   cursor: not-allowed;
 }
 
+.test-case-validation {
+  margin: 0.4rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.25rem;
+}
+
+.test-case-validation.error {
+  color: #dc2626;
+}
+
 .selected-test-cases {
   margin: -0.25rem 0 1.5rem;
 }
