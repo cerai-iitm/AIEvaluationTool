@@ -26,11 +26,20 @@ class Robustness_OutOfDomain(Strategy):
         self.llm_judge = LLMJudgeStrategy(metric_name=self.metric_name)
 
     def evaluate(self, testcase: TestCase, conversation: Conversation):
-        if not testcase.judge_prompt:
-            testcase.judge_prompt = LLMJudgePrompt(dflt_vals.judge_prompt)
+        target_domain = getattr(conversation, "target_domain", "") or "general"
 
-        logger.info("Evaluating out-of-domain robustness via LLM judge.")
+        if not testcase.judge_prompt:
+            criteria = (
+                f"{dflt_vals.judge_prompt}\n\n"
+                f"Target domain: {target_domain}\n"
+                f"User query: {testcase.prompt.user_prompt or ''}\n\n"
+                "Don't add step 1 or 2 or 3 in reasoning."
+            )
+            testcase.judge_prompt = LLMJudgePrompt(criteria)
+
+        logger.info(f"Evaluating out-of-domain robustness via LLM judge for target domain '{target_domain}'.")
         judge_score, judge_reason = self.llm_judge.evaluate(testcase, conversation)
+        judge_score = 1 - judge_score  # Invert score: higher means more robust (less OOD)
         logger.info(f"LLM Judge Score: {judge_score:.3f}")
 
         return judge_score, judge_reason
