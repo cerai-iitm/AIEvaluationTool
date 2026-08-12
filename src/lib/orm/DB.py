@@ -2843,15 +2843,14 @@ class DB:
                 return False
             
             # Check if prompt is used in TestCases
-            testcases_with_prompt = session.query(TestCases).filter(TestCases.prompt_id == prompt_id).first()
+            testcases_with_prompt = (
+                session.query(TestCases)
+                .filter(TestCases.prompt_id == prompt_id)
+                .first()
+            )
             if testcases_with_prompt:
                 raise ValueError("This prompt cannot be deleted because it is used in the TestCase table.")
             
-            response = session.query(Responses).filter(Responses.prompt_id == prompt_id).first()
-            if response:
-                raise ValueError("This prompt cannot be deleted because it is used in the Responses table.")
-
-
             session.delete(prompt)
             session.commit()
             return True
