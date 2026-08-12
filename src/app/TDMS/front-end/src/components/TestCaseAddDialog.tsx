@@ -865,7 +865,7 @@ export const TestCaseAddDialog = ({
               {showDetails && (
                 <>
                   <div className="space-y-1">
-                    <Label className="text-sm font-semibold">System prompt</Label>
+                    <Label className="text-sm font-semibold">System Prompt</Label>
                     <div className="relative">
                       <Textarea
                         value={systemPrompts}
