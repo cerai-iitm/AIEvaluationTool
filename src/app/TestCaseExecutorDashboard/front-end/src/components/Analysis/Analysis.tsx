@@ -319,6 +319,8 @@ const Analysis: React.FC = () => {
 
   const [loading, setLoading] = useState(true);
   const [isAnalysing, setIsAnalysing] = useState(false);
+  const [isStopping, setIsStopping] = useState(false);
+  const [isStopped, setIsStopped] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState<RunSummary | null>(null);
@@ -481,6 +483,13 @@ const Analysis: React.FC = () => {
         if (data.total !== undefined) setAnalysisTotal(data.total);
         if (data.analysis_start_ts) setAnalysisStartTs(data.analysis_start_ts);
         if (data.analysis_end_ts) setAnalysisEndTs(data.analysis_end_ts);
+        if (data.status === "STOPPING") setIsStopping(true);
+        if (data.status === "STOPPED") {
+          setIsAnalysing(false);
+          setIsStopping(false);
+          setIsStopped(true);
+          setRunningDetailId(null);
+        }
       } catch {
         // silent
       }
@@ -539,6 +548,8 @@ const Analysis: React.FC = () => {
 
           if (payload.type === "ANALYSIS_STARTED") {
             setIsAnalysing(true);
+            setIsStopping(false);
+            setIsStopped(false);
             setIsCompleted(false);
             // Mark first detail as running
             setDetails((prev) => {
@@ -560,6 +571,7 @@ const Analysis: React.FC = () => {
 
           if (payload.type === "ANALYSIS_FINISHED") {
             setIsAnalysing(false);
+            setIsStopping(false);
             setIsCompleted(true);
             setRunningDetailId(null);
             applyProgress(payload);
@@ -569,6 +581,20 @@ const Analysis: React.FC = () => {
               setCurrentStepIndex(last);
               setSelectedStepIndex(last);
             }
+            if (statusTimer) {
+              window.clearInterval(statusTimer);
+              statusTimer = null;
+            }
+            return;
+          }
+
+          if (payload.type === "ANALYSIS_STOPPED") {
+            setIsAnalysing(false);
+            setIsStopping(false);
+            setIsStopped(true);
+            setRunningDetailId(null);
+            if (payload.analysisEndTs) setAnalysisEndTs(payload.analysisEndTs);
+            if (payload.current !== undefined) setAnalysisCurrent(payload.current);
             if (statusTimer) {
               window.clearInterval(statusTimer);
               statusTimer = null;
@@ -626,6 +652,32 @@ const Analysis: React.FC = () => {
     });
   }, [isCompleted, orderedDetails.length, currentStepIndex]);
 
+  const handleStopAnalysis = async () => {
+    if (!runName || isStopping) return;
+    if (!window.confirm("Are you sure you want to cancel the analysis?")) return;
+
+    setIsStopping(true);
+    try {
+      const res = await fetch(API_ENDPOINTS.STOP_ANALYSIS(runName), {
+        method: "POST",
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+      if (res.status === 401) {
+        redirectToLogin();
+        return;
+      }
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.detail || `Failed to stop analysis (${res.status})`);
+      }
+      navigate(`/test-runs/${encodeURIComponent(runName)}`);
+    } catch (e) {
+      setIsStopping(false);
+      alert(e instanceof Error ? e.message : "Failed to stop analysis");
+    }
+  };
+
   const stats = useMemo(() => {
     const scoredItems = orderedDetails.filter(
       (d) => typeof d.score === "number"
@@ -658,11 +710,24 @@ const Analysis: React.FC = () => {
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        <h2>Run Analysis</h2>
+        <div className={styles.headerRow}>
+          <h2>Run Analysis</h2>
+          {isAnalysing && (
+            <button
+              type="button"
+              className={styles.stopButton}
+              onClick={handleStopAnalysis}
+              disabled={isStopping}
+            >
+              {isStopping ? "Stopping…" : "Stop Analysis"}
+            </button>
+          )}
+        </div>
         {orderedDetails.length > 0 && isAnalysing && (
   <p>Analysis is running. Live execution loop is updating...</p>
 )}
         {isCompleted && <p className={styles.success}>Completed successfully.</p>}
+        {isStopped && <p className={styles.stopped}>Analysis stopped.</p>}
       </div>
 
       <section className={styles.cardGrid}>

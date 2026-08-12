@@ -603,9 +603,9 @@ const TestCases = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="testcase">Testcase Name</SelectItem>
-                <SelectItem value="strategy">Strategy Name</SelectItem>
-                <SelectItem value="domain">Domain Name</SelectItem>
+                <SelectItem value="testcase">Testcase </SelectItem>
+                <SelectItem value="strategy">Strategy </SelectItem>
+                <SelectItem value="domain">Domain </SelectItem>
               </SelectContent>
             </Select>
 
@@ -724,7 +724,7 @@ const TestCases = () => {
                     </td>
                   </tr>
                 ) : (
-                  paginatedCases.map((testCase,index) => (
+                  paginatedCases.map((testCase) => (
                     <tr
                       key={testCase.id}
                       className={`border-b cursor-pointer transition-colors duration-200 ${
@@ -839,7 +839,7 @@ const TestCases = () => {
               </div>
 
               <div className="space-y-1">
-                <Label className="text-base font-semibold">System prompt</Label>
+                <Label className="text-base font-semibold">System Prompt</Label>
                 <Textarea
                   ref={systemPromptsRef}
                   value={selectedCase.systemPrompts}
@@ -1086,7 +1086,7 @@ const TestCases = () => {
               {testCaseToDelete && (
                 <div className="mt-4 p-4 bg-muted rounded-md">
                   <p className="font-semibold">Test Case ID: {testCaseToDelete.id}</p>
-                  <p className="font-semibold">Test Case Name: {testCaseToDelete.name}</p>
+                  <p className="font-semibold">Test Case: {testCaseToDelete.name}</p>
                 </div>
               )}
             </AlertDialogDescription>

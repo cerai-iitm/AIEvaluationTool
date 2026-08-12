@@ -407,7 +407,7 @@ const TestPlans = () => {
                       </td>
                     </tr>
                   ) : (
-                    paginatedTestPlans.map((testPlan, index) => (
+                    paginatedTestPlans.map((testPlan) => (
                       <tr
                         key={testPlan.plan_id}
                         className={`border-b cursor-pointer transition-colors duration-200 ${highlightedRowId === testPlan.plan_id ? "bg-primary/10 hover:bg-primary/15 border-primary//30" : "hover:bg-muted/50"}`}
@@ -575,7 +575,7 @@ const TestPlans = () => {
                     Plan ID: {testPlanToDelete.plan_id}
                   </p>
                   <p className="font-semibold">
-                    Plan Name: {testPlanToDelete.plan_name}
+                    Plan: {testPlanToDelete.plan_name}
                   </p>
                 </div>
               )}

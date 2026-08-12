@@ -23,6 +23,9 @@ interface TargetCredentialsEditorProps {
 const areCredentialsComplete = (credentials: TargetCredentials) =>
   Boolean(credentials.username.trim() && credentials.password.trim());
 
+const hasAnyCredentials = (credentials: TargetCredentials) =>
+  Boolean(credentials.username.trim() || credentials.password.trim());
+
 const emptyCredentials: TargetCredentials = {
   username: "",
   password: "",
@@ -163,7 +166,7 @@ export default function TargetCredentialsEditor({
         <div>
           <Label className="text-base font-semibold">Credentials</Label>
           <p className="text-sm text-muted-foreground">
-            WebApp login credentials
+            WebApp login credentials (optional)
           </p>
         </div>
         {showSave ? (
@@ -189,9 +192,9 @@ export default function TargetCredentialsEditor({
         </div>
       ) : null}
 
-      {!isLoading && !isComplete ? (
+      {!isLoading && hasAnyCredentials(value) && !isComplete ? (
         <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
-          Username and password are required.
+          Enter both username and password, or leave both blank.
         </div>
       ) : null}
 

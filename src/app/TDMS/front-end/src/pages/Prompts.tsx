@@ -323,7 +323,7 @@ const Prompts = () => {
                         </td>
                       </tr>
                     ) : (
-                      paginatedPrompts.map((row, index) => (
+                      paginatedPrompts.map((row) => (
                         <tr
                           key={row.prompt_id}
                           className={`border-b cursor-pointer transition-colors duration-200 ${
@@ -334,7 +334,7 @@ const Prompts = () => {
                             setHighlightedRowId(row.prompt_id);
                           }}
                         >
-                          <td className="p-2 text-center">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                          <td className="p-2 text-center">{row.prompt_id}</td>
                           <td className="p-2 truncate max-w-[650px] pr-8 mr-2">
                             {row.user_prompt}
                           </td>

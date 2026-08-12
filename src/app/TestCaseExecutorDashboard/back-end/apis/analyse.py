@@ -2,7 +2,12 @@ from typing import Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 
-from services.analyse import get_analyse_status_service, start_analyse_service, check_analyse_health_service
+from services.analyse import (
+    check_analyse_health_service,
+    get_analyse_status_service,
+    start_analyse_service,
+    stop_analyse_service,
+)
 from services.testruns import get_test_run_service
 
 router = APIRouter()
@@ -74,6 +79,16 @@ def get_analyse_details(RunName: str, db = Depends(get_db), mode: str = Query("r
 def get_analyse_status(RunName: str):
     try:
         return get_analyse_status_service(RunName)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/analyse/{RunName}/stop")
+def stop_analyse(RunName: str):
+    try:
+        return stop_analyse_service(RunName)
     except HTTPException:
         raise
     except Exception as e:
