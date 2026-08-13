@@ -351,6 +351,12 @@ async def execute_testcases(
                     db.add_or_update_testrun_detail(rundetail)
                 continue
 
+        # A stop can arrive after the final testcase-level check. Do not let
+        # that race turn an explicitly stopped run into a successful one.
+        if stop_requested():
+            await finish_aborted_run()
+            return
+
         stop_watcher.set()
         run.end_ts = datetime.now().isoformat()
         run.status = "COMPLETED"
