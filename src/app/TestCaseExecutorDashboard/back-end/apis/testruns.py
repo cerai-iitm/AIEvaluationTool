@@ -29,6 +29,8 @@ from services.testruns import (
     start_run_service,
 )
 from configuration.database import get_db
+from configuration.paths import ROOT_CONFIG_PATH
+from utils.port import stop_active_run
 
 router = APIRouter()
 
@@ -49,6 +51,13 @@ def start_run(data: NewTestRun, background_tasks: BackgroundTasks, db=Depends(ge
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/test-runs/{run_id}/stop")
+def stop_run(run_id: int):
+    if not stop_active_run(run_id, ROOT_CONFIG_PATH):
+        raise HTTPException(status_code=409, detail="This test run is not active")
+    return {"message": "Stop requested", "runId": run_id}
 
 
 @router.post("/continue-run")

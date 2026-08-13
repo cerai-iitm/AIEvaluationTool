@@ -1,4 +1,5 @@
 import json
+import errno
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -155,7 +156,18 @@ def _write_xpaths_config(config: dict) -> None:
     with temp_path.open("w", encoding="utf-8") as file:
         json.dump(config, file, indent=2)
         file.write("\n")
-    temp_path.replace(xpaths_path)
+    try:
+        temp_path.replace(xpaths_path)
+    except OSError as exc:
+        # Docker bind-mounted files cannot be replaced with rename(2). Fall
+        # back to updating the mounted inode so the host and all containers
+        # immediately observe the new configuration.
+        if exc.errno not in (errno.EBUSY, errno.EXDEV):
+            raise
+        with xpaths_path.open("w", encoding="utf-8") as file:
+            json.dump(config, file, indent=2)
+            file.write("\n")
+        temp_path.unlink(missing_ok=True)
 
 
 @target_router.get(

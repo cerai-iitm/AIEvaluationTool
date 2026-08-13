@@ -450,7 +450,7 @@ const RunDetails: React.FC = () => {
                 <table className={styles.resultsTable}>
                   <thead>
                     <tr>
-                      <th>Plan Name</th>
+                      <th>Test Plan</th>
                       <th>Test Case</th>
 
                       {/* Metric Column with Filter */}

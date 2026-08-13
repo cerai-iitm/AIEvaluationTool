@@ -23,6 +23,8 @@ export const AUTH_LOGOUT_URL = `${AUTH_SERVICE_URL}/web/logout`;
     `${API_BASE_URL}/analyse/${encodeURIComponent(runName)}/details?mode=${mode}`,
     ANALYSE_RUN_STATUS: (runName: string) =>
     `${API_BASE_URL}/analyse/${encodeURIComponent(runName)}/status`,
+    STOP_ANALYSIS: (runName: string) =>
+    `${API_BASE_URL}/analyse/${encodeURIComponent(runName)}/stop`,
     DOWNLOAD_REPORT: (runName: string) =>
     `${API_BASE_URL}/test-runs/${runName}/evaluation-report`,
     GET_CONVERSATION: (conversationId: string) =>
@@ -38,8 +40,12 @@ export const AUTH_LOGOUT_URL = `${AUTH_SERVICE_URL}/web/logout`;
     GET_METRICS_BY_PLAN: (planName: string) =>
     `${API_BASE_URL}/get_metrics_by_plan/${planName}`,
     GET_TARGET_METADATA: (targetName: string) =>
-    `${API_BASE_URL}/targets/${encodeURIComponent(targetName)}/metadata`,
+      `${API_BASE_URL}/targets/${encodeURIComponent(targetName)}/metadata`,
+    GET_TEST_CASE: (testCaseName: string) =>
+      `${API_BASE_URL}/testcases/${encodeURIComponent(testCaseName)}`,
     START_RUN: `${API_BASE_URL}/start-run`,
+    STOP_RUN: (runId: string | number) =>
+      `${API_BASE_URL}/test-runs/${encodeURIComponent(runId)}/stop`,
     DOWNLOAD_REPORT_NEW: (runName: string) =>
   `${API_BASE_URL}/report/${encodeURIComponent(runName)}`,
     

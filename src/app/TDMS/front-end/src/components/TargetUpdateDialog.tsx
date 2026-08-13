@@ -67,6 +67,9 @@ const normalizeTargetType = (value: string) => value.trim().toLowerCase();
 const areCredentialsComplete = (credentials: TargetCredentials) =>
   Boolean(credentials.username.trim() && credentials.password.trim());
 
+const hasAnyCredentials = (credentials: TargetCredentials) =>
+  Boolean(credentials.username.trim() || credentials.password.trim());
+
 const getXPathFieldCount = (pages: XPathPages) =>
   Object.values(pages).reduce(
     (count, elements) => count + Object.keys(elements || {}).length,
@@ -466,10 +469,14 @@ export default function TargetUpdateDialog({
     //   return;
     // }
 
-    if (isWebAppTarget && !areCredentialsComplete(credentials)) {
+    if (
+      isWebAppTarget &&
+      hasAnyCredentials(credentials) &&
+      !areCredentialsComplete(credentials)
+    ) {
       toast({
         title: "Validation Error",
-        description: "Username and password are required",
+        description: "Enter both username and password, or leave both blank",
         variant: "destructive",
       });
       return;
@@ -557,7 +564,11 @@ export default function TargetUpdateDialog({
       }
 
       const updatedTargetName = target.target_name.trim();
-      if (isWebAppTarget && hasCredentialChanges) {
+      if (
+        isWebAppTarget &&
+        hasCredentialChanges &&
+        hasAnyCredentials(credentials)
+      ) {
         await saveTargetCredentials(updatedTargetName, headers);
       }
 

@@ -106,12 +106,15 @@ td.col-evaluation {
 th.col-duration,
 td.col-duration,
 th.col-score,
-td.col-score {
+td.col-score,
+th.col-evaluation,
+td.col-evaluation {
   text-align: center;
 }
 
 th.col-duration .header-content,
-th.col-score .header-content {
+th.col-score .header-content,
+th.col-evaluation .header-content {
   justify-content: center;
 }
 
