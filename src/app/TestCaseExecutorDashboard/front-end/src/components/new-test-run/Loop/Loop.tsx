@@ -10,6 +10,7 @@ export interface TestRunEvent {
   status?: StepStatus | string;
   current?: number;
   error?: string;
+  agentResponse?: string;
 }
 
 interface LoopProps {

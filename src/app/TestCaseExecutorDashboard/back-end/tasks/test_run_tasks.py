@@ -323,6 +323,7 @@ async def execute_testcases(
                         "testcaseIndex": index,
                         "step": 3,
                         "status": "DONE",
+                        "agentResponse": agent_response,
                     }
                 )
                 await step(
