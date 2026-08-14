@@ -702,7 +702,7 @@ export default function TargetAddDialog({
           </TabsList>
 
           <TabsContent value="general">
-            <div className="space-y-4 pt-4">
+            <div className="space-y-4 pt-4 px-1">
               <div className="space-y-2">
                 <Label className="text-base font-semibold">Target</Label>
                 <Input
@@ -731,7 +731,7 @@ export default function TargetAddDialog({
                 />
               </div>
 
-              <div className="grid gap-4 pb-4 sm:grid-cols-2">
+              <div className="grid gap-4 pb-1 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label className="text-base font-semibold">Type</Label>
                   <Select
@@ -789,7 +789,7 @@ export default function TargetAddDialog({
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label className="text-base font-semibold">URL</Label>
                 <Input
                   value={url}

@@ -162,17 +162,17 @@ export default function TargetCredentialsEditor({
   const isComplete = areCredentialsComplete(value);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 px-1">
       <div className="flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-center sm:justify-center">
         <div className="flex items-center justify-center gap-2 pb-4">
-          <Label className="text-base font-semibold">Target -</Label>
+          {/* <Label className="text-base font-semibold">Target -</Label>
           <Label className="text-xl font-semibold text-primary hover:text-primary/90">
-            {targetName || "N/A"}
+            {targetName || "N/A"} */}
             {/* {target.target_name}{appKey} */}
             {/* <Badge variant="secondary" className="rounded-md font-mono">
               {appKey}
             </Badge> */}
-          </Label>
+          {/* </Label> */}
         </div>        
         {/* <div>
           <Label className="text-base font-semibold">Credentials</Label>

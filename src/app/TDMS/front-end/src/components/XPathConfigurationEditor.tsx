@@ -20,7 +20,7 @@ type XPathPages = Record<string, Record<string, string>>;
 
 interface XPathConfigurationEditorProps {
   applicationName: string;
-  // applicationType?: string;
+  applicationType?: string;
   targetType?: string;
   targetId?: number;
   targetName?: string;
@@ -30,8 +30,8 @@ interface XPathConfigurationEditorProps {
   showSave?: boolean;
   onPagesChange?: (pages: XPathPages) => void;
   onDirtyChange?: (isDirty: boolean) => void;
-  onPagesChange?: (pages: XPathPages) => void;
-  showSave?: boolean;
+  // onPagesChange?: (pages: XPathPages) => void;
+  // showSave?: boolean;
 }
 
 export interface XPathConfigurationEditorHandle {
@@ -64,7 +64,7 @@ const XPathConfigurationEditor = forwardRef<
   XPathConfigurationEditorProps
 >(function XPathConfigurationEditor({
   applicationName,
-  // applicationType,
+  applicationType,
   targetType,
   targetId,
   targetName,
@@ -74,7 +74,6 @@ const XPathConfigurationEditor = forwardRef<
   showSave = true,
   onPagesChange,
   onDirtyChange,
-  onPagesChange,
 }, ref) {
   const { toast } = useToast();
   const resolvedApplicationType = applicationType ?? targetType;
@@ -344,14 +343,14 @@ const XPathConfigurationEditor = forwardRef<
     <div className="space-y-4">
       <div className="flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-center sm:justify-center">
               <div className="flex items-center justify-center gap-2 pb-4">
-                <Label className="text-base font-semibold">Target -</Label>
+                {/* <Label className="text-base font-semibold">Target -</Label>
                 <Label className="text-xl font-semibold text-primary hover:text-primary/90">
-                  {targetName || "N/A"}
+                  {targetName || "N/A"} */}
                   {/* {target.target_name}{appKey} */}
                   {/* <Badge variant="secondary" className="rounded-md font-mono">
                     {appKey}
                   </Badge> */}
-                </Label>
+                {/* </Label> */}
               </div>
         <div className="min-w-0 space-y-1">
           {/* <div className="flex items-center gap-2">
