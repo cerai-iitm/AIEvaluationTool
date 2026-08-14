@@ -369,17 +369,17 @@ const TestPlans = () => {
             </div>
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto">
-            <div className="bg-white rounded-lg shadow overflow-hidden w-full max-h-[67vh] overflow-y-auto">
+            <div className="bg-white rounded-lg shadow overflow-hidden max-w-[1200px] md:max-w-[1200px] mx-left max-h-[67vh] overflow-y-auto">
               <table className="w-full table-fixed">
                 <thead className="border-b-2">
                   <tr>
-                    <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-center w-[120px]">
+                    <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-center w-[20%]">
                       Plan ID
                     </th>
-                    <th className="sticky top-0 bg-white z-10 p-4 pl-12 font-semibold text-left w-[300px]">
-                      Plan Name
+                    <th className="sticky top-0 bg-white z-10 p-4 pl-12 font-semibold text-left w-[40%]">
+                      Test Plan
                     </th>
-                    <th className="sticky top-0 bg-white z-10 p-4 pl-12 font-semibold text-left">
+                    <th className="sticky top-0 bg-white z-10 p-4 pl-12 font-semibold text-left w-[80%]">
                       Description
                     </th>
                   </tr>
