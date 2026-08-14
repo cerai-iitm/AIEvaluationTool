@@ -53,7 +53,7 @@ interface TestCase {
 const TestCases = () => {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchField, setSearchField] = useState<"testcase" | "strategy" | "domain">("testcase");
+  const [searchField, setSearchField] = useState<"testcase" | "strategy" | "domain " | "metric">("testcase");
   const [selectedCase, setSelectedCase] = useState<TestCase | null>(null);
   const [updateCase, setUpdateCase] = useState<TestCase | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -503,8 +503,10 @@ const TestCases = () => {
       return tc.name.toLowerCase().includes(q);
     } else if (searchField === "strategy") {
       return tc.strategyName.toLowerCase().includes(q);
-    } else if (searchField === "domain") {
+    } else if (searchField === "domain ") {
       return tc.domainName.toLowerCase().includes(q);
+    } else if (searchField === "metric") {
+      return tc.metricName.toLowerCase().includes(q);
     }
     return true;
   }
@@ -597,15 +599,16 @@ const TestCases = () => {
 
           <div className="flex gap-4 mb-6 ">
             <Select defaultValue="testcase"
-              onValueChange={(value: "testcase" | "strategy" | "domain") => setSearchField(value)}
+              // onValueChange={(value: "testcase" | "metric" | "strategy" | "domain") => setSearchField(value)}
             >
               <SelectTrigger className="w-40">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="testcase">Testcase </SelectItem>
-                <SelectItem value="strategy">Strategy </SelectItem>
-                <SelectItem value="domain">Domain </SelectItem>
+                <SelectItem value="testcase">Testcase</SelectItem>
+                <SelectItem value="metric">Metric</SelectItem>
+                <SelectItem value="strategy">Strategy</SelectItem>
+                <SelectItem value="domain">Domain</SelectItem>
               </SelectContent>
             </Select>
 
@@ -737,7 +740,8 @@ const TestCases = () => {
                       }}
                     >
                       <td className="p-2 pl-12">{testCase.id}</td>
-                      <td className="p-2 pl-12 max-w-[200px] whitespace-normal break-words">{testCase.name}</td>
+                      <td className="p-2 pl-2 max-w-[200px] whitespace-normal break-words">{testCase.name}</td>
+                      <td className="p-2 truncate">{testCase.metricName}</td>
                       <td className="p-2 truncate">{testCase.strategyName}</td>
                       <td className="p-2 pl-6 capitalize first-letter">{testCase.domainName}</td>
                       <td className="p-2 pl-6 capitalize first-letter">{testCase.language}</td>
