@@ -402,7 +402,12 @@ def update_target(
 ):
     update_data = payload.model_dump(
         exclude_unset=True,
-        exclude={"notes", "xpath_config_changed", "xpath_application_name"},
+        exclude={
+            "notes",
+            "xpath_config_changed",
+            "xpath_application_name",
+            "credential_config_changed",
+        },
     )
     # if not update_data:
     #     existing = db.get_target_by_id(target_id)
@@ -459,10 +464,9 @@ def update_target(
         if original_lang_names != updated_lang_names:
             changes.append("Languages changed")
     if payload.xpath_config_changed:
-        application_name = _normalize_application_name(
-            payload.xpath_application_name or updated.target_name
-        )
-        changes.append(f"XPath Config changed")
+        changes.append("XPath Config changed")
+    if payload.credential_config_changed:
+        changes.append("Credentials changed")
 
     note = f"Target - {updated.target_name} updated"
     if changes:
@@ -549,12 +553,16 @@ def update_target(target_name: str, payload: dict = Body(...), db: DB = Depends(
     applications = data.setdefault("applications", {})
     key = _resolve_key(target, applications)
 
+    if applications.get(key) == payload:
+        return applications[key]
+
     # Replace this app's whole block with the posted value
     applications[key] = payload
 
     # Persist back to disk so the change is reflected
     with open(path, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
+        json.dump(data, f, indent=2)
+        f.write("\n")
 
     return applications[key]
 

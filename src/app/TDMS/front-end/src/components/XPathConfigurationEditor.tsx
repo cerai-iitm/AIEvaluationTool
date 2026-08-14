@@ -20,13 +20,15 @@ type XPathPages = Record<string, Record<string, string>>;
 
 interface XPathConfigurationEditorProps {
   applicationName: string;
-  applicationType?: string;
+  // applicationType?: string;
   targetType?: string;
   targetId?: number;
   targetName?: string;
   notes?: string;
   open: boolean;
   disabled?: boolean;
+  showSave?: boolean;
+  onPagesChange?: (pages: XPathPages) => void;
   onDirtyChange?: (isDirty: boolean) => void;
   onPagesChange?: (pages: XPathPages) => void;
   showSave?: boolean;
@@ -62,27 +64,30 @@ const XPathConfigurationEditor = forwardRef<
   XPathConfigurationEditorProps
 >(function XPathConfigurationEditor({
   applicationName,
-  applicationType,
+  // applicationType,
   targetType,
   targetId,
   targetName,
   notes,
   open,
   disabled = false,
+  showSave = true,
+  onPagesChange,
   onDirtyChange,
   onPagesChange,
 }, ref) {
   const { toast } = useToast();
   const resolvedApplicationType = applicationType ?? targetType;
   const appKey = useMemo(
-    () => resolveApplicationKey(applicationName, resolvedApplicationType),
-    [applicationName, resolvedApplicationType],
+    () => resolveApplicationKey(applicationName, targetType),
+    [applicationName, targetType],
   );
   const targetKey = targetName?.trim() || "";
   const [pages, setPages] = useState<XPathPages>({});
   const [activePage, setActivePage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [hasLoadedConfig, setHasLoadedConfig] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [savedSignature, setSavedSignature] = useState("{}");
 
@@ -106,10 +111,12 @@ const XPathConfigurationEditor = forwardRef<
       setPages({});
       setActivePage("");
       setLoadError(null);
+      setHasLoadedConfig(false);
       return;
     }
 
     setIsLoading(true);
+    setHasLoadedConfig(false);
     setLoadError(null);
     try {
       // Existing targets must be resolved by the backend. In particular, the
@@ -138,6 +145,7 @@ const XPathConfigurationEditor = forwardRef<
       setPages(nextPages);
       setActivePage(nextPageNames[0] || "");
       setSavedSignature(JSON.stringify(nextPages));
+      setHasLoadedConfig(true);
     } catch (error) {
       const message =
         error instanceof Error
@@ -146,6 +154,8 @@ const XPathConfigurationEditor = forwardRef<
       setLoadError(message);
       setPages({});
       setActivePage("");
+      setSavedSignature("{}");
+      setHasLoadedConfig(true);
     } finally {
       setIsLoading(false);
     }
@@ -160,8 +170,9 @@ const XPathConfigurationEditor = forwardRef<
   }, [hasChanges, onDirtyChange]);
 
   useEffect(() => {
+    if (!hasLoadedConfig) return;
     onPagesChange?.(pages);
-  }, [onPagesChange, pages]);
+  }, [hasLoadedConfig, onPagesChange, pages]);
 
   const addPage = () => {
     let index = pageNames.length + 1;
@@ -335,7 +346,8 @@ const XPathConfigurationEditor = forwardRef<
               <div className="flex items-center justify-center gap-2 pb-4">
                 <Label className="text-base font-semibold">Target -</Label>
                 <Label className="text-xl font-semibold text-primary hover:text-primary/90">
-                  {/* {target.target_name} */}{appKey}
+                  {targetName || "N/A"}
+                  {/* {target.target_name}{appKey} */}
                   {/* <Badge variant="secondary" className="rounded-md font-mono">
                     {appKey}
                   </Badge> */}
@@ -359,7 +371,8 @@ const XPathConfigurationEditor = forwardRef<
             </Badge>
           </div> */}
         </div>
-        {/* <Button
+        {showSave ? (
+        <Button
           type="button"
           onClick={() => saveConfig()}
           disabled={disabled || isLoading || isSaving || !hasChanges}
@@ -371,7 +384,8 @@ const XPathConfigurationEditor = forwardRef<
             <Save className="h-4 w-4" />
           )}
           Save XPaths
-        </Button> */}
+        </Button>
+        ) : null}
       </div>
 
       {loadError ? (

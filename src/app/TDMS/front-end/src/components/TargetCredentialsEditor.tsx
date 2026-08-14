@@ -44,6 +44,7 @@ export default function TargetCredentialsEditor({
   const [isSaving, setIsSaving] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  
 
   const authHeaders = useCallback((): HeadersInit => {
     const headers: HeadersInit = {
@@ -162,13 +163,23 @@ export default function TargetCredentialsEditor({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
+      <div className="flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-center sm:justify-center">
+        <div className="flex items-center justify-center gap-2 pb-4">
+          <Label className="text-base font-semibold">Target -</Label>
+          <Label className="text-xl font-semibold text-primary hover:text-primary/90">
+            {targetName || "N/A"}
+            {/* {target.target_name}{appKey} */}
+            {/* <Badge variant="secondary" className="rounded-md font-mono">
+              {appKey}
+            </Badge> */}
+          </Label>
+        </div>        
+        {/* <div>
           <Label className="text-base font-semibold">Credentials</Label>
           <p className="text-sm text-muted-foreground">
             WebApp login credentials (optional)
           </p>
-        </div>
+        </div> */}
         {showSave ? (
           <Button
             type="button"
@@ -192,11 +203,11 @@ export default function TargetCredentialsEditor({
         </div>
       ) : null}
 
-      {!isLoading && hasAnyCredentials(value) && !isComplete ? (
+      {/* {!isLoading && !isComplete ? (
         <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
           Enter both username and password, or leave both blank.
         </div>
-      ) : null}
+      ) : null} */}
 
       {isLoading ? (
         <div className="flex min-h-[160px] items-center justify-center text-sm text-muted-foreground">
