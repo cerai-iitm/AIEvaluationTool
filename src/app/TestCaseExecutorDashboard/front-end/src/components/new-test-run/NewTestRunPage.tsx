@@ -51,6 +51,11 @@ const NewTestRunPage: React.FC = () => {
   const languages = ['Tamil', 'Hindi', 'Assamese', 'Bengali', 'Sindhi', 'Bodo'];
   const [runName, setRunName] = useState("");
   const [testCaseInput, setTestCaseInput] = useState("");
+  const [isValidatingTestCase, setIsValidatingTestCase] = useState(false);
+  const [testCaseValidation, setTestCaseValidation] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
   const [maxTestCasesSelection, setMaxTestCasesSelection] = useState("10");
   const [domainOptions, setDomainOptions] = useState<string[]>([]);
   const [languageOptions, setLanguageOptions] = useState<string[]>([]);
@@ -334,6 +339,7 @@ const NewTestRunPage: React.FC = () => {
 
     if (key === "testPlan") {
       setTestCaseInput("");
+      setTestCaseValidation(null);
       fetchMetricsByPlan(value); // 🔥 second fetch happens here
     }
     if (key === "target") {
@@ -341,17 +347,62 @@ const NewTestRunPage: React.FC = () => {
     }
   };
 
-  const addTestCase = () => {
-    const testCaseName = testCaseInput.trim();
-    if (!testCaseName || formData.testCaseIds.includes(testCaseName)) return;
+  const addTestCase = async () => {
+    const testCaseName = testCaseInput.trim().toUpperCase();
+    if (!testCaseName) return;
 
-    setFormData(prev => ({
-      ...prev,
-      metric: "",
-      testCaseId: "",
-      testCaseIds: [...prev.testCaseIds, testCaseName],
-    }));
-    setTestCaseInput("");
+    if (formData.testCaseIds.includes(testCaseName)) {
+      setTestCaseValidation({
+        type: "error",
+        message: `Test case '${testCaseName}' has already been added.`,
+      });
+      return;
+    }
+
+    setIsValidatingTestCase(true);
+    setTestCaseValidation(null);
+
+    try {
+      const testCaseUrl = `${API_ENDPOINTS.GET_TEST_CASE(testCaseName)}?plan_name=${encodeURIComponent(formData.testPlan)}`;
+      const res = await fetch(testCaseUrl, {
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+
+      if (res.status === 401) {
+        redirectToLogin();
+        return;
+      }
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setTestCaseValidation({
+          type: "error",
+          message: data.detail || `Test case '${testCaseName}' is invalid.`,
+        });
+        return;
+      }
+
+      setFormData(prev => ({
+        ...prev,
+        metric: "",
+        testCaseId: "",
+        testCaseIds: [...prev.testCaseIds, testCaseName],
+      }));
+      setTestCaseInput("");
+      setTestCaseValidation({
+        type: "success",
+        message: ``,
+      });
+    } catch (err) {
+      console.error("Failed to validate test case:", err);
+      setTestCaseValidation({
+        type: "error",
+        message: "Unable to validate the test case. Please try again.",
+      });
+    } finally {
+      setIsValidatingTestCase(false);
+    }
   };
 
   const removeTestCase = (testCaseName: string) => {
@@ -533,7 +584,10 @@ const NewTestRunPage: React.FC = () => {
                 }
                 value={testCaseInput}
                 disabled={!formData.testPlan || !!formData.metric}
-                onChange={(e) => setTestCaseInput(e.target.value)}
+                onChange={(e) => {
+                  setTestCaseInput(e.target.value.toUpperCase());
+                  setTestCaseValidation(null);
+                }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
@@ -545,11 +599,19 @@ const NewTestRunPage: React.FC = () => {
                 type="button"
                 className="add-test-case-button"
                 onClick={addTestCase}
-                disabled={!testCaseInput.trim() || !formData.testPlan || !!formData.metric}
+                disabled={!testCaseInput.trim() || !formData.testPlan || !!formData.metric || isValidatingTestCase}
               >
-                Add
+                {isValidatingTestCase ? "Checking…" : "Add"}
               </button>
             </div>
+            {testCaseValidation && (
+              <p
+                className={`test-case-validation ${testCaseValidation.type}`}
+                role={testCaseValidation.type === "error" ? "alert" : "status"}
+              >
+                {testCaseValidation.message}
+              </p>
+            )}
           </div>
 
           

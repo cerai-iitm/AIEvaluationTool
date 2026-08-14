@@ -630,7 +630,7 @@ export const TestCaseUpdateDialog = ({
             <div className="space-y-1 pb-1">
               {/* <Label className="text-base font-semibold">Prompt</Label> */}
               <div className="space-y-1 pb-1">
-                <Label className="text-base font-semibold">User Prompts</Label>
+                <Label className="text-base font-semibold">User Prompt</Label>
                 <div className="relative">
                   <Textarea
                     value={userPrompts}
@@ -670,7 +670,7 @@ export const TestCaseUpdateDialog = ({
               </div>
 
               <div className="space-y-1 pb-2">
-                <Label className="text-base font-semibold">System prompts</Label>
+                <Label className="text-base font-semibold">System Prompt</Label>
                 <div className="relative">
                   <Textarea
                     value={systemPrompts}

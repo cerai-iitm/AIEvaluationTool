@@ -54,7 +54,13 @@ const ContinueRunPage: React.FC = () => {
   const maxTestCases = ['5', '10', '20', '30', '50', '100', 'Custom'];
   const languages = ['English', 'Spanish', 'French', 'German', 'Chinese'];
   const [isRunning, setIsRunning] = useState(false);
+  const [isStopping, setIsStopping] = useState(false);
   const [testCaseInput, setTestCaseInput] = useState("");
+  const [isValidatingTestCase, setIsValidatingTestCase] = useState(false);
+  const [testCaseValidation, setTestCaseValidation] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
   const [maxTestCasesSelection, setMaxTestCasesSelection] = useState("10");
   const [runFinished, setRunFinished] = useState(false);
   const [totalTestCases, setTotalTestCases] = useState(0);
@@ -68,6 +74,7 @@ const ContinueRunPage: React.FC = () => {
   const [hasContinuedRunStarted, setHasContinuedRunStarted] = useState(false);
   useNavigationBlocker(isRunning);
   const wsRef = useRef<WebSocket | null>(null);
+  const activeRunIdRef = useRef<string | number | null>(null);
   const [formData, setFormData] = useState<RunFormData>({
     runName: "",
     // target: "",
@@ -99,6 +106,8 @@ const ContinueRunPage: React.FC = () => {
   const handleRunFinished = useCallback(() => {
     setRunFinished(true);
     setIsRunning(false);
+    setIsStopping(false);
+    activeRunIdRef.current = null;
   }, []);
 
   useEffect(() => {
@@ -286,21 +295,63 @@ const ContinueRunPage: React.FC = () => {
 
     if (key === "testPlan") {
       setTestCaseInput("");
+      setTestCaseValidation(null);
       fetchMetricsByPlan(value);
     }
   };
 
-  const addTestCase = () => {
-    const testCaseName = testCaseInput.trim();
-    if (!testCaseName || formData.testCaseIds.includes(testCaseName)) return;
+  const addTestCase = async () => {
+    const testCaseName = testCaseInput.trim().toUpperCase();
+    if (!testCaseName) return;
 
-    setFormData(prev => ({
-      ...prev,
-      metric: "",
-      testCaseId: "",
-      testCaseIds: [...prev.testCaseIds, testCaseName],
-    }));
-    setTestCaseInput("");
+    if (formData.testCaseIds.includes(testCaseName)) {
+      setTestCaseValidation({
+        type: "error",
+        message: `Test case '${testCaseName}' has already been added.`,
+      });
+      return;
+    }
+
+    setIsValidatingTestCase(true);
+    setTestCaseValidation(null);
+
+    try {
+      const res = await fetch(API_ENDPOINTS.GET_TEST_CASE(testCaseName), {
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+
+      if (res.status === 401) {
+        redirectToLogin();
+        return;
+      }
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setTestCaseValidation({
+          type: "error",
+          message: data.detail || `Test case '${testCaseName}' is invalid.`,
+        });
+        return;
+      }
+
+      setFormData(prev => ({
+        ...prev,
+        metric: "",
+        testCaseId: "",
+        testCaseIds: [...prev.testCaseIds, testCaseName],
+      }));
+      setTestCaseInput("");
+      setTestCaseValidation(null);
+    } catch (err) {
+      console.error("Failed to validate test case:", err);
+      setTestCaseValidation({
+        type: "error",
+        message: "Unable to validate the test case. Please try again.",
+      });
+    } finally {
+      setIsValidatingTestCase(false);
+    }
   };
 
   const removeTestCase = (testCaseName: string) => {
@@ -317,6 +368,12 @@ const ContinueRunPage: React.FC = () => {
  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (testCaseInput.trim()) {
+      alert("Click Add to include the entered test case before continuing the run.");
+      return;
+    }
+
     setRunFinished(false);
     setHasContinuedRunStarted(false);
 
@@ -351,6 +408,7 @@ const ContinueRunPage: React.FC = () => {
       }
 
       setTotalTestCases(data.totalTestCases);
+      activeRunIdRef.current = data.runId;
       setHasContinuedRunStarted(true);
       setIsRunning(true);
 
@@ -374,6 +432,33 @@ const ContinueRunPage: React.FC = () => {
     } catch (err) {
       console.error("Error continuing run:", err);
       setIsRunning(false);
+    }
+  };
+
+  const handleStopRun = async () => {
+    const runId = activeRunIdRef.current;
+    if (runId === null || isStopping) return;
+
+    setIsStopping(true);
+    try {
+      const res = await fetch(API_ENDPOINTS.STOP_RUN(runId), {
+        method: "POST",
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+
+      if (res.status === 401) {
+        redirectToLogin();
+        return;
+      }
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail || "Failed to stop run");
+      }
+    } catch (err) {
+      console.error("Failed to stop run:", err);
+      alert(err instanceof Error ? err.message : "Failed to stop run");
+      setIsStopping(false);
     }
   };
 
@@ -483,7 +568,10 @@ const ContinueRunPage: React.FC = () => {
                           }
                           value={testCaseInput}
                           disabled={!formData.testPlan || !!formData.metric}
-                          onChange={(e) => setTestCaseInput(e.target.value)}
+                          onChange={(e) => {
+                            setTestCaseInput(e.target.value.toUpperCase());
+                            setTestCaseValidation(null);
+                          }}
                           onKeyDown={(e) => {
                             if (e.key === "Enter") {
                               e.preventDefault();
@@ -495,11 +583,16 @@ const ContinueRunPage: React.FC = () => {
                           type="button"
                           className="add-test-case-button"
                           onClick={addTestCase}
-                          disabled={!testCaseInput.trim() || !formData.testPlan || !!formData.metric}
+                          disabled={!testCaseInput.trim() || !formData.testPlan || !!formData.metric || isValidatingTestCase}
                         >
-                          Add
+                          {isValidatingTestCase ? "Checking…" : "Add"}
                         </button>
                       </div>
+                      {testCaseValidation && (
+                        <p className="test-case-validation error" role="alert">
+                          {testCaseValidation.message}
+                        </p>
+                      )}
                     </div>
 
                     
@@ -576,6 +669,16 @@ const ContinueRunPage: React.FC = () => {
                     <button type="submit" className="start-button" disabled={isStartDisabled}>
                       Start Run
                     </button>
+                    {isRunning && (
+                      <button
+                        type="button"
+                        className="stop-button"
+                        onClick={handleStopRun}
+                        disabled={isStopping}
+                      >
+                        {isStopping ? "Stopping…" : "Stop Run"}
+                      </button>
+                    )}
                     </div>
                   </form>
                   {(isRunning || runFinished) && (

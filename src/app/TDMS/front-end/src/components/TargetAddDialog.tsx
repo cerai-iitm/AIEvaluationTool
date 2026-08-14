@@ -69,6 +69,9 @@ const normalizeTargetType = (value: string) => value.trim().toLowerCase();
 const areCredentialsComplete = (credentials: TargetCredentials) =>
   Boolean(credentials.username.trim() && credentials.password.trim());
 
+const hasAnyCredentials = (credentials: TargetCredentials) =>
+  Boolean(credentials.username.trim() || credentials.password.trim());
+
 const getXPathTemplateKeyForTargetType = (targetType: string) => {
   const normalizedType = normalizeTargetType(targetType);
   if (normalizedType === "whatsapp") return WHATSAPP_XPATH_TEMPLATE_KEY;
@@ -245,7 +248,9 @@ export default function TargetAddDialog({
     xpathInitialSignature !== null &&
     JSON.stringify(xpathPages) !== xpathInitialSignature;
   const areWebAppCredentialsComplete =
-    !isWebAppTarget || areCredentialsComplete(credentials);
+    !isWebAppTarget ||
+    !hasAnyCredentials(credentials) ||
+    areCredentialsComplete(credentials);
   const canSubmit =
     Boolean(isFormValid) &&
     (!requiresXPathConfig || isXPathConfigComplete) &&
@@ -573,10 +578,14 @@ export default function TargetAddDialog({
       return;
     }
 
-    if (isWebAppTarget && !areCredentialsComplete(credentials)) {
+    if (
+      isWebAppTarget &&
+      hasAnyCredentials(credentials) &&
+      !areCredentialsComplete(credentials)
+    ) {
       toast({
         title: "Validation Error",
-        description: "Username and password are required",
+        description: "Enter both username and password, or leave both blank",
         variant: "destructive",
       });
       return;
@@ -624,7 +633,9 @@ export default function TargetAddDialog({
         await saveWhatsAppXPaths(headers);
       } else if (isWebAppTarget) {
         await seedWebAppXPaths(createdTargetName, headers);
-        await saveWebAppCredentials(createdTargetName, headers);
+        if (hasAnyCredentials(credentials)) {
+          await saveWebAppCredentials(createdTargetName, headers);
+        }
       }
 
       toast({

@@ -837,7 +837,7 @@ const TestCases = () => {
               </div>
 
               <div className="space-y-1">
-                <Label className="text-base font-semibold">System prompt</Label>
+                <Label className="text-base font-semibold">System Prompt</Label>
                 <Textarea
                   ref={systemPromptsRef}
                   value={selectedCase.systemPrompts}

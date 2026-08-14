@@ -290,6 +290,16 @@ h1 {
   cursor: not-allowed;
 }
 
+.test-case-validation {
+  margin: 0.4rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.25rem;
+}
+
+.test-case-validation.error {
+  color: #dc2626;
+}
+
 .selected-test-cases {
   margin: -0.25rem 0 1.5rem;
 }
@@ -351,6 +361,28 @@ h1 {
   gap: 1rem;
   margin-top: 1rem;
   width: 100%;
+}
+
+.stop-button {
+  width: 200px;
+  padding: 0.85rem 2rem;
+  border: none;
+  border-radius: 0.5rem;
+  background-color: #dc2626;
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.stop-button:hover:not(:disabled) {
+  background-color: #b91c1c;
+}
+
+.stop-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .selenium-link-button {
@@ -442,6 +474,7 @@ select:focus {
   }
 
   .run-actions-row .start-button,
+  .run-actions-row .stop-button,
   .run-actions-row .selenium-link-button {
     width: 100%;
   }
