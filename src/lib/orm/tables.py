@@ -244,7 +244,7 @@ class TestRuns(Base):
     #session_id = Column(Integer, ForeignKey('TargetSessions.session_id'), nullable=False)  # Foreign key to TargetSessions
     start_ts = Column(DateTime, nullable=True)  # Start timestamp of the test run
     end_ts = Column(DateTime, nullable=True)  # End timestamp of the test run
-    status = Column(Enum('NEW', 'RUNNING', 'COMPLETED', 'FAILED'), nullable=False)  # Status of the test run
+    status = Column(Enum('NEW', 'RUNNING', 'COMPLETED', 'STOPPED', 'FAILED'), nullable=False)  # Status of the test run
 
     run_details = relationship("TestRunDetails", back_populates="run")  # Relationship to TestRunDetails
     target = relationship("Targets", back_populates="runs")  # Relationship to Targets
