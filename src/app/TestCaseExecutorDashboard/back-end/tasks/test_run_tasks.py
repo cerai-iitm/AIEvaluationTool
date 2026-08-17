@@ -115,13 +115,13 @@ async def execute_testcases(
                 rundetail.status = "FAILED"
                 db.add_or_update_testrun_detail(rundetail)
             run.end_ts = datetime.now().isoformat()
-            run.status = "FAILED"
+            run.status = "STOPPED"
             db.add_or_update_testrun(run=run)
             await ws_manager.send_all(
                 {
                     "type": "RUN_FINISHED",
                     "runId": run_id,
-                    "status": "FAILED",
+                    "status": "STOPPED",
                     "error": stop_reason,
                 }
             )
@@ -350,6 +350,12 @@ async def execute_testcases(
                     rundetail.status = "FAILED"
                     db.add_or_update_testrun_detail(rundetail)
                 continue
+
+        # A stop can arrive after the final testcase-level check. Do not let
+        # that race turn an explicitly stopped run into a successful one.
+        if stop_requested():
+            await finish_aborted_run()
+            return
 
         stop_watcher.set()
         run.end_ts = datetime.now().isoformat()

@@ -316,7 +316,8 @@ const ContinueRunPage: React.FC = () => {
     setTestCaseValidation(null);
 
     try {
-      const res = await fetch(API_ENDPOINTS.GET_TEST_CASE(testCaseName), {
+      const testCaseUrl = `${API_ENDPOINTS.GET_TEST_CASE(testCaseName)}?plan_name=${encodeURIComponent(formData.testPlan)}`;
+      const res = await fetch(testCaseUrl, {
         headers: getAuthHeaders(),
         credentials: "include",
       });

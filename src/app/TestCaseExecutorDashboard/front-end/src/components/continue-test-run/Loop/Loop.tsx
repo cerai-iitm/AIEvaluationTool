@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {WS_BASE_URL,} from "../../../config/api"
 
@@ -35,6 +35,7 @@ const Loop: React.FC<LoopProps> = ({
   const { runName } = useParams();
   const [runCompleted, setRunCompleted] = useState(false);
   const [runStatus, setRunStatus] = useState<string | null>(null);
+  const activeTestCaseRef = useRef(0);
   // Track status for each step individually
   const [stepStatuses, setStepStatuses] = useState<StepStatus[]>(
     Array(stepsPerTestCase).fill("PENDING")
@@ -65,6 +66,7 @@ const Loop: React.FC<LoopProps> = ({
 
     setRunCompleted(false);
     setRunStatus(null);
+    activeTestCaseRef.current = 0;
     const ws = new WebSocket(`${WS_BASE_URL}/ws/test-run`);
 
     ws.onopen = () => {
@@ -77,15 +79,23 @@ const Loop: React.FC<LoopProps> = ({
 
       switch (data.type) {
         case "RUN_STARTED":
+          activeTestCaseRef.current = 0;
           setCurrentTestCase(0);
           setStepStatuses(Array(stepsPerTestCase).fill("PENDING"));
           break;
 
-        case "STEP_UPDATE":
+        case "STEP_UPDATE": {
+          const testcaseIndex = Number(data.testcaseIndex ?? 0);
+          const previousTestCase = activeTestCaseRef.current;
+          if (testcaseIndex < previousTestCase) break;
+
           console.log('STEP_UPDATE received:', { step: data.step, status: data.status });
-          setCurrentTestCase(data.testcaseIndex);
+          activeTestCaseRef.current = testcaseIndex;
+          setCurrentTestCase((previous) => Math.max(previous, testcaseIndex));
           setStepStatuses((prev) => {
-            const next = [...prev];
+            const next = testcaseIndex === previousTestCase
+              ? [...prev]
+              : Array(stepsPerTestCase).fill("PENDING");
             // Convert 1-based step to 0-based index
             const stepIndex = data.step - 1;
             if (stepIndex >= 0 && stepIndex < next.length) {
@@ -97,25 +107,45 @@ const Loop: React.FC<LoopProps> = ({
             return next;
           });
           break;
+        }
 
-        case "TESTCASE_FINISHED":
+        case "TESTCASE_FINISHED": {
+          const finishedTestCase = Number(data.current ?? 0);
+          if (finishedTestCase < activeTestCaseRef.current) break;
+
+          activeTestCaseRef.current = finishedTestCase;
           setStepStatuses(Array(stepsPerTestCase).fill("PENDING"));
-          setCurrentTestCase(data.current + 1);
+          setCurrentTestCase(Math.min(finishedTestCase, totalTestCases));
           break;
-        case "RUN_FINISHED":
+        }
+        case "RUN_FINISHED": {
+          const status = String(data.status ?? "");
+          const completedSuccessfully = status === "COMPLETED";
+          const error = String(data.error ?? "").toLowerCase();
+          const displayStatus =
+            !completedSuccessfully &&
+            (error.includes("stopped") || error.includes("frontend disconnected"))
+              ? "STOPPED"
+              : status;
+
+          if (completedSuccessfully) {
+            activeTestCaseRef.current = totalTestCases;
+            setCurrentTestCase(totalTestCases);
+          }
           setRunCompleted(true);
-          setRunStatus(data.status);
-          onRunFinished?.(data.status);
-          console.log("🏁 Run completed");
+          setRunStatus(displayStatus);
+          onRunFinished?.(status);
+          console.log("🏁 Run finished", status);
           ws.close();
           break;
+        }
       }
     };
 
     ws.onclose = () => console.log("❌ WebSocket closed");
 
     return () => ws.close();
-  }, [isRunning, stepsPerTestCase, onRunFinished]);
+  }, [isRunning, stepsPerTestCase, onRunFinished, totalTestCases]);
 
   /* ---------- UI HELPERS ---------- */
 
@@ -162,7 +192,11 @@ const Loop: React.FC<LoopProps> = ({
           fontWeight: 600,
           color: '#111827'
         }}>
-          Test Run in Progress
+          {runCompleted
+            ? runStatus === "COMPLETED"
+              ? "Test Run Completed"
+              : runStatus === "STOPPED" ? "Test Run Stopped" : "Test Run Failed"
+            : "Test Run in Progress"}
         </h2>
         <div style={{
           fontSize: '14px',
@@ -190,7 +224,11 @@ const Loop: React.FC<LoopProps> = ({
           fontSize: '14px',
           color: '#4B5563'
         }}>
-          Executing test cases
+          {runCompleted
+            ? runStatus === "COMPLETED"
+              ? "All test cases executed"
+              : runStatus === "STOPPED" ? "Execution stopped" : "Execution failed"
+            : "Executing test cases"}
         </p>
         {showTestExecutionLink && (
           <a
@@ -326,8 +364,8 @@ const Loop: React.FC<LoopProps> = ({
           style={{
             marginTop: "24px",
             padding: "16px",
-            background: runStatus === "FAILED" ? "#FEF2F2" : "#ECFDF5",
-            border: `1px solid ${runStatus === "FAILED" ? "#EF4444" : "#10B981"}`,
+            background: runStatus === "COMPLETED" ? "#ECFDF5" : "#FEF2F2",
+            border: `1px solid ${runStatus === "COMPLETED" ? "#10B981" : "#EF4444"}`,
             borderRadius: "10px",
             display: "flex",
             justifyContent: "space-between",
@@ -337,12 +375,14 @@ const Loop: React.FC<LoopProps> = ({
         >
           <span
             style={{
-              color: runStatus === "FAILED" ? "#991B1B" : "#065F46",
+              color: runStatus === "COMPLETED" ? "#065F46" : "#991B1B",
               fontWeight: 600,
               fontSize: "14px",
             }}
           >
-            {runStatus === "FAILED" ? "Run failed" : "Completed successfully"}
+            {runStatus === "COMPLETED"
+              ? "✅ Test run completed successfully"
+              : runStatus === "STOPPED" ? "Run stopped" : "Test run failed"}
           </span>
 
           <button
