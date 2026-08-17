@@ -419,7 +419,7 @@ const LanguageList: React.FC = () => {
                                     <thead className="border-b-2">
                                         <tr>
                                             <th className="sticky top-0 bg-white z-10 p-2 md:p-4 font-semibold text-center text-xs md:text-base">Language ID</th>
-                                            <th className="sticky top-0 bg-white z-10 p-2 md:p-4 font-semibold text-left text-xs md:text-base">Language Name</th>
+                                            <th className="sticky top-0 bg-white z-10 p-2 md:p-4 font-semibold text-left text-xs md:text-base">Language </th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -430,7 +430,7 @@ const LanguageList: React.FC = () => {
                                                 </td>
                                             </tr>
                                         ) : (
-                                            paginatedLanguages.map((lang, index) => (
+                                            paginatedLanguages.map((lang) => (
                                                 <tr 
                                                     key={lang.lang_id} 
                                                     className={`border-b cursor-pointer transition-colors duration-200 ${
@@ -438,7 +438,7 @@ const LanguageList: React.FC = () => {
                                                     }`}
                                                     onClick={() => {handleRowClick(lang); setHighlightedRowId(lang.lang_id);}}
                                                 >
-                                                    <td className="p-2 text-center text-xs md:text-base">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                                                    <td className="p-2 text-center text-xs md:text-base">{lang.lang_id}</td>
                                                     <td className="p-2 pl-10 text-xs md:text-base capitalize">{lang.lang_name}</td>
                                                 </tr>
                                             ))

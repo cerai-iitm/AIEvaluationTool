@@ -67,6 +67,9 @@ const normalizeTargetType = (value: string) => value.trim().toLowerCase();
 const areCredentialsComplete = (credentials: TargetCredentials) =>
   Boolean(credentials.username.trim() && credentials.password.trim());
 
+const hasAnyCredentials = (credentials: TargetCredentials) =>
+  Boolean(credentials.username.trim() || credentials.password.trim());
+
 const getXPathFieldCount = (pages: XPathPages) =>
   Object.values(pages).reduce(
     (count, elements) => count + Object.keys(elements || {}).length,
@@ -223,7 +226,6 @@ export default function TargetUpdateDialog({
     description.trim() !== (targetInitial.target_description || "") ||
     url.trim() !== (targetInitial.target_url || "") ||
     domain.trim() !== (targetInitial.domain_name || "") ||
-    notes.trim() !== (targetInitial.notes || "") ||
     sortedLanguages(selectedLanguages) !== sortedLanguages(targetInitial.lang_list || [])
   );
 
@@ -466,14 +468,14 @@ export default function TargetUpdateDialog({
     //   return;
     // }
 
-    if (isWebAppTarget && !areCredentialsComplete(credentials)) {
-      toast({
-        title: "Validation Error",
-        description: "Username and password are required",
-        variant: "destructive",
-      });
-      return;
-    }
+    // if (isWebAppTarget && !areCredentialsComplete(credentials)) {
+    //   toast({
+    //     title: "Validation Error",
+    //     description: "Username and password are required",
+    //     variant: "destructive",
+    //   });
+    //   return;
+    // }
 
     if (!hasChanges) {
       toast({
@@ -505,6 +507,7 @@ export default function TargetUpdateDialog({
             : targetInitial.lang_list || [],
         xpath_config_changed: hasXPathChanges,
         xpath_application_name: target.target_name,
+        credential_config_changed: hasCredentialChanges,
         notes: notes.trim() || null,
       };
 
@@ -557,7 +560,11 @@ export default function TargetUpdateDialog({
       }
 
       const updatedTargetName = target.target_name.trim();
-      if (isWebAppTarget && hasCredentialChanges) {
+      if (
+        isWebAppTarget &&
+        hasCredentialChanges &&
+        hasAnyCredentials(credentials)
+      ) {
         await saveTargetCredentials(updatedTargetName, headers);
       }
 

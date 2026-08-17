@@ -13,6 +13,7 @@ interface RunFormData {
   target: string;
   testPlan: string; 
   testCaseId: string ;
+  testCaseIds: string[];
   metric: string;     // ✅ name
   maxTestCases: string;
   domain: string;
@@ -45,13 +46,21 @@ const NewTestRunPage: React.FC = () => {
   // const targets = ['Vaidya AI', 'Target 2', 'Target 3'];
   const testPlans = ['Plan 1', 'Plan 2', 'Plan 3'];
   const metrics = ['Accuracy', 'Precision', 'Recall', 'F1 Score'];
-  const maxTestCases = ['5', '10', '20', '30', '50', '100'];
+  const maxTestCases = ['5', '10', '20', '30', '50', '100', 'Custom'];
   const domains = ['E-commerce', 'Healthcare', 'Finance', 'Education'];
   const languages = ['Tamil', 'Hindi', 'Assamese', 'Bengali', 'Sindhi', 'Bodo'];
   const [runName, setRunName] = useState("");
+  const [testCaseInput, setTestCaseInput] = useState("");
+  const [isValidatingTestCase, setIsValidatingTestCase] = useState(false);
+  const [testCaseValidation, setTestCaseValidation] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+  const [maxTestCasesSelection, setMaxTestCasesSelection] = useState("10");
   const [domainOptions, setDomainOptions] = useState<string[]>([]);
   const [languageOptions, setLanguageOptions] = useState<string[]>([]);
   const [isRunning, setIsRunning] = useState(false);
+  const [isStopping, setIsStopping] = useState(false);
   const [runCompleted, setRunCompleted] = useState(false);
   const [totalTestCases, setTotalTestCases] = useState(0);
   const [filters, setFilters] = useState<AllFiltersResponse | null>(null);
@@ -70,6 +79,7 @@ const NewTestRunPage: React.FC = () => {
     target: "",
     testPlan: "",
     testCaseId:"",
+    testCaseIds: [],
     metric: "",
     maxTestCases: "10", 
     domain: "",
@@ -114,8 +124,10 @@ const NewTestRunPage: React.FC = () => {
     }
   };
 
-  const isStartDisabled = !formData.testPlan || !formData.target  || isRunning;
+  const hasPendingTestCase = testCaseInput.trim().length > 0;
+  const isStartDisabled = !formData.testPlan || !formData.target || isRunning;
   const isTargetSelected = !!formData.target;
+  const hasSelectedTestCases = formData.testCaseIds.length > 0;
   const seleniumHref = "/selenium/";
   const selectedTarget = filters?.targets.find(
     (target) =>
@@ -130,6 +142,7 @@ const NewTestRunPage: React.FC = () => {
   const handleRunFinished = useCallback(() => {
     setRunCompleted(true);
     setIsRunning(false);
+    setIsStopping(false);
   }, []);
 
   const handleWsMessage = useCallback((event: MessageEvent) => {
@@ -153,6 +166,7 @@ const NewTestRunPage: React.FC = () => {
     if (data.type === "RUN_FINISHED") {
       setRunCompleted(true);
       setIsRunning(false);
+      setIsStopping(false);
       activeRunIdRef.current = null;
     }
   }, []);
@@ -319,12 +333,13 @@ const NewTestRunPage: React.FC = () => {
     setFormData(prev => ({
       ...prev,
       [key]: value,
-      ...(key === "testPlan" && { metric: "", testCaseId: "" }),
-      ...(key === "metric"   && value && { testCaseId: "" }),   // ← new
-      ...(key === "testCaseId" && value && { metric: "" }),     // ← new
+      ...(key === "testPlan" && { metric: "", testCaseId: "", testCaseIds: [] }),
+      ...(key === "metric" && value && { testCaseId: "", testCaseIds: [] }),
     }));
 
     if (key === "testPlan") {
+      setTestCaseInput("");
+      setTestCaseValidation(null);
       fetchMetricsByPlan(value); // 🔥 second fetch happens here
     }
     if (key === "target") {
@@ -332,9 +347,86 @@ const NewTestRunPage: React.FC = () => {
     }
   };
 
+  const addTestCase = async () => {
+    const testCaseName = testCaseInput.trim().toUpperCase();
+    if (!testCaseName) return;
+
+    if (formData.testCaseIds.includes(testCaseName)) {
+      setTestCaseValidation({
+        type: "error",
+        message: `Test case '${testCaseName}' has already been added.`,
+      });
+      return;
+    }
+
+    setIsValidatingTestCase(true);
+    setTestCaseValidation(null);
+
+    try {
+      const testCaseUrl = `${API_ENDPOINTS.GET_TEST_CASE(testCaseName)}?plan_name=${encodeURIComponent(formData.testPlan)}`;
+      const res = await fetch(testCaseUrl, {
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+
+      if (res.status === 401) {
+        redirectToLogin();
+        return;
+      }
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setTestCaseValidation({
+          type: "error",
+          message: data.detail || `Test case '${testCaseName}' is invalid.`,
+        });
+        return;
+      }
+
+      setFormData(prev => ({
+        ...prev,
+        metric: "",
+        testCaseId: "",
+        testCaseIds: [...prev.testCaseIds, testCaseName],
+      }));
+      setTestCaseInput("");
+      setTestCaseValidation({
+        type: "success",
+        message: ``,
+      });
+    } catch (err) {
+      console.error("Failed to validate test case:", err);
+      setTestCaseValidation({
+        type: "error",
+        message: "Unable to validate the test case. Please try again.",
+      });
+    } finally {
+      setIsValidatingTestCase(false);
+    }
+  };
+
+  const removeTestCase = (testCaseName: string) => {
+    setFormData(prev => ({
+      ...prev,
+      testCaseIds: prev.testCaseIds.filter(name => name !== testCaseName),
+    }));
+  };
+
+  const handleMaxTestCasesChange = (value: string) => {
+    setMaxTestCasesSelection(value);
+    handleChange("maxTestCases", value === "Custom" ? "" : value);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (testCaseInput.trim()) {
+      alert("Click Add to include the entered test case before starting the run.");
+      return;
+    }
+
     setRunCompleted(false);
+    setIsStopping(false);
     setLiveEvents([]);
     activeRunIdRef.current = null;
     pendingEventsRef.current = [];
@@ -395,6 +487,33 @@ const NewTestRunPage: React.FC = () => {
     setIsRunning(true); // now we can start the Loop component
   };
 
+  const handleStopRun = async () => {
+    const runId = activeRunIdRef.current;
+    if (runId === null || isStopping) return;
+
+    setIsStopping(true);
+    try {
+      const res = await fetch(API_ENDPOINTS.STOP_RUN(runId), {
+        method: "POST",
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+
+      if (res.status === 401) {
+        redirectToLogin();
+        return;
+      }
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail || "Failed to stop run");
+      }
+    } catch (err) {
+      console.error("Failed to stop run:", err);
+      alert(err instanceof Error ? err.message : "Failed to stop run");
+      setIsStopping(false);
+    }
+  };
+
   return (
     <div className="new-test-run-container">
       <h1>Create New Test Run</h1>
@@ -437,41 +556,86 @@ const NewTestRunPage: React.FC = () => {
           <div className="filter-item">
             <label>Metric </label>
             <CustomSelect
-              key={formData.testCaseId}   // ← add this line
+              key={formData.testCaseIds.join("|")}
               options={planMetrics}
               defaultText={
                 !formData.testPlan
                   ? "Select Test Plan first"
-                  : formData.testCaseId
-                  ? "Test case selected"
+                  : formData.testCaseIds.length > 0
+                  ? "Test cases selected"
                   : "All Metrics"
               }
               
-              disabled={!formData.testPlan || !!formData.testCaseId}
+              disabled={!formData.testPlan || formData.testCaseIds.length > 0}
               onChange={(val) => handleChange("metric", val)}
             />
           </div>
           <div className="filter-item">
-            <label>Test Case Name</label>
-            <input
-              type="text"
-              placeholder={
-                !formData.testPlan
-                ? "Select Test Plan first"
-                : formData.metric
-                ? "Metric selected"
-                : "Enter Test Case Name"
-              }
-              value={formData.testCaseId?? ""}
-              disabled={!formData.testPlan || !!formData.metric}
-              onChange={(e) =>
-                handleChange("testCaseId", e.target.value)
-              }
-            />
+            <label>Test Case</label>
+            <div className="test-case-entry">
+              <input
+                type="text"
+                placeholder={
+                  !formData.testPlan
+                  ? "Select Test Plan first"
+                  : formData.metric
+                  ? "Metric selected"
+                  : "Enter Test Case Name"
+                }
+                value={testCaseInput}
+                disabled={!formData.testPlan || !!formData.metric}
+                onChange={(e) => {
+                  setTestCaseInput(e.target.value.toUpperCase());
+                  setTestCaseValidation(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addTestCase();
+                  }
+                }}
+              />
+              <button
+                type="button"
+                className="add-test-case-button"
+                onClick={addTestCase}
+                disabled={!testCaseInput.trim() || !formData.testPlan || !!formData.metric || isValidatingTestCase}
+              >
+                {isValidatingTestCase ? "Checking…" : "Add"}
+              </button>
+            </div>
+            {testCaseValidation && (
+              <p
+                className={`test-case-validation ${testCaseValidation.type}`}
+                role={testCaseValidation.type === "error" ? "alert" : "status"}
+              >
+                {testCaseValidation.message}
+              </p>
+            )}
           </div>
 
           
         </div>
+
+        {formData.testCaseIds.length > 0 && (
+          <div className="selected-test-cases" aria-label="Selected test cases">
+            <span className="selected-test-cases-label">Added test cases</span>
+            <div className="test-case-chips">
+              {formData.testCaseIds.map(testCaseName => (
+                <span className="test-case-chip" key={testCaseName}>
+                  {testCaseName}
+                  <button
+                    type="button"
+                    onClick={() => removeTestCase(testCaseName)}
+                    aria-label={`Remove ${testCaseName}`}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="filters-row">
           <div className="filter-item">
@@ -479,10 +643,24 @@ const NewTestRunPage: React.FC = () => {
             <CustomSelect
               options={maxTestCases}
               defaultText="Select Max"
-              value={formData.maxTestCases}
+              value={maxTestCasesSelection}
               showDefaultOption={false}
-              onChange={(val) => handleChange("maxTestCases", val)}
+              disabled={hasSelectedTestCases}
+              onChange={handleMaxTestCasesChange}
             />
+            {maxTestCasesSelection === "Custom" && (
+              <input
+                className="custom-max-input"
+                type="number"
+                min="1"
+                step="1"
+                placeholder="Enter max test cases"
+                value={formData.maxTestCases}
+                disabled={hasSelectedTestCases}
+                onChange={(e) => handleChange("maxTestCases", e.target.value)}
+                required
+              />
+            )}
           </div>
 
           <div className="filter-item">
@@ -495,7 +673,7 @@ const NewTestRunPage: React.FC = () => {
                   : "Please select target first"
               }
               onChange={(val) => handleChange("domain", val)}
-              disabled={!isTargetSelected}
+              disabled={!isTargetSelected || hasSelectedTestCases}
             />
           </div>
 
@@ -509,7 +687,7 @@ const NewTestRunPage: React.FC = () => {
                   : "Please select target first"
               }
               onChange={(val) => handleChange("language", val)}
-              disabled={!isTargetSelected}
+              disabled={!isTargetSelected || hasSelectedTestCases}
             />
           </div>
         </div>
@@ -518,6 +696,16 @@ const NewTestRunPage: React.FC = () => {
           <button type="submit" className="start-button" disabled={isStartDisabled}>
             Start Run
           </button>
+          {isRunning && (
+            <button
+              type="button"
+              className="stop-button"
+              onClick={handleStopRun}
+              disabled={isStopping}
+            >
+              {isStopping ? "Stopping…" : "Stop Run"}
+            </button>
+          )}
         </div>
         </form>
         {(isRunning || runCompleted) && 
@@ -526,7 +714,7 @@ const NewTestRunPage: React.FC = () => {
           stepsPerTestCase={4} 
           stepNames={["Prepare", "Finding elements", "Execute", "Store"]} planName={formData.testPlan}   
           metricName={formData.metric}
-          testCaseName={formData.testCaseId}
+          testCaseName={formData.testCaseIds.join(", ")}
           runName={runName}
           liveEvents={liveEvents}
           onRunFinished={handleRunFinished}

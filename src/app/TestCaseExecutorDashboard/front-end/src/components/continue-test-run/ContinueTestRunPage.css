@@ -266,6 +266,94 @@ h1 {
   font-weight: 500;
 }
 
+.test-case-entry {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.test-case-entry input {
+  min-width: 0;
+}
+
+.add-test-case-button {
+  padding: 0 1rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: #3b82f6;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.add-test-case-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.test-case-validation {
+  margin: 0.4rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.25rem;
+}
+
+.test-case-validation.error {
+  color: #dc2626;
+}
+
+.selected-test-cases {
+  margin: -0.25rem 0 1.5rem;
+}
+
+.selected-test-cases-label {
+  display: block;
+  margin-bottom: 0.6rem;
+  color: #4b5563;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.test-case-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.test-case-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.55rem 0.45rem 0.75rem;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1e40af;
+  font-size: 0.9rem;
+}
+
+.test-case-chip button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #1e40af;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.test-case-chip button:hover {
+  background: #dbeafe;
+}
+
+.custom-max-input {
+  margin-top: 0.5rem;
+}
+
 .run-actions-row {
   display: flex;
   align-items: center;
@@ -273,6 +361,28 @@ h1 {
   gap: 1rem;
   margin-top: 1rem;
   width: 100%;
+}
+
+.stop-button {
+  width: 200px;
+  padding: 0.85rem 2rem;
+  border: none;
+  border-radius: 0.5rem;
+  background-color: #dc2626;
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.stop-button:hover:not(:disabled) {
+  background-color: #b91c1c;
+}
+
+.stop-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .selenium-link-button {
@@ -364,6 +474,7 @@ select:focus {
   }
 
   .run-actions-row .start-button,
+  .run-actions-row .stop-button,
   .run-actions-row .selenium-link-button {
     width: 100%;
   }

@@ -21,12 +21,17 @@ type XPathPages = Record<string, Record<string, string>>;
 interface XPathConfigurationEditorProps {
   applicationName: string;
   applicationType?: string;
+  targetType?: string;
   targetId?: number;
   targetName?: string;
   notes?: string;
   open: boolean;
   disabled?: boolean;
+  showSave?: boolean;
+  onPagesChange?: (pages: XPathPages) => void;
   onDirtyChange?: (isDirty: boolean) => void;
+  // onPagesChange?: (pages: XPathPages) => void;
+  // showSave?: boolean;
 }
 
 export interface XPathConfigurationEditorHandle {
@@ -60,22 +65,28 @@ const XPathConfigurationEditor = forwardRef<
 >(function XPathConfigurationEditor({
   applicationName,
   applicationType,
+  targetType,
   targetId,
   targetName,
   notes,
   open,
   disabled = false,
+  showSave = true,
+  onPagesChange,
   onDirtyChange,
 }, ref) {
   const { toast } = useToast();
+  const resolvedApplicationType = applicationType ?? targetType;
   const appKey = useMemo(
-    () => resolveApplicationKey(applicationName, applicationType),
-    [applicationName, applicationType],
+    () => resolveApplicationKey(applicationName, targetType),
+    [applicationName, targetType],
   );
+  const targetKey = targetName?.trim() || "";
   const [pages, setPages] = useState<XPathPages>({});
   const [activePage, setActivePage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [hasLoadedConfig, setHasLoadedConfig] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [savedSignature, setSavedSignature] = useState("{}");
 
@@ -99,15 +110,25 @@ const XPathConfigurationEditor = forwardRef<
       setPages({});
       setActivePage("");
       setLoadError(null);
+      setHasLoadedConfig(false);
       return;
     }
 
     setIsLoading(true);
+    setHasLoadedConfig(false);
     setLoadError(null);
     try {
-      const response = await fetch(API_ENDPOINTS.TARGET_XPATHS_V2(appKey), {
+      // Existing targets must be resolved by the backend. In particular, the
+      // target name and the key used in xpaths.json are not always identical
+      // (for example WhatsApp targets use the shared `whatsapp_web` key).
+      const response = await fetch(
+        targetKey
+          ? API_ENDPOINTS.TARGET_XPATHS_BY_TARGET_V2(targetKey)
+          : API_ENDPOINTS.TARGET_XPATHS_V2(appKey),
+        {
         headers: authHeaders(),
-      });
+        },
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -115,13 +136,15 @@ const XPathConfigurationEditor = forwardRef<
       }
 
       const data = await response.json();
-      const nextPages = data?.pages && typeof data.pages === "object"
-        ? data.pages
+      const responsePages = targetKey ? data : data?.pages;
+      const nextPages = responsePages && typeof responsePages === "object"
+        ? responsePages
         : {};
       const nextPageNames = sortPages(nextPages);
       setPages(nextPages);
       setActivePage(nextPageNames[0] || "");
       setSavedSignature(JSON.stringify(nextPages));
+      setHasLoadedConfig(true);
     } catch (error) {
       const message =
         error instanceof Error
@@ -130,10 +153,12 @@ const XPathConfigurationEditor = forwardRef<
       setLoadError(message);
       setPages({});
       setActivePage("");
+      setSavedSignature("{}");
+      setHasLoadedConfig(true);
     } finally {
       setIsLoading(false);
     }
-  }, [appKey, authHeaders, open]);
+  }, [appKey, authHeaders, open, targetKey]);
 
   useEffect(() => {
     loadConfig();
@@ -142,6 +167,11 @@ const XPathConfigurationEditor = forwardRef<
   useEffect(() => {
     onDirtyChange?.(hasChanges);
   }, [hasChanges, onDirtyChange]);
+
+  useEffect(() => {
+    if (!hasLoadedConfig) return;
+    onPagesChange?.(pages);
+  }, [hasLoadedConfig, onPagesChange, pages]);
 
   const addPage = () => {
     let index = pageNames.length + 1;
@@ -313,27 +343,35 @@ const XPathConfigurationEditor = forwardRef<
     <div className="space-y-4">
       <div className="flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-center sm:justify-center">
               <div className="flex items-center justify-center gap-2 pb-4">
-                <Label className="text-base font-semibold">Target -</Label>
+                {/* <Label className="text-base font-semibold">Target -</Label>
                 <Label className="text-xl font-semibold text-primary hover:text-primary/90">
-                  {/* {target.target_name} */}{appKey}
+                  {targetName || "N/A"} */}
+                  {/* {target.target_name}{appKey} */}
                   {/* <Badge variant="secondary" className="rounded-md font-mono">
                     {appKey}
                   </Badge> */}
-                </Label>
+                {/* </Label> */}
               </div>
         <div className="min-w-0 space-y-1">
           {/* <div className="flex items-center gap-2">
             <FileCode2 className="h-4 w-4 text-primary" />
             <Label className="text-base font-semibold">XPath Configuration</Label>
           </div>
-          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-            <span>Shared application key</span>
+          {/* <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            <span>
+              {usesTargetConfig
+                ? "Target"
+                : usesTypeTemplate
+                  ? "XPath template"
+                  : "Shared application key"}
+            </span>
             <Badge variant="secondary" className="rounded-md font-mono">
               {appKey}
             </Badge>
           </div> */}
         </div>
-        {/* <Button
+        {showSave ? (
+        <Button
           type="button"
           onClick={() => saveConfig()}
           disabled={disabled || isLoading || isSaving || !hasChanges}
@@ -345,7 +383,8 @@ const XPathConfigurationEditor = forwardRef<
             <Save className="h-4 w-4" />
           )}
           Save XPaths
-        </Button> */}
+        </Button>
+        ) : null}
       </div>
 
       {loadError ? (

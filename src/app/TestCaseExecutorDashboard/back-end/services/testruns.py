@@ -118,13 +118,17 @@ def start_run_service(db, data: NewTestRun, background_tasks: BackgroundTasks):
         target = re.sub(r"\s*\(.*?\)", "", target)
 
         plan_name = data.testPlan
-        test_case_id = data.testCaseId
+        test_case_ids = list(dict.fromkeys(
+            testcase_name.strip()
+            for testcase_name in (data.testCaseIds or ([data.testCaseId] if data.testCaseId else []))
+            if testcase_name and testcase_name.strip()
+        ))
         metric_name = data.metric
         domain_name = data.domain if data.domain else None
         lang_name = [data.language] if data.language else None
         
         provided_run_name = data.runName.strip() if data.runName else None
-        if test_case_id and metric_name:
+        if test_case_ids and metric_name:
             raise HTTPException(
                 status_code=400,
                 detail="Provide either 'testCaseId' or 'metric', not both.",
@@ -136,6 +140,11 @@ def start_run_service(db, data: NewTestRun, background_tasks: BackgroundTasks):
             raise HTTPException(
                 status_code=400,
                 detail="maxTestCases must be a valid number",
+            )
+        if max_test_cases < 1:
+            raise HTTPException(
+                status_code=400,
+                detail="maxTestCases must be at least 1",
             )
 
         if provided_run_name:
@@ -154,15 +163,16 @@ def start_run_service(db, data: NewTestRun, background_tasks: BackgroundTasks):
             return
         logger.info(f"Starting run with Test Plan: {plan_name}")
 
-        if test_case_id:
-            testcases = db.get_testcase_by_name(test_case_id)
-            if not testcases:
-                raise HTTPException(
-                    status_code=404,
-                    detail=f"Test case ID '{test_case_id}' does not exist",
-                )
-
-            testcases = [testcases]
+        if test_case_ids:
+            testcases = []
+            for test_case_id in test_case_ids:
+                testcase = db.get_testcase_by_name(test_case_id)
+                if not testcase:
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"Test case ID '{test_case_id}' does not exist",
+                    )
+                testcases.append(testcase)
             total_testcases = len(testcases)
             logger.info(f"Length of testcases: {len(testcases)}")
             
@@ -280,8 +290,12 @@ def continue_run_with_plan_service(db, data: NewTestRun, background_tasks: Backg
 
     plan_name = data.testPlan
     metric_name = data.metric
-    testcase_id = data.testCaseId
-    if testcase_id and metric_name:
+    testcase_ids = list(dict.fromkeys(
+        testcase_name.strip()
+        for testcase_name in (data.testCaseIds or ([data.testCaseId] if data.testCaseId else []))
+        if testcase_name and testcase_name.strip()
+    ))
+    if testcase_ids and metric_name:
         raise HTTPException(
             status_code=400,
             detail="Provide either 'testCaseId' or 'metric', not both.",
@@ -294,6 +308,8 @@ def continue_run_with_plan_service(db, data: NewTestRun, background_tasks: Backg
         max_test_cases = int(data.maxTestCases)
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid maxTestCases")
+    if max_test_cases < 1:
+        raise HTTPException(status_code=400, detail="maxTestCases must be at least 1")
 
     if metric_name:
         testcases = db.get_testcases_by_metric(
@@ -302,14 +318,16 @@ def continue_run_with_plan_service(db, data: NewTestRun, background_tasks: Backg
             lang_names=data.language,
             domain_name=data.domain,
         )
-    elif testcase_id:
-        testcases = db.get_testcase_by_name(testcase_id)
-        if not testcases:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Test case ID '{testcase_id}' does not exist",
-            )
-        testcases = [testcases]
+    elif testcase_ids:
+        testcases = []
+        for testcase_id in testcase_ids:
+            testcase = db.get_testcase_by_name(testcase_id)
+            if not testcase:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Test case ID '{testcase_id}' does not exist",
+                )
+            testcases.append(testcase)
     else:
         testcases = db.get_testcases_by_testplan(
             plan_name=plan_name,

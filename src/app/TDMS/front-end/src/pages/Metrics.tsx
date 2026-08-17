@@ -507,7 +507,7 @@ const Metrics: React.FC = () => {
                   <thead className="border-b-2">
                     <tr>
                       <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left pl-10 w-[20%] ">Metric Id</th>
-                      <th className="sticky top-0 bg-white z-10 p-2 font-semibold text-left pl-4 w-[40%]">Metric Name</th>
+                      <th className="sticky top-0 bg-white z-10 p-2 font-semibold text-left pl-4 w-[40%]">Metric</th>
                       <th className="sticky top-0 bg-white z-10 p-2 font-semibold text-left pl-4 w-[80%]">Description</th>
                     </tr>
                   </thead>
@@ -519,7 +519,7 @@ const Metrics: React.FC = () => {
                         </td>
                       </tr>
                     ) : (
-                      PaginatedMetrics.map((row, index) => (
+                      PaginatedMetrics.map((row) => (
                         <tr 
                           key={row.metric_id}
                           className={`border-b cursor-pointer transition-colors duration-200 ${
@@ -531,7 +531,7 @@ const Metrics: React.FC = () => {
                             setHighlightedRowId(row.metric_id);
                           }}
                         >
-                          <td className="p-2 pl-16">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                          <td className="p-2 pl-16">{row.metric_id}</td>
                           <td className="p-2 truncate">{row.metric_name}</td>
                           <td className="p-2 truncate ">{row.metric_description}</td>
                         </tr>
@@ -686,7 +686,7 @@ const Metrics: React.FC = () => {
               </p>
               <div className="mb-6">
                 <p className="text-sm md:text-base text-center capitalize font-semibold">
-                  <span className="font-medium">Metric Name :</span> {selectedMetric.metric_name}
+                  <span className="font-medium">Metric :</span> {selectedMetric.metric_name}
                 </p>
               </div>
               <div className="flex gap-4 justify-center">

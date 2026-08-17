@@ -163,7 +163,7 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
     { key: "start_ts", label: "Started At", filterable: false, sortable: true, sortKey: "start_ts" },
     { key: "duration", label: "Duration", filterable: false },
     { key: "average_score", label: "Score", filterable: false },
-    { key: "evaluation_ts", label: "Evaluation Time", filterable: false },
+    { key: "evaluation_ts", label: "Evaluated at", filterable: false },
     { key: "status", label: "Status", filterable: true, filterType: "status" },
     { key: "domain", label: "Domain", filterable: true, filterType: "domain" },
     { key: "actions", label: "Actions", filterable: false },
@@ -526,7 +526,7 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
                     <td className="col-score cell-center nowrap" onClick={(e) => e.stopPropagation()}>
                       {typeof run.average_score === "number" ? run.average_score.toFixed(2) : "Analysis not completed"}
                     </td>
-                    <td className="col-evaluation nowrap">
+                    <td className="col-evaluation cell-center nowrap">
                       {run.evaluation_ts != null ? (
                         <span className="cell-ellipsis" title={new Date(run.evaluation_ts).toLocaleString("en-US")}>
                           {new Date(run.evaluation_ts).toLocaleString("en-US")}

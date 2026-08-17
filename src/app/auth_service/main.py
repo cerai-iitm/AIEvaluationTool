@@ -134,6 +134,7 @@ async def web_login(
     db: Session = Depends(get_db),
 ):
     refresh_token_cookie = request.cookies.get("refresh_token")
+    clear_stale_auth_cookies = False
     if refresh_token_cookie:
         try:
             tokens = auth.refresh_access_token(db, RefreshTokenRequest(refresh_token=refresh_token_cookie))
@@ -145,14 +146,14 @@ async def web_login(
                 "role": tokens.role,
             }
             redirect_url = f"{redirect_target}#{urlencode(redirect_params)}"
-            response = RedirectResponse(redirect_url)
+            response = RedirectResponse(redirect_url, status_code=303)
             cookie_secure = os.getenv("COOKIE_SECURE", "").lower() in {"1", "true", "yes"}
             cookie_samesite = os.getenv("COOKIE_SAMESITE", "lax")
             response.set_cookie("access_token", tokens.access_token, httponly=True, secure=cookie_secure, samesite=cookie_samesite, path="/")
             response.set_cookie("refresh_token", tokens.refresh_token, httponly=True, secure=cookie_secure, samesite=cookie_samesite, path="/")
             return response
         except Exception:
-            pass
+            clear_stale_auth_cookies = True
 
     cerai_logo_url = with_auth_base("/web-assets/cerai-logo.png")
     iit_logo_url = with_auth_base("/web-assets/iit-logo.png")
@@ -430,6 +431,12 @@ async def web_login(
     </body>
     </html>
     """
+    if clear_stale_auth_cookies:
+        response = HTMLResponse(content=html)
+        response.delete_cookie("access_token", path="/")
+        response.delete_cookie("refresh_token", path="/")
+        return response
+
     return HTMLResponse(content=html)
 
 @app.get("/web/portal", response_class=HTMLResponse)
@@ -488,7 +495,7 @@ async def web_logout(
             auth.logout(LogoutRequest(refresh_token=refresh_token_cookie))
         except Exception:
             pass
-    response = RedirectResponse(url=return_url)
+    response = RedirectResponse(url=return_url, status_code=303)
     response.delete_cookie("access_token", path="/")
     response.delete_cookie("refresh_token", path="/")
     return response

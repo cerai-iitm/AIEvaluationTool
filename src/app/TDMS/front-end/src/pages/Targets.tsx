@@ -295,9 +295,9 @@ const Targets = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="target">Target Name</SelectItem>
+                <SelectItem value="target">Target </SelectItem>
                 <SelectItem value="type">Target Type</SelectItem>
-                <SelectItem value="domain">Domain Name</SelectItem>
+                <SelectItem value="domain">Domain </SelectItem>
               </SelectContent>
             </Select>
             <Input
@@ -369,21 +369,24 @@ const Targets = () => {
             </div>
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto">
-            <div className="bg-white rounded-lg shadow overflow-hidden max-w-7xl mx-left max-h-[67vh] overflow-y-auto">
-              <table className="w-full">
+            <div className="bg-white rounded-lg shadow overflow-hidden w-full mx-left max-h-[67vh] overflow-y-auto overflow-x-auto">
+              <table className="w-full table-fixed">
                 <thead className="border-b-2">
                   <tr>
-                    <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">
+                    <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left w-[12%]">
                       Target ID
                     </th>
-                    <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">
+                    <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left w-[12%]">
                       Target Name
                     </th>
-                    <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">
+                    <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left w-[12%]">
                       Target Type 
                     </th>
-                    <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">
+                    <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left w-[12%]">
                       Domain Name
+                    </th>
+                    <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">
+                      Descriptions
                     </th>
                   </tr>
                 </thead>
@@ -410,7 +413,7 @@ const Targets = () => {
                       </td>
                     </tr>
                   ) : (
-                    paginatedTargets.map((target,index) => (
+                    paginatedTargets.map((target) => (
                       <tr
                         key={target.target_id}
                         className={`border-b cursor-pointer transition-colors duration-200 ${highlightedRowId === target.target_id ? "bg-primary/10 hover:bg-primary/15 border-primary//30" : "hover:bg-muted/50"}`}
@@ -419,9 +422,9 @@ const Targets = () => {
                           setHighlightedRowId(target.target_id);
                         }}
                       >
-                        <td className="p-2 pl-12">{(currentPage - 1) * itemsPerPage + index + 1}</td>
-                        <td className="p-2 pl-6 capitalize">{target.target_name}</td>
-                        <td className="p-2 pl-12">
+                        <td className="p-2 pl-12">{target.target_id}</td>
+                        <td className="p-2 pl-6 capitalize truncate">{target.target_name}</td>
+                        <td className="p-2 pl-6">
                           <span
                             onClick={(e) => {
                               e.stopPropagation();
@@ -437,6 +440,7 @@ const Targets = () => {
                           </span>
                         </td>
                         <td className="p-2 pl-8 capitalize">{target.domain_name}</td>
+                        <td className="p-2 pl-8 truncate">{target.target_description}</td>
                       </tr>
                     ))
                   )}
@@ -604,7 +608,7 @@ const Targets = () => {
                     Target ID: {targetToDelete.target_id}
                   </p>
                   <p className="font-semibold">
-                    Target Name: {targetToDelete.target_name}
+                    Target: {targetToDelete.target_name}
                   </p>
                 </div>
               )}

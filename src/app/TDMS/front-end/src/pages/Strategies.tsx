@@ -437,7 +437,7 @@ const StrategyList: React.FC = () => {
                     <tr>
                       <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left w-[120px]">Strategy ID</th>
                       <th className="sticky top-0 bg-white z-10 p-2 font-semibold text-left w-[260px]">Strategy Name</th>
-                      <th className="sticky top-0 z-10 pl-8 p-2 font-semibold text-left">Strategy Description</th>
+                      <th className="sticky top-0 bg-white z-10 pl-8 p-2 font-semibold text-left">Strategy Description</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -448,7 +448,7 @@ const StrategyList: React.FC = () => {
                         </td>
                       </tr>
                     ) : (
-                      PaginatedStrategies.map((row, index) => (
+                      PaginatedStrategies.map((row) => (
                         <tr 
                           key={row.strategy_id}
                           className={`border-b cursor-pointer transition-colors duration-200 ${
@@ -460,7 +460,7 @@ const StrategyList: React.FC = () => {
                             setHighlightedRowId(row.strategy_id);
                           }}
                         >
-                          <td className="p-2 pl-12">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                          <td className="p-2 pl-12">{row.strategy_id}</td>
                           <td className="p-2 truncate">{row.strategy_name}</td>
                           <td className="p-2 truncate">{row.strategy_description}</td>
                         </tr>
@@ -585,7 +585,7 @@ const StrategyList: React.FC = () => {
               </p>
               <div className="mb-6">
                 <p className="text-sm md:text-base text-center capitalize font-semibold">
-                  <span className="font-medium">Strategy Name :</span> {selectedStrategy.strategy_name}
+                  <span className="font-medium">Strategy  :</span> {selectedStrategy.strategy_name}
                 </p>
               </div>
               <div className="flex gap-4 justify-center">
