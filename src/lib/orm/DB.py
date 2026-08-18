@@ -2213,7 +2213,7 @@ class DB:
         Returns:
             int: 0 if the statuses are the same (case-insensitive), 1 if status1 is greater, -1 if status2 is greater. -2 if either status is invalid.
         """
-        lookup = {"new": 0, "running": 1, "completed": 3, "failed": 2}
+        lookup = {"new": 0, "running": 1, "completed": 3, "stopped": 2, "failed": 2}
         s1 = lookup.get(status1.lower(), -1)
         s2 = lookup.get(status2.lower(), -1)
         if s1 == -1 or s2 == -1:
@@ -2843,14 +2843,15 @@ class DB:
                 return False
             
             # Check if prompt is used in TestCases
-            testcases_with_prompt = (
-                session.query(TestCases)
-                .filter(TestCases.prompt_id == prompt_id)
-                .first()
-            )
+            testcases_with_prompt = session.query(TestCases).filter(TestCases.prompt_id == prompt_id).first()
             if testcases_with_prompt:
                 raise ValueError("This prompt cannot be deleted because it is used in the TestCase table.")
             
+            response = session.query(Responses).filter(Responses.prompt_id == prompt_id).first()
+            if response:
+                raise ValueError("This prompt cannot be deleted because it is used in the Responses table.")
+
+
             session.delete(prompt)
             session.commit()
             return True

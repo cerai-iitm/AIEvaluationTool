@@ -101,26 +101,28 @@ async def execute_testcases(
     try:
         
         stop_watcher = threading.Event()
-        set_active_stop_watcher(stop_watcher)
+        set_active_stop_watcher(stop_watcher, run_id)
 
         def stop_requested() -> bool:
             return is_frontend_disconnect_requested(stop_watcher)
 
         async def finish_aborted_run(rundetail=None):
-            logger.info(f"Frontend disconnected; aborting run {run_id}")
+            stopped_from_frontend = ws_manager.disconnected_by_frontend
+            stop_reason = "Frontend disconnected" if stopped_from_frontend else "Run stopped by user"
+            logger.info(f"{stop_reason}; aborting run {run_id}")
             stop_watcher.set()
             if rundetail is not None:
                 rundetail.status = "FAILED"
                 db.add_or_update_testrun_detail(rundetail)
             run.end_ts = datetime.now().isoformat()
-            run.status = "FAILED"
+            run.status = "STOPPED"
             db.add_or_update_testrun(run=run)
             await ws_manager.send_all(
                 {
                     "type": "RUN_FINISHED",
                     "runId": run_id,
-                    "status": "FAILED",
-                    "error": "Frontend disconnected",
+                    "status": "STOPPED",
+                    "error": stop_reason,
                 }
             )
 
@@ -321,6 +323,7 @@ async def execute_testcases(
                         "testcaseIndex": index,
                         "step": 3,
                         "status": "DONE",
+                        "agentResponse": agent_response,
                     }
                 )
                 await step(
@@ -348,6 +351,12 @@ async def execute_testcases(
                     rundetail.status = "FAILED"
                     db.add_or_update_testrun_detail(rundetail)
                 continue
+
+        # A stop can arrive after the final testcase-level check. Do not let
+        # that race turn an explicitly stopped run into a successful one.
+        if stop_requested():
+            await finish_aborted_run()
+            return
 
         stop_watcher.set()
         run.end_ts = datetime.now().isoformat()

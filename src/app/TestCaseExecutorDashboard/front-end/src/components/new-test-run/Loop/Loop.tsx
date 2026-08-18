@@ -10,6 +10,7 @@ export interface TestRunEvent {
   status?: StepStatus | string;
   current?: number;
   error?: string;
+  agentResponse?: string;
 }
 
 interface LoopProps {
@@ -22,7 +23,7 @@ interface LoopProps {
   metricName?: string;   // 👈 add
   testCaseName?: string; 
   liveEvents?: TestRunEvent[];
-  onRunFinished?: () => void;
+  onRunFinished?: (status?: string) => void;
   showTestExecutionLink?: boolean;
   seleniumHref?: string;
   
@@ -53,6 +54,7 @@ type StepStatus = "PENDING" | "RUNNING" | "DONE" | "FAILED";
     Array(stepsPerTestCase).fill("PENDING")
   );
   const [runCompleted, setRunCompleted] = useState(false);
+  const [runStatus, setRunStatus] = useState<string | null>(null);
   // Default step names if not provided
   const stepLabels = Array.from({ length: stepsPerTestCase }, (_, i) => 
     i === 0 ? 'Setup' : 
@@ -80,6 +82,7 @@ type StepStatus = "PENDING" | "RUNNING" | "DONE" | "FAILED";
     processedEventCountRef.current = 0;
     setCurrentTestCase(0);
     setRunCompleted(false);
+    setRunStatus(null);
     setStepStatuses(Array(stepsPerTestCase).fill("PENDING"));
   }, [isRunning, stepsPerTestCase]);
 
@@ -94,6 +97,7 @@ type StepStatus = "PENDING" | "RUNNING" | "DONE" | "FAILED";
       case "RUN_STARTED":
         activeTestCaseRef.current = 0;
         setRunCompleted(false);
+        setRunStatus(null);
         setCurrentTestCase(0);
         setStepStatuses(Array(stepsPerTestCase).fill("PENDING"));
         break;
@@ -140,13 +144,28 @@ type StepStatus = "PENDING" | "RUNNING" | "DONE" | "FAILED";
         break;
       }
 
-      case "RUN_FINISHED":
-        activeTestCaseRef.current = totalTestCases;
-        setCurrentTestCase(totalTestCases);
+      case "RUN_FINISHED": {
+        const status = String(liveEvent.status ?? "");
+        const completedSuccessfully = status === "COMPLETED";
+        const error = String(liveEvent.error ?? "").toLowerCase();
+        const displayStatus =
+          !completedSuccessfully &&
+          (error.includes("stopped") || error.includes("frontend disconnected"))
+            ? "STOPPED"
+            : status;
+
+        // A stopped/failed run must retain the last testcase shown. Only a
+        // genuinely completed run is allowed to advance the UI to 100%.
+        if (completedSuccessfully) {
+          activeTestCaseRef.current = totalTestCases;
+          setCurrentTestCase(totalTestCases);
+        }
+        setRunStatus(displayStatus);
         setRunCompleted(true);
-        onRunFinished?.();
-        console.log("🏁 Run completed");
+        onRunFinished?.(status);
+        console.log("🏁 Run finished", status);
         break;
+      }
       }
     });
   }, [liveEvents, onRunFinished, stepsPerTestCase, totalTestCases]);
@@ -196,7 +215,11 @@ type StepStatus = "PENDING" | "RUNNING" | "DONE" | "FAILED";
           fontWeight: 600,
           color: '#111827'
         }}>
-          Test Run in Progress
+          {runCompleted
+            ? runStatus === "COMPLETED"
+              ? "Test Run Completed"
+              : runStatus === "STOPPED" ? "Test Run Stopped" : "Test Run Failed"
+            : "Test Run in Progress"}
         </h2>
         <div style={{
           fontSize: '14px',
@@ -224,7 +247,11 @@ type StepStatus = "PENDING" | "RUNNING" | "DONE" | "FAILED";
           fontSize: '14px',
           color: '#4B5563'
         }}>
-          Executing test cases
+          {runCompleted
+            ? runStatus === "COMPLETED"
+              ? "All test cases executed"
+              : runStatus === "STOPPED" ? "Execution stopped" : "Execution failed"
+            : "Executing test cases"}
         </p>
         {showTestExecutionLink && (
           <a
@@ -360,8 +387,8 @@ type StepStatus = "PENDING" | "RUNNING" | "DONE" | "FAILED";
           style={{
             marginTop: "24px",
             padding: "16px",
-            background: "#ECFDF5",
-            border: "1px solid #10B981",
+            background: runStatus === "COMPLETED" ? "#ECFDF5" : "#FEF2F2",
+            border: `1px solid ${runStatus === "COMPLETED" ? "#10B981" : "#EF4444"}`,
             borderRadius: "10px",
             display: "flex",
             justifyContent: "space-between",
@@ -371,12 +398,14 @@ type StepStatus = "PENDING" | "RUNNING" | "DONE" | "FAILED";
         >
           <span
             style={{
-              color: "#065F46",
+              color: runStatus === "COMPLETED" ? "#065F46" : "#991B1B",
               fontWeight: 600,
               fontSize: "14px",
             }}
           >
-            ✅ Test run completed successfully
+            {runStatus === "COMPLETED"
+              ? "✅ Test run completed successfully"
+              : runStatus === "STOPPED" ? "Run stopped" : "Test run failed"}
           </span>
 
           <button

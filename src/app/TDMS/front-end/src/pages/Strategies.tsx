@@ -437,7 +437,7 @@ const StrategyList: React.FC = () => {
                     <tr>
                       <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left w-[120px]">Strategy ID</th>
                       <th className="sticky top-0 bg-white z-10 p-2 font-semibold text-left w-[260px]">Strategy Name</th>
-                      <th className="sticky top-0 z-10 pl-8 p-2 font-semibold text-left">Strategy Description</th>
+                      <th className="sticky top-0 bg-white z-10 pl-8 p-2 font-semibold text-left">Strategy Description</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -495,7 +495,7 @@ const StrategyList: React.FC = () => {
             setUpdateMessage("");
           }}
         >
-          <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-[90vw] max-w-4xl"
+          <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-[80vw] max-w-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <button 
@@ -585,7 +585,7 @@ const StrategyList: React.FC = () => {
               </p>
               <div className="mb-6">
                 <p className="text-sm md:text-base text-center capitalize font-semibold">
-                  <span className="font-medium">Strategy Name :</span> {selectedStrategy.strategy_name}
+                  <span className="font-medium">Strategy  :</span> {selectedStrategy.strategy_name}
                 </p>
               </div>
               <div className="flex gap-4 justify-center">
@@ -616,7 +616,7 @@ const StrategyList: React.FC = () => {
           //   setUpdateMessage("");
           // }}
         >
-          <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-lg min-h-[300px]"
+          <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-[80vw] max-w-2xl min-h-[300px]"
             onClick={(e) => e.stopPropagation()}
           >
             <button 
@@ -631,7 +631,7 @@ const StrategyList: React.FC = () => {
               ×
             </button>
             
-            <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 mt-4 md:mt-5 gap-2 md:gap-0">
+            <div className="flex flex-col md:flex-col items-left mb-0 md:mb-0 mt-4 md:mt-5 gap-2 md:gap-0">
               <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy</label>
               <Input
                 value={updateName}
@@ -649,7 +649,7 @@ const StrategyList: React.FC = () => {
               <Textarea
                 value={updateDescription}
                 onChange={e => setUpdateDescription(e.target.value)}
-                className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-lg flex-1 w-full md:w-auto min-h-[80px] resize-none focus:outline-none focus:ring focus:ring-blue-200"
+                className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-lg flex-1  min-h-[140px] resize-none focus:outline-none focus:ring focus:ring-blue-200"
                 placeholder="Enter strategy description..."
               />
             </div>

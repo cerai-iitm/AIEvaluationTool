@@ -144,11 +144,18 @@ async def websocket_endpoint(websocket: WebSocket):
     "/testcases/{testcase_name}",
     response_model=TestCaseResponse
 )
-def get_conversation(testcase_name: str):
+def get_conversation(testcase_name: str, plan_name: Optional[str] = None):
     
     testcase = db.get_testcase_by_name(testcase_name)
     if not testcase:
         raise HTTPException(status_code=404, detail="Testcase not found")
+    if plan_name:
+        plan_testcases = db.get_testcases_by_testplan(plan_name)
+        if not any(case.name == testcase_name for case in plan_testcases):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Test case '{testcase_name}' does not belong to test plan '{plan_name}'",
+            )
     return TestCaseResponse(
         user_prompt=testcase.prompt.user_prompt,
         system_prompt=testcase.prompt.system_prompt

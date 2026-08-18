@@ -53,7 +53,7 @@ interface TestCase {
 const TestCases = () => {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchField, setSearchField] = useState<"testcase" | "strategy" | "domain">("testcase");
+  const [searchField, setSearchField] = useState<"testcase" | "strategy" | "domain " | "metric">("testcase");
   const [selectedCase, setSelectedCase] = useState<TestCase | null>(null);
   const [updateCase, setUpdateCase] = useState<TestCase | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -503,8 +503,10 @@ const TestCases = () => {
       return tc.name.toLowerCase().includes(q);
     } else if (searchField === "strategy") {
       return tc.strategyName.toLowerCase().includes(q);
-    } else if (searchField === "domain") {
+    } else if (searchField === "domain ") {
       return tc.domainName.toLowerCase().includes(q);
+    } else if (searchField === "metric") {
+      return tc.metricName.toLowerCase().includes(q);
     }
     return true;
   }
@@ -597,15 +599,16 @@ const TestCases = () => {
 
           <div className="flex gap-4 mb-6 ">
             <Select defaultValue="testcase"
-              onValueChange={(value: "testcase" | "strategy" | "domain") => setSearchField(value)}
+              // onValueChange={(value: "testcase" | "metric" | "strategy" | "domain") => setSearchField(value)}
             >
               <SelectTrigger className="w-40">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="testcase">Testcase Name</SelectItem>
-                <SelectItem value="strategy">Strategy Name</SelectItem>
-                <SelectItem value="domain">Domain Name</SelectItem>
+                <SelectItem value="testcase">Testcase</SelectItem>
+                <SelectItem value="metric">Metric</SelectItem>
+                <SelectItem value="strategy">Strategy</SelectItem>
+                <SelectItem value="domain">Domain</SelectItem>
               </SelectContent>
             </Select>
 
@@ -698,15 +701,16 @@ const TestCases = () => {
             </div> */}
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto">
-          <div className="bg-white rounded-lg shadow overflow-hidden max-w-7xl mx-left  max-h-[73vh] overflow-y-auto">
+          <div className="bg-white rounded-lg shadow overflow-hidden w-full overflow-y-auto overflow-x-auto">
             <table className="w-full table-fixed">
               <thead className="border-b-2">
                 <tr>
-                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">Testcase ID</th>
-                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">Testcase Name</th>
-                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">Strategy Name</th>
-                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold   text-left">Domain Name</th>
-                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">Language</th>
+                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left w-[12%]">Testcase ID</th>
+                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left w-[12%]">Testcases</th>
+                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left w-[20%]">Metrics</th>
+                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left w-[12%]">Strategies</th>
+                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left w-[12%]">Domains</th>
+                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left w-[12%]">Languages</th>
                 </tr>
               </thead>
               <tbody>
@@ -723,7 +727,7 @@ const TestCases = () => {
                     </td>
                   </tr>
                 ) : (
-                  paginatedCases.map((testCase,index) => (
+                  paginatedCases.map((testCase) => (
                     <tr
                       key={testCase.id}
                       className={`border-b cursor-pointer transition-colors duration-200 ${
@@ -736,8 +740,9 @@ const TestCases = () => {
                         setHighlightedRowId(testCase.id);
                       }}
                     >
-                      <td className="p-2 pl-12">{(currentPage - 1) * itemsPerPage + index + 1}</td>
-                      <td className="p-2 pl-12 max-w-[200px] whitespace-normal break-words">{testCase.name}</td>
+                      <td className="p-2 pl-12">{testCase.id}</td>
+                      <td className="p-2 pl-2 max-w-[200px] whitespace-normal break-words">{testCase.name}</td>
+                      <td className="p-2 truncate">{testCase.metricName}</td>
                       <td className="p-2 truncate">{testCase.strategyName}</td>
                       <td className="p-2 pl-6 capitalize first-letter">{testCase.domainName}</td>
                       <td className="p-2 pl-6 capitalize first-letter">{testCase.language}</td>
@@ -763,7 +768,7 @@ const TestCases = () => {
         </div>
       </main>
 
-      <button
+      {/* <button
         onClick={() => {
           resetImporter();
           setImporterDialogOpen(true);
@@ -782,7 +787,7 @@ const TestCases = () => {
             <span>Import Data</span>
           </>
         )}
-      </button>
+      </button> */}
 
       <Dialog open={!!selectedCase} onOpenChange={() => setSelectedCase(null)}>
         <DialogContent 
@@ -837,7 +842,7 @@ const TestCases = () => {
               </div>
 
               <div className="space-y-1">
-                <Label className="text-base font-semibold">System prompt</Label>
+                <Label className="text-base font-semibold">System Prompt</Label>
                 <Textarea
                   ref={systemPromptsRef}
                   value={selectedCase.systemPrompts}
@@ -1011,9 +1016,9 @@ const TestCases = () => {
                 >
                   <Upload className="w-12 h-12 text-blue-600" />
                 </button>
-                <div className="space-y-1">
-                  <p className="text-foreground font-medium">
-                    {selectedJsonFile ? selectedJsonFile.name : "Click the upload icon or drop a JSON file here"}
+                <div className="w-full space-y-1">
+                  <p className="w-full text-foreground font-medium">
+                    {selectedJsonFile ? selectedJsonFile.name.length > 40 ? `${selectedJsonFile.name.slice(0, 40)}...` : selectedJsonFile.name : "Click the upload icon or drop a JSON file here"}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     Missing fields will be reported before import. Existing test case names are skipped.
@@ -1084,7 +1089,7 @@ const TestCases = () => {
               {testCaseToDelete && (
                 <div className="mt-4 p-4 bg-muted rounded-md">
                   <p className="font-semibold">Test Case ID: {testCaseToDelete.id}</p>
-                  <p className="font-semibold">Test Case Name: {testCaseToDelete.name}</p>
+                  <p className="font-semibold">Test Case: {testCaseToDelete.name}</p>
                 </div>
               )}
             </AlertDialogDescription>

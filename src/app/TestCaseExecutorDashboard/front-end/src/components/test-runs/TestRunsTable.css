@@ -106,12 +106,15 @@ td.col-evaluation {
 th.col-duration,
 td.col-duration,
 th.col-score,
-td.col-score {
+td.col-score,
+th.col-evaluation,
+td.col-evaluation {
   text-align: center;
 }
 
 th.col-duration .header-content,
-th.col-score .header-content {
+th.col-score .header-content,
+th.col-evaluation .header-content {
   justify-content: center;
 }
 
@@ -291,6 +294,11 @@ th.col-score .header-content {
 .status-running {
   background-color: #dbeafe;
   color: #1e40af;
+}
+
+.status-stopped {
+  background-color: #fef3c7;
+  color: #92400e;
 }
 
 .status-failed {

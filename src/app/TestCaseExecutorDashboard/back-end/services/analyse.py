@@ -18,6 +18,7 @@ analysis_jobs_lock = Lock()
 
 ollama_url = os.getenv("OLLAMA_URL")
 NO_FAILED_TESTCASES_MESSAGE = "No failed testcases found"
+ANALYSABLE_RUN_STATUSES = {"COMPLETED", "STOPPED"}
 
 def check_analyse_health_service():
     try:
@@ -59,6 +60,23 @@ def get_analyse_status_service(run_name: str):
         if not state:
             return {"run_name": run_name, "status": "IDLE"}
         return {"run_name": run_name, **state}
+
+
+def stop_analyse_service(run_name: str):
+    with analysis_jobs_lock:
+        state = analysis_jobs.get(run_name)
+        if not state or state.get("status") not in ("RUNNING", "STOPPING"):
+            raise HTTPException(status_code=409, detail="This analysis is not active")
+        state["status"] = "STOPPING"
+        state["stop_requested"] = True
+        analysis_jobs[run_name] = state
+    logger.info(f"Stop requested for analysis '{run_name}'")
+    return {"run_name": run_name, "status": "stopping"}
+
+
+def _analysis_stop_requested(run_name: str) -> bool:
+    with analysis_jobs_lock:
+        return bool(analysis_jobs.get(run_name, {}).get("stop_requested"))
 
 
 def _is_retry_failed_candidate(db, detail) -> bool:
@@ -119,11 +137,11 @@ def start_analyse_service(
                 status_code=404,
                 detail=f"Run with name '{run_name}' not found."
             )
-        if run.status != "COMPLETED":
-            logger.error(f"Run '{run_name}' is not completed. Current status: {run.status}")
+        if run.status not in ANALYSABLE_RUN_STATUSES:
+            logger.error(f"Run '{run_name}' cannot be analysed. Current status: {run.status}")
             raise HTTPException(
                 status_code=400,
-                detail=f"Run '{run_name}' is not completed. Current status: {run.status}"
+                detail=f"Run '{run_name}' cannot be analysed. Current status: {run.status}"
             )
 
         with analysis_jobs_lock:
@@ -162,6 +180,7 @@ def start_analyse_service(
             analysis_end_ts=None,
             analysis_duration_seconds=None,
             last_update=None,
+            stop_requested=False,
         )
 
         background_tasks.add_task(
@@ -262,6 +281,9 @@ async def run_analyse_background_service(
         failed = 0
 
         for detail in sorted(run_details, key=lambda d: getattr(d, "detail_id", 0) or 0):
+            if _analysis_stop_requested(run_name):
+                break
+
             testcase_name = getattr(detail, "testcase_name", None)
             metric_name = getattr(detail, "metric_name", None)
             detail_id = getattr(detail, "detail_id", None)
@@ -279,6 +301,7 @@ async def run_analyse_background_service(
             score = None
             error = None
             conversation = None
+            stopped_during_detail = False
 
             try:
                 # Validate detail readiness for analysis, but never abort the whole loop.
@@ -334,6 +357,9 @@ async def run_analyse_background_service(
                     return impl.execute(testcase=testcase, conversation=conversation)
 
                 raw_score, reason = await _run_in_thread(_eval_sync)
+                if _analysis_stop_requested(run_name):
+                    stopped_during_detail = True
+                    break
                 score = float(raw_score) if raw_score is not None else None
                 if not reason or str(reason).strip() == "":
                     raise ValueError(
@@ -362,28 +388,51 @@ async def run_analyse_background_service(
                 except Exception:
                     pass
             finally:
-                completed += 1
-                progress_payload = {
-                    "type": "ANALYSIS_PROGRESS",
-                    "runName": run_name,
-                    "current": completed,
-                    "total": total_items,
-                    "testcaseName": testcase_name,
-                    "metricName": metric_name,
-                    "strategyName": strategy_name,
-                    "detailId": detail_id,
-                    "status": status,
-                    "score": score,
-                }
-                if error:
-                    progress_payload["error"] = error
+                if not stopped_during_detail:
+                    completed += 1
+                    progress_payload = {
+                        "type": "ANALYSIS_PROGRESS",
+                        "runName": run_name,
+                        "current": completed,
+                        "total": total_items,
+                        "testcaseName": testcase_name,
+                        "metricName": metric_name,
+                        "strategyName": strategy_name,
+                        "detailId": detail_id,
+                        "status": status,
+                        "score": score,
+                    }
+                    if error:
+                        progress_payload["error"] = error
 
-                _set_analysis_job(
-                    run_name,
-                    current=completed,
-                    last_update=progress_payload,
-                )
-                await _safe_ws_send(progress_payload)
+                    _set_analysis_job(
+                        run_name,
+                        current=completed,
+                        last_update=progress_payload,
+                    )
+                    await _safe_ws_send(progress_payload)
+
+        if _analysis_stop_requested(run_name):
+            analysis_end_ts = datetime.now()
+            duration_seconds = int((analysis_end_ts - analysis_start_ts).total_seconds())
+            _set_analysis_job(
+                run_name,
+                status="STOPPED",
+                analysis_start_ts=analysis_start_ts.isoformat(),
+                analysis_end_ts=analysis_end_ts.isoformat(),
+                analysis_duration_seconds=duration_seconds,
+                stop_requested=False,
+            )
+            await _safe_ws_send({
+                "type": "ANALYSIS_STOPPED",
+                "runName": run_name,
+                "analysisStartTs": analysis_start_ts.isoformat(),
+                "analysisEndTs": analysis_end_ts.isoformat(),
+                "analysisDurationSeconds": duration_seconds,
+                "current": completed,
+                "total": total_items,
+            })
+            return
 
         analysis_end_ts = datetime.now()
         duration_seconds = int((analysis_end_ts - analysis_start_ts).total_seconds())
