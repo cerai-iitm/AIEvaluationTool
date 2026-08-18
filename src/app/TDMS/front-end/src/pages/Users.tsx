@@ -42,7 +42,7 @@ const Users = () => {
   const v = value.trim();
   if (v.length < 3) return "Username must be at least 3 characters long";
   if (v.length > 30) return "Username must be 30 characters or fewer";
-  
+
   if (!/^[a-zA-Z0-9._-]+$/.test(v)) return "Special characters are not allowed";
   if (!/^[a-zA-Z0-9]/.test(v)) return "Username must start with a letter or number";
   if (!/[a-zA-Z0-9]$/.test(v)) return "Username must end with a letter or number";
@@ -78,7 +78,7 @@ const Users = () => {
         if (response.ok) {
           const userData = await response.json();
           setCurrentUserRole(userData.role || "");
-          
+
           // Check if user has permission to manage users
           if (!hasPermission(userData.role, "canManageUsers")) {
             toast({
@@ -89,7 +89,7 @@ const Users = () => {
             navigate("/dashboard");
             return;
           }
-          
+
           // If user has permission, fetch users list
           fetchUsers();
         } else if (response.status === 401) {
@@ -123,7 +123,7 @@ const Users = () => {
       }
 
       const response = await fetch(API_ENDPOINTS.USERS, { headers });
-      
+
       if (response.ok) {
         const data: User[] = await response.json();
         setUsers(data);
@@ -147,7 +147,7 @@ const Users = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validation
     if (!formData.user_name || !formData.email || !formData.role || !formData.password) {
       toast({
@@ -301,7 +301,7 @@ const Users = () => {
               </table>
             </div>
           )}
-          
+
 
           {/* {hasPermission(currentUserRole, "canCreateUser") && (
             <div className="mt-8 max-w-5xl mx-auto">
@@ -316,8 +316,8 @@ const Users = () => {
         </div>
       </main>
 
-      <Dialog 
-        open={showCreateUser} 
+      <Dialog
+        open={showCreateUser}
         onOpenChange={(open) => {
           setShowCreateUser(open);
           if (!open) {
@@ -342,7 +342,7 @@ const Users = () => {
           <form onSubmit={handleSubmit} className="space-y-6 pt-8 pr-16" autoComplete="off">
             <div className="grid grid-cols-[200px_1fr] items-center gap-4">
               <Label htmlFor="create-account-display-id" className="text-right font-semibold">
-                User Name : <span className="text-red-600" aria-hidden="true">*</span>
+                User Name :
               </Label>
               <Input
                 id="create-account-display-id"
@@ -359,7 +359,7 @@ const Users = () => {
 
             <div className="grid grid-cols-[200px_1fr] items-center gap-4">
               <Label htmlFor="email" className="text-right font-semibold">
-                Email Address : <span className="text-red-600" aria-hidden="true">*</span>
+                Email Address :
               </Label>
               <Input
                 id="email"
@@ -374,7 +374,7 @@ const Users = () => {
 
             <div className="grid grid-cols-[200px_1fr] items-center gap-4">
               <Label htmlFor="role" className="text-right font-semibold">
-                User Role : <span className="text-red-600" aria-hidden="true">*</span>
+                User Role :
               </Label>
               <Select
                 value={formData.role}
@@ -395,7 +395,7 @@ const Users = () => {
 
             <div className="grid grid-cols-[200px_1fr] items-center gap-4">
               <Label htmlFor="create-account-password" className="text-right font-semibold">
-                Password : <span className="text-red-600" aria-hidden="true">*</span>
+                Password :
               </Label>
               <div className="relative">
                 <Input
@@ -421,7 +421,7 @@ const Users = () => {
 
             <div className="grid grid-cols-[200px_1fr] items-center gap-4">
               <Label htmlFor="create-account-confirm-password" className="text-right font-semibold">
-                Confirm Password : <span className="text-red-600" aria-hidden="true">*</span>
+                Confirm Password :
               </Label>
               <div className="relative">
                 <Input
