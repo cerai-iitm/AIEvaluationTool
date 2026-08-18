@@ -144,11 +144,6 @@ services:
       - "7000"
     env_file:
       - .env
-    environment:
-      DATA_PATH : "data/"
-      DEFAULT_VALUES_PATH : "data/defaults.json"
-      EXAMPLES_DIR : "data/examples/"
-      IMAGES_DIR : "data/images/"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
