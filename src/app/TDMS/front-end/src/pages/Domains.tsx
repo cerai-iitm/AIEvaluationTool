@@ -610,7 +610,7 @@ const DomainList: React.FC = () => {
             </button>
             <div className="flex flex-col md:flex-row items-center mb-6 md:mb-8 mt-4 md:mt-5 gap-2 md:gap-0">
               {/* <label className="font-semibold text-left md:text-lg min-w-[100px] md:min-w-[165px]">Domain :</label> */}
-              <label className="font-semibold text-lg text-left ml-8 p-2">Domain :</label>
+              <label className="font-semibold text-lg text-left ml-8 p-2">Domain :<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
               <div className="mx-2 mr-8 w-full flex-1">
                 <Input
                   value={updateName}
@@ -624,7 +624,7 @@ const DomainList: React.FC = () => {
               </div>
             </div>
             <div className="flex justify-center items-center p-4">
-              <label className="text-base md:text-lg mr-2"> Notes </label>
+              <label className="text-base md:text-lg mr-2">Notes<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
               <Input
                 value={addMessage}
                 onChange={e => setAddMessage(e.target.value)}
@@ -679,7 +679,7 @@ const DomainList: React.FC = () => {
             {/* Domain Name Row */}
             {/* <div className="flex flex-col items-center justify-center flex-1"> */}
             <div className="flex flex-col md:flex-row items-center mb-6 mb:mb-8 mt-4 md:mt-5 gap-2 md:gap-0">
-              <label className="font-semibold text-base md:text-lg ml-8 p-2">Domain :</label>
+              <label className="font-semibold text-base md:text-lg ml-8 p-2">Domain :<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
               <div className="mx-2 mr-8 w-full flex-1">
                 <Input
                   value={newDomainName}
@@ -695,7 +695,7 @@ const DomainList: React.FC = () => {
             {/* </div> */}
             {/* Message Row + Submit Button */}
             <div className="flex flex-col md:flex-row items-center gap-2 md:gap-0">
-              <label className="text-base md:text-lg mr-2"> Notes   </label>
+              <label className="text-base md:text-lg mr-2">Notes<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
               <Input
                 value={addMessage}
                 onChange={e => setAddMessage(e.target.value)}

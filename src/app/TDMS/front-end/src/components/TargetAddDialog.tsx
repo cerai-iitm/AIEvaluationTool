@@ -704,7 +704,7 @@ export default function TargetAddDialog({
           <TabsContent value="general">
             <div className="space-y-4 pt-4">
               <div className="space-y-2">
-                <Label className="text-base font-semibold">Target</Label>
+                <Label className="text-base font-semibold">Target<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
                 <Input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -722,7 +722,7 @@ export default function TargetAddDialog({
               </div>
 
               <div className="space-y-2">
-                <Label className="text-base font-semibold">Description</Label>
+                <Label className="text-base font-semibold">Description<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
                 <Textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -733,7 +733,7 @@ export default function TargetAddDialog({
 
               <div className="grid gap-4 pb-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label className="text-base font-semibold">Type</Label>
+                  <Label className="text-base font-semibold">Type<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
                   <Select
                     value={type}
                     onValueChange={setType}
@@ -761,7 +761,7 @@ export default function TargetAddDialog({
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-base font-semibold">Domain</Label>
+                  <Label className="text-base font-semibold">Domain<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
                   <Select
                     value={domain}
                     onValueChange={setDomain}
@@ -790,7 +790,7 @@ export default function TargetAddDialog({
               </div>
 
               <div className="space-y-2">
-                <Label className="text-base font-semibold">URL</Label>
+                <Label className="text-base font-semibold">URL<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
                 <Input
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
@@ -801,7 +801,7 @@ export default function TargetAddDialog({
               </div>
 
               <div className="space-y-2">
-                <Label className="text-base font-semibold">Languages</Label>
+                <Label className="text-base font-semibold">Languages<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
                 <div className="bg-muted p-4 rounded-md max-h-[110px] overflow-y-auto">
                   {isFetchingOptions ? (
                     <div className="text-sm text-muted-foreground">
@@ -834,7 +834,7 @@ export default function TargetAddDialog({
               </div>
 
               <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-center">
-                <Label className="text-base font-semibold">Notes</Label>
+                <Label className="text-base font-semibold">Notes<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
                 <Input
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}

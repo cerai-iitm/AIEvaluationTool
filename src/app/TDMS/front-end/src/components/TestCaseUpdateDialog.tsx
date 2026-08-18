@@ -630,7 +630,7 @@ export const TestCaseUpdateDialog = ({
             <div className="space-y-1 pb-1">
               {/* <Label className="text-base font-semibold">Prompt</Label> */}
               <div className="space-y-1 pb-1">
-                <Label className="text-base font-semibold">User Prompt</Label>
+                <Label className="text-base font-semibold">User Prompt<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
                 <div className="relative">
                   <Textarea
                     value={userPrompts}
@@ -670,7 +670,7 @@ export const TestCaseUpdateDialog = ({
               </div>
 
               <div className="space-y-1 pb-2">
-                <Label className="text-base font-semibold">System Prompt</Label>
+                <Label className="text-base font-semibold">System Prompt<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
                 <div className="relative">
                   <Textarea
                     value={systemPrompts}
@@ -712,7 +712,7 @@ export const TestCaseUpdateDialog = ({
             </div>
 
             <div className="space-y-1 pb-2">
-              <Label className="text-base font-semibold">Response</Label>
+              <Label className="text-base font-semibold">Response<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
               <div className="relative">
                 <Textarea
                   value={responseText}
@@ -754,7 +754,7 @@ export const TestCaseUpdateDialog = ({
             </div>
 
             <div className="space-y-1 pb-2">
-              <Label className="text-base font-semibold">Strategy</Label>
+              <Label className="text-base font-semibold">Strategy<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
               <Select value={strategy} onValueChange={setStrategy} disabled={isFetchingStrategies}>
                 <SelectTrigger className="bg-muted">
                   <SelectValue placeholder={isFetchingStrategies ? "Loading strategies..." : "Select strategy"} />
@@ -777,7 +777,7 @@ export const TestCaseUpdateDialog = ({
 
             {selectedStrategyRequiresLLM ? (
               <div className="space-y-1 pb-2">
-                <Label className="text-base font-semibold">LLM Prompt</Label>
+                <Label className="text-base font-semibold">LLM Prompt<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
                 <div className="relative">
                   <Textarea
                     value={llmPrompt}
@@ -817,7 +817,7 @@ export const TestCaseUpdateDialog = ({
               </div>
             ):(
                 <div className="space-y-1 pb-2 hidden">
-                  <Label className="text-base font-semibold">LLM Prompt</Label>
+                  <Label className="text-base font-semibold">LLM Prompt<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
                   <Textarea
                     value=""
                     readOnly
@@ -834,7 +834,7 @@ export const TestCaseUpdateDialog = ({
             
 
             <div className="space-y-1 pb-2">
-              <Label className="text-base font-semibold">Metrics</Label>
+              <Label className="text-base font-semibold">Metrics<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
               <div className="bg-muted p-4 rounded-md max-h-[130px] overflow-y-auto">
                 {isFetchingMetrics ? (
                   <div className="text-sm text-muted-foreground">
@@ -892,7 +892,7 @@ export const TestCaseUpdateDialog = ({
 
             <div className="flex justify-center items-center p-2 border-gray-300 bg-white sticky bottom-0 z-10">
               <label className="text-base font-bold mr-2">
-                Notes 
+                Notes<span className="ml-1 text-red-600" aria-hidden="true">*</span>
               </label>
               <input
                 type="text"

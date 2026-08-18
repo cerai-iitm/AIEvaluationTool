@@ -155,10 +155,10 @@ const StrategyList: React.FC = () => {
 
   // ADD handler
   const handleAdd = async () => {
-    if (!newStrategyName.trim() || !addMessage.trim()) {
+    if (!newStrategyName.trim() || !newStrategyDescription.trim() || !addMessage.trim()) {
       toast({
         title: "Validation Error",
-        description: "Strategy name and notes are required",
+        description: "Strategy name, description, and notes are required",
         variant: "destructive",
       });
       return;
@@ -188,7 +188,7 @@ const StrategyList: React.FC = () => {
         headers,
         body: JSON.stringify({
           strategy_name: newStrategyName.trim(),
-          strategy_description: newStrategyDescription.trim() || null,
+          strategy_description: newStrategyDescription.trim(),
           notes: addMessage.trim() || null,
         }),
       });
@@ -223,10 +223,10 @@ const StrategyList: React.FC = () => {
 
   // UPDATE handler
   const handleUpdate = async () => {
-    if (!selectedStrategy || !updateName.trim() || !updateMessage.trim()) {
+    if (!selectedStrategy || !updateName.trim() || !updateDescription.trim() || !updateMessage.trim()) {
       toast({
         title: "Validation Error",
-        description: "Strategy name and notes are required",
+        description: "Strategy name, description, and notes are required",
         variant: "destructive",
       });
       return;
@@ -632,7 +632,7 @@ const StrategyList: React.FC = () => {
             </button>
             
             <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 mt-4 md:mt-5 gap-2 md:gap-0">
-              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy</label>
+              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
               <Input
                 value={updateName}
                 onChange={e => setUpdateName(e.target.value)}
@@ -645,7 +645,7 @@ const StrategyList: React.FC = () => {
             </div>
             
             <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 gap-2 md:gap-0">
-              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Description </label>
+              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Description<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
               <Textarea
                 value={updateDescription}
                 onChange={e => setUpdateDescription(e.target.value)}
@@ -655,7 +655,7 @@ const StrategyList: React.FC = () => {
             </div>
             
             <div className="flex flex-col md:flex-row items-center gap-2 md:gap-0">
-              <label className="text-base md:text-lg min-w-[60px]">Notes </label>
+              <label className="text-base md:text-lg min-w-[60px]">Notes<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
               <Input
                 value={updateMessage}
                 onChange={e => setUpdateMessage(e.target.value)}
@@ -665,6 +665,7 @@ const StrategyList: React.FC = () => {
                 className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={
                   !updateName.trim() ||
+                  !updateDescription.trim() ||
                   !updateMessage.trim() ||
                   isNameOverCharacterLimit(updateName)
                 }
@@ -703,7 +704,7 @@ const StrategyList: React.FC = () => {
             
             <div className="flex flex-col items-center justify-center flex-1">
               <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 w-full gap-2 md:gap-0">
-                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy</label>
+                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
                 <Input
                   value={newStrategyName}
                   onChange={e => setNewStrategyName(e.target.value)}
@@ -716,7 +717,7 @@ const StrategyList: React.FC = () => {
               </div>
               
               <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 w-full gap-2 md:gap-0">
-                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Description</label>
+                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Description<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
                 <Textarea
                   value={newStrategyDescription}
                   onChange={e => setNewStrategyDescription(e.target.value)}
@@ -727,7 +728,7 @@ const StrategyList: React.FC = () => {
             </div>
             
             <div className="flex flex-col md:flex-row items-center gap-2 md:gap-0">
-              <label className="text-base md:text-lg min-w-[60px]">Notes</label>
+              <label className="text-base md:text-lg min-w-[60px]">Notes<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
               <Input
                 value={addMessage}
                 onChange={e => setAddMessage(e.target.value)}
