@@ -44,6 +44,7 @@ COPY --from=builder /opt/venv /opt/venv
 COPY . /app
 
 FROM runtime-base AS app-backend
+COPY src/lib/strategy/.env.example /app/src/lib/strategy/.env
 WORKDIR /app/src/app/TestCaseExecutorDashboard
 EXPOSE 7000
 CMD [ "python", "back-end/main.py" ]
