@@ -532,7 +532,7 @@ const ContinueRunPage: React.FC = () => {
                     </div> */}
 
                     <div className="filter-item">
-                      <label>Test Plan</label>
+                      <label>Test Plan <span style={{ color: "#dc2626" }} aria-hidden="true">*</span></label>
                       <CustomSelect
                         options={filters?.plans?.map(p => p.filter_name) ?? []}
                         defaultText="Select Test Plan"
@@ -621,7 +621,7 @@ const ContinueRunPage: React.FC = () => {
 
                   <div className="filters-row">
                     <div className="filter-item">
-                      <label>Max test cases</label>
+                      <label>Max test cases{maxTestCasesSelection === "Custom" && <span style={{ color: "#dc2626" }} aria-hidden="true"> *</span>}</label>
                       <CustomSelect
                         options={maxTestCases}
                         defaultText="Select Max"
