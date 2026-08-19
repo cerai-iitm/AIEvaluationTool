@@ -497,7 +497,7 @@ const Metrics: React.FC = () => {
           </div>
           
           <div className="flex-1 min-h-0 overflow-y-auto">
-            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[73vh] max-w-[1200px] mx-left overflow-y-auto">
+            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[73vh] w-full mx-left overflow-y-auto">
               {isLoading ? (
                 <div className="flex items-center justify-center p-8">
                   <span>Loading...</span>

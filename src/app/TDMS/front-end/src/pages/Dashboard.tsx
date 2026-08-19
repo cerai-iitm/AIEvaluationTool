@@ -91,6 +91,7 @@ const Dashboard = () => {
   const importerReloadTimerRef = useRef<number | null>(null);
   const [selectedJsonFile, setSelectedJsonFile] = useState<File | null>(null);
   const [isJsonDragActive, setIsJsonDragActive] = useState(false);
+  // const hasDashboardData = stats.some((stat) => stat.count > 0);
 
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -325,7 +326,7 @@ const Dashboard = () => {
           closeImporterSocket();
           importerReloadTimerRef.current = window.setTimeout(() => {
             window.location.reload();
-          }, 2000);
+          }, 3000);
           return;
         }
 
@@ -442,85 +443,8 @@ const Dashboard = () => {
     pickJsonFile(event.dataTransfer.files?.[0]);
   };
 
-  const formatUploadError = async (response: Response) => {
-    try {
-      const data = await response.json();
-      const detail = data.detail;
-
-      if (typeof detail === "string") {
-        return detail;
-      }
-
-      if (detail?.errors?.length) {
-        const firstErrors = detail.errors
-          .slice(0, 5)
-          .map((error: { row?: number | null; field?: string; message?: string }) => {
-            const row = error.row ? `Row ${error.row}` : "File";
-            const field = error.field ? ` ${error.field}` : "";
-            return `${row}${field}: ${error.message}`;
-          })
-          .join("\n");
-        const remaining = detail.errors.length > 5 ? `\n...and ${detail.errors.length - 5} more error(s).` : "";
-        return `${detail.message || "JSON upload validation failed."}\n${firstErrors}${remaining}`;
-      }
-
-      return detail?.message || data.message || "JSON upload failed.";
-    } catch (error) {
-      return "JSON upload failed.";
-    }
-  };
-
-  const uploadJsonFile = async () => {
-    if (!selectedJsonFile) {
-      setImporterStatus("error");
-      setImporterMessage("Select a JSON file before importing.");
-      return;
-    }
-
-    setImporterLoading(true);
-    setImporterStatus("loading");
-    setImporterMessage("Uploading JSON test cases...");
-    setImporterLogs([]);
-
-    try {
-      const token = await getValidAccessToken(API_ENDPOINTS.REFRESH);
-      if (!token) {
-        setImporterStatus("error");
-        setImporterMessage("Authentication failed");
-        setImporterLoading(false);
-        return;
-      }
-
-      const formData = new FormData();
-      formData.append("file", selectedJsonFile);
-
-      const response = await fetch(API_ENDPOINTS.TESTCASE_UPLOAD_JSON, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        setImporterStatus("error");
-        setImporterMessage(await formatUploadError(response));
-        setImporterLoading(false);
-        return;
-      }
-
-      const data = await response.json();
-      setImporterStatus("success");
-      setImporterMessage(data.message || "JSON test cases imported successfully.");
-      setImporterLoading(false);
-      importerReloadTimerRef.current = window.setTimeout(() => {
-        window.location.reload();
-      }, 2000);
-    } catch (error) {
-      setImporterStatus("error");
-      setImporterMessage(`Error: ${error instanceof Error ? error.message : "An unexpected error occurred"}`);
-      setImporterLoading(false);
-    }
+  const handleImportClick = () => {
+    runImporter();
   };
 
   const statCardHandlers = (stat: typeof stats[0]) => ({
@@ -725,41 +649,50 @@ const Dashboard = () => {
             )}
 
             {importerStatus === "idle" && (
-              <div
-                className={`flex flex-col items-center gap-4 rounded-lg border-2 border-dashed px-6 py-8 transition-colors ${
-                  isJsonDragActive ? "border-blue-600 bg-blue-50" : "border-gray-300 bg-white"
-                }`}
-                onDragOver={handleJsonDragOver}
-                onDragLeave={handleJsonDragLeave}
-                onDrop={handleJsonDrop}
-              >
-                <input
-                  ref={importerFileInputRef}
-                  type="file"
-                  accept="application/json,.json"
-                  className="hidden"
-                  onChange={handleJsonFileChange}
-                />
-                <button
-                  type="button"
-                  onClick={() => importerFileInputRef.current?.click()}
-                  className="rounded-full p-3 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
-                  aria-label="Choose JSON file"
+              // hasDashboardData ? (
+                <div
+                  className={`flex flex-col items-center gap-4 rounded-lg border-2 border-dashed px-6 py-8 transition-colors ${
+                    isJsonDragActive ? "border-blue-600 bg-blue-50" : "border-gray-300 bg-white"
+                  }`}
+                  onDragOver={handleJsonDragOver}
+                  onDragLeave={handleJsonDragLeave}
+                  onDrop={handleJsonDrop}
                 >
-                  <Upload className="w-12 h-12 text-blue-600" />
-                </button>
-                <div className="space-y-1">
-                  <p className="text-foreground font-medium">
-                    {selectedJsonFile ? selectedJsonFile.name : "Click the upload icon or drop a JSON file here"}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Missing fields will be reported before import. Existing test case names are skipped.
-                  </p>
-                  {importerMessage && (
-                    <p className="text-sm text-red-600 whitespace-pre-line">{importerMessage}</p>
-                  )}
+                  <input
+                    ref={importerFileInputRef}
+                    type="file"
+                    accept="application/json,.json"
+                    className="hidden"
+                    onChange={handleJsonFileChange}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => importerFileInputRef.current?.click()}
+                    className="rounded-full p-3 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                    aria-label="Choose JSON file"
+                  >
+                    <Upload className="w-12 h-12 text-blue-600" />
+                  </button>
+                  <div className="space-y-1">
+                    <p className="text-foreground font-medium">
+                      {selectedJsonFile ? selectedJsonFile.name : "Click the upload icon or drop a JSON file here"}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Missing fields will be reported before import. Existing test case names are skipped.
+                    </p>
+                    {importerMessage && (
+                      <p className="text-sm text-red-600 whitespace-pre-line">{importerMessage}</p>
+                    )}
+                  </div>
                 </div>
-              </div>
+              // ) : (
+              //   <div className="flex flex-col items-center gap-4 px-6 py-8">
+              //     <Upload className="w-12 h-12 text-blue-600" />
+              //     {importerMessage && (
+              //       <p className="text-sm text-red-600 whitespace-pre-line">{importerMessage}</p>
+              //     )}
+              //   </div>
+              // )
             )}
           </div>
 
@@ -772,7 +705,7 @@ const Dashboard = () => {
                 Cancel
               </button>
               <button
-                onClick={runImporter}
+                onClick={handleImportClick}
                 disabled={importerLoading}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-400"
               >
