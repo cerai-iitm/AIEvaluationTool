@@ -599,7 +599,7 @@ const TestCases = () => {
 
           <div className="flex gap-4 mb-6 ">
             <Select defaultValue="testcase"
-              // onValueChange={(value: "testcase" | "metric" | "strategy" | "domain") => setSearchField(value)}
+              onValueChange={(value: "testcase" | "metric" | "strategy" | "domain") => setSearchField(value)}
             >
               <SelectTrigger className="w-40">
                 <SelectValue />
