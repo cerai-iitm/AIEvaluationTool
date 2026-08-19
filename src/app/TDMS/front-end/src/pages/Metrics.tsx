@@ -787,7 +787,7 @@ const Metrics: React.FC = () => {
             </div>
             
             <div className="flex flex-col md:flex-row items-center gap-2 md:gap-0">
-              <label className="text-base md:text-lg min-w-[60px]">Notes<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
+              <label className="text-base md:text-lg min-w-[60px]">Notes</label>
               <Input
                 value={updateMessage}
                 onChange={e => setUpdateMessage(e.target.value)}

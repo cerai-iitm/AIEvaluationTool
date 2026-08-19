@@ -85,7 +85,7 @@ const UserHistory = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  
+
   // Dialog states
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -108,7 +108,7 @@ const UserHistory = () => {
   const v = value.trim();
     if (v.length < 3) return "Username must be at least 3 characters long";
     if (v.length > 30) return "Username must be 30 characters or fewer";
-    
+
     if (!/^[a-zA-Z0-9._-]+$/.test(v)) return "Special characters are not allowed";
     if (!/^[a-zA-Z0-9]/.test(v)) return "Username must start with a letter or number";
     if (!/[a-zA-Z0-9]$/.test(v)) return "Username must end with a letter or number";
@@ -130,7 +130,7 @@ const UserHistory = () => {
         }
 
         const response = await fetch(API_ENDPOINTS.CURRENT_USER, { headers });
-        
+
         if (response.ok) {
           const userData: User = await response.json();
           setCurrentUser(userData);
@@ -160,12 +160,12 @@ const UserHistory = () => {
 
         // Fetch all users to find the one matching the username
         const response = await fetch(API_ENDPOINTS.USERS, { headers });
-        
+
         if (response.ok) {
           const users: User[] = await response.json();
           const decodedUsername = decodeURIComponent(username);
           const foundUser = users.find(u => u.user_name === decodedUsername);
-          
+
           if (foundUser) {
             setUser(foundUser);
             setUpdateForm({
@@ -215,7 +215,7 @@ const UserHistory = () => {
         // Decode username from URL and encode for API call
         const decodedUsername = decodeURIComponent(username);
         const response = await fetch(API_ENDPOINTS.USER_ACTIVITY(encodeURIComponent(decodedUsername)), { headers });
-        
+
         if (response.ok) {
           const data: Activity[] = await response.json();
           setActivities(data);
@@ -265,7 +265,7 @@ const UserHistory = () => {
         toast({ title: "Invalid Username", description: userNameError, variant: "destructive" });
         return;
       }
-      
+
     setIsUpdating(true);
     try {
       const token = localStorage.getItem("access_token");
@@ -382,7 +382,7 @@ const UserHistory = () => {
           method: "DELETE",
           headers,
         });
-        
+
         if (!activityResponse.ok) {
           console.warn("Failed to delete user activity, continuing with user deletion");
         }
@@ -471,11 +471,11 @@ const UserHistory = () => {
                 className="bg-primary hover:bg-primary/90"
                 onClick={() => setUpdateDialogOpen(true)}
                 disabled={isLoadingUser || !user ||
-                  (currentUser?.role?.toLowerCase() === "admin" && 
+                  (currentUser?.role?.toLowerCase() === "admin" &&
                    currentUser?.user_name === user?.user_name)
                 }
                 title={
-                  currentUser?.role?.toLowerCase() === "admin" && 
+                  currentUser?.role?.toLowerCase() === "admin" &&
                   currentUser?.user_name === user?.user_name
                     ? "Admin users cannot update their own account"
                     : ""
@@ -487,13 +487,13 @@ const UserHistory = () => {
                 variant="destructive"
                 onClick={() => setDeleteDialogOpen(true)}
                 disabled={
-                  isLoadingUser || 
-                  !user || 
-                  (currentUser?.role?.toLowerCase() === "admin" && 
+                  isLoadingUser ||
+                  !user ||
+                  (currentUser?.role?.toLowerCase() === "admin" &&
                    currentUser?.user_name === user?.user_name)
                 }
                 title={
-                  currentUser?.role?.toLowerCase() === "admin" && 
+                  currentUser?.role?.toLowerCase() === "admin" &&
                   currentUser?.user_name === user?.user_name
                     ? "Admin users cannot delete their own account"
                     : ""
@@ -624,8 +624,8 @@ const UserHistory = () => {
               </div>
             </div>
             )}
-            
-                    
+
+
             <div className="flex justify-center gap-4 pt-6">
               <Button
                 variant="outline"
@@ -655,7 +655,7 @@ const UserHistory = () => {
                   </>
                 ) : (
                   <>save</>
-                  
+
                 )}
               </Button>
             </div>

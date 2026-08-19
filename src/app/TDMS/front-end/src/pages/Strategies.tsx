@@ -645,7 +645,7 @@ const StrategyList: React.FC = () => {
             </div>
             
             <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 gap-2 md:gap-0">
-              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Description<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
+              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Description</label>
               <Textarea
                 value={updateDescription}
                 onChange={e => setUpdateDescription(e.target.value)}
@@ -655,7 +655,7 @@ const StrategyList: React.FC = () => {
             </div>
             
             <div className="flex flex-col md:flex-row items-center gap-2 md:gap-0">
-              <label className="text-base md:text-lg min-w-[60px]">Notes<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
+              <label className="text-base md:text-lg min-w-[60px]">Notes</label>
               <Input
                 value={updateMessage}
                 onChange={e => setUpdateMessage(e.target.value)}

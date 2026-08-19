@@ -892,7 +892,7 @@ export const TestCaseUpdateDialog = ({
 
             <div className="flex justify-center items-center p-2 border-gray-300 bg-white sticky bottom-0 z-10">
               <label className="text-base font-bold mr-2">
-                Notes<span className="ml-1 text-red-600" aria-hidden="true">*</span>
+                Notes
               </label>
               <input
                 type="text"

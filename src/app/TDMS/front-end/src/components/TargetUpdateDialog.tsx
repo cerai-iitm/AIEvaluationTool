@@ -763,7 +763,7 @@ export default function TargetUpdateDialog({
             </div>
 
             {/* <div className="flex flex-col gap-3 p-4 border-gray-300 bg-white sticky bottom-0 z-10 sm:flex-row sm:items-center sm:justify-center">
-              <Label className="text-base font-bold">Notes<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
+              <Label className="text-base font-bold">Notes</Label>
               <Input
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
@@ -827,7 +827,7 @@ export default function TargetUpdateDialog({
           ) : null}
         </Tabs>
             <div className="flex flex-col gap-3 p-4 border-gray-300 bg-white sticky bottom-0 z-10 sm:flex-row sm:items-center sm:justify-center">
-              <Label className="text-base font-bold">Notes<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
+              <Label className="text-base font-bold">Notes</Label>
               <Input
                 type="text"
                 value={notes}
