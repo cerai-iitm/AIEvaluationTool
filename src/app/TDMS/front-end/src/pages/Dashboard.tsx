@@ -368,12 +368,17 @@ const Dashboard = () => {
 
       await connectImporterSocket(token);
 
+      const formData = new FormData();
+      if (selectedJsonFile) {
+        formData.append("file", selectedJsonFile);
+      }
+
       const response = await fetch(API_ENDPOINTS.IMPORTER_RUN, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
         },
+        body: selectedJsonFile ? formData : undefined,
       });
 
       const data = await response.json();
@@ -381,7 +386,7 @@ const Dashboard = () => {
       if (!response.ok && data.status !== "running") {
         closeImporterSocket();
         setImporterStatus("error");
-        setImporterMessage(data.message || "Failed to import data. Please check the server logs.");
+        setImporterMessage(data.detail || data.message || "Failed to import data. Please check the server logs.");
         setImporterLoading(false);
         return;
       }
@@ -767,9 +772,7 @@ const Dashboard = () => {
                 Cancel
               </button>
               <button
-                // onClick={uploadJsonFile}
                 onClick={runImporter}
-                // disabled={importerLoading || !selectedJsonFile}
                 disabled={importerLoading}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-400"
               >

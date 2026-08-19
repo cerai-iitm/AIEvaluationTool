@@ -427,17 +427,17 @@ const DomainList: React.FC = () => {
             </div>
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto">
-            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[72vh] w-full max-w-[800px] overflow-y-auto">
+            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[72vh] w-full max-w-[500px] overflow-y-auto">
               {isLoading ? (
                 <div className="flex items-center justify-center p-8">
                   <span>Loading...</span>
                 </div>
               ) : (
-                <table className="w-full min-w-[600px] table-fixed">
+                <table className="w-full min-w-[400px]">
                   <thead className="border-b-2">
                     <tr>
-                      <th className="sticky top-0 bg-white z-10 w-[30%] p-2 md:p-4 font-semibold text-center text-xs md:text-base">Domain ID</th>
-                      <th className="sticky top-0 bg-white z-10 w-[70%] p-2 md:p-4 font-semibold text-left text-xs md:text-base">Domain</th>
+                      <th className="sticky top-0 bg-white z-10 p-2 md:p-4 font-semibold text-center text-xs md:text-base">Domain ID</th>
+                      <th className="sticky top-0 bg-white z-10 p-2 md:p-4 font-semibold text-left text-xs md:text-base">Domain name</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -460,8 +460,9 @@ const DomainList: React.FC = () => {
                             setHighlightedRowId(row.domain_id);
                           }}
                         >
+                          {/* <td className="p-2 text-center text-xs md:text-base">{(currentPage - 1) * itemsPerPage + index + 1}</td> */}
                           <td className="p-2 text-center text-xs md:text-base">{row.domain_id}</td>
-                          <td className="p-2 text-xs md:text-base capitalize pl-6 break-words">{row.domain_name}</td>
+                          <td className="p-2 text-xs md:text-base capitalize pl-6">{row.domain_name}</td>
                         </tr>
                       ))
                     )}

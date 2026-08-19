@@ -41,6 +41,9 @@ class TargetUpdateV2(BaseModel):
     xpath_application_name: Optional[str] = Field(
         None, description="The XPath application key that was changed."
     )
+    credential_config_changed: Optional[bool] = Field(
+        False, description="Whether the target credentials were changed."
+    )
     notes: Optional[str] = Field(None, description="User notes for this operation.")
 
 

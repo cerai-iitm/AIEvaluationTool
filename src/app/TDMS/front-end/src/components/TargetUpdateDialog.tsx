@@ -226,7 +226,6 @@ export default function TargetUpdateDialog({
     description.trim() !== (targetInitial.target_description || "") ||
     url.trim() !== (targetInitial.target_url || "") ||
     domain.trim() !== (targetInitial.domain_name || "") ||
-    notes.trim() !== (targetInitial.notes || "") ||
     sortedLanguages(selectedLanguages) !== sortedLanguages(targetInitial.lang_list || [])
   );
 
@@ -469,18 +468,14 @@ export default function TargetUpdateDialog({
     //   return;
     // }
 
-    if (
-      isWebAppTarget &&
-      hasAnyCredentials(credentials) &&
-      !areCredentialsComplete(credentials)
-    ) {
-      toast({
-        title: "Validation Error",
-        description: "Enter both username and password, or leave both blank",
-        variant: "destructive",
-      });
-      return;
-    }
+    // if (isWebAppTarget && !areCredentialsComplete(credentials)) {
+    //   toast({
+    //     title: "Validation Error",
+    //     description: "Username and password are required",
+    //     variant: "destructive",
+    //   });
+    //   return;
+    // }
 
     if (!hasChanges) {
       toast({
@@ -512,6 +507,7 @@ export default function TargetUpdateDialog({
             : targetInitial.lang_list || [],
         xpath_config_changed: hasXPathChanges,
         xpath_application_name: target.target_name,
+        credential_config_changed: hasCredentialChanges,
         notes: notes.trim() || null,
       };
 
