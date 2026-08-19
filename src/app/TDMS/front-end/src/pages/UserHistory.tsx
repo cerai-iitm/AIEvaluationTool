@@ -551,7 +551,7 @@ const UserHistory = () => {
           <div className="space-y-6 pt-8">
             <div className="grid grid-cols-[200px_1fr] items-center gap-4">
               <Label htmlFor="update-username" className="text-right font-semibold">
-                User Name :
+                User Name : <span className="text-red-600" aria-hidden="true">*</span>
               </Label>
               <Input
                 id="update-username"
@@ -564,7 +564,7 @@ const UserHistory = () => {
 
             <div className="grid grid-cols-[200px_1fr] items-center gap-4">
               <Label htmlFor="update-email" className="text-right font-semibold">
-                Email Address :
+                Email Address : <span className="text-red-600" aria-hidden="true">*</span>
               </Label>
               <Input
                 id="update-email"
@@ -578,7 +578,7 @@ const UserHistory = () => {
 
             <div className="grid grid-cols-[200px_1fr] items-center gap-4">
               <Label htmlFor="update-role" className="text-right font-semibold">
-                User Role :
+                User Role : <span className="text-red-600" aria-hidden="true">*</span>
               </Label>
               <Select
                 value={updateForm.role}

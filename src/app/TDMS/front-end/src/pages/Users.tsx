@@ -342,7 +342,7 @@ const Users = () => {
           <form onSubmit={handleSubmit} className="space-y-6 pt-8 pr-16" autoComplete="off">
             <div className="grid grid-cols-[200px_1fr] items-center gap-4">
               <Label htmlFor="create-account-display-id" className="text-right font-semibold">
-                User Name :
+                User Name : <span className="text-red-600" aria-hidden="true">*</span>
               </Label>
               <Input
                 id="create-account-display-id"
@@ -359,7 +359,7 @@ const Users = () => {
 
             <div className="grid grid-cols-[200px_1fr] items-center gap-4">
               <Label htmlFor="email" className="text-right font-semibold">
-                Email Address :
+                Email Address : <span className="text-red-600" aria-hidden="true">*</span>
               </Label>
               <Input
                 id="email"
@@ -374,7 +374,7 @@ const Users = () => {
 
             <div className="grid grid-cols-[200px_1fr] items-center gap-4">
               <Label htmlFor="role" className="text-right font-semibold">
-                User Role :
+                User Role : <span className="text-red-600" aria-hidden="true">*</span>
               </Label>
               <Select
                 value={formData.role}
@@ -395,7 +395,7 @@ const Users = () => {
 
             <div className="grid grid-cols-[200px_1fr] items-center gap-4">
               <Label htmlFor="create-account-password" className="text-right font-semibold">
-                Password :
+                Password : <span className="text-red-600" aria-hidden="true">*</span>
               </Label>
               <div className="relative">
                 <Input
@@ -421,7 +421,7 @@ const Users = () => {
 
             <div className="grid grid-cols-[200px_1fr] items-center gap-4">
               <Label htmlFor="create-account-confirm-password" className="text-right font-semibold">
-                Confirm Password :
+                Confirm Password : <span className="text-red-600" aria-hidden="true">*</span>
               </Label>
               <div className="relative">
                 <Input

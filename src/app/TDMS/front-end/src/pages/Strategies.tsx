@@ -631,8 +631,8 @@ const StrategyList: React.FC = () => {
               ×
             </button>
             
-            <div className="flex flex-col md:flex-col items-left mb-0 md:mb-0 mt-4 md:mt-5 gap-2 md:gap-0">
-              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy</label>
+            <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 mt-4 md:mt-5 gap-2 md:gap-0">
+              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
               <Input
                 value={updateName}
                 onChange={e => setUpdateName(e.target.value)}
@@ -704,7 +704,7 @@ const StrategyList: React.FC = () => {
             
             <div className="flex flex-col items-center justify-center flex-1">
               <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 w-full gap-2 md:gap-0">
-                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy</label>
+                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
                 <Input
                   value={newStrategyName}
                   onChange={e => setNewStrategyName(e.target.value)}
@@ -717,7 +717,7 @@ const StrategyList: React.FC = () => {
               </div>
               
               <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 w-full gap-2 md:gap-0">
-                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Description</label>
+                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Description<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
                 <Textarea
                   value={newStrategyDescription}
                   onChange={e => setNewStrategyDescription(e.target.value)}
@@ -728,7 +728,7 @@ const StrategyList: React.FC = () => {
             </div>
             
             <div className="flex flex-col md:flex-row items-center gap-2 md:gap-0">
-              <label className="text-base md:text-lg min-w-[60px]">Notes</label>
+              <label className="text-base md:text-lg min-w-[60px]">Notes<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
               <Input
                 value={addMessage}
                 onChange={e => setAddMessage(e.target.value)}
