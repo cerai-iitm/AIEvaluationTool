@@ -51,12 +51,6 @@ interface DashboardStats {
   metrics: number;
 }
 
-interface ImporterWsEvent {
-  event: "idle" | "accepted" | "running" | "log" | "success" | "error";
-  status: "idle" | "running" | "success" | "error";
-  message: string;
-}
-
 const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -83,11 +77,7 @@ const Dashboard = () => {
   const [importerLoading, setImporterLoading] = useState(false);
   const [importerStatus, setImporterStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [importerMessage, setImporterMessage] = useState("");
-  const [importerLogs, setImporterLogs] = useState<string[]>([]);
-  const importerSocketRef = useRef<WebSocket | null>(null);
   const importerFileInputRef = useRef<HTMLInputElement | null>(null);
-  const importerSocketClosingRef = useRef(false);
-  const importerLoadingRef = useRef(false);
   const importerReloadTimerRef = useRef<number | null>(null);
   const [selectedJsonFile, setSelectedJsonFile] = useState<File | null>(null);
   const [isJsonDragActive, setIsJsonDragActive] = useState(false);
@@ -175,13 +165,7 @@ const Dashboard = () => {
   }, [navigate, toast]);
 
   useEffect(() => {
-    importerLoadingRef.current = importerLoading;
-  }, [importerLoading]);
-
-  useEffect(() => {
     return () => {
-      importerSocketClosingRef.current = true;
-      importerSocketRef.current?.close();
       if (importerReloadTimerRef.current !== null) {
         window.clearTimeout(importerReloadTimerRef.current);
       }
@@ -281,81 +265,10 @@ const Dashboard = () => {
     }
   };
 
-  const closeImporterSocket = () => {
-    importerSocketClosingRef.current = true;
-    importerSocketRef.current?.close();
-    importerSocketRef.current = null;
-  };
-
-  const connectImporterSocket = (token: string) =>
-    new Promise<void>((resolve, reject) => {
-      importerSocketClosingRef.current = false;
-      const socket = new WebSocket(
-        `${API_ENDPOINTS.IMPORTER_STATUS_WS}?token=${encodeURIComponent(token)}`
-      );
-
-      socket.onopen = () => {
-        importerSocketRef.current = socket;
-        resolve();
-      };
-
-      socket.onmessage = (event) => {
-        const payload = JSON.parse(event.data) as ImporterWsEvent;
-
-        if (payload.event === "idle") {
-          return;
-        }
-
-        setImporterDialogOpen(true);
-        setImporterMessage(payload.message);
-
-        if (payload.event === "log") {
-          setImporterLogs((current) => [...current.slice(-7), payload.message]);
-          return;
-        }
-
-        if (payload.status === "running") {
-          setImporterLoading(true);
-          setImporterStatus("loading");
-          return;
-        }
-
-        if (payload.status === "success") {
-          setImporterLoading(false);
-          setImporterStatus("success");
-          closeImporterSocket();
-          importerReloadTimerRef.current = window.setTimeout(() => {
-            window.location.reload();
-          }, 3000);
-          return;
-        }
-
-        if (payload.status === "error") {
-          setImporterLoading(false);
-          setImporterStatus("error");
-          closeImporterSocket();
-        }
-      };
-
-      socket.onerror = () => {
-        reject(new Error("Unable to connect to importer status websocket"));
-      };
-
-      socket.onclose = () => {
-        importerSocketRef.current = null;
-        if (!importerSocketClosingRef.current && importerLoadingRef.current) {
-          setImporterLoading(false);
-          setImporterStatus("error");
-          setImporterMessage("Importer status connection was closed unexpectedly.");
-        }
-      };
-    });
-
   const runImporter = async () => {
     setImporterLoading(true);
     setImporterStatus("loading");
     setImporterMessage("Running importer... This may take a few minutes.");
-    setImporterLogs([]);
     setImporterDialogOpen(true);
 
     try {
@@ -366,8 +279,6 @@ const Dashboard = () => {
         setImporterLoading(false);
         return;
       }
-
-      await connectImporterSocket(token);
 
       const formData = new FormData();
       if (selectedJsonFile) {
@@ -384,19 +295,20 @@ const Dashboard = () => {
 
       const data = await response.json();
 
-      if (!response.ok && data.status !== "running") {
-        closeImporterSocket();
+      if (!response.ok) {
         setImporterStatus("error");
         setImporterMessage(data.detail || data.message || "Failed to import data. Please check the server logs.");
         setImporterLoading(false);
         return;
       }
 
-      setImporterStatus("loading");
-      setImporterLoading(true);
-      setImporterMessage(data.message || "Importer started. Waiting for live updates...");
+      setImporterStatus("success");
+      setImporterLoading(false);
+      setImporterMessage(data.message || "Data imported successfully.");
+      importerReloadTimerRef.current = window.setTimeout(() => {
+        window.location.reload();
+      }, 3000);
     } catch (error) {
-      closeImporterSocket();
       setImporterStatus("error");
       setImporterMessage(`Error: ${error instanceof Error ? error.message : "An unexpected error occurred"}`);
       setImporterLoading(false);
@@ -526,7 +438,6 @@ const Dashboard = () => {
           onClick={() => {
             setImporterStatus("idle");
             setImporterMessage("");
-            setImporterLogs([]);
             setSelectedJsonFile(null);
             setIsJsonDragActive(false);
             setImporterDialogOpen(true);
@@ -617,15 +528,6 @@ const Dashboard = () => {
                 <Loader className="w-12 h-12 text-blue-600 animate-spin" />
                 <p className="text-foreground font-medium">The data is being imported. it will take a few seconds</p>
                 {/* <p className="text-muted-foreground">{importerMessage}</p> */}
-                {/* {importerLogs.length > 0 && (
-                  <div className="w-full max-h-48 overflow-y-auto rounded-md bg-slate-950 p-3 text-left">
-                    {importerLogs.map((log, index) => (
-                      <p key={`${log}-${index}`} className="font-mono text-xs text-slate-100">
-                        {log}
-                      </p>
-                    ))}
-                  </div>
-                )} */}
               </div>
             )}
 

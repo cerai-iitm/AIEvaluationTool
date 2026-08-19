@@ -26,6 +26,24 @@ async def _read_uploaded_prompts(file: UploadFile | None) -> Any | None:
         raise HTTPException(status_code=422, detail=f"Uploaded file is not valid JSON: {exc.msg}") from exc
 
 
+def _resolve_importer_config() -> str:
+    current_dir = os.path.dirname(__file__)
+    candidates = [
+        os.path.abspath(os.path.join(current_dir, "../../../../../../../config.json")),
+        os.path.abspath(os.path.join(current_dir, "../../../../../importer/config.json")),
+        "config.json",
+    ]
+
+    for candidate in candidates:
+        if os.path.exists(candidate):
+            return candidate
+
+    raise HTTPException(
+        status_code=404,
+        detail=f"Config file not found. Checked: {', '.join(candidates)}",
+    )
+
+
 @importer_router.post("/run", summary="Run data importer", tags=["Importer"])
 async def run_importer(
     db: DB = Depends(_get_db),
@@ -33,7 +51,7 @@ async def run_importer(
 ):
     """
     Runs the importer script to import data into the database.
-    This endpoint triggers the importer/main.py script.
+    This endpoint runs the importer logic in this file.
     """
     import sys
     import os
@@ -118,10 +136,17 @@ async def run_importer(
         help="Enable ORM debug mode",
     )
 
-    args = parser.parse_args()
+    args = parser.parse_args([])
+    args.config = _resolve_importer_config()
 
     # connecting to the database
     config = json.load(open(args.config, 'r'))
+    config_dir = os.path.dirname(os.path.abspath(args.config))
+
+    def config_file_path(path: str) -> str:
+        if os.path.isabs(path):
+            return path
+        return os.path.join(config_dir, path)
     # db_url = "mariadb+mariadbconnector://{user}:{password}@{host}:{port}/{database}".format(
     #     user=config['db']['user'],
     #     password=config['db']['password'],
@@ -136,11 +161,8 @@ async def run_importer(
     if engine == "sqlite":
         sqlite_file = config['db'].get('file', 'app.db')
 
-        # project_root = src/app/importer/../../../
-        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
-
-        # Put DB in project_root/data
-        db_folder = os.path.join(base_dir, "data")
+        # Put DB in the same data folder used by TDMS database.py and fastapi_deps.py.
+        db_folder = os.path.join(config_dir, "data")
         os.makedirs(db_folder, exist_ok=True)
 
         db_path = os.path.join(db_folder, sqlite_file)
@@ -161,16 +183,16 @@ async def run_importer(
     else:
         raise ValueError(f"Unsupported database engine: {engine}")
 
-    plans = json.load(open(config['files']['plans'], 'r'))
+    plans = json.load(open(config_file_path(config['files']['plans']), 'r'))
     #testcases -> basically the data points
     prompts = await _read_uploaded_prompts(file)
     if prompts is None:
-        prompts = json.load(open(config['files']['testcases'], 'r'))
+        prompts = json.load(open(config_file_path(config['files']['testcases']), 'r'))
 
     db = DB(db_url=db_url, debug=args.orm_debug)
 
-    strategies = json.load(open(config["files"]["strategies"], "r"))
-    descriptions = json.load(open(config["files"]["descriptions"], "r"))
+    strategies = json.load(open(config_file_path(config["files"]["strategies"]), "r"))
+    descriptions = json.load(open(config_file_path(config["files"]["descriptions"]), "r"))
 
     # Build one case-insensitive lookup for parent metrics and Parent/SubMetric rows.
     metric_descriptions = {}
@@ -428,3 +450,11 @@ async def run_importer(
                 target_domain="agriculture",
                 target_languages=["english"])
     target_id = db.add_or_get_target(target = tgt)
+
+    return JSONResponse(
+        status_code=200,
+        content={
+            "status": "success",
+            "message": "Data imported successfully",
+        },
+    )
