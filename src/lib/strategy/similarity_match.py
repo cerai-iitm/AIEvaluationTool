@@ -1,5 +1,7 @@
+import nltk
 from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
 from nltk.translate.meteor_score import meteor_score
+from nltk.corpus import wordnet
 import evaluate
 import os
 import warnings
@@ -11,6 +13,7 @@ from lib.data import TestCase, Conversation
 from .strategy_base import Strategy
 from .logger import get_logger
 from .utils_new import FileLoader, OllamaConnect
+from pathlib import Path
 
 warnings.filterwarnings("ignore")
 
@@ -19,6 +22,55 @@ logger = get_logger("similarity_match")
 dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), simple=True, strat_name="similarity_match")
 # This module implements a similarity matching strategy for evaluating agent responses.
 # It uses various metrics such as BERT, cosine, and Jaccard similarity to assess the quality of responses.
+
+## NLTK WORDNET INSTALL 
+
+NLTK_DATA_DIR = Path(__file__).resolve().parent / "nltk_data"
+
+
+def ensure_meteor_resources() -> None:
+    """
+    Ensure that the NLTK resources required by METEOR are available.
+    Downloads them into a project-local nltk_data directory when missing.
+    """
+
+    NLTK_DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+    nltk_data_path = str(NLTK_DATA_DIR)
+
+    if nltk_data_path not in nltk.data.path:
+        nltk.data.path.insert(0, nltk_data_path)
+
+    try:
+        wordnet.ensure_loaded()
+        logger.info("NLTK WordNet is already available")
+
+    except LookupError:
+        logger.info(
+            f"WordNet is missing. Downloading to {NLTK_DATA_DIR}"
+        )
+
+        wordnet_downloaded = nltk.download(
+            "wordnet",
+            download_dir=nltk_data_path,
+            quiet=True,
+        )
+
+        omw_downloaded = nltk.download(
+            "omw-1.4",
+            download_dir=nltk_data_path,
+            quiet=True,
+        )
+
+        if not wordnet_downloaded or not omw_downloaded:
+            raise RuntimeError(
+                "Failed to download NLTK WordNet resources"
+            )
+
+        wordnet.ensure_loaded()
+
+        logger.info("NLTK WordNet resources downloaded successfully")
+
 class SimilarityMatchStrategy(Strategy):
     def __init__(self, name: str = "similarity_match", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
@@ -59,6 +111,7 @@ class SimilarityMatchStrategy(Strategy):
         Prints:
         - Average METEOR Score (%)
         """
+        ensure_meteor_resources()
         logger.info("Starting meteor_metric evaluation strategy")
         try:
             prediction = test_case_responses
@@ -134,35 +187,35 @@ class SimilarityMatchStrategy(Strategy):
             case "ROUGE" | "rouge":
                 score = self.rouge_score_metric(conversation.agent_response, testcase.response.response_text)
                 return float(score['rougeLsum']), OllamaConnect.get_reason(conversation.agent_response, float(score['rougeLsum']), metric_name=self.__metric_name, add_info=f"""Reference response: {testcase.response.response_text}
-The reported score is ROUGE-Lsum.
+                The reported score is ROUGE-Lsum.
 
-Generate the reason using these mandatory rules:
-1. Compare the candidate and reference using actual ordered word-sequence overlap.
-2. State the exact words or sequences that occur in both texts.
-3. Extra unmatched content in the candidate lowers PRECISION, never recall.
-4. Reference content missing from the candidate lowers RECALL.
-5. Explain that the final ROUGE-Lsum score reflects the balance between precision and recall.
-6. Do not provide numerical precision, recall, or F1 values because they were not supplied.
-7. ROUGE-Lsum uses longest common subsequence (LCS); do not describe it as an n-gram metric.
-8. Capitalization differences must be treated as matches.
-9. Do not claim that single-sentence versus multi-sentence structure itself lowers the score.
-10. Do not say the reference lacks candidate details; describe those details as extra unmatched candidate content.
-11. Do not invent, assume, or paraphrase content that is absent from either text.
-12. Do not call the overlap minimal if multiple exact sequences match; use “limited relative to the candidate’s length.”
-13. End by clarifying that ROUGE-Lsum measures lexical alignment, not factual correctness.
+                Generate the reason using these mandatory rules:
+                1. Compare the candidate and reference using actual ordered word-sequence overlap.
+                2. State the exact words or sequences that occur in both texts.
+                3. Extra unmatched content in the candidate lowers PRECISION, never recall.
+                4. Reference content missing from the candidate lowers RECALL.
+                5. Explain that the final ROUGE-Lsum score reflects the balance between precision and recall.
+                6. Do not provide numerical precision, recall, or F1 values because they were not supplied.
+                7. ROUGE-Lsum uses longest common subsequence (LCS); do not describe it as an n-gram metric.
+                8. Capitalization differences must be treated as matches.
+                9. Do not claim that single-sentence versus multi-sentence structure itself lowers the score.
+                10. Do not say the reference lacks candidate details; describe those details as extra unmatched candidate content.
+                11. Do not invent, assume, or paraphrase content that is absent from either text.
+                12. Do not call the overlap minimal if multiple exact sequences match; use “limited relative to the candidate’s length.”
+                13. End by clarifying that ROUGE-Lsum measures lexical alignment, not factual correctness.
 
-The explanation must follow this logic:
-- Actual matching sequences
-- Differently worded or missing reference sequences affecting recall
-- Extra candidate content affecting precision
-- Precision-recall balance explaining the final score"""
-)
+                The explanation must follow this logic:
+                - Actual matching sequences
+                - Differently worded or missing reference sequences affecting recall
+                - Extra candidate content affecting precision
+                - Precision-recall balance explaining the final score"""
+                )
             case "METEOR" | "meteor" :
                 score = self.meteor_metric(testcase.response.response_text, conversation.agent_response)
-                return float(score), OllamaConnect.get_reason(conversation.agent_response, float(score), metric_name=self.__metric_name)
+                return float(score), OllamaConnect.get_reason(conversation.agent_response, float(score), metric_name=self.__metric_name, add_info=testcase.response.response_text)
             case "BLEU" | "bleu":
                 score = self.bleu_score_metric(conversation.agent_response, testcase.response.response_text)
-                return float(score), OllamaConnect.get_reason(conversation.agent_response, float(score), metric_name=self.__metric_name)
+                return float(score), OllamaConnect.get_reason(conversation.agent_response, float(score), metric_name=self.__metric_name, add_info=testcase.response.response_text)
             case "bart_score_similarity":
                 # Placeholder for BART score similarity logic
                 bart_scorer = BARTScorer(device='cpu', checkpoint='facebook/bart-large-cnn')
