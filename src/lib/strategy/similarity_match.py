@@ -133,7 +133,30 @@ class SimilarityMatchStrategy(Strategy):
                 return float(cos_sim_score), OllamaConnect.get_reason(conversation.agent_response, float(cos_sim_score), metric_name=self.__metric_name)
             case "ROUGE" | "rouge":
                 score = self.rouge_score_metric(conversation.agent_response, testcase.response.response_text)
-                return float(score['rougeLsum']), OllamaConnect.get_reason(conversation.agent_response, float(score['rougeLsum']), metric_name=self.__metric_name)
+                return float(score['rougeLsum']), OllamaConnect.get_reason(conversation.agent_response, float(score['rougeLsum']), metric_name=self.__metric_name, add_info=f"""Reference response: {testcase.response.response_text}
+The reported score is ROUGE-Lsum.
+
+Generate the reason using these mandatory rules:
+1. Compare the candidate and reference using actual ordered word-sequence overlap.
+2. State the exact words or sequences that occur in both texts.
+3. Extra unmatched content in the candidate lowers PRECISION, never recall.
+4. Reference content missing from the candidate lowers RECALL.
+5. Explain that the final ROUGE-Lsum score reflects the balance between precision and recall.
+6. Do not provide numerical precision, recall, or F1 values because they were not supplied.
+7. ROUGE-Lsum uses longest common subsequence (LCS); do not describe it as an n-gram metric.
+8. Capitalization differences must be treated as matches.
+9. Do not claim that single-sentence versus multi-sentence structure itself lowers the score.
+10. Do not say the reference lacks candidate details; describe those details as extra unmatched candidate content.
+11. Do not invent, assume, or paraphrase content that is absent from either text.
+12. Do not call the overlap minimal if multiple exact sequences match; use “limited relative to the candidate’s length.”
+13. End by clarifying that ROUGE-Lsum measures lexical alignment, not factual correctness.
+
+The explanation must follow this logic:
+- Actual matching sequences
+- Differently worded or missing reference sequences affecting recall
+- Extra candidate content affecting precision
+- Precision-recall balance explaining the final score"""
+)
             case "METEOR" | "meteor" :
                 score = self.meteor_metric(testcase.response.response_text, conversation.agent_response)
                 return float(score), OllamaConnect.get_reason(conversation.agent_response, float(score), metric_name=self.__metric_name)

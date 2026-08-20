@@ -27,8 +27,8 @@ interface SidebarProps {
 const sectionIcons: Record<DocSectionId, React.ComponentType<{ className?: string }>> = {
   overview: BookOpen,
   'docker-setup': Container,
-  'tdms-and-dashboard-ui': LayoutDashboard,
-  'ai-evaluation-tool-cli': TerminalSquare,
+  ui: LayoutDashboard,
+  cli: TerminalSquare,
   pqet: Sparkles,
 };
 
@@ -193,7 +193,7 @@ export function Sidebar({
 
           <div className="px-6 py-4 border-t border-sidebar-border flex items-center justify-between">
             <span className="text-[10px] text-sidebar-foreground/40 font-bold uppercase tracking-widest">Version</span>
-            <span className="text-xs font-mono text-sidebar-foreground/60 bg-sidebar-accent px-2 py-0.5 rounded">v2.0</span>
+            <span className="text-xs font-mono text-sidebar-foreground/60 bg-sidebar-accent px-2 py-0.5 rounded">v2.0.1</span>
           </div>
         </div>
       </aside>

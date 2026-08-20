@@ -77,7 +77,7 @@ Each service runs independently with direct port access, no reverse proxy.
 │ TCE Dashboard    │     │ TDMS Frontend    │     │ Auth Service     │
 │ Frontend (CRA)   │     │ (Vite/React)     │     │ (FastAPI)        │
 │ http://localhost │     │ http://localhost │     │ http://localhost │
-│ :3000            │     │ :5173            │     │ :7500            │
+│ :3000            │     │ :8080            │     │ :7500            │
 └────────┬─────────┘     └────────┬─────────┘     └────────┬─────────┘
          │                        │                        │
          └────────────────────────┼────────────────────────┘
@@ -120,7 +120,7 @@ Each service runs independently with direct port access, no reverse proxy.
 **Development Details (5 Ports):**
 - Each backend runs on its own port (7000, 7250, 7500, 8000)
 - TCE Dashboard Frontend on port 3000 (CRA default)
-- TDMS Frontend on port 5173 (Vite default)
+- TDMS Frontend on port 8080 (configured in `vite.config.ts`, not the Vite default)
 - Frontends make direct API calls to backend ports
 - Useful for independent debugging and development
 - Database shared across all services
@@ -134,7 +134,7 @@ Each service runs independently with direct port access, no reverse proxy.
 | TCE Backend | `/api/` | 7000 | Test run execution & analysis |
 | Interface Manager | (internal) | 8000 | Browser automation & LLM interactions |
 | TCE Dashboard Frontend | `/` | 3000 | Test orchestration UI |
-| TDMS Frontend | `/tdms/` | 5173 | Test data management UI |
+| TDMS Frontend | `/tdms/` | 8080 | Test data management UI |
 | NGINX Proxy | - | 80/443 | Reverse proxy for all services (Docker only) |
 
 ## Core Components

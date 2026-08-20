@@ -49,7 +49,7 @@ Click a testcase row to open full conversation detail modal.
 Modal-level information includes:
 
 - conversation context
-- prompts and responses
+- prompts and the `Agent Response` field (the model/target's actual response, shown under its own heading)
 - score
 - evaluation reasoning
 
@@ -70,6 +70,12 @@ On analysis start:
 - UI navigates to `/analyse/:runName`
 - status updates are shown live with progress tracking
 - testcase status transitions include `PENDING`, `RUNNING`, `COMPLETED`, `FAILED`
+
+### Stopping Analysis
+
+- A `Stop Analysis` button is shown while analysis is in progress
+- Calls `POST /analyse/{runName}/stop` on the dashboard backend
+- The button shows a `Stopping…` state while the request is in flight, followed by `Analysis stopped.` once the backend confirms via WebSocket
 
 ## Report Download
 

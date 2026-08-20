@@ -21,11 +21,13 @@ This makes PQET especially useful for teams refining datasets, improving test qu
 
 ## Architecture Summary
 
-PQET is organized as a lightweight application with:
+PQET is organized as a lightweight, stateless application with:
 
 - Streamlit UI
 - Python-based evaluation logic
-- local-file or lightweight database-backed storage patterns
+- Metric/submetric definitions loaded from a bundled Excel file (`metric_and_submetric.xlsx`)
+- Gemini API calls (with API-key rotation) for LLM-assisted scoring
+- No persistence: evaluation results are shown in the UI only and are not saved
 
 ## How PQET Fits Into The Ecosystem
 
@@ -41,4 +43,4 @@ PQET complements the broader AI Evaluation Tool workflow. The main platform hand
 ## Related Sections
 
 - [PQET documentation](../pqet/index.md)
-- [AI Evaluation Tool CLI](../ai_evaluation_tool_cli/index.md)
+- [AI Evaluation Tool CLI](../cli/index.md)
