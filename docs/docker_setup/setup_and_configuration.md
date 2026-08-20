@@ -2,10 +2,11 @@
 
 This page explains how to run the AI Evaluation Tool from scratch using Docker, with separate flows for:
 
-- UI-based usage
-- CLI-based usage
+- production UI usage through `nginx`
+- development usage with exposed service ports
+- CLI-based usage through the backend container
 
-It is aligned with the current Compose stack (`app-backend`, `app-front-end`, `auth-service`, `tdms-backend`, `tdms-frontend`, `nginx`).
+It is aligned with the current Compose stack (`app-backend`, `app-front-end`, `auth-service`, `tdms-backend`, `tdms-frontend`, `nginx`) and the development override file (`docker-compose.dev.yml`).
 
 ## Prerequisites
 
@@ -28,6 +29,59 @@ Primary services in [docker-compose.yml][docker-compose]:
 - `nginx` (single public entrypoint and reverse proxy)
 
 Public access is through `nginx` on `http://localhost:${NGINX_PORT:-80}`.
+
+## Compose Modes
+
+### Production Mode
+
+Use only `docker-compose.yml` for the production-style local stack.
+
+```bash
+docker compose up -d --build nginx
+```
+
+This exposes only the nginx entrypoint to the host. Backend, database, Selenium, and frontend services communicate over the internal Docker network.
+
+### Development Mode
+
+Use both Compose files when developing or debugging services directly:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+```
+
+The development override bind-mounts the repository into service containers and exposes direct ports for the individual services.
+
+Development URLs:
+
+- TCE frontend dev server: `http://localhost:3000`
+- TDMS frontend dev server: `http://localhost:8080`
+- Dashboard backend API docs: `http://localhost:7000/docs`
+- TDMS backend: `http://localhost:7250`
+- Auth service docs: `http://localhost:7500/docs`
+- Interface Manager docs: `http://localhost:8000/docs`
+- Selenium live browser: `http://localhost:7900`
+
+In development mode, use the direct frontend ports above as the primary UI entrypoints. The production nginx route uses `docker/nginx/nginx.conf`; use a development nginx config only if you explicitly wire it into Compose.
+
+### Compose Profiles
+
+The Docker stack also includes optional model-serving profiles:
+
+- `prod`: enables Compose-managed Ollama services (`ollama`, `ollama-init`, `ollama-warmup`) and `sarvam-ai`.
+- `sarvam`: enables only the Compose-managed Sarvam AI service.
+
+Use `prod` when you want the Docker stack to include the bundled model-serving services:
+
+```bash
+docker compose --profile prod up -d --build
+```
+
+Use `sarvam` when Ollama is hosted elsewhere but Sarvam AI should run through Compose:
+
+```bash
+docker compose --profile sarvam up -d sarvam-ai
+```
 
 ## Configuration Files To Prepare
 
@@ -123,29 +177,23 @@ Use remote Selenium mode:
 }
 ```
 
-## Section 1: Run Through UI (Recommended For Most Users)
+## Section 1: Run Production UI (Recommended For Most Users)
 
-### Step 1: Build Images
-
-```bash
-docker compose build
-```
-
-### Step 2: Start Full UI Stack
+### Step 1: Start Production UI Stack
 
 ```bash
-docker compose up -d nginx
+docker compose up -d --build nginx
 ```
 
 Bringing up `nginx` starts required dependencies (`app-front-end`, `tdms-frontend`, `app-backend`, `tdms-backend`, `auth-service`, `interface-manager`, `db`, `selenium-browser`).
 
-### Step 3: Verify Containers
+### Step 2: Verify Containers
 
 ```bash
 docker compose ps
 ```
 
-### Step 4: Open The Application
+### Step 3: Open The Application
 
 - Main UI (TCE): `http://localhost:${NGINX_PORT:-80}/`
 - TDMS UI: `http://localhost:${NGINX_PORT:-80}/tdms/`
@@ -154,14 +202,40 @@ docker compose ps
 
 For detailed UI workflows after startup, refer to:
 
-- [TDMS + Dashboard UI Overview](../TDMS_and_Dashboard_ui/index.md)
-- [Authentication And Roles](../TDMS_and_Dashboard_ui/authentication_and_roles.md)
-- [TDMS Dashboard Manual](../TDMS_and_Dashboard_ui/tdms_dashboard_manual.md)
-- [Test Runs Manual](../TDMS_and_Dashboard_ui/test_runs_manual.md)
-- [Run Configuration Manual](../TDMS_and_Dashboard_ui/run_configuration_manual.md)
-- [Analysis And Run Details Manual](../TDMS_and_Dashboard_ui/analysis_and_run_details_manual.md)
+- [UI Overview](../ui/index.md)
+- [Authentication And Roles](../ui/authentication_and_roles.md)
+- [TDMS Dashboard Manual](../ui/tdms_dashboard_manual.md)
+- [Test Runs Manual](../ui/test_runs_manual.md)
+- [Run Configuration Manual](../ui/run_configuration_manual.md)
+- [Analysis And Run Details Manual](../ui/analysis_and_run_details_manual.md)
 
-## Section 2: Run Through CLI (Importer, Execution, Analysis, Report)
+## Section 2: Run Development Stack
+
+Use this mode when you need live frontend development servers, direct backend ports, or easier debugging.
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+```
+
+Check status:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml ps
+```
+
+Open:
+
+- TCE frontend: `http://localhost:3000`
+- TDMS frontend: `http://localhost:8080`
+- Selenium live browser: `http://localhost:7900`
+
+Stop development stack:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml down
+```
+
+## Section 3: Run Through CLI (Importer, Execution, Analysis, Report)
 
 Use `app-backend` as the CLI runtime container.
 
@@ -211,7 +285,24 @@ docker compose run --rm --no-deps -w /app app-backend \
 python src/app/response_analyzer/report.py --config config.json --run-name <run_name> --get-report
 ```
 
-## Optional: Use Built-In Sarvam AI Service
+## Optional: Use Built-In Model Services
+
+### Full Production Model Profile
+
+Use the `prod` profile to start the production stack with Compose-managed Ollama and Sarvam AI:
+
+```bash
+docker compose --profile prod up -d --build
+```
+
+When using this mode, set model URLs to the Compose service names:
+
+```env
+OLLAMA_URL="http://ollama:11434/"
+GPU_URL="http://sarvam-ai:16000/"
+```
+
+### Sarvam AI Only
 
 If you want Compose-managed Sarvam instead of an external `GPU_URL` endpoint:
 
