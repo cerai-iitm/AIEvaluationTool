@@ -12,10 +12,10 @@ The TDMS (Test Data Management System) is a comprehensive application designed t
 
 ### Logging In
 
-1. Open the TDMS application in your web browser
-2. Enter your username and password
-3. Click **Login** or press Enter
-4. Upon successful login, you will be redirected to the Dashboard
+- Open the TDMS application in your web browser
+- Enter your username and password
+- Click **Login** or press Enter
+- Upon successful login, you will be redirected to the Dashboard
 
 ![Dashboard after successful login](../../screenshots/afterLogin.png)
 

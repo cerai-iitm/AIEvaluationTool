@@ -8,7 +8,9 @@ TDMS and the Test Case Execution Dashboard share authentication, core data model
 
 NGINX reverse proxy serves all services behind a single port (80, or 443 for HTTPS) with unified URL paths.
 
-```Architecture
+![Docker Container Architecture](../../screenshots/docker_arch.png)
+
+<!-- ```Architecture
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                          NGINX Reverse Proxy (Port 80/443)              │
 ├─────────────┬──────────────────────┬────────────────┬───────────────────┤
@@ -55,7 +57,7 @@ NGINX reverse proxy serves all services behind a single port (80, or 443 for HTT
                                                         │ • Test Runs      │
                                                         │ • Results        │
                                                         └──────────────────┘
-```
+``` -->
 
 **Deployment Details (Docker):**
 - Services run in Docker containers with internal networking
