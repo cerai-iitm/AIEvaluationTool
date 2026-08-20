@@ -179,7 +179,7 @@ export function LlmPromptAddDialog({
 
         <div className="flex-1 p-1 overflow-y-auto space-y-6 pb-5">
           <div className="space-y-1">
-            <Label className="text-base font-semibold">LLM Prompt</Label>
+            <Label className="text-base font-semibold">LLM Prompt<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
             <Textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
@@ -193,7 +193,7 @@ export function LlmPromptAddDialog({
             />
           </div>
           <div className="space-y-1">
-            <Label className="text-base font-semibold">Language</Label>
+            <Label className="text-base font-semibold">Language<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
             <Select
               value={language || undefined}
               onValueChange={setLanguage}
@@ -229,7 +229,7 @@ export function LlmPromptAddDialog({
         </div>
 
         <div className="sticky bottom-0 bg-white pt-4 p-2 flex justify-center items-center gap-4 border-gray-200 z-10">
-          <Label className="text-base font-semibold">Notes</Label>
+          <Label className="text-base font-semibold">Notes<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
             <Input
               value={notes}
               onChange={(e) => setNotes(e.target.value)}

@@ -520,6 +520,7 @@ const ContinueRunPage: React.FC = () => {
             <Accordion.Body>
               {existingRun ? (
                 <div className="filters-container">
+                  <span className="form-required-notice">* Required</span>
                   <form onSubmit={handleSubmit}>
                     <div className="filters-row">
                     {/* <div className="filter-item">
@@ -532,7 +533,7 @@ const ContinueRunPage: React.FC = () => {
                     </div> */}
 
                     <div className="filter-item">
-                      <label>Test Plan</label>
+                      <label>Test Plan <span className="required-asterisk" aria-hidden="true">*</span></label>
                       <CustomSelect
                         options={filters?.plans?.map(p => p.filter_name) ?? []}
                         defaultText="Select Test Plan"
@@ -621,7 +622,7 @@ const ContinueRunPage: React.FC = () => {
 
                   <div className="filters-row">
                     <div className="filter-item">
-                      <label>Max test cases</label>
+                      <label>Max test cases{maxTestCasesSelection === "Custom" && <span className="required-asterisk" aria-hidden="true"> *</span>}</label>
                       <CustomSelect
                         options={maxTestCases}
                         defaultText="Select Max"
