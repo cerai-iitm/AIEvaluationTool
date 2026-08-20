@@ -212,7 +212,22 @@ class SimilarityMatchStrategy(Strategy):
                 )
             case "METEOR" | "meteor" :
                 score = self.meteor_metric(testcase.response.response_text, conversation.agent_response)
-                return float(score), OllamaConnect.get_reason(conversation.agent_response, float(score), metric_name=self.__metric_name, add_info=testcase.response.response_text)
+                return float(score), OllamaConnect.get_reason(conversation.agent_response, float(score), metric_name=self.__metric_name, add_info=f"""
+                Reference response:
+                {testcase.response.response_text}
+
+                METEOR reasoning instructions:
+
+                Write exactly three sentences.
+
+                Sentence 1: State the score and explicitly say that the complete agent response was compared with the reference response.
+
+                Sentence 2: Explicitly mention both that the primary translation uses different wording from the reference and that the complete agent response contains additional explanations or alternative translations. Explain that these factors can reduce word-level alignment and precision. Do not omit either factor.
+
+                Sentence 3: Clarify that a low METEOR score reflects limited lexical alignment and does not necessarily mean the response is semantically incorrect.
+
+                Do not mention syntactic overlap, exact matching words, synonyms, stemming, grammar, fluency, bigrams, numerical precision or recall values, or specific fragmentation details. Do not add any other metric claims.
+                """)
             case "BLEU" | "bleu":
                 score = self.bleu_score_metric(conversation.agent_response, testcase.response.response_text)
                 return float(score), OllamaConnect.get_reason(conversation.agent_response, float(score), metric_name=self.__metric_name, add_info=testcase.response.response_text)
