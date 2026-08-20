@@ -106,21 +106,6 @@ GEMINI_API_KEY=""
 OPENAI_API_KEY=""
 ```
 
-For strategy defaults used by `src/lib/strategy/utils_new.py`, keep `src/lib/strategy/.env` present.
-
-```bash
-cp src/lib/strategy/.env.example src/lib/strategy/.env
-```
-
-Expected values:
-
-```env
-DATA_PATH=data/
-DEFAULT_VALUES_PATH=data/defaults.json
-EXAMPLES_DIR=data/examples/
-IMAGES_DIR=data/images/
-```
-
 
 ### 2. Optional `.env` Overrides (All Compose-Tunable Variables)
 
@@ -166,16 +151,6 @@ Keep Docker-aware values:
 - `interface_manager.docker` should be `true`
 - `interface_manager.base_url` should be `http://interface-manager:8000`
 
-### 4. `src/app/interface_manager/config.json` (Required For Browser Targets)
-
-Use remote Selenium mode:
-
-```json
-{
-  "selenium_mode": "remote",
-  "selenium_remote_url": "http://selenium-browser:4444/wd/hub"
-}
-```
 
 ## Section 1: Run Production UI (Recommended For Most Users)
 
