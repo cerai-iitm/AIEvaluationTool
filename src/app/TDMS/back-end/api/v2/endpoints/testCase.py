@@ -1,11 +1,14 @@
-from typing import List, Optional
+from typing import Any, List, Optional
+import errno
 import json
 import time
+from pathlib import Path
 from config.settings import settings
 from database.fastapi_deps import _get_db
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, File, Header, HTTPException, UploadFile, status
 from fastapi.responses import StreamingResponse
 from jose import JWTError, jwt
+from pydantic import ValidationError
 from schemas import (
     TestCaseCreateV2,
     TestCaseDetailResponse,
@@ -84,7 +87,7 @@ def list_testcases(db: DB = Depends(_get_db)):
                 testcase_name=testcase.testcase_name,
                 user_prompt=testcase.prompt.user_prompt,
                 system_prompt=testcase.prompt.system_prompt,
-                response_text=testcase.response.response_text,
+                response_text=getattr(testcase.response, "response_text", None),
                 strategy_name=getattr(testcase.strategy, "strategy_name", ""),  # Get strategy name as string
                 llm_judge_prompt=getattr(testcase.judge_prompt, "prompt", None),
                 domain_name=str(testcase.prompt.domain.domain_name),  # Convert to string
@@ -320,13 +323,11 @@ def create_testcase(
                 # Add all metrics from the list
                 for metric_name in payload.metric_name_list:
                     metric = session.query(Metrics).filter(Metrics.metric_name == metric_name).first()
-                    if metric:
-                        testcase_in_session.metrics.append(metric)
-                    else:
-                        raise HTTPException(
-                            status_code=status.HTTP_400_BAD_REQUEST,
-                            detail=f"Metric '{metric_name}' not found.",
-                        )
+                    if not metric:
+                        metric = Metrics(metric_name=metric_name, domain_id=domain_id)
+                        session.add(metric)
+                        session.flush()
+                    testcase_in_session.metrics.append(metric)
                 session.commit()
                 session.refresh(testcase_in_session)
 
@@ -579,6 +580,546 @@ def update_testcase(
         "metric_name": metric_name,  # Comma-separated for backward compatibility
         "metric_name_list": metric_name_list,  # List of metric names
     }
+
+
+def _format_validation_location(location: tuple[Any, ...]) -> str:
+    return ".".join(str(part) for part in location)
+
+
+def _extract_testcases_from_json(payload: Any) -> list[Any]:
+    if isinstance(payload, list):
+        return payload
+    if isinstance(payload, dict) and isinstance(payload.get("test_cases"), list):
+        return payload["test_cases"]
+    raise HTTPException(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        detail={
+            "message": "JSON must be an array of test cases or an object with a test_cases array.",
+            "errors": [],
+        },
+    )
+
+
+def _read_uploaded_json_file(file: UploadFile, upload_label: str) -> Any:
+    if not file.filename or not file.filename.lower().endswith(".json"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Please upload a .json file.",
+        )
+
+    try:
+        return json.loads(file.file.read().decode("utf-8"))
+    except UnicodeDecodeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"{upload_label} JSON file must be UTF-8 encoded.",
+        ) from exc
+    except json.JSONDecodeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid JSON: {exc.msg} at line {exc.lineno}, column {exc.colno}.",
+        ) from exc
+
+# if the uploading sample testcases datasets no in data/ directory this router will store it in data/ directory
+# @testcase_router.post(
+#     "/upload-dashboard-testcases-json",
+#     summary="Bulk upload dashboard dataset test cases from JSON (v2)",
+# )
+
+
+@testcase_router.post(
+    "/upload-json",
+    summary="Bulk upload test cases from JSON (v2)",
+)
+async def upload_testcases_json(
+    file: UploadFile = File(...),
+    db: DB = Depends(_get_db),
+    authorization: Optional[str] = Header(None),
+):
+    raw_payload = _read_uploaded_json_file(file, "Test cases")
+    rows = _extract_testcases_from_json(raw_payload)
+    if not rows:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "message": "JSON file does not contain any test cases.",
+                "errors": [],
+            },
+        )
+
+    validated_rows: list[TestCaseCreateV2] = []
+    errors: list[dict[str, Any]] = []
+    seen_names: set[str] = set()
+    required_text_fields = (
+        "testcase_name",
+        "user_prompt",
+        "language_name",
+        "domain_name",
+        "strategy_name",
+    )
+
+    for index, row in enumerate(rows, start=1):
+        if not isinstance(row, dict):
+            errors.append({"row": index, "field": "", "message": "Each test case must be a JSON object."})
+            continue
+
+        try:
+            testcase_payload = TestCaseCreateV2.model_validate(row)
+        except ValidationError as exc:
+            for error in exc.errors():
+                errors.append(
+                    {
+                        "row": index,
+                        "field": _format_validation_location(error["loc"]),
+                        "message": error["msg"],
+                    }
+                )
+            continue
+
+        for field_name in required_text_fields:
+            value = getattr(testcase_payload, field_name)
+            if isinstance(value, str):
+                value = value.strip()
+                setattr(testcase_payload, field_name, value)
+            if not value:
+                errors.append({"row": index, "field": field_name, "message": "Field is required."})
+
+        testcase_payload.metric_name_list = [
+            metric_name.strip()
+            for metric_name in testcase_payload.metric_name_list
+            if metric_name and metric_name.strip()
+        ]
+        if not testcase_payload.metric_name_list:
+            errors.append({"row": index, "field": "metric_name_list", "message": "At least one metric is required."})
+
+        normalized_name = testcase_payload.testcase_name.strip().lower()
+        if normalized_name in seen_names:
+            errors.append(
+                {
+                    "row": index,
+                    "field": "testcase_name",
+                    "message": f"Duplicate testcase_name '{testcase_payload.testcase_name}' in uploaded JSON.",
+                }
+            )
+        seen_names.add(normalized_name)
+        validated_rows.append(testcase_payload)
+
+    if errors:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "message": "JSON upload validation failed.",
+                "errors": errors,
+            },
+        )
+
+    with db.Session() as session:
+        existing_testcase_names = {
+            name
+            for (name,) in session.query(TestCases.testcase_name)
+            .filter(TestCases.testcase_name.in_([row.testcase_name for row in validated_rows]))
+            .all()
+        }
+
+    created: list[dict[str, Any]] = []
+    skipped: list[str] = []
+    for testcase_payload in validated_rows:
+        if testcase_payload.testcase_name in existing_testcase_names:
+            skipped.append(testcase_payload.testcase_name)
+            continue
+
+        created_response = create_testcase(
+            payload=testcase_payload,
+            db=db,
+            authorization=authorization,
+        )
+        created.append(created_response.model_dump())
+
+    return {
+        "message": f"Imported {len(created)} test case(s). Skipped {len(skipped)} duplicate(s).",
+        "created_count": len(created),
+        "skipped_count": len(skipped),
+        "skipped_duplicates": skipped,
+        "created": created,
+    }
+
+
+def _required_dashboard_value(row: dict[str, Any], key: str, row_label: str) -> str:
+    value = row.get(key)
+    if not isinstance(value, str) or not value.strip():
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "message": "Dashboard JSON upload validation failed.",
+                "errors": [
+                    {
+                        "row": row_label,
+                        "field": key,
+                        "message": "Field is required.",
+                    }
+                ],
+            },
+        )
+    return value.strip()
+
+
+def _resolve_dashboard_strategy_name(db: DB, strategy_value: Any, row_label: str) -> str:
+    strategy_ids = strategy_value if isinstance(strategy_value, list) else [strategy_value]
+    for strategy_id in strategy_ids:
+        try:
+            strategy_name = db.get_strategy_name(int(strategy_id))
+        except (TypeError, ValueError):
+            strategy_name = None
+
+        if strategy_name:
+            return strategy_name
+
+    raise HTTPException(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        detail={
+            "message": "Dashboard JSON upload validation failed.",
+            "errors": [
+                {
+                    "row": row_label,
+                    "field": "STRATEGY",
+                    "message": f"Strategy id(s) {strategy_ids} were not found.",
+                }
+            ],
+        },
+    )
+
+
+def _dashboard_dataset_to_testcase_payloads(payload: Any, db: DB) -> list[TestCaseCreateV2]:
+    if not isinstance(payload, dict):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "message": "Dashboard JSON must be an object keyed by metric id.",
+                "errors": [],
+            },
+        )
+
+    testcases: list[TestCaseCreateV2] = []
+    seen_names: set[str] = set()
+
+    for metric_id, metric_group in payload.items():
+        metric_name = None
+        try:
+            metric_name = db.get_metric_name(int(metric_id))
+        except (TypeError, ValueError):
+            pass
+
+        if not metric_name:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail={
+                    "message": "Dashboard JSON upload validation failed.",
+                    "errors": [
+                        {
+                            "row": str(metric_id),
+                            "field": "metric_id",
+                            "message": f"Metric id '{metric_id}' was not found.",
+                        }
+                    ],
+                },
+            )
+
+        if not isinstance(metric_group, dict) or not isinstance(metric_group.get("cases"), list):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail={
+                    "message": "Dashboard JSON upload validation failed.",
+                    "errors": [
+                        {
+                            "row": str(metric_id),
+                            "field": "cases",
+                            "message": "Each metric id must contain a cases array.",
+                        }
+                    ],
+                },
+            )
+
+        for case_index, row in enumerate(metric_group["cases"], start=1):
+            row_label = f"metric {metric_id}, case {case_index}"
+            if not isinstance(row, dict):
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail={
+                        "message": "Dashboard JSON upload validation failed.",
+                        "errors": [
+                            {
+                                "row": row_label,
+                                "field": "",
+                                "message": "Each case must be a JSON object.",
+                            }
+                        ],
+                    },
+                )
+
+            testcase_name = _required_dashboard_value(row, "PROMPT_ID", row_label)
+            normalized_name = testcase_name.lower()
+            if normalized_name in seen_names:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail={
+                        "message": "Dashboard JSON upload validation failed.",
+                        "errors": [
+                            {
+                                "row": row_label,
+                                "field": "PROMPT_ID",
+                                "message": f"Duplicate PROMPT_ID '{testcase_name}' in uploaded JSON.",
+                            }
+                        ],
+                    },
+                )
+            seen_names.add(normalized_name)
+
+            strategy_name = _resolve_dashboard_strategy_name(db, row.get("STRATEGY"), row_label)
+            llm_judge_prompt = row.get("LLM_AS_JUDGE")
+            if isinstance(llm_judge_prompt, str) and llm_judge_prompt.strip().lower() == "no":
+                llm_judge_prompt = None
+
+            testcases.append(
+                TestCaseCreateV2(
+                    testcase_name=testcase_name,
+                    user_prompt=_required_dashboard_value(row, "PROMPT", row_label),
+                    system_prompt=row.get("SYSTEM_PROMPT") if isinstance(row.get("SYSTEM_PROMPT"), str) else None,
+                    language_name=_required_dashboard_value(row, "LANGUAGE", row_label),
+                    domain_name=_required_dashboard_value(row, "DOMAIN", row_label),
+                    response_text=row.get("EXPECTED_OUTPUT") if isinstance(row.get("EXPECTED_OUTPUT"), str) else None,
+                    response_type="GT",
+                    strategy_name=strategy_name,
+                    llm_judge_prompt=llm_judge_prompt if isinstance(llm_judge_prompt, str) else None,
+                    metric_name_list=[metric_name],
+                )
+            )
+
+    return testcases
+
+
+@testcase_router.post(
+    "/upload-dashboard-json",
+    summary="Bulk upload dashboard dataset test cases from JSON (v2)",
+)
+async def upload_dashboard_testcases_json(
+    file: UploadFile = File(...),
+    db: DB = Depends(_get_db),
+    authorization: Optional[str] = Header(None),
+):
+    raw_payload = _read_uploaded_json_file(file, "Dashboard dataset")
+    testcase_payloads = _dashboard_dataset_to_testcase_payloads(raw_payload, db)
+    if not testcase_payloads:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "message": "Dashboard JSON file does not contain any test cases.",
+                "errors": [],
+            },
+        )
+
+    with db.Session() as session:
+        existing_testcase_names = {
+            name
+            for (name,) in session.query(TestCases.testcase_name)
+            .filter(TestCases.testcase_name.in_([row.testcase_name for row in testcase_payloads]))
+            .all()
+        }
+
+    created: list[dict[str, Any]] = []
+    skipped: list[str] = []
+    for testcase_payload in testcase_payloads:
+        if testcase_payload.testcase_name in existing_testcase_names:
+            skipped.append(testcase_payload.testcase_name)
+            continue
+
+        created_response = create_testcase(
+            payload=testcase_payload,
+            db=db,
+            authorization=authorization,
+        )
+        created.append(created_response.model_dump())
+
+    return {
+        "message": f"Imported {len(created)} dashboard test case(s). Skipped {len(skipped)} duplicate(s).",
+        "created_count": len(created),
+        "skipped_count": len(skipped),
+        "skipped_duplicates": skipped,
+        "created": created,
+    }
+
+
+# @testcase_router.post(
+#     "/upload-json",
+#     summary="Bulk upload test cases from JSON (v2)",
+# )
+# async def upload_testcases_json(
+#     file: UploadFile = File(...),
+#     db: DB = Depends(_get_db),
+#     authorization: Optional[str] = Header(None),
+# ):
+#     if not file.filename or not file.filename.lower().endswith(".json"):
+#         raise HTTPException(
+#             status_code=status.HTTP_400_BAD_REQUEST,
+#             detail="Please upload a .json file.",
+#         )
+
+#     try:
+#         raw_payload = json.loads((await file.read()).decode("utf-8"))
+#     except UnicodeDecodeError as exc:
+#         raise HTTPException(
+#             status_code=status.HTTP_400_BAD_REQUEST,
+#             detail="JSON file must be UTF-8 encoded.",
+#         ) from exc
+#     except json.JSONDecodeError as exc:
+#         raise HTTPException(
+#             status_code=status.HTTP_400_BAD_REQUEST,
+#             detail=f"Invalid JSON: {exc.msg} at line {exc.lineno}, column {exc.colno}.",
+#         ) from exc
+
+#     rows = _extract_testcases_from_json(raw_payload)
+#     if not rows:
+#         raise HTTPException(
+#             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+#             detail={
+#                 "message": "JSON file does not contain any test cases.",
+#                 "errors": [],
+#             },
+#         )
+
+#     validated_rows: list[TestCaseCreateV2] = []
+#     errors: list[dict[str, Any]] = []
+#     seen_names: set[str] = set()
+#     required_text_fields = (
+#         "testcase_name",
+#         "user_prompt",
+#         "language_name",
+#         "domain_name",
+#         "strategy_name",
+#     )
+
+#     for index, row in enumerate(rows, start=1):
+#         if not isinstance(row, dict):
+#             errors.append(
+#                 {
+#                     "row": index,
+#                     "field": "",
+#                     "message": "Each test case must be a JSON object.",
+#                 }
+#             )
+#             continue
+
+#         try:
+#             testcase_payload = TestCaseCreateV2.model_validate(row)
+#         except ValidationError as exc:
+#             for error in exc.errors():
+#                 errors.append(
+#                     {
+#                         "row": index,
+#                         "field": _format_validation_location(error["loc"]),
+#                         "message": error["msg"],
+#                     }
+#                 )
+#             continue
+
+#         for field_name in required_text_fields:
+#             value = getattr(testcase_payload, field_name)
+#             if isinstance(value, str):
+#                 setattr(testcase_payload, field_name, value.strip())
+#             if not value or not value.strip():
+#                 errors.append(
+#                     {
+#                         "row": index,
+#                         "field": field_name,
+#                         "message": "Field is required.",
+#                     }
+#                 )
+
+#         testcase_payload.metric_name_list = [
+#             metric_name.strip() for metric_name in testcase_payload.metric_name_list
+#         ]
+#         if not testcase_payload.metric_name_list:
+#             errors.append(
+#                 {
+#                     "row": index,
+#                     "field": "metric_name_list",
+#                     "message": "At least one metric is required.",
+#                 }
+#             )
+#         else:
+#             seen_metrics: set[str] = set()
+#             for metric_name in testcase_payload.metric_name_list:
+#                 normalized_metric = metric_name.strip().lower()
+#                 if not normalized_metric:
+#                     errors.append(
+#                         {
+#                             "row": index,
+#                             "field": "metric_name_list",
+#                             "message": "Metric names cannot be blank.",
+#                         }
+#                     )
+#                     continue
+#                 if normalized_metric in seen_metrics:
+#                     errors.append(
+#                         {
+#                             "row": index,
+#                             "field": "metric_name_list",
+#                             "message": f"Duplicate metric '{metric_name}' in the same test case.",
+#                         }
+#                     )
+#                 seen_metrics.add(normalized_metric)
+
+#         normalized_name = testcase_payload.testcase_name.strip().lower()
+#         if normalized_name in seen_names:
+#             errors.append(
+#                 {
+#                     "row": index,
+#                     "field": "testcase_name",
+#                     "message": f"Duplicate testcase_name '{testcase_payload.testcase_name}' in uploaded JSON.",
+#                 }
+#             )
+#         seen_names.add(normalized_name)
+#         validated_rows.append(testcase_payload)
+
+#     metric_names = sorted({metric for row in validated_rows for metric in row.metric_name_list})
+#     with db.Session() as session:
+#         existing_testcase_names = {
+#             name
+#             for (name,) in session.query(TestCases.testcase_name)
+#             .filter(TestCases.testcase_name.in_([row.testcase_name for row in validated_rows]))
+#             .all()
+#         }
+
+#     if errors:
+#         raise HTTPException(
+#             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+#             detail={
+#                 "message": "JSON upload validation failed.",
+#                 "errors": errors,
+#             },
+#         )
+
+#     created: list[dict[str, Any]] = []
+#     skipped: list[str] = []
+
+#     for testcase_payload in validated_rows:
+#         if testcase_payload.testcase_name in existing_testcase_names:
+#             skipped.append(testcase_payload.testcase_name)
+#             continue
+
+#         created_response = create_testcase(
+#             payload=testcase_payload,
+#             db=db,
+#             authorization=authorization,
+#         )
+#         created.append(created_response.model_dump())
+
+#     return {
+#         "message": f"Imported {len(created)} test case(s). Skipped {len(skipped)} duplicate(s).",
+#         "created_count": len(created),
+#         "skipped_count": len(skipped),
+#         "skipped_duplicates": skipped,
+#         "created": created,
+#     }
 
 
 

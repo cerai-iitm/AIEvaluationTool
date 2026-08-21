@@ -28,6 +28,12 @@ Use this page to configure and execute new runs or continue existing runs.
   - `Execute`
   - `Store`
 
+### Stop Action
+
+- While a run is in progress, a `Stop Run` button is shown in place of `Start Run`
+- Click `Stop Run` to cancel the in-progress run
+- Calls `POST /test-runs/{run_id}/stop` on the dashboard backend
+
 ## B. Continue Existing Run
 
 - Route: `/continue-run/:runName`
@@ -51,6 +57,7 @@ Use this page to configure and execute new runs or continue existing runs.
 
 - Click `Start Run` inside continue configuration
 - Same execution loop and progress behavior applies
+- Same `Stop Run` control is available while the continued run is in progress
 
 ## Recommended Operator Sequence
 

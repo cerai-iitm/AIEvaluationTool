@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Sidebar from "@/components/Sidebar";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -26,7 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import TestPlanUpdateDialog from "@/components/TestPlanUpdateDialog";
 import TestPlanAddDialog from "@/components/TestPlanAddDialog";
@@ -34,6 +33,7 @@ import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
 import { hasPermission } from "@/utils/permissions";
 import { HistoryButton } from "@/components/HistoryButton";
+import { PageHeaderWithBack } from "@/components/PageHeaderWithBack";
 
 interface TestPlan {
   plan_id: number;
@@ -272,7 +272,7 @@ const TestPlans = () => {
 
   const totalItems = filteredTestPlans.length;
   const itemsPerPage = 15;
-  const TotalPages = Math.ceil(totalItems / itemsPerPage);
+  const TotalPages = Math.ceil(totalItems / itemsPerPage) || 1;
   const paginatedTestPlans = useMemo(
     () =>
       filteredTestPlans.slice(
@@ -289,12 +289,9 @@ const TestPlans = () => {
 
   return (
     <div className="flex min-h-screen">
-      <aside className="fixed top-0 left-0 h-screen w-224px bg-[#5252c2] z-20">
-        <Sidebar />
-      </aside>
-      <main className="flex-1 bg-background ml-[224px] ">
+      <main className="flex-1 bg-background ">
         <div className="p-8 flex flex-col h-screen">
-          <h1 className="text-4xl font-bold mb-8 text-center">Test Plans</h1>
+          <PageHeaderWithBack title="Test Plans" />
           <div className="flex gap-4 mb-6">
             <Select defaultValue="plan">
               {/* <SelectTrigger className="w-48">
@@ -333,8 +330,18 @@ const TestPlans = () => {
                 <Button
                   variant="ghost"
                   size="icon"
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                  aria-label="Go to first page"
+                >
+                  <ChevronsLeft className="w-5 h-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
+                  aria-label="Go to previous page"
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </Button>
@@ -345,22 +352,35 @@ const TestPlans = () => {
                     setCurrentPage((p) => Math.min(TotalPages, p + 1))
                   }
                   disabled={currentPage === TotalPages}
+                  aria-label="Go to next page"
                 >
                   <ChevronRight className="w-5 h-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setCurrentPage(TotalPages)}
+                  disabled={currentPage === TotalPages}
+                  aria-label="Go to last page"
+                >
+                  <ChevronsRight className="w-5 h-5" />
                 </Button>
               </div>
             </div>
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto">
-            <div className="bg-white rounded-lg shadow overflow-hidden  md:max-w-[500px] mx-left max-h-[67vh] overflow-y-auto">
-              <table className="w-full">
+            <div className="bg-white rounded-lg shadow overflow-hidden w-full max-h-[67vh] overflow-y-auto">
+              <table className="w-full table-fixed">
                 <thead className="border-b-2">
                   <tr>
-                    <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-center">
+                    <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-center w-[120px]">
                       Plan ID
                     </th>
-                    <th className="sticky top-0 bg-white z-10 p-4 pl-12 font-semibold text-left">
+                    <th className="sticky top-0 bg-white z-10 p-4 pl-12 font-semibold text-left w-[300px]">
                       Plan Name
+                    </th>
+                    <th className="sticky top-0 bg-white z-10 p-4 pl-12 font-semibold text-left">
+                      Description
                     </th>
                   </tr>
                 </thead>
@@ -387,7 +407,7 @@ const TestPlans = () => {
                       </td>
                     </tr>
                   ) : (
-                    paginatedTestPlans.map((testPlan) => (
+                    paginatedTestPlans.map((testPlan, index) => (
                       <tr
                         key={testPlan.plan_id}
                         className={`border-b cursor-pointer transition-colors duration-200 ${highlightedRowId === testPlan.plan_id ? "bg-primary/10 hover:bg-primary/15 border-primary//30" : "hover:bg-muted/50"}`}
@@ -396,8 +416,9 @@ const TestPlans = () => {
                           setHighlightedRowId(testPlan.plan_id);
                         }}
                       >
-                        <td className="p-2 pl-1 text-center">{testPlan.plan_id}</td>
-                        <td className="p-2 pl-12 text-left capitalize">{testPlan.plan_name}</td>
+                        <td className="p-2 pl-1 text-center">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                        <td className="p-2 pl-12 text-left capitalize truncate">{testPlan.plan_name}</td>
+                        <td className="p-2 text-left truncate">{testPlan.plan_description}</td>
                       </tr>
                     ))
                   )}
@@ -586,4 +607,3 @@ const TestPlans = () => {
 };
 
 export default TestPlans;
-

@@ -25,6 +25,32 @@
   color: #1e293b;
 }
 
+.headerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.stopButton {
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  background: #dc2626;
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.stopButton:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+.stopButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .header p {
   margin: 0;
   color: #334155;
@@ -33,6 +59,11 @@
 
 .success {
   color: #14532d !important;
+  font-weight: 600;
+}
+
+.stopped {
+  color: #9a3412 !important;
   font-weight: 600;
 }
 
@@ -287,6 +318,11 @@
 
   .header h2 {
     font-size: 1.35rem;
+  }
+
+  .headerRow {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .cardGrid {

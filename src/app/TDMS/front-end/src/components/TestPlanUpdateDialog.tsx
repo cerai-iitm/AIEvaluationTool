@@ -141,6 +141,15 @@ export default function TestPlanUpdateDialog({
       return;
     }
 
+    if (selectedMetrics.length === 0) {
+      toast({
+        title: "Validation Error",
+        description: "At least one metric is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!notes || !notes.trim()) {
       toast({
         title: "Validation Error",
@@ -267,7 +276,7 @@ export default function TestPlanUpdateDialog({
             />
           </div>
           <div className="space-y-1 pb-4">
-            <Label className="text-base font-semibold">Metrics</Label>
+            <Label className="text-base font-semibold">Metrics<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
             <div className="bg-muted p-4 rounded-md max-h-[200px] overflow-y-auto">
               {isFetchingMetrics ? (
                 <div className="text-sm text-muted-foreground">
@@ -301,7 +310,7 @@ export default function TestPlanUpdateDialog({
         </div>
 
         <div className="flex justify-center items-center p-4 border-gray-300 bg-white sticky bottom-0 z-10">
-          <Label className="text-base font-semibold mr-2">Notes :</Label>
+          <Label className="text-base font-semibold mr-2">Notes :<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
           <Input
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
@@ -330,4 +339,3 @@ export default function TestPlanUpdateDialog({
 }
 
 export { TestPlanUpdateDialog };
-

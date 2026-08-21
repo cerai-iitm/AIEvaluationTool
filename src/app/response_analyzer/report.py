@@ -311,19 +311,22 @@ def main():
     # PDF generation
     # ------------------------------------------------------------
 
-    filename = EvaluationReport.create_report(
+    report_generator = EvaluationReport()
+    headers, rows = report_generator.scorecard_to_table(score_card)
+    output_file = os.path.join(
+        reports_folder,
+        f"AI_Evaluation_Report_{target_name}_{run_name}.pdf"
+    )
+    filename = report_generator.create_report(
         target_name=target_name,
         run_name=run_name,
         timestamp=timestamp,
         total_testcases=total_testcases,
-        target_summary=run_summary,
-        plan_summary=plan_summary,
+        run_summary=run_summary,
+        headers=headers,
+        rows=rows,
         score_card=score_card,
-        out_path=os.path.join(
-            reports_folder,
-            f"AI_Evaluation_Report_{target_name}_{run_name}.pdf"
-        ),
-        column_widths=[100, 80, 40, None, None] if multi_plan else [100, 80, 40, None]
+        output_file=output_file,
     )
 
     logger.info(

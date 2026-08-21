@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Sidebar from "@/components/Sidebar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, Loader2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
@@ -27,6 +26,7 @@ import { useToast } from "@/hooks/use-toast";
 import { API_ENDPOINTS } from "@/config/api";
 import { hasPermission } from "@/utils/permissions";
 import { HistoryButton } from "@/components/HistoryButton";
+import { PageHeaderWithBack } from "@/components/PageHeaderWithBack";
 
 const LlmPrompts = () => {
   const { toast } = useToast();
@@ -45,7 +45,7 @@ const LlmPrompts = () => {
   );
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentUserRole, setCurrentUserRole] = useState<string>("");
-
+  const [searchField, setSearchField] = useState<"llmprompts" | "language">("llmprompts");
   const [highlightedRowId, setHighlightedRowId] = useState<number | null>(null);
 
   const fetchLlmPrompts = useCallback(async () => {
@@ -108,12 +108,13 @@ const LlmPrompts = () => {
     () =>
       llmPrompts.filter((p) => {
         const query = searchQuery.toLowerCase();
-        return (
-          p.prompt.toLowerCase().includes(query) ||
-          (p.language?.toLowerCase() ?? "").includes(query)
-        );
+        if (!query) return true;
+        if (searchField === "language") {
+          return (p.language?.toLowerCase() ?? "").includes(query);
+        }
+        return p.prompt.toLowerCase().includes(query);
       }),
-    [llmPrompts, searchQuery],
+    [llmPrompts, searchQuery, searchField], // add searchField here
   );
 
   const totalItems = filteredPrompts.length;
@@ -185,16 +186,16 @@ const LlmPrompts = () => {
 
   return (
     <div className="flex min-h-screen">
-      <aside className="fixed top-0 left-0 h-screen w-[220px] bg-[#5252c2] z-20">
-        <Sidebar />
-      </aside>
 
-      <main className="flex-1 bg-background ml-[224px]">
+      <main className="flex-1 bg-background">
         <div className="p-8 flex flex-col h-screen">
-          <h1 className="text-4xl font-bold mb-8 text-center">LLM Prompts</h1>
+          <PageHeaderWithBack title="LLM Prompts" />
 
           <div className="flex gap-4 mb-6">
-            <Select defaultValue="llmprompts">
+            <Select 
+            defaultValue="llmprompts"
+            onValueChange={(value: "llmprompts" | "language") => setSearchField(value)}
+            >
               <SelectTrigger className="w-48">
                 <SelectValue />
               </SelectTrigger>
@@ -229,8 +230,18 @@ const LlmPrompts = () => {
                 <Button
                   variant="ghost"
                   size="icon"
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                  aria-label="Go to first page"
+                >
+                  <ChevronsLeft className="w-5 h-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
+                  aria-label="Go to previous page"
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </Button>
@@ -241,8 +252,18 @@ const LlmPrompts = () => {
                     setCurrentPage((p) => Math.min(totalPages, p + 1))
                   }
                   disabled={currentPage === totalPages}
+                  aria-label="Go to next page"
                 >
                   <ChevronRight className="w-5 h-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setCurrentPage(totalPages)}
+                  disabled={currentPage === totalPages}
+                  aria-label="Go to last page"
+                >
+                  <ChevronsRight className="w-5 h-5" />
                 </Button>
               </div>
             </div>
@@ -311,7 +332,7 @@ const LlmPrompts = () => {
                 className="bg-primary hover:bg-primary/90"
                 onClick={() => setAddDialogOpen(true)}
               >
-                + Add Prompts
+                + Add LLM Prompt
               </Button>
             </div>
           )}

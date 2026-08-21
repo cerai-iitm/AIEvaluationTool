@@ -59,6 +59,7 @@ Common endpoints on dashboard backend:
 - `POST /start-run`
 - `POST /continue-run`
 - `POST /continue-run-with-plan`
+- `POST /test-runs/{run_id}/stop`
 - `GET /test-runs/{run_name}`
 - `GET /test-runs/{run_name}/timeline`
 - `GET /test-runs/{run_name}/summary`
@@ -68,6 +69,7 @@ Common endpoints on dashboard backend:
 - `GET /analyse/{runName}`
 - `GET /analyse/{runName}/details`
 - `GET /analyse/{runName}/status`
+- `POST /analyse/{runName}/stop`
 - `GET /conversations/full/{conversation_id}`
 - `GET /testcases/{testcase_name}`
 - `GET /targets/{target_name}/metadata`

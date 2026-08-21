@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import Sidebar from "@/components/Sidebar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,13 +14,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, X } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { API_ENDPOINTS } from "@/config/api";
 import { hasPermission } from "@/utils/permissions";
 import { HistoryButton } from "@/components/HistoryButton";
+import { PageHeaderWithBack } from "@/components/PageHeaderWithBack";
+import { NameCharacterCounter } from "@/components/NameCharacterCounter";
+import { isNameOverCharacterLimit } from "@/utils/nameValidation";
 
 // Types
 interface Metric {
@@ -31,6 +33,10 @@ interface Metric {
   metric_source: string | null;
   domain_name: string;
   metric_benchmark: string | null;
+}
+
+interface DomainOption {
+  domain_name?: string;
 }
 
 const Metrics: React.FC = () => {
@@ -98,7 +104,9 @@ const Metrics: React.FC = () => {
       if (response.ok) {
         const domainsData = await response.json();
         const domainNames = Array.isArray(domainsData)
-          ? domainsData.map((d: any) => d.domain_name).filter(Boolean)
+          ? domainsData
+              .map((d: DomainOption) => d.domain_name)
+              .filter((domainName): domainName is string => Boolean(domainName))
           : [];
         setDomainOptions(domainNames);
         if (domainNames.length > 0 && !newDomainName) {
@@ -187,10 +195,26 @@ const Metrics: React.FC = () => {
 
   // ADD handler
   const handleAdd = async () => {
-    if (!newMetricName.trim() || !addMessage.trim() || !newDomainName.trim()) {
+    if (
+      !newMetricName.trim() ||
+      !newMetricDescription.trim() ||
+      !newMetricSource.trim() ||
+      !newDomainName.trim() ||
+      !newMetricBenchmark.trim() ||
+      !addMessage.trim()
+    ) {
       toast({
         title: "Validation Error",
-        description: "Metric name, domain, and notes are required",
+        description: "Metric name, description, source, domain, benchmark, and notes are required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isNameOverCharacterLimit(newMetricName)) {
+      toast({
+        title: "Validation Error",
+        description: "Metric name must be 40 characters or fewer",
         variant: "destructive",
       });
       return;
@@ -211,11 +235,11 @@ const Metrics: React.FC = () => {
         headers,
         body: JSON.stringify({
           metric_name: newMetricName.trim(),
-          metric_description: newMetricDescription.trim() || null,
-          metric_source: newMetricSource.trim() || null,
+          metric_description: newMetricDescription.trim(),
+          metric_source: newMetricSource.trim(),
           domain_name: newDomainName.trim(),
-          metric_benchmark: newMetricBenchmark.trim() || null,
-          notes: addMessage.trim() || null,
+          metric_benchmark: newMetricBenchmark.trim(),
+          notes: addMessage.trim(),
         }),
       });
 
@@ -240,11 +264,14 @@ const Metrics: React.FC = () => {
       setAddOpen(false);
       fetchMetrics(); // Refresh the list
       setHighlightedRowId(data.metric_id);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error creating metric:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to create metric. Please try again.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to create metric. Please try again.",
         variant: "destructive",
       });
     }
@@ -252,10 +279,27 @@ const Metrics: React.FC = () => {
 
   // UPDATE handler
   const handleUpdate = async () => {
-    if (!selectedMetric || !updateName.trim() || !updateMessage.trim() || !updateDomainName.trim()) {
+    if (
+      !selectedMetric ||
+      !updateName.trim() ||
+      !updateDescription.trim() ||
+      !updateSource.trim() ||
+      !updateDomainName.trim() ||
+      !updateBenchmark.trim() ||
+      !updateMessage.trim()
+    ) {
       toast({
         title: "Validation Error",
-        description: "Metric name, domain, and notes are required",
+        description: "Metric name, description, source, domain, benchmark, and notes are required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isNameOverCharacterLimit(updateName)) {
+      toast({
+        title: "Validation Error",
+        description: "Metric name must be 40 characters or fewer",
         variant: "destructive",
       });
       return;
@@ -276,10 +320,10 @@ const Metrics: React.FC = () => {
         headers,
         body: JSON.stringify({
           metric_name: updateName.trim(),
-          metric_description: updateDescription.trim() || null,
-          metric_source: updateSource.trim() || null,
+          metric_description: updateDescription.trim(),
+          metric_source: updateSource.trim(),
           domain_name: updateDomainName.trim(),
-          metric_benchmark: updateBenchmark.trim() || null,
+          metric_benchmark: updateBenchmark.trim(),
           user_note: updateMessage.trim()
         }),
       });
@@ -298,11 +342,14 @@ const Metrics: React.FC = () => {
       setShowUpdateModal(false);
       setSelectedMetric(null);
       fetchMetrics(); // Refresh the list
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error updating metric:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to update metric. Please try again.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to update metric. Please try again.",
         variant: "destructive",
       });
     }
@@ -355,11 +402,14 @@ const Metrics: React.FC = () => {
       fetchMetrics(); // Refresh the list
       setHighlightedRowId(null);
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error deleting metric:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to delete metric. Please try again.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to delete metric. Please try again.",
         variant: "destructive",
       });
     }
@@ -371,13 +421,10 @@ const Metrics: React.FC = () => {
 
   return (
     <div className="flex min-h-screen">
-      <aside className="fixed top-0 left-0 h-screen w-[220px] bg-[#5252c2] z-20">
-        <Sidebar />
-      </aside>
 
-      <main className="flex-1 bg-background ml-[220px] md:ml-[224px]">
+      <main className="flex-1 bg-background">
         <div className="p-4 md:p-8 flex flex-col h-screen">
-          <h1 className="text-2xl md:text-4xl font-bold mb-4 md:mb-8 text-center">Metrics</h1>
+          <PageHeaderWithBack title="Metrics" />
 
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <Select defaultValue="Metric">
@@ -412,8 +459,18 @@ const Metrics: React.FC = () => {
                 <Button
                   variant="ghost"
                   size="icon"
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                  aria-label="Go to first page"
+                >
+                  <ChevronsLeft className="w-4 h-4 md:w-5 md:h-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
+                  aria-label="Go to previous page"
                 >
                   <ChevronLeft className="w-4 h-4 md:w-5 md:h-5"></ChevronLeft>
                 </Button>
@@ -422,15 +479,25 @@ const Metrics: React.FC = () => {
                   size='icon'
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
+                  aria-label="Go to next page"
                 >
                   <ChevronRight className="w-4 h-4 md:w-5 md:h-5"></ChevronRight>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setCurrentPage(totalPages)}
+                  disabled={currentPage === totalPages}
+                  aria-label="Go to last page"
+                >
+                  <ChevronsRight className="w-4 h-4 md:w-5 md:h-5" />
                 </Button>
               </div>
             </div>
           </div>
           
           <div className="flex-1 min-h-0 overflow-y-auto">
-            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[73vh] max-w-[800px] mx-left overflow-y-auto">
+            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[73vh] w-full mx-left overflow-y-auto">
               {isLoading ? (
                 <div className="flex items-center justify-center p-8">
                   <span>Loading...</span>
@@ -439,8 +506,9 @@ const Metrics: React.FC = () => {
                 <table className="w-full table-fixed">
                   <thead className="border-b-2">
                     <tr>
-                      <th className="sticky top-0 z-10 p-4 font-semibold text-left pl-10 w-[15%] ">Metric Id</th>
-                      <th className="sticky top-0 z-10 p-2 font-semibold text-left pl-4 w-[30%]">Metric Name</th>
+                      <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left pl-10 w-[20%] ">Metric Id</th>
+                      <th className="sticky top-0 bg-white z-10 p-2 font-semibold text-left pl-4 w-[40%]">Metric</th>
+                      <th className="sticky top-0 bg-white z-10 p-2 font-semibold text-left pl-4 w-[80%]">Description</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -465,6 +533,7 @@ const Metrics: React.FC = () => {
                         >
                           <td className="p-2 pl-16">{row.metric_id}</td>
                           <td className="p-2 truncate">{row.metric_name}</td>
+                          <td className="p-2 truncate ">{row.metric_description}</td>
                         </tr>
                       ))
                     )}
@@ -518,17 +587,51 @@ const Metrics: React.FC = () => {
                 <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Metric</label>
                 <Input className="bg-muted text-sm md:text-base" value={selectedMetric.metric_name} readOnly />
               </div>
+
+              {/* if Description is null means description is not visible */}
+              {selectedMetric.metric_description && (
+              <div className="flex flex-col gap-1">
+                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Description</label>
+                <Textarea className="bg-muted text-sm md:text-base" 
+                  value={selectedMetric.metric_description || ""} 
+                  readOnly 
+                style={{
+                    maxHeight: "120px",
+                    minHeight: "80px",
+                    overflowY: "auto"
+                  }}
+                ></Textarea>
+              </div>
+              )}
+              {selectedMetric.metric_source && (
+              <div className="flex flex-col gap-1">
+                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Source</label>
+                <Input className="bg-muted text-sm md:text-base" 
+                  value={selectedMetric.metric_source || ""} 
+                  readOnly 
+                />
+              </div>
+              )}
               <div className="flex flex-col gap-1">
                 <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Domain</label>
                 <Input className="bg-muted text-sm md:text-base capitalize" value={selectedMetric.domain_name} readOnly />
               </div>
+              {selectedMetric.metric_benchmark && (
+              <div className="flex flex-col gap-1">
+                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Benchmark</label>
+                <Input className="bg-muted text-sm md:text-base" 
+                  value={selectedMetric.metric_benchmark || ""} 
+                  readOnly 
+                />
+              </div>
+              )}
             </div>
             <div className="flex gap-4 md:gap-8 justify-center">
               {hasPermission(currentUserRole, "canDeleteTables") && (
                 <button
                   className="px-6 md:px-8 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-sm md:text-base transition-colors"
                   onClick={() =>{
-                    handleDeleteClick;
+                    handleDeleteClick();
                     setShowEditDialog(false);
                     setShowDeleteConfirm(true);
                   }}
@@ -583,7 +686,7 @@ const Metrics: React.FC = () => {
               </p>
               <div className="mb-6">
                 <p className="text-sm md:text-base text-center capitalize font-semibold">
-                  <span className="font-medium">Metric Name :</span> {selectedMetric.metric_name}
+                  <span className="font-medium">Metric :</span> {selectedMetric.metric_name}
                 </p>
               </div>
               <div className="flex gap-4 justify-center">
@@ -617,36 +720,43 @@ const Metrics: React.FC = () => {
             </button>
             
             <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 mt-4 md:mt-5 gap-2 md:gap-0">
-              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Metric</label>
+              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Metric<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
               <Input
                 value={updateName}
                 onChange={e => setUpdateName(e.target.value)}
-                className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-lg flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
+                aria-invalid={isNameOverCharacterLimit(updateName)}
+                className={`bg-gray-100 rounded border px-3 md:px-4 py-2 text-sm md:text-lg flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200 ${
+                  isNameOverCharacterLimit(updateName) ? "border-red-500" : "border-gray-300"
+                }`}
+                required
               />
+              <NameCharacterCounter value={updateName} />
             </div>
             
             <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 gap-2 md:gap-0">
-              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Description</label>
+              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Description<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
               <Textarea
                 value={updateDescription}
                 onChange={e => setUpdateDescription(e.target.value)}
                 className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-lg flex-1 w-full md:w-auto min-h-[80px] resize-none focus:outline-none focus:ring focus:ring-blue-200"
                 placeholder="Enter metric description..."
+                required
               />
             </div>
 
             <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 gap-2 md:gap-0">
-              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Source</label>
+              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Source<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
               <Input
                 value={updateSource}
                 onChange={e => setUpdateSource(e.target.value)}
                 className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-lg flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
                 placeholder="Enter metric source..."
+                required
               />
             </div>
 
             <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 gap-2 md:gap-0">
-              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Domain</label>
+              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Domain<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
               <Select
                 value={updateDomainName}
                 onValueChange={setUpdateDomainName}
@@ -666,25 +776,35 @@ const Metrics: React.FC = () => {
             </div>
 
             <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 gap-2 md:gap-0">
-              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Bench Mark</label>
+              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Bench Mark<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
               <Input
                 value={updateBenchmark}
                 onChange={e => setUpdateBenchmark(e.target.value)}
                 className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-lg flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
                 placeholder="Enter metric benchmark..."
+                required
               />
             </div>
             
             <div className="flex flex-col md:flex-row items-center gap-2 md:gap-0">
-              <label className="text-base md:text-lg min-w-[60px]">Notes </label>
+              <label className="text-base md:text-lg min-w-[60px]">Notes</label>
               <Input
                 value={updateMessage}
                 onChange={e => setUpdateMessage(e.target.value)}
                 className="bg-gray-100 rounded px-4 py-1 mr-4 w-96"
+                required
               />
               <button
                 className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={!updateName.trim() || !updateMessage.trim() || !updateDomainName.trim()}
+                disabled={
+                  !updateName.trim() ||
+                  !updateDescription.trim() ||
+                  !updateSource.trim() ||
+                  !updateDomainName.trim() ||
+                  !updateBenchmark.trim() ||
+                  !updateMessage.trim() ||
+                  isNameOverCharacterLimit(updateName)
+                }
                 onClick={handleUpdate}
               >
                 Submit
@@ -723,37 +843,43 @@ const Metrics: React.FC = () => {
             
             <div className="flex flex-col items-center justify-center flex-1">
               <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 w-full gap-2 md:gap-0">
-                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Metric</label>
+                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Metric<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
                 <Input
                   value={newMetricName}
                   onChange={e => setNewMetricName(e.target.value)}
-                  className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
-                  maxLength={150}
+                  aria-invalid={isNameOverCharacterLimit(newMetricName)}
+                  className={`bg-gray-100 rounded border px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200 ${
+                    isNameOverCharacterLimit(newMetricName) ? "border-red-500" : "border-gray-300"
+                  }`}
+                  required
                 />
+                <NameCharacterCounter value={newMetricName} />
               </div>
               
               <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 w-full gap-2 md:gap-0">
-                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Description</label>
+                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Description<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
                 <Textarea
                   value={newMetricDescription}
                   onChange={e => setNewMetricDescription(e.target.value)}
                   className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 w-full md:w-auto min-h-[80px] resize-none focus:outline-none focus:ring focus:ring-blue-200"
                   placeholder="Enter metric description..."
+                  required
                 />
               </div>
 
               <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 w-full gap-2 md:gap-0">
-                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Source</label>
+                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Source<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
                 <Input
                   value={newMetricSource}
                   onChange={e => setNewMetricSource(e.target.value)}
                   className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
                   placeholder="Enter metric source..."
+                  required
                 />
               </div>
 
               <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 w-full gap-2 md:gap-0">
-                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Domain</label>
+                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Domain<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
                 <Select
                   value={newDomainName}
                   onValueChange={setNewDomainName}
@@ -773,28 +899,38 @@ const Metrics: React.FC = () => {
               </div>
 
               <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 w-full gap-2 md:gap-0">
-                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Bench Mark</label>
+                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Bench Mark<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
                 <Input
                   value={newMetricBenchmark}
                   onChange={e => setNewMetricBenchmark(e.target.value)}
                   className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
                   placeholder="Enter metric benchmark..."
+                  required
                 />
               </div>
             </div>
             
             <div className="flex flex-col md:flex-row items-center gap-2 md:gap-0">
-              <label className="text-base md:text-lg min-w-[60px]">Notes</label>
+              <label className="text-base md:text-lg min-w-[60px]">Notes<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
               <Input
                 value={addMessage}
                 onChange={e => setAddMessage(e.target.value)}
                 className="bg-gray-200 rounded px-4 py-1 mr-4 w-96"
+                required
               />
               <button
                 type="button"
                 className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleAdd}
-                disabled={!newMetricName.trim() || !newDomainName.trim() || !addMessage.trim()}
+                disabled={
+                  !newMetricName.trim() ||
+                  !newMetricDescription.trim() ||
+                  !newMetricSource.trim() ||
+                  !newDomainName.trim() ||
+                  !newMetricBenchmark.trim() ||
+                  !addMessage.trim() ||
+                  isNameOverCharacterLimit(newMetricName)
+                }
               >
                 Submit
               </button>
@@ -807,4 +943,3 @@ const Metrics: React.FC = () => {
 };
 
 export default Metrics;
-

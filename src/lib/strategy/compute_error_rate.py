@@ -4,18 +4,20 @@ from lib.data import TestCase, Conversation
 from .utils_new import FileLoader
 from .strategy_base import Strategy
 from .logger import get_logger
+from pathlib import Path
 
 warnings.filterwarnings("ignore")
 
 FileLoader._load_env_vars(__file__)
 logger = get_logger("compute_error_rate")
+project_root = Path(__file__).parents[3]
 dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), simple=True, strat_name="compute_error_rate")
 
 # This module calculate error rate using the interaction log
 class ComputeErrorRate(Strategy):
     def __init__(self, name: str = "compute_error_rate", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
-        self.file_path = dflt_vals.file_path
+        self.file_path = project_root / Path(dflt_vals.file_path)
 
     def compute_error_rate_from_log(self, file_path: str) -> int:
         error_count = 0

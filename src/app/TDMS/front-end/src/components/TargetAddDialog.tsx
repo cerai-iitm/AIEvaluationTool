@@ -5,6 +5,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -17,14 +27,86 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
+import { NameCharacterCounter } from "@/components/NameCharacterCounter";
+import {
+  isNameOverCharacterLimit,
+  isNameUsingAllowedCharacters,
+  NAME_ALLOWED_CHARACTERS_MESSAGE,
+} from "@/utils/nameValidation";
+import XPathConfigurationEditor from "@/components/XPathConfigurationEditor";
+import TargetCredentialsEditor, {
+  type TargetCredentials,
+} from "@/components/TargetCredentialsEditor";
 
 interface TargetAddDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
 }
+
+interface DomainOption {
+  domain_name?: string;
+}
+
+interface LanguageOption {
+  lang_name?: string;
+}
+
+type XPathPages = Record<string, Record<string, string>>;
+
+const WHATSAPP_XPATH_TEMPLATE_KEY = "whatsapp_web";
+const WEB_APP_XPATH_TEMPLATE_KEY = "cpgrams";
+const emptyCredentials: TargetCredentials = {
+  username: "",
+  password: "",
+};
+
+const normalizeTargetType = (value: string) => value.trim().toLowerCase();
+
+const areCredentialsComplete = (credentials: TargetCredentials) =>
+  Boolean(credentials.username.trim() && credentials.password.trim());
+
+const hasAnyCredentials = (credentials: TargetCredentials) =>
+  Boolean(credentials.username.trim() || credentials.password.trim());
+
+const getXPathTemplateKeyForTargetType = (targetType: string) => {
+  const normalizedType = normalizeTargetType(targetType);
+  if (normalizedType === "whatsapp") return WHATSAPP_XPATH_TEMPLATE_KEY;
+  if (normalizedType === "webapp") return WEB_APP_XPATH_TEMPLATE_KEY;
+  return "";
+};
+
+const toXPathPages = (value: unknown): XPathPages =>
+  value && typeof value === "object" && !Array.isArray(value)
+    ? (value as XPathPages)
+    : {};
+
+const toBlankXPathPages = (pages: XPathPages): XPathPages =>
+  Object.fromEntries(
+    Object.entries(pages).map(([pageName, elements]) => [
+      pageName,
+      Object.fromEntries(
+        Object.keys(elements || {}).map((elementName) => [elementName, ""]),
+      ),
+    ]),
+  );
+
+const getXPathFieldCount = (pages: XPathPages) =>
+  Object.values(pages).reduce(
+    (count, elements) => count + Object.keys(elements || {}).length,
+    0,
+  );
+
+const getMissingXPathCount = (pages: XPathPages) =>
+  Object.values(pages).reduce(
+    (count, elements) =>
+      count +
+      Object.values(elements || {}).filter((xpath) => !xpath.trim()).length,
+    0,
+  );
 
 export default function TargetAddDialog({
   open,
@@ -44,6 +126,12 @@ export default function TargetAddDialog({
   const [domainOptions, setDomainOptions] = useState<string[]>([]);
   const [languageOptions, setLanguageOptions] = useState<string[]>([]);
   const [isFetchingOptions, setIsFetchingOptions] = useState(false);
+  const [xpathPages, setXpathPages] = useState<XPathPages>({});
+  const [credentials, setCredentials] =
+    useState<TargetCredentials>(emptyCredentials);
+  const [activeTab, setActiveTab] = useState("general");
+  const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false);
+  const [xpathInitialSignature, setXpathInitialSignature] = useState<string | null>(null);
 
   // Fetch options from API
   const fetchOptions = useCallback(async () => {
@@ -75,7 +163,9 @@ export default function TargetAddDialog({
       if (domainsResponse.ok) {
         const domainsData = await domainsResponse.json();
         const domainNames = Array.isArray(domainsData)
-          ? domainsData.map((d: any) => d.domain_name).filter(Boolean)
+          ? domainsData
+              .map((d: DomainOption) => d.domain_name)
+              .filter((domainName): domainName is string => Boolean(domainName))
           : [];
         setDomainOptions(domainNames);
         if (domainNames.length > 0) {
@@ -86,7 +176,9 @@ export default function TargetAddDialog({
       if (languagesResponse.ok) {
         const languagesData = await languagesResponse.json();
         const langNames = Array.isArray(languagesData)
-          ? languagesData.map((l: any) => l.lang_name).filter(Boolean)
+          ? languagesData
+              .map((l: LanguageOption) => l.lang_name)
+              .filter((langName): langName is string => Boolean(langName))
           : [];
         setLanguageOptions(langNames);
       }
@@ -114,6 +206,11 @@ export default function TargetAddDialog({
       setDomain("");
       setSelectedLanguages([]);
       setNotes("");
+      setXpathPages({});
+      setXpathInitialSignature(null);
+      setCredentials(emptyCredentials);
+      setActiveTab("general");
+      setDiscardConfirmOpen(false);
     }
   }, [open, fetchOptions]);
 
@@ -123,14 +220,293 @@ export default function TargetAddDialog({
     );
   };
 
+  const hasInvalidNameCharacters =
+    name.trim().length > 0 && !isNameUsingAllowedCharacters(name);
+  const isNameInvalid =
+    isNameOverCharacterLimit(name) || hasInvalidNameCharacters;
+
   const isFormValid =
-    name.trim() && type && url.trim() && domain && notes.trim();
+    name.trim() &&
+    !isNameInvalid &&
+    type &&
+    description.trim() &&
+    url.trim() &&
+    domain &&
+    selectedLanguages.length > 0 &&
+    notes.trim();
+
+  const selectedTargetType = normalizeTargetType(type);
+  const isWebAppTarget = selectedTargetType === "webapp";
+  const requiresXPathConfig =
+    selectedTargetType === "whatsapp" || isWebAppTarget;
+  const showXPathTab = requiresXPathConfig;
+  const xpathFieldCount = getXPathFieldCount(xpathPages);
+  const missingXPathCount = getMissingXPathCount(xpathPages);
+  const isXPathConfigComplete =
+    xpathFieldCount > 0 && missingXPathCount === 0;
+  const hasXPathChanges =
+    xpathInitialSignature !== null &&
+    JSON.stringify(xpathPages) !== xpathInitialSignature;
+  const areWebAppCredentialsComplete =
+    !isWebAppTarget ||
+    !hasAnyCredentials(credentials) ||
+    areCredentialsComplete(credentials);
+  const canSubmit =
+    Boolean(isFormValid) &&
+    (!requiresXPathConfig || isXPathConfigComplete) &&
+    areWebAppCredentialsComplete;
+
+  const buildHeaders = useCallback((): HeadersInit => {
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+    };
+    const token = localStorage.getItem("access_token");
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    return headers;
+  }, []);
+
+  const fetchXPathTemplateForType = useCallback(
+    async (targetType: string, headers: HeadersInit): Promise<XPathPages> => {
+      const templateKey = getXPathTemplateKeyForTargetType(targetType);
+      if (!templateKey) return {};
+
+      const response = await fetch(API_ENDPOINTS.TARGET_XPATHS_V2(templateKey), {
+        headers,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || "Failed to load XPath template");
+      }
+
+      const data = await response.json();
+      const templatePages = toXPathPages(data?.pages);
+      return normalizeTargetType(targetType) === "webapp"
+        ? toBlankXPathPages(templatePages)
+        : templatePages;
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (!open || !type) {
+      setXpathPages({});
+      return;
+    }
+
+    let isCancelled = false;
+    fetchXPathTemplateForType(type, buildHeaders())
+      .then((templatePages) => {
+        if (!isCancelled) {
+          setXpathInitialSignature(JSON.stringify(templatePages));
+          setXpathPages(templatePages);
+        }
+      })
+      .catch((error) => {
+        if (!isCancelled) {
+          console.error("Error loading XPath template:", error);
+          setXpathInitialSignature(JSON.stringify({}));
+          setXpathPages({});
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [buildHeaders, fetchXPathTemplateForType, open, type]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    if (!showXPathTab && activeTab === "xpaths") {
+      setActiveTab("general");
+      return;
+    }
+
+    if (!isWebAppTarget) {
+      setCredentials(emptyCredentials);
+      if (activeTab === "credentials") {
+        setActiveTab("general");
+      }
+    }
+  }, [activeTab, isWebAppTarget, open, showXPathTab]);
+
+  const hasUnsavedChanges = Boolean(
+    name.trim() ||
+      description.trim() ||
+      url.trim() ||
+      selectedLanguages.length > 0 ||
+      notes.trim() ||
+      credentials.username.trim() ||
+      credentials.password.trim() ||
+      hasXPathChanges,
+  );
+
+  const handleDialogOpenChange = (nextOpen: boolean) => {
+    if (nextOpen) {
+      onOpenChange(true);
+      return;
+    }
+
+    if (isSubmitting) {
+      return;
+    }
+
+    if (hasUnsavedChanges) {
+      setDiscardConfirmOpen(true);
+      return;
+    }
+
+    onOpenChange(false);
+  };
+
+  const discardChangesAndClose = () => {
+    setDiscardConfirmOpen(false);
+    onOpenChange(false);
+  };
+
+  const handleXPathPagesChange = useCallback((pages: XPathPages) => {
+    setXpathPages(pages);
+    setXpathInitialSignature((current) => current ?? JSON.stringify(pages));
+  }, []);
+
+  const fetchWebAppXPathTemplate = async (
+    headers: HeadersInit,
+  ): Promise<XPathPages> => {
+    const response = await fetch(
+      API_ENDPOINTS.TARGET_XPATHS_V2(WEB_APP_XPATH_TEMPLATE_KEY),
+      { headers },
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.detail ||
+          "Target created, but failed to load the WebApp XPath template",
+      );
+    }
+
+    const data = await response.json();
+    return toBlankXPathPages(toXPathPages(data?.pages));
+  };
+
+  const seedWebAppXPaths = async (
+    targetName: string,
+    headers: HeadersInit,
+  ) => {
+    const seedPages =
+      Object.keys(xpathPages).length > 0
+        ? xpathPages
+        : await fetchWebAppXPathTemplate(headers);
+
+    const response = await fetch(API_ENDPOINTS.TARGET_XPATH_SEED_V2(targetName), {
+      method: "POST",
+      headers,
+      body: JSON.stringify(seedPages),
+    });
+
+    if (response.status === 404) {
+      const fallbackResponse = await fetch(API_ENDPOINTS.TARGET_XPATHS_V2(targetName), {
+        method: "PUT",
+        headers,
+        body: JSON.stringify({ pages: seedPages }),
+      });
+
+      if (fallbackResponse.ok) {
+        return;
+      }
+
+      const fallbackErrorData = await fallbackResponse.json().catch(() => ({}));
+      throw new Error(
+        fallbackErrorData.detail ||
+          "Target created, but failed to save the WebApp XPath config",
+      );
+    }
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.detail ||
+          "Target created, but failed to seed the WebApp XPath config",
+      );
+    }
+  };
+
+  const saveWhatsAppXPaths = async (headers: HeadersInit) => {
+    const response = await fetch(
+      API_ENDPOINTS.TARGET_XPATHS_V2(WHATSAPP_XPATH_TEMPLATE_KEY),
+      {
+        method: "PUT",
+        headers,
+        body: JSON.stringify({ pages: xpathPages }),
+      },
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.detail ||
+          "Target created, but failed to save the WhatsApp XPath config",
+      );
+    }
+  };
+
+  const saveWebAppCredentials = async (
+    targetName: string,
+    headers: HeadersInit,
+  ) => {
+    const payload = JSON.stringify({
+      username: credentials.username.trim(),
+      password: credentials.password.trim(),
+    });
+    let response = await fetch(API_ENDPOINTS.TARGET_CREDENTIALS_V2(targetName), {
+      method: "POST",
+      headers,
+      body: payload,
+    });
+
+    if (response.status === 405) {
+      response = await fetch(API_ENDPOINTS.TARGET_CREDENTIALS_V2(targetName), {
+        method: "PUT",
+        headers,
+        body: payload,
+      });
+    }
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.detail ||
+          "Target created, but failed to save the WebApp credentials",
+      );
+    }
+  };
 
   const handleSubmit = async () => {
     if (!name.trim()) {
       toast({
         title: "Validation Error",
         description: "Target name is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isNameOverCharacterLimit(name)) {
+      toast({
+        title: "Validation Error",
+        description: "Target name must be 40 characters or fewer",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!isNameUsingAllowedCharacters(name)) {
+      toast({
+        title: "Validation Error",
+        description: NAME_ALLOWED_CHARACTERS_MESSAGE,
         variant: "destructive",
       });
       return;
@@ -190,15 +566,34 @@ export default function TargetAddDialog({
       return;
     }
 
+    if (requiresXPathConfig && !isXPathConfigComplete) {
+      toast({
+        title: "Validation Error",
+        description:
+          xpathFieldCount === 0
+            ? "XPath configuration is required"
+            : "All XPath fields are required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (
+      isWebAppTarget &&
+      hasAnyCredentials(credentials) &&
+      !areCredentialsComplete(credentials)
+    ) {
+      toast({
+        title: "Validation Error",
+        description: "Enter both username and password, or leave both blank",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      const token = localStorage.getItem("access_token");
-      const headers: HeadersInit = {
-        "Content-Type": "application/json",
-      };
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
-      }
+      const headers = buildHeaders();
 
       const payload = {
         target_name: name.trim(),
@@ -231,6 +626,18 @@ export default function TargetAddDialog({
       const data = await response.json();
       console.log("Target created successfully:", data);
 
+      const createdTargetName =
+        typeof data?.target_name === "string" ? data.target_name : name.trim();
+
+      if (selectedTargetType === "whatsapp") {
+        await saveWhatsAppXPaths(headers);
+      } else if (isWebAppTarget) {
+        await seedWebAppXPaths(createdTargetName, headers);
+        if (hasAnyCredentials(credentials)) {
+          await saveWebAppCredentials(createdTargetName, headers);
+        }
+      }
+
       toast({
         title: "Success",
         description: "Target created successfully",
@@ -244,9 +651,11 @@ export default function TargetAddDialog({
       setDomain("");
       setSelectedLanguages([]);
       setNotes("");
+      setCredentials(emptyCredentials);
+      setActiveTab("general");
 
       // Close dialog
-      onOpenChange(false);
+      discardChangesAndClose();
 
       // Trigger refresh in parent component
       if (onSuccess) {
@@ -266,156 +675,251 @@ export default function TargetAddDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+    <>
+    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
+      <DialogContent className="max-w-5xl h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="sr-only">Add Target</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 pt-4">
-          <div className="space-y-2">
-            <Label className="text-base font-semibold">Target</Label>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Enter target name"
-              required
-              className="bg-muted"
-            />
-          </div>
 
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="max-w-5xl h-[65vh] overflow-y-auto">
+          <TabsList
+            className={`grid w-full ${
+              isWebAppTarget
+                ? "grid-cols-3 sm:w-[620px]"
+                : showXPathTab
+                  ? "grid-cols-2 sm:w-[420px]"
+                  : "grid-cols-1 sm:w-[220px]"
+            }`}
+          >
+            <TabsTrigger value="general">General</TabsTrigger>
+            {showXPathTab ? (
+              <TabsTrigger value="xpaths">XPath Config</TabsTrigger>
+            ) : null}
+            {isWebAppTarget ? (
+              <TabsTrigger value="credentials">Credentials</TabsTrigger>
+            ) : null}
+          </TabsList>
 
-          <div className="space-y-2">
-            <Label className="text-base font-semibold">Description</Label>
-            <Textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="bg-muted min-h-[80px]"
-              placeholder="Enter description..."
-            />
-          </div>
+          <TabsContent value="general">
+            <div className="space-y-4 pt-4 px-1">
+              <div className="space-y-2">
+                <Label className="text-base font-semibold">Target<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
+                <Input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Enter target name"
+                  required
+                  aria-invalid={isNameInvalid}
+                  className={`bg-muted ${isNameInvalid ? "border-red-500" : ""}`}
+                />
+                <NameCharacterCounter value={name} />
+                {hasInvalidNameCharacters && (
+                  <p className="text-xs font-medium text-red-600">
+                    {NAME_ALLOWED_CHARACTERS_MESSAGE}.
+                  </p>
+                )}
+              </div>
 
-          <div className="grid grid-cols-2 gap-4 pb-4">
-            <div className="space-y-2">
-              <Label className="text-base font-semibold">Type</Label>
-              <Select
-                value={type}
-                onValueChange={setType}
-                disabled={isFetchingOptions}
-              >
-                <SelectTrigger className="bg-muted">
-                  <SelectValue
-                    placeholder={isFetchingOptions ? "Loading..." : "Select type"}
-                  />
-                </SelectTrigger>
-                <SelectContent className="bg-popover max-h-[300px]">
-                  {targetTypes.length === 0 && !isFetchingOptions ? (
-                    <SelectItem value="" disabled>
-                      No types available
-                    </SelectItem>
-                  ) : (
-                    targetTypes.map((t) => (
-                      <SelectItem key={t} value={t}>
-                        {t}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
+              <div className="space-y-2">
+                <Label className="text-base font-semibold">Description<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
+                <Textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="bg-muted min-h-[80px]"
+                  placeholder="Enter description..."
+                />
+              </div>
 
-            
-            <div className="space-y-2">
-              <Label className="text-base font-semibold">Domain</Label>
-              <Select
-                
-                value={domain}
-                onValueChange={setDomain}
-                disabled={isFetchingOptions}
-              >
-                <SelectTrigger className= "bg-muted capitalize">
-                  <SelectValue placeholder= {isFetchingOptions ? "Loading..." : "Select domain"}/>
-                </SelectTrigger>
-                <SelectContent className="bg-popover max-h-[300px]">
-                  {domainOptions.length === 0 && !isFetchingOptions ? (
-                    <SelectItem value="" disabled>
-                      No domains available
-                    </SelectItem>
-                  ) : (
-                    domainOptions.map((d) => (
-                      <SelectItem key={d} value={d} className="capitalize">
-                        {d}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-
-          </div>
-          <div className="space-y-2">
-            <Label className="text-base font-semibold">URL</Label>
-            <Input
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="Enter URL"
-              required
-              className="bg-muted"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-base font-semibold">Languages</Label>
-            <div className="bg-muted p-4 rounded-md max-h-[110px] overflow-y-auto">
-              {isFetchingOptions ? (
-                <div className="text-sm text-muted-foreground">
-                  Loading languages...
-                </div>
-              ) : languageOptions.length === 0 ? (
-                <div className="text-sm text-muted-foreground">
-                  No languages available
-                </div>
-              ) : (
+              <div className="grid gap-4 pb-1 sm:grid-cols-2">
                 <div className="space-y-2">
-                  {languageOptions.map((lang) => (
-                    <div key={lang} className="flex items-center space-x-2 capitalize">
-                      <Checkbox
-                        id={`lang-add-${lang}`}
-                        checked={selectedLanguages.includes(lang)}
-                        onCheckedChange={() => handleLanguageToggle(lang)}
+                  <Label className="text-base font-semibold">Type<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
+                  <Select
+                    value={type}
+                    onValueChange={setType}
+                    disabled={isFetchingOptions}
+                  >
+                    <SelectTrigger className="bg-muted">
+                      <SelectValue
+                        placeholder={isFetchingOptions ? "Loading..." : "Select type"}
                       />
-                      <label
-                        htmlFor={`lang-add-${lang}`}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                      >
-                        {lang}
-                      </label>
-                    </div>
-                  ))}
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover max-h-[300px]">
+                      {targetTypes.length === 0 && !isFetchingOptions ? (
+                        <SelectItem value="" disabled>
+                          No types available
+                        </SelectItem>
+                      ) : (
+                        targetTypes.map((t) => (
+                          <SelectItem key={t} value={t}>
+                            {t}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
                 </div>
-              )}
+
+                <div className="space-y-2">
+                  <Label className="text-base font-semibold">Domain<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
+                  <Select
+                    value={domain}
+                    onValueChange={setDomain}
+                    disabled={isFetchingOptions}
+                  >
+                    <SelectTrigger className="bg-muted capitalize">
+                      <SelectValue
+                        placeholder={isFetchingOptions ? "Loading..." : "Select domain"}
+                      />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover max-h-[300px]">
+                      {domainOptions.length === 0 && !isFetchingOptions ? (
+                        <SelectItem value="" disabled>
+                          No domains available
+                        </SelectItem>
+                      ) : (
+                        domainOptions.map((d) => (
+                          <SelectItem key={d} value={d} className="capitalize">
+                            {d}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-base font-semibold">URL<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
+                <Input
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  placeholder="Enter URL"
+                  required
+                  className="bg-muted"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-base font-semibold">Languages<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
+                <div className="bg-muted p-4 rounded-md max-h-[110px] overflow-y-auto">
+                  {isFetchingOptions ? (
+                    <div className="text-sm text-muted-foreground">
+                      Loading languages...
+                    </div>
+                  ) : languageOptions.length === 0 ? (
+                    <div className="text-sm text-muted-foreground">
+                      No languages available
+                    </div>
+                  ) : (
+                    <div className="space-y-2 grid grid-cols-3">
+                      {languageOptions.map((lang) => (
+                        <div key={lang} className="flex items-center space-x-2 capitalize">
+                          <Checkbox
+                            id={`lang-add-${lang}`}
+                            checked={selectedLanguages.includes(lang)}
+                            onCheckedChange={() => handleLanguageToggle(lang)}
+                          />
+                          <label
+                            htmlFor={`lang-add-${lang}`}
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                          >
+                            {lang}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-center">
+                <Label className="text-base font-semibold">Notes<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
+                <Input
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Enter notes"
+                  className="bg-gray-200 rounded px-4 py-1 sm:mr-4 sm:max-w-md"
+                  required
+                />
+
+                <Button
+                  className="bg-accent hover:bg-accent/90 text-accent-foreground px-8"
+                  onClick={handleSubmit}
+                  disabled={!canSubmit || isSubmitting}
+                >
+                  {isSubmitting ? "Submitting..." : "Submit"}
+                </Button>
+              </div> 
             </div>
-          </div>
+          </TabsContent>
 
-          <div className="flex justify-center items-center p-4 ">
-            <Label className="text-base font-semibold mr-2">Notes</Label>
-            <Input
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Enter notes"
-              className="bg-gray-200 rounded px-4 py-1 mr-4 "
-              required
-            />
-
-            <Button
-              className="bg-accent hover:bg-accent/90 text-accent-foreground px-8"
-              onClick={handleSubmit}
-              disabled={!isFormValid || isSubmitting}
+          {showXPathTab ? (
+            <TabsContent
+              value="xpaths"
+              className="pt-4 data-[state=inactive]:hidden"
+              forceMount
             >
-              {isSubmitting ? "Submitting..." : "Submit"}
-            </Button>
-          </div>
-        </div>
+              <XPathConfigurationEditor
+                applicationName={name}
+                targetType={type}
+                onPagesChange={handleXPathPagesChange}
+                open={open}
+                showSave={false}
+              />
+            </TabsContent>
+          ) : null}
+
+          {isWebAppTarget ? (
+            <TabsContent value="credentials" className="pt-4">
+              <TargetCredentialsEditor
+                open={open}
+                value={credentials}
+                onChange={setCredentials}
+                showSave={false}
+              />
+            </TabsContent>
+          ) : null}
+        </Tabs>
+              <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-center">
+                <Label className="text-base font-semibold">Notes</Label>
+                <Input
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Enter notes"
+                  className="bg-gray-200 rounded px-4 py-1 sm:mr-4 sm:max-w-md"
+                  required
+                />
+
+                <Button
+                  className="bg-accent hover:bg-accent/90 text-accent-foreground px-8"
+                  onClick={handleSubmit}
+                  disabled={!canSubmit || isSubmitting}
+                >
+                  {isSubmitting ? "Submitting..." : "Submit"}
+                </Button>
+              </div>
       </DialogContent>
     </Dialog>
+    <AlertDialog open={discardConfirmOpen} onOpenChange={setDiscardConfirmOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Discard changes?</AlertDialogTitle>
+          <AlertDialogDescription>
+            You have unsaved target changes. Do you want to discard them and close this dialog?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={discardChangesAndClose}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            Discard
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }

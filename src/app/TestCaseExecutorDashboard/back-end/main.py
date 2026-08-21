@@ -44,7 +44,7 @@ from apis.analyse import router as analyse_router
 from apis.conversations import router as conversations_router
 from apis.report import router as report_router
 
-from utils.port import check_service, ensure_interface_manager_port_running, stop_interface_manager, watch_chrome_and_kill_im, watch_im_process
+from utils.port import check_service, ensure_interface_manager_port_running, stop_interface_manager, watch_chrome_and_kill_im, watch_im_process,on_frontend_disconnect
 
 from middleware.auth import AuthMiddleware
 
@@ -122,23 +122,40 @@ def load_config():
 
 @app.websocket("/ws/test-run")
 async def websocket_endpoint(websocket: WebSocket):
+    
     await ws_manager.connect(websocket)
     try:
         while True:
-            # keep connection alive
-            await websocket.receive_text()
+            try:
+                await asyncio.wait_for(websocket.receive_text(), timeout=15)
+            except asyncio.TimeoutError:
+                await ws_manager.send_one(websocket, {"type": "HEARTBEAT"})
     except WebSocketDisconnect:
         ws_manager.disconnect(websocket)
+        if ws_manager.is_empty():
+            on_frontend_disconnect(interface_manager_config)
+    except Exception:
+        ws_manager.disconnect(websocket)
+        
+        if ws_manager.is_empty():
+            on_frontend_disconnect(interface_manager_config)
          
 @app.get(
     "/testcases/{testcase_name}",
     response_model=TestCaseResponse
 )
-def get_conversation(testcase_name: str):
+def get_conversation(testcase_name: str, plan_name: Optional[str] = None):
     
     testcase = db.get_testcase_by_name(testcase_name)
     if not testcase:
         raise HTTPException(status_code=404, detail="Testcase not found")
+    if plan_name:
+        plan_testcases = db.get_testcases_by_testplan(plan_name)
+        if not any(case.name == testcase_name for case in plan_testcases):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Test case '{testcase_name}' does not belong to test plan '{plan_name}'",
+            )
     return TestCaseResponse(
         user_prompt=testcase.prompt.user_prompt,
         system_prompt=testcase.prompt.system_prompt

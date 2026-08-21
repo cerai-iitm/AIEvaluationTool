@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Sidebar from "@/components/Sidebar";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -26,7 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import TargetUpdateDialog from "@/components/TargetUpdateDialog";
 import TargetAddDialog from "@/components/TargetAddDialog";
@@ -34,6 +33,7 @@ import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
 import { hasPermission } from "@/utils/permissions";
 import { HistoryButton } from "@/components/HistoryButton";
+import { PageHeaderWithBack } from "@/components/PageHeaderWithBack";
 
 interface Target {
   target_id: number;
@@ -49,6 +49,7 @@ interface Target {
 const Targets = () => {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchField, setSearchField] = useState<"target" | "type" | "domain">("target");
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [selectedTarget, setSelectedTarget] = useState<Target | null>(null);
   const [updateTarget, setUpdateTarget] = useState<Target | null>(null);
@@ -242,16 +243,23 @@ const Targets = () => {
     }
   };
 
-  const filteredTargets = targets.filter(
-    (t) =>
-      t.target_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.target_type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.domain_name.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
+  const filteredTargets = targets.filter((target) => {
+    const query = searchQuery.toLowerCase();
+
+    switch (searchField) {
+      case "type":
+        return target.target_type.toLowerCase().includes(query);
+      case "domain":
+        return target.domain_name.toLowerCase().includes(query);
+      case "target":
+      default:
+        return target.target_name.toLowerCase().includes(query);
+    }
+  });
 
   const totalItems = filteredTargets.length;
   const itemsPerPage = 15;
-  const TotalPages = Math.ceil(totalItems / itemsPerPage);
+  const TotalPages = Math.ceil(totalItems / itemsPerPage) || 1;
   const paginatedTargets = useMemo(
     () =>
       filteredTargets.slice(
@@ -272,21 +280,24 @@ const Targets = () => {
 
   return (
     <div className="flex min-h-screen">
-      <aside className="fixed top-0 left-0 h-screen w-224px bg-[#5252c2] z-20">
-        <Sidebar />
-      </aside>
-      <main className="flex-1 bg-background ml-[224px] ">
+      <main className="flex-1 bg-background ">
         <div className="p-8 flex flex-col h-screen">
-          <h1 className="text-4xl font-bold mb-8 text-center">Targets</h1>
+          <PageHeaderWithBack title="Targets" />
           <div className="flex gap-4 mb-6">
-            <Select defaultValue="target">
+            <Select
+              value={searchField}
+              onValueChange={(value: "target" | "type" | "domain") => {
+                setSearchField(value);
+                setCurrentPage(1);
+              }}
+            >
               <SelectTrigger className="w-48">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="target">Target Name</SelectItem>
+                <SelectItem value="target">Target </SelectItem>
                 <SelectItem value="type">Target Type</SelectItem>
-                <SelectItem value="domain">Domain Name</SelectItem>
+                <SelectItem value="domain">Domain </SelectItem>
               </SelectContent>
             </Select>
             <Input
@@ -319,8 +330,18 @@ const Targets = () => {
                 <Button
                   variant="ghost"
                   size="icon"
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                  aria-label="Go to first page"
+                >
+                  <ChevronsLeft className="w-5 h-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
+                  aria-label="Go to previous page"
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </Button>
@@ -331,28 +352,41 @@ const Targets = () => {
                     setCurrentPage((p) => Math.min(TotalPages, p + 1))
                   }
                   disabled={currentPage === TotalPages}
+                  aria-label="Go to next page"
                 >
                   <ChevronRight className="w-5 h-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setCurrentPage(TotalPages)}
+                  disabled={currentPage === TotalPages}
+                  aria-label="Go to last page"
+                >
+                  <ChevronsRight className="w-5 h-5" />
                 </Button>
               </div>
             </div>
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto">
-            <div className="bg-white rounded-lg shadow overflow-hidden max-w-7xl mx-left max-h-[67vh] overflow-y-auto">
-              <table className="w-full">
+            <div className="bg-white rounded-lg shadow overflow-hidden w-full mx-left max-h-[67vh] overflow-y-auto overflow-x-auto">
+              <table className="w-full table-fixed">
                 <thead className="border-b-2">
                   <tr>
-                    <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">
+                    <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left w-[12%]">
                       Target ID
                     </th>
-                    <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">
+                    <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left w-[12%]">
                       Target Name
                     </th>
-                    <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">
-                      Target Type & URL
+                    <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left w-[12%]">
+                      Target Type 
+                    </th>
+                    <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left w-[12%]">
+                      Domain Name
                     </th>
                     <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">
-                      Domain Name
+                      Descriptions
                     </th>
                   </tr>
                 </thead>
@@ -389,8 +423,8 @@ const Targets = () => {
                         }}
                       >
                         <td className="p-2 pl-12">{target.target_id}</td>
-                        <td className="p-2 pl-6 capitalize">{target.target_name}</td>
-                        <td className="p-2 pl-12">
+                        <td className="p-2 pl-6 capitalize truncate">{target.target_name}</td>
+                        <td className="p-2 pl-6">
                           <span
                             onClick={(e) => {
                               e.stopPropagation();
@@ -406,6 +440,7 @@ const Targets = () => {
                           </span>
                         </td>
                         <td className="p-2 pl-8 capitalize">{target.domain_name}</td>
+                        <td className="p-2 pl-8 truncate">{target.target_description}</td>
                       </tr>
                     ))
                   )}
@@ -573,7 +608,7 @@ const Targets = () => {
                     Target ID: {targetToDelete.target_id}
                   </p>
                   <p className="font-semibold">
-                    Target Name: {targetToDelete.target_name}
+                    Target: {targetToDelete.target_name}
                   </p>
                 </div>
               )}

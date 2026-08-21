@@ -29,6 +29,50 @@ services:
       - "4444"
       - "7900"
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: aiet-ollama
+    restart: unless-stopped
+    environment:
+      - OLLAMA_KEEP_ALIVE=-1
+    profiles: ["prod"]
+    expose:
+      - "11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  ollama-init:
+    image: ollama/ollama:latest
+    container_name: aiet-ollama-init
+    profiles: ["prod"]
+    depends_on:
+      - ollama
+    environment:
+      - OLLAMA_HOST=ollama:11434 
+    command: ["pull", "${OLLAMA_MODEL:-qwen3:32b}"]
+
+  ollama-warmup:
+    image: curlimages/curl:latest
+    container_name: aiet-ollama-warmup
+    profiles: ["prod"]
+    depends_on:
+      ollama-init:
+        condition: service_completed_successfully
+    restart: "no"
+    command: >
+      sh -c "
+      curl http://ollama:11434/api/generate
+      -d '{\"model\":\"${OLLAMA_MODEL:-qwen3:32b}\",\"prompt\":\"hi\",\"stream\":false}'
+      "
+    
+
   interface-manager:
     build:
       context: .
@@ -49,6 +93,8 @@ services:
       - .env
     volumes:
       - interface_manager_logs:/app/src/app/interface_manager/logs
+      - ./src/app/interface_manager/xpaths.json:/app/src/app/interface_manager/xpaths.json:ro
+      - ./src/app/interface_manager/credentials.json:/app/src/app/interface_manager/credentials.json:ro
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/docs', timeout=3)"]
       interval: 20s
@@ -74,6 +120,8 @@ services:
       TDMS_APP_URL: ${TDMS_APP_URL:-/tdms/dashboard}
       DB_HOST: ${DB_HOST:-db}
       DB_PORT: ${DB_PORT:-3306}
+    volumes:
+      - ./data:/app/data
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:7500/docs', timeout=3)"]
       interval: 20s
@@ -102,6 +150,8 @@ services:
     volumes:
       - interface_manager_logs:/app/src/app/interface_manager/logs:ro
       - ./config.json:/app/config.json
+      - ./src/app/interface_manager/xpaths.json:/app/src/app/interface_manager/xpaths.json:ro
+      - ./src/app/interface_manager/credentials.json:/app/src/app/interface_manager/credentials.json:ro
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:7000/docs', timeout=3)"]
       interval: 20s
@@ -115,7 +165,7 @@ services:
       target: sarvam-ai
     container_name: aiet-sarvam-ai
     restart: unless-stopped
-    profiles: ["sarvam"]
+    profiles: ["sarvam", "prod"]
     expose:
       - "16000"
     environment:
@@ -150,6 +200,10 @@ services:
       - .env
     environment:
       AUTH_SERVICE_URL: ${AUTH_SERVICE_URL:-http://auth-service:7500}
+    volumes:
+      - ./data:/app/data
+      - ./src/app/interface_manager/xpaths.json:/app/src/app/interface_manager/xpaths.json
+      - ./src/app/interface_manager/credentials.json:/app/src/app/interface_manager/credentials.json
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:7250/', timeout=3)"]
       interval: 20s
@@ -220,3 +274,6 @@ services:
 volumes:
   mariadb_data:
   interface_manager_logs:
+  ollama_data:
+  sarvam_models:
+  app:

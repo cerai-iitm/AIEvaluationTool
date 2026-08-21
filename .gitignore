@@ -27,9 +27,6 @@ new_fairness_stereotype_recognition.py
 *.pkl
 .strategy_*.json
 AI
-app.db
-TDMS.db
-AIEvaluationData.db
 strategy_id/
 
 # --------------FrontEnd_dev------------------
@@ -56,7 +53,8 @@ src/app/TDMS/front-end/*.sln
 src/app/TDMS/front-end/*.sw?
 *.sqlite3
 chroma_langchain_db/
-data/AIEvaluationData.db
-
+*.db
 reports/
 chrome-data/
+run_app.sh
+.venv/

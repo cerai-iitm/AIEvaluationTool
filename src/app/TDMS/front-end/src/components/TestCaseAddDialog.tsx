@@ -27,6 +27,8 @@ import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
 import { hasPermission } from "@/utils/permissions";
 import { set } from "date-fns";
+import { NameCharacterCounter } from "@/components/NameCharacterCounter";
+import { isNameOverCharacterLimit } from "@/utils/nameValidation";
 
 interface TestCaseAddDialogProps {
   open: boolean;
@@ -360,8 +362,9 @@ export const TestCaseAddDialog = ({
 
     const checkNameAvailability = async () => {
       const name = testCaseName.trim();
-      if (!name) {
+      if (!name || isNameOverCharacterLimit(testCaseName)) {
         setIsNameAvailable(null);
+        setIsCheckingName(false);
         return;
       }
 
@@ -500,6 +503,15 @@ export const TestCaseAddDialog = ({
       return;
     }
 
+    if (isNameOverCharacterLimit(testCaseName)) {
+      toast({
+        title: "Validation Error",
+        description: "Test case name must be 40 characters or fewer",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!userPrompts.trim()) {
       toast({
         title: "Validation Error",
@@ -566,14 +578,14 @@ export const TestCaseAddDialog = ({
       return;
     }
 
-    // if (!responseText.trim()) {
-    //   toast({
-    //     title: "Validation Error",
-    //     description: "Response text is required",
-    //     variant: "destructive",
-    //   });
-    //   return;
-    // }
+    if (!responseText.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Response text is required",
+        variant: "destructive",
+      });
+      return;
+    }
 
     // if response text is available means response type and response language is required
     if (responseText.trim()) {
@@ -762,19 +774,27 @@ export const TestCaseAddDialog = ({
 
           <div className="space-y-1 pt-1">
             <div className="space-y-1">
-              <Label className="text-base font-semibold">Test Case</Label>
+              <Label className="text-base font-semibold">Test Case<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
               <div className="relative">
                 <Input
                   placeholder="Enter new test case name"
                   value={testCaseName}
                   onChange={(e) => setTestCaseName(e.target.value)}
+                  onMouseDown={(e) => e.currentTarget.focus()}
                   onFocus={() => {
                     setShowDetails(false);
                     setShowRequestDetails(false);
                   }}
                   className={`bg-muted pr-24 ${
-                    isNameAvailable === false ? "border-destructive" : ""
+                    isNameAvailable === false ||
+                    isNameOverCharacterLimit(testCaseName)
+                      ? "border-destructive"
+                      : ""
                   }`}
+                  aria-invalid={
+                    isNameAvailable === false ||
+                    isNameOverCharacterLimit(testCaseName)
+                  }
                   required
                   disabled={isSubmitting}
                 />
@@ -796,6 +816,7 @@ export const TestCaseAddDialog = ({
                   </div>
                 )}
               </div>
+              <NameCharacterCounter value={testCaseName} />
             </div>
                
             <div className="space-y-1 pb-2">
@@ -803,7 +824,7 @@ export const TestCaseAddDialog = ({
                 {/* <Label className="text-base font-semibold">Prompt</Label> */}
               {/* </div> */}
               <div className="space-y-1">
-                <Label className="text-base font-semibold">User Prompt</Label>
+                <Label className="text-base font-semibold">User Prompt<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
                 <div className="relative">
                   <Textarea
                     value={userPrompts}
@@ -815,6 +836,7 @@ export const TestCaseAddDialog = ({
                     }}
                     placeholder="Enter user prompt or Search "
                     onChange={(e) => setUserPrompts(e.target.value)}
+                    onMouseDown={(e) => e.currentTarget.focus()}
                     onFocus={() => {
                       setFocusedField("userPrompt");
                       setShowRequestDetails(false);
@@ -843,7 +865,7 @@ export const TestCaseAddDialog = ({
               {showDetails && (
                 <>
                   <div className="space-y-1">
-                    <Label className="text-sm font-semibold">System prompt</Label>
+                    <Label className="text-sm font-semibold">System Prompt<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
                     <div className="relative">
                       <Textarea
                         value={systemPrompts}
@@ -860,6 +882,7 @@ export const TestCaseAddDialog = ({
                             setErrors(prev => ({ ...prev, systemPrompts: false }));
                           }
                         }}
+                        onMouseDown={(e) => e.currentTarget.focus()}
                         onFocus={() => setFocusedField("systemPrompt")}
                         onBlur={() => setFocusedField(null)}
                         className={`bg-muted min-h-[73px] pr-10 ${
@@ -888,7 +911,7 @@ export const TestCaseAddDialog = ({
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-sm font-semibold">Domain</Label>
+                      <Label className="text-sm font-semibold">Domain<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
                       <Select
                         value={domain}
                         onValueChange={(value) => {
@@ -922,7 +945,7 @@ export const TestCaseAddDialog = ({
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-sm font-semibold">Language</Label>
+                      <Label className="text-sm font-semibold">Language<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
                       <Select
                         value={language}
                         onValueChange={(value) => {
@@ -965,7 +988,7 @@ export const TestCaseAddDialog = ({
            
             <div className="space-y-1 pb-2">
               <div className="space-y-2">
-                <Label className="text-base font-semibold">Response</Label>
+                <Label className="text-base font-semibold">Response<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
                 <div className="relative">
                   <Textarea
                     value={responseText}
@@ -978,14 +1001,16 @@ export const TestCaseAddDialog = ({
                     placeholder="Enter response or Search "
                     className="bg-muted min-h-[73px] pr-10"
                     onChange={(e) => setResponseText(e.target.value)}
+                    onMouseDown={(e) => e.currentTarget.focus()}
                     onFocus={() => {
                       setFocusedField("response");
                       setShowDetails(false);
+                       setShowRequestDetails(true); // response details show
                     }}
                     onBlur={() => setFocusedField(null)}
                     onClick={() => {
-                      setShowRequestDetails(true);
-                      setShowDetails(false);
+                      setShowRequestDetails(true); // response details show
+                      setShowDetails(false); // user prompt details hide
                     }}
                   />
                   { focusedField === "response" && (
@@ -1006,7 +1031,7 @@ export const TestCaseAddDialog = ({
                 <>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-base font-semibold">Response Type</Label>
+                    <Label className="text-base font-semibold">Response Type<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
                     <Select 
                       value={responseType} 
                       onValueChange={(value) => {
@@ -1033,7 +1058,7 @@ export const TestCaseAddDialog = ({
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-base font-semibold">Language</Label>
+                    <Label className="text-base font-semibold">Language<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
                     <Select
                       value={responseLanguage}
                       onValueChange={(value) => {
@@ -1078,7 +1103,7 @@ export const TestCaseAddDialog = ({
             </div>
           
             <div className="space-y-1">
-              <Label className="text-base font-semibold">Strategy</Label>
+              <Label className="text-base font-semibold">Strategy<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
               <Select 
                 value={strategy} 
                 onValueChange={setStrategy}
@@ -1107,7 +1132,7 @@ export const TestCaseAddDialog = ({
 
             {showLLMPrompt && (
               <div className="space-y-2">
-                <Label className="text-base font-semibold">LLM Prompt</Label>
+                <Label className="text-base font-semibold">LLM Prompt<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
                 <div className="relative">
                   <Textarea
                     value={llmPrompt}
@@ -1131,6 +1156,7 @@ export const TestCaseAddDialog = ({
                             setErrors(prev => ({ ...prev, llmPrompt: false }));
                           }
                         }}
+                    onMouseDown={(e) => e.currentTarget.focus()}
                     onFocus={() => {
                       setFocusedField("llm");
                       setShowDetails(false);
@@ -1160,7 +1186,7 @@ export const TestCaseAddDialog = ({
             
 
             <div className="space-y-2">
-              <Label className="text-base font-semibold">Metrics</Label>
+              <Label className="text-base font-semibold">Metrics<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
               <div className="bg-muted p-4 rounded-md max-h-[130px] overflow-y-auto">
                 {isFetchingMetrics ? (
                   <div className="text-sm text-muted-foreground">
@@ -1199,7 +1225,7 @@ export const TestCaseAddDialog = ({
             </div>
 
             <div className="flex justify-center items-center p-2 border-gray-300 bg-white sticky bottom-0 z-10">
-              <Label className="text-base font-semibold mr-2">Notes</Label>
+              <Label className="text-base font-semibold mr-2">Notes<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
               <Input
                 placeholder="Enter Notes"
                 type="text"
@@ -1219,6 +1245,7 @@ export const TestCaseAddDialog = ({
                   isSubmitting || 
                   isCheckingName || 
                   isNameAvailable === false || 
+                  isNameOverCharacterLimit(testCaseName) ||
                   !isAdded || 
                   !notes ||
                   selectedMetrics.length === 0 ||

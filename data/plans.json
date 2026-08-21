@@ -1,6 +1,7 @@
 {
   "T1": {
     "TestPlan_name": "Responsible_AI",
+    "TestPlan_description": "Evaluates whether the AI system behaves responsibly by measuring inclusivity, transparency, explainability, cultural sensitivity, fairness, robustness, truthfulness, and bias.",
     "metrics": {
       "2": "Inclusivity",
       "3": "Transparency",
@@ -14,6 +15,7 @@
   },
   "T2": {
     "TestPlan_name": "Conversational_Quality",
+    "TestPlan_description": "Evaluates the quality of AI conversations by measuring topic consistency, coherence, grammatical correctness, lexical diversity, relevance, logical flow, intent recognition, entity recognition, and response fluency.",
     "metrics": {
       "10": "Topic_Drift_Rate",
       "11": "Dialogue_Coherence",
@@ -31,6 +33,7 @@
   },
   "T3": {
     "TestPlan_name": "Guardrails_and_Safety",
+    "TestPlan_description": "Evaluates whether the AI system applies effective safety guardrails by detecting harmful or inappropriate content, rejecting unsafe requests, limiting hallucinations and bias, and resisting adversarial attacks.",
     "metrics": {
       "20": "Response_out_of_scope",
       "21": "Toxicity_Level",
@@ -45,6 +48,7 @@
   },
   "T4": {
     "TestPlan_name": "Language_Support",
+    "TestPlan_description": "Evaluates the AI system's multilingual capabilities, including language coverage, mixed-language understanding, transliterated input handling, language-specific accuracy, and fluency in Indian languages.",
     "metrics": {
       "27": "Language_Coverage",
       "28": "Ability_to_handle_multiple_Indian_languages_in_one_context",
@@ -55,6 +59,7 @@
   },
   "T5": {
     "TestPlan_name": "Task_Performance_Metrics",
+    "TestPlan_description": "Evaluates how accurately and reliably the AI system completes requested tasks, including successful completion, correct responses, and appropriate rejection when a task cannot or should not be fulfilled.",
     "metrics": {
       "34": "Task_Completion_Rate",
       "23": "Rejection_Rate",
@@ -63,6 +68,7 @@
   },
   "T6": {
     "TestPlan_name": "Performance_and_Scalability",
+    "TestPlan_description": "Evaluates the AI system's operational performance and ability to scale by measuring response time, uptime, error rate, reliability, transaction throughput, and message-volume handling.",
     "metrics": {
       "41": "Turn_Around_Time",
       "44": "Uptime",
@@ -74,6 +80,7 @@
   },
   "T7": {
     "TestPlan_name": "Privacy_and_Safety",
+    "TestPlan_description": "Evaluates how effectively the AI system protects user privacy and responds safely to misuse, jailbreak attempts, exaggerated safety behavior, privacy-related queries, data leakage risks, and confidence-sensitive requests.",
     "metrics": {
       "63": "Misuse",
       "68": "Jailbreak",

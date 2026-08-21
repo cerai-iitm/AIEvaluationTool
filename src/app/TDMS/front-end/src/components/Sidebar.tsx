@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import ceraiLogo from "@/assets/cerai-logo.png";
 import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
-import { clearStoredTokens, getValidAccessToken } from "@/utils/auth";
+import { getLoginUrl, getValidAccessToken, logoutAndRedirect, redirectToLogin } from "@/utils/auth";
 import { hasPermission } from "@/utils/permissions";
 
 interface UserInfo {
@@ -22,28 +22,18 @@ interface NavItem {
   allowedRoles?: string[];
 }
 
-const Sidebar = () => {
+interface SidebarProps {
+  onLogout?: () => void;
+}
+
+const Sidebar = ({ onLogout }: SidebarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [userInfo, setUserInfo] = useState<UserInfo>({ user_name: "UserName", email: "", role: "Admin" });
+  const [userInfo, setUserInfo] = useState<UserInfo>({ user_name: "", email: "", role: "" });
   const [isLoading, setIsLoading] = useState(true);
   const testRunsHomeUrl =
     import.meta.env.VITE_TEST_RUNS_HOME_URL || "/";
-  const authServiceUrl = import.meta.env.VITE_AUTH_SERVICE_URL || "/auth";
-  const authLoginUrl = `${authServiceUrl}/web/login`;
-
-  const clearSession = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-    localStorage.removeItem("user_name");
-    localStorage.removeItem("role");
-  };
-
-  const redirectToLogin = () => {
-    clearSession();
-    window.location.href = `${authLoginUrl}`;
-  };
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -118,7 +108,7 @@ const Sidebar = () => {
       <nav className="flex-1 px-3 mt-8">
         {navItems
           .filter((item) => {
-            const normalizedRole = userInfo.role.toLowerCase();
+            const normalizedRole = userInfo.role.trim().toLowerCase();
 
             if (item.allowedRoles && !item.allowedRoles.includes(normalizedRole)) {
               return false;
@@ -139,7 +129,7 @@ const Sidebar = () => {
               return (
                 <a
                   key={`${item.label}-${item.externalUrl}`}
-                  href={item.externalUrl}
+                  href={getLoginUrl(item.externalUrl)}
                   className="flex items-center gap-3 px-4 py-3 rounded-lg mb-2 transition-colors text-primary-foreground/80 hover:bg-white/10"
                 >
                   <Icon className="w-5 h-5" />
@@ -178,19 +168,9 @@ const Sidebar = () => {
           </div>
         </div>
         <button
+          data-nav-block 
           type="button"
-          onClick={async () => {
-            try {
-              await fetch(`${authLoginUrl.replace('/web/login', '/web/logout')}`, {
-                method: "GET",
-                credentials: "include",
-              });
-            } catch {
-              // ignore network errors; still clear local state
-            }
-            clearStoredTokens();
-            redirectToLogin();
-          }}
+          onClick={logoutAndRedirect}
           className="flex w-full items-center justify-start gap-3 px-4 py-3 text-primary-foreground/80 hover:bg-white/10 rounded-lg mb-2 transition-colors"
         >
           <LogOut className="w-5 h-5" />

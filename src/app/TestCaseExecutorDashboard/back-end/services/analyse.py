@@ -16,6 +16,19 @@ gpu_url = os.getenv("GPU_URL")
 analysis_jobs = {}
 analysis_jobs_lock = Lock()
 
+ollama_url = os.getenv("OLLAMA_URL")
+NO_FAILED_TESTCASES_MESSAGE = "No failed testcases found"
+ANALYSABLE_RUN_STATUSES = {"COMPLETED", "STOPPED"}
+
+def check_analyse_health_service():
+    try:
+        response = requests.get(ollama_url, timeout=3)
+        if response.status_code < 400:
+            return {"status": "ok"}
+        raise HTTPException(status_code=503, detail="Ollama is not healthy")
+    except requests.exceptions.RequestException:
+        raise HTTPException(status_code=503, detail="Ollama is not reachable")
+
 # def check_service(url: str, name: str):
 #     try:
 #         response = requests.get(url, timeout=3)
@@ -49,7 +62,72 @@ def get_analyse_status_service(run_name: str):
         return {"run_name": run_name, **state}
 
 
-def start_analyse_service(run_name: str, db, background_tasks: BackgroundTasks, mode: str = "rerun_all"):
+def stop_analyse_service(run_name: str):
+    with analysis_jobs_lock:
+        state = analysis_jobs.get(run_name)
+        if not state or state.get("status") not in ("RUNNING", "STOPPING"):
+            raise HTTPException(status_code=409, detail="This analysis is not active")
+        state["status"] = "STOPPING"
+        state["stop_requested"] = True
+        analysis_jobs[run_name] = state
+    logger.info(f"Stop requested for analysis '{run_name}'")
+    return {"run_name": run_name, "status": "stopping"}
+
+
+def _analysis_stop_requested(run_name: str) -> bool:
+    with analysis_jobs_lock:
+        return bool(analysis_jobs.get(run_name, {}).get("stop_requested"))
+
+
+def _is_retry_failed_candidate(db, detail) -> bool:
+    if getattr(detail, "status", None) != "COMPLETED":
+        return False
+
+    conversation_id = getattr(detail, "conversation_id", None)
+    if not conversation_id:
+        return False
+
+    conversation = db.get_conversation_by_id(conversation_id)
+    if not conversation:
+        return False
+
+    reason = getattr(conversation, "evaluation_reason", None) or ""
+    return reason.strip() == ""
+
+
+def _parse_selected_detail_ids(selected_detail_ids):
+    if not selected_detail_ids:
+        return set()
+    try:
+        return {int(value) for value in selected_detail_ids.split(",") if value.strip()}
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="detail_ids must be comma-separated integers")
+
+
+def _filter_run_details(run_details, mode: str, selected_detail_ids, db):
+    if mode == "retry_failed":
+        return [detail for detail in run_details if _is_retry_failed_candidate(db, detail)]
+    if mode == "selected":
+        selected_ids = _parse_selected_detail_ids(selected_detail_ids)
+        if not selected_ids:
+            raise HTTPException(status_code=400, detail="Select at least one test case")
+        return [
+            detail
+            for detail in run_details
+            if getattr(detail, "detail_id", None) in selected_ids
+        ]
+    if mode != "rerun_all":
+        raise HTTPException(status_code=400, detail=f"Unsupported analysis mode: {mode}")
+    return run_details
+
+
+def start_analyse_service(
+    run_name: str,
+    db,
+    background_tasks: BackgroundTasks,
+    mode: str = "rerun_all",
+    selected_detail_ids=None,
+):
     logger.info(f"[SERVICE] Starting analysis service for run '{run_name}' with mode '{mode}'")
     try:
         run = db.get_run_by_name(run_name=run_name)
@@ -59,11 +137,11 @@ def start_analyse_service(run_name: str, db, background_tasks: BackgroundTasks, 
                 status_code=404,
                 detail=f"Run with name '{run_name}' not found."
             )
-        if run.status != "COMPLETED":
-            logger.error(f"Run '{run_name}' is not completed. Current status: {run.status}")
+        if run.status not in ANALYSABLE_RUN_STATUSES:
+            logger.error(f"Run '{run_name}' cannot be analysed. Current status: {run.status}")
             raise HTTPException(
                 status_code=400,
-                detail=f"Run '{run_name}' is not completed. Current status: {run.status}"
+                detail=f"Run '{run_name}' cannot be analysed. Current status: {run.status}"
             )
 
         with analysis_jobs_lock:
@@ -76,22 +154,22 @@ def start_analyse_service(run_name: str, db, background_tasks: BackgroundTasks, 
             rd for rd in run_details if rd.status == "COMPLETED"
         ]
 
-        if mode == "retry_failed":
+        if mode in ("retry_failed", "selected"):
             logger.info("Running only failed test cases...")
-            filtered_run_details = []
-            for detail in run_details:
-                conversation = db.get_conversation_by_id(detail.conversation_id)
-                if not conversation:
-                    continue
-                reason = conversation.evaluation_reason or ""
-                if reason.strip() == "":
-                    filtered_run_details.append(detail)
+            filtered_run_details = _filter_run_details(
+                run_details, mode, selected_detail_ids, db
+            )
             logger.info(f"Filtered Run Details: {filtered_run_details}")
             logger.info(f"Retry Failed: {len(filtered_run_details)} / {len(run_details)} selected")
             run_details = filtered_run_details
             if not run_details:
                 logger.info("No failed test cases to retry")
-                return
+                message = (
+                    NO_FAILED_TESTCASES_MESSAGE
+                    if mode == "retry_failed"
+                    else "None of the selected test cases can be re-executed"
+                )
+                raise HTTPException(status_code=400, detail=message)
         total_items = len(run_details) if run_details else 0
         _set_analysis_job(
             run_name,
@@ -102,9 +180,16 @@ def start_analyse_service(run_name: str, db, background_tasks: BackgroundTasks, 
             analysis_end_ts=None,
             analysis_duration_seconds=None,
             last_update=None,
+            stop_requested=False,
         )
 
-        background_tasks.add_task(run_analyse_background_service, run_name, db, mode)
+        background_tasks.add_task(
+            run_analyse_background_service,
+            run_name,
+            db,
+            mode,
+            selected_detail_ids,
+        )
         return {
             "run_name": run_name,
             "status": "started",
@@ -150,7 +235,9 @@ def _stringify_error(e: Exception) -> str:
         return "Unknown error"
 
 
-async def run_analyse_background_service(run_name: str, db, mode: str = "rerun_all"):
+async def run_analyse_background_service(
+    run_name: str, db, mode: str = "rerun_all", selected_detail_ids=None
+):
     analysis_start_ts = datetime.now()
     try:
         await _safe_ws_send({
@@ -171,21 +258,16 @@ async def run_analyse_background_service(run_name: str, db, mode: str = "rerun_a
             rd for rd in run_details if rd.status == "COMPLETED"
         ]
         
-        if mode == "retry_failed":
+        if mode in ("retry_failed", "selected"):
             logger.info("Running only failed test cases...")
-            filtered_run_details = []
-            for detail in run_details:
-                conversation = db.get_conversation_by_id(detail.conversation_id)
-                if not conversation:
-                    continue
-                reason = conversation.evaluation_reason or ""
-                if reason.strip() == "":
-                    filtered_run_details.append(detail)
+            filtered_run_details = _filter_run_details(
+                run_details, mode, selected_detail_ids, db
+            )
             logger.info(f"Retry Failed: {len(filtered_run_details)} / {len(run_details)} selected")
             run_details = filtered_run_details
             if not run_details:
                 logger.info("No failed test cases to retry")
-                return        
+                raise ValueError(NO_FAILED_TESTCASES_MESSAGE)
         if not run_details:
             logger.error(f"No run details found for run '{run_name}'.")
             raise HTTPException(
@@ -199,6 +281,9 @@ async def run_analyse_background_service(run_name: str, db, mode: str = "rerun_a
         failed = 0
 
         for detail in sorted(run_details, key=lambda d: getattr(d, "detail_id", 0) or 0):
+            if _analysis_stop_requested(run_name):
+                break
+
             testcase_name = getattr(detail, "testcase_name", None)
             metric_name = getattr(detail, "metric_name", None)
             detail_id = getattr(detail, "detail_id", None)
@@ -216,6 +301,7 @@ async def run_analyse_background_service(run_name: str, db, mode: str = "rerun_a
             score = None
             error = None
             conversation = None
+            stopped_during_detail = False
 
             try:
                 # Validate detail readiness for analysis, but never abort the whole loop.
@@ -271,6 +357,9 @@ async def run_analyse_background_service(run_name: str, db, mode: str = "rerun_a
                     return impl.execute(testcase=testcase, conversation=conversation)
 
                 raw_score, reason = await _run_in_thread(_eval_sync)
+                if _analysis_stop_requested(run_name):
+                    stopped_during_detail = True
+                    break
                 score = float(raw_score) if raw_score is not None else None
                 if not reason or str(reason).strip() == "":
                     raise ValueError(
@@ -285,41 +374,65 @@ async def run_analyse_background_service(run_name: str, db, mode: str = "rerun_a
                 status = "FAILED"
                 failed += 1
                 error = _stringify_error(e)
+                score = None
                 # Best-effort: persist failure reason to conversation (if available)
                 try:
                     if conversation is None and conversation_id:
                         conversation = db.get_conversation_by_id(conversation_id)
                     if conversation is not None:
-                        # Set score to 0 when there's an error
-                        conversation.evaluation_score = 0.0
+                        # Set score to None when there's an error
+                        conversation.evaluation_score = None
                         conversation.evaluation_reason = ""
                         conversation.evaluation_ts = datetime.now().isoformat()
                         db.add_or_update_conversation(conversation=conversation, override=True)
                 except Exception:
                     pass
             finally:
-                completed += 1
-                progress_payload = {
-                    "type": "ANALYSIS_PROGRESS",
-                    "runName": run_name,
-                    "current": completed,
-                    "total": total_items,
-                    "testcaseName": testcase_name,
-                    "metricName": metric_name,
-                    "strategyName": strategy_name,
-                    "detailId": detail_id,
-                    "status": status,
-                    "score": score,
-                }
-                if error:
-                    progress_payload["error"] = error
+                if not stopped_during_detail:
+                    completed += 1
+                    progress_payload = {
+                        "type": "ANALYSIS_PROGRESS",
+                        "runName": run_name,
+                        "current": completed,
+                        "total": total_items,
+                        "testcaseName": testcase_name,
+                        "metricName": metric_name,
+                        "strategyName": strategy_name,
+                        "detailId": detail_id,
+                        "status": status,
+                        "score": score,
+                    }
+                    if error:
+                        progress_payload["error"] = error
 
-                _set_analysis_job(
-                    run_name,
-                    current=completed,
-                    last_update=progress_payload,
-                )
-                await _safe_ws_send(progress_payload)
+                    _set_analysis_job(
+                        run_name,
+                        current=completed,
+                        last_update=progress_payload,
+                    )
+                    await _safe_ws_send(progress_payload)
+
+        if _analysis_stop_requested(run_name):
+            analysis_end_ts = datetime.now()
+            duration_seconds = int((analysis_end_ts - analysis_start_ts).total_seconds())
+            _set_analysis_job(
+                run_name,
+                status="STOPPED",
+                analysis_start_ts=analysis_start_ts.isoformat(),
+                analysis_end_ts=analysis_end_ts.isoformat(),
+                analysis_duration_seconds=duration_seconds,
+                stop_requested=False,
+            )
+            await _safe_ws_send({
+                "type": "ANALYSIS_STOPPED",
+                "runName": run_name,
+                "analysisStartTs": analysis_start_ts.isoformat(),
+                "analysisEndTs": analysis_end_ts.isoformat(),
+                "analysisDurationSeconds": duration_seconds,
+                "current": completed,
+                "total": total_items,
+            })
+            return
 
         analysis_end_ts = datetime.now()
         duration_seconds = int((analysis_end_ts - analysis_start_ts).total_seconds())

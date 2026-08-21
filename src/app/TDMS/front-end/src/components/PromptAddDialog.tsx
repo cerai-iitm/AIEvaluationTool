@@ -25,6 +25,8 @@ import {
   PromptSearchType,
 } from "./PromptSearchDialog";
 
+const PROMPT_CHARACTER_LIMIT = 10000;
+
 interface PromptAddDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -173,10 +175,25 @@ export function PromptAddDialog({
     }
   }, [open, fetchReferenceData]);
 
+  const isUserPromptOverLimit = userPrompt.length > PROMPT_CHARACTER_LIMIT;
+  const isSystemPromptOverLimit = systemPrompt.length > PROMPT_CHARACTER_LIMIT;
+  const arePromptLengthsValid =
+    !isUserPromptOverLimit && !isSystemPromptOverLimit;
   const isValid =
-    userPrompt.trim().length > 0 && systemPrompt.trim().length > 0;
+    userPrompt.trim().length > 0 &&
+    systemPrompt.trim().length > 0 &&
+    arePromptLengthsValid;
 
   const handleSubmit = async () => {
+    if (!arePromptLengthsValid) {
+      toast({
+        title: "Validation error",
+        description: "User Prompt and System Prompt must be 10,000 characters or fewer.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!isValid || !notes.trim() || !language || !domain) {
       toast({
         title: "Validation error",
@@ -245,28 +262,39 @@ export function PromptAddDialog({
 
         <div className="flex-1 p-1 overflow-y-auto space-y-6 pb-5">
           <div className="space-y-1">
-            <Label className="text-base font-semibold">User Prompt</Label>
+            <Label className="text-base font-semibold">User Prompt<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
             <Textarea
               value={userPrompt}
               placeholder="Enter user prompt"
               onChange={(e) => setUserPrompt(e.target.value)}
-              className="bg-muted min-h-[80px]"
+              className={`bg-muted min-h-[80px] ${
+                isUserPromptOverLimit ? "border-red-500 focus-visible:ring-red-500" : ""
+              }`}
               style={{
                 maxHeight: "120px",
                 minHeight: "70px",
                 overflow: "auto",
               }}
             />
+            <div
+              className={`text-right text-xs ${
+                isUserPromptOverLimit ? "text-red-600" : "text-muted-foreground"
+              }`}
+            >
+              {userPrompt.length}/{PROMPT_CHARACTER_LIMIT} characters
+            </div>
           </div>
           <div className="space-y-1">
-            <Label className="text-base font-semibold">System Prompt</Label>
+            <Label className="text-base font-semibold">System Prompt<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
             <div className="relative">
               <Textarea
                 value={systemPrompt}
                 onChange={(e) => setSystemPrompt(e.target.value)}
                 onFocus={() => setFocusedField("systemPrompt")}
                 onBlur={() => setFocusedField(null)}
-                className="bg-muted min-h-[80px] pr-10"
+                className={`bg-muted min-h-[80px] pr-10 ${
+                  isSystemPromptOverLimit ? "border-red-500 focus-visible:ring-red-500" : ""
+                }`}
                 style={{
                   maxHeight: "120px",
                   minHeight: "70px",
@@ -287,10 +315,17 @@ export function PromptAddDialog({
                 </Button>
               )}
             </div>
+            <div
+              className={`text-right text-xs ${
+                isSystemPromptOverLimit ? "text-red-600" : "text-muted-foreground"
+              }`}
+            >
+              {systemPrompt.length}/{PROMPT_CHARACTER_LIMIT} characters
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
-              <Label className="text-base font-semibold">Language</Label>
+              <Label className="text-base font-semibold">Language<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
               <Select
                 value={language || undefined}
                 onValueChange={setLanguage}
@@ -321,7 +356,7 @@ export function PromptAddDialog({
               </Select>
             </div>
             <div className="space-y-1">
-              <Label className="text-base font-semibold">Domain</Label>
+              <Label className="text-base font-semibold">Domain<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
               <Select
                 value={domain || undefined}
                 onValueChange={setDomain}
@@ -354,7 +389,7 @@ export function PromptAddDialog({
         </div>
 
         <div className="sticky bottom-0 bg-white pt-4 p-2 flex justify-center items-center gap-4 border-gray-200 z-10">
-          <Label className="text-base font-bold mr-2">Notes</Label>
+          <Label className="text-base font-bold mr-2">Notes<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
           <Input
             value={notes}
             onChange={(e) => setNotes(e.target.value)}

@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { type ChangeEvent, type DragEvent, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Sidebar from "@/components/Sidebar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { MoreVertical, FileText, Target, Globe, Layers, Languages, MessageSquare, PenTool, Scale, ClipboardList, BarChart3, Users, Upload, Loader } from "lucide-react";
@@ -52,12 +51,6 @@ interface DashboardStats {
   metrics: number;
 }
 
-interface ImporterWsEvent {
-  event: "idle" | "accepted" | "running" | "log" | "success" | "error";
-  status: "idle" | "running" | "success" | "error";
-  message: string;
-}
-
 const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -84,11 +77,11 @@ const Dashboard = () => {
   const [importerLoading, setImporterLoading] = useState(false);
   const [importerStatus, setImporterStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [importerMessage, setImporterMessage] = useState("");
-  const [importerLogs, setImporterLogs] = useState<string[]>([]);
-  const importerSocketRef = useRef<WebSocket | null>(null);
-  const importerSocketClosingRef = useRef(false);
-  const importerLoadingRef = useRef(false);
+  const importerFileInputRef = useRef<HTMLInputElement | null>(null);
   const importerReloadTimerRef = useRef<number | null>(null);
+  const [selectedJsonFile, setSelectedJsonFile] = useState<File | null>(null);
+  const [isJsonDragActive, setIsJsonDragActive] = useState(false);
+  // const hasDashboardData = stats.some((stat) => stat.count > 0);
 
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -172,13 +165,7 @@ const Dashboard = () => {
   }, [navigate, toast]);
 
   useEffect(() => {
-    importerLoadingRef.current = importerLoading;
-  }, [importerLoading]);
-
-  useEffect(() => {
     return () => {
-      importerSocketClosingRef.current = true;
-      importerSocketRef.current?.close();
       if (importerReloadTimerRef.current !== null) {
         window.clearTimeout(importerReloadTimerRef.current);
       }
@@ -278,81 +265,10 @@ const Dashboard = () => {
     }
   };
 
-  const closeImporterSocket = () => {
-    importerSocketClosingRef.current = true;
-    importerSocketRef.current?.close();
-    importerSocketRef.current = null;
-  };
-
-  const connectImporterSocket = (token: string) =>
-    new Promise<void>((resolve, reject) => {
-      importerSocketClosingRef.current = false;
-      const socket = new WebSocket(
-        `${API_ENDPOINTS.IMPORTER_STATUS_WS}?token=${encodeURIComponent(token)}`
-      );
-
-      socket.onopen = () => {
-        importerSocketRef.current = socket;
-        resolve();
-      };
-
-      socket.onmessage = (event) => {
-        const payload = JSON.parse(event.data) as ImporterWsEvent;
-
-        if (payload.event === "idle") {
-          return;
-        }
-
-        setImporterDialogOpen(true);
-        setImporterMessage(payload.message);
-
-        if (payload.event === "log") {
-          setImporterLogs((current) => [...current.slice(-7), payload.message]);
-          return;
-        }
-
-        if (payload.status === "running") {
-          setImporterLoading(true);
-          setImporterStatus("loading");
-          return;
-        }
-
-        if (payload.status === "success") {
-          setImporterLoading(false);
-          setImporterStatus("success");
-          closeImporterSocket();
-          importerReloadTimerRef.current = window.setTimeout(() => {
-            window.location.reload();
-          }, 2000);
-          return;
-        }
-
-        if (payload.status === "error") {
-          setImporterLoading(false);
-          setImporterStatus("error");
-          closeImporterSocket();
-        }
-      };
-
-      socket.onerror = () => {
-        reject(new Error("Unable to connect to importer status websocket"));
-      };
-
-      socket.onclose = () => {
-        importerSocketRef.current = null;
-        if (!importerSocketClosingRef.current && importerLoadingRef.current) {
-          setImporterLoading(false);
-          setImporterStatus("error");
-          setImporterMessage("Importer status connection was closed unexpectedly.");
-        }
-      };
-    });
-
   const runImporter = async () => {
     setImporterLoading(true);
     setImporterStatus("loading");
     setImporterMessage("Running importer... This may take a few minutes.");
-    setImporterLogs([]);
     setImporterDialogOpen(true);
 
     try {
@@ -364,35 +280,83 @@ const Dashboard = () => {
         return;
       }
 
-      await connectImporterSocket(token);
+      const formData = new FormData();
+      if (selectedJsonFile) {
+        formData.append("file", selectedJsonFile);
+      }
 
       const response = await fetch(API_ENDPOINTS.IMPORTER_RUN, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
         },
+        body: selectedJsonFile ? formData : undefined,
       });
 
       const data = await response.json();
 
-      if (!response.ok && data.status !== "running") {
-        closeImporterSocket();
+      if (!response.ok) {
         setImporterStatus("error");
-        setImporterMessage(data.message || "Failed to import data. Please check the server logs.");
+        setImporterMessage(data.detail || data.message || "Failed to import data. Please check the server logs.");
         setImporterLoading(false);
         return;
       }
 
-      setImporterStatus("loading");
-      setImporterLoading(true);
-      setImporterMessage(data.message || "Importer started. Waiting for live updates...");
+      setImporterStatus("success");
+      setImporterLoading(false);
+      setImporterMessage(data.message || "Data imported successfully.");
+      importerReloadTimerRef.current = window.setTimeout(() => {
+        window.location.reload();
+      }, 3000);
     } catch (error) {
-      closeImporterSocket();
       setImporterStatus("error");
       setImporterMessage(`Error: ${error instanceof Error ? error.message : "An unexpected error occurred"}`);
       setImporterLoading(false);
     }
+  };
+
+  const pickJsonFile = (file?: File | null) => {
+    if (!file) {
+      return;
+    }
+
+    if (!file.name.toLowerCase().endsWith(".json")) {
+      setSelectedJsonFile(null);
+      setImporterStatus("idle");
+      setImporterMessage("Please select a .json file.");
+      return;
+    }
+
+    setSelectedJsonFile(file);
+    setImporterStatus("idle");
+    setImporterMessage("");
+  };
+
+  const handleJsonFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    pickJsonFile(event.target.files?.[0]);
+  };
+
+  const handleJsonDragOver = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsJsonDragActive(true);
+  };
+
+  const handleJsonDragLeave = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsJsonDragActive(false);
+  };
+
+  const handleJsonDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsJsonDragActive(false);
+    pickJsonFile(event.dataTransfer.files?.[0]);
+  };
+
+  const handleImportClick = () => {
+    runImporter();
   };
 
   const statCardHandlers = (stat: typeof stats[0]) => ({
@@ -403,10 +367,7 @@ const Dashboard = () => {
   return (
     <>
       <div className="flex min-h-screen">
-        <aside className="fixed top-0 left-0 h-screen w-[220px] bg-[#5252c2] z-20">
-          <Sidebar />
-        </aside>
-        <main className="flex-1 ml-[220px] min-h-screen flex flex-col pt-28 pb-28">
+        <main className="flex-1 min-h-screen flex flex-col pt-28 pb-28">
           {/* Centered Title */}
           <div className="flex items-center justify-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold text-black">
@@ -424,7 +385,7 @@ const Dashboard = () => {
                     className={`relative shadow-lg hover:shadow-xl transition-shadow hovershadow-md ${stat.onClick ? "cursor-pointer" : ""}`}
                     onClick={() => stat.onClick && stat.onClick()}
                   >
-                    <button
+                    {/* <button
                       className="absolute top-4 right-4 text-muted-foreground hover:text-foreground z-10"
                       onClick={(e) => {
                         e.stopPropagation();
@@ -432,7 +393,7 @@ const Dashboard = () => {
                       }}
                     >
                       <MoreVertical className="w-5 h-5" />
-                    </button>
+                    </button> */}
                     {menuOpen === idx && (
                       <div className="absolute top-12 right-4 z-20 bg-white border rounded-lg shadow-lg flex flex-col min-w-[150px]">
                         {MENU_OPTIONS.filter(opt => {
@@ -477,7 +438,8 @@ const Dashboard = () => {
           onClick={() => {
             setImporterStatus("idle");
             setImporterMessage("");
-            setImporterLogs([]);
+            setSelectedJsonFile(null);
+            setIsJsonDragActive(false);
             setImporterDialogOpen(true);
           }}
           disabled={importerLoading}
@@ -566,15 +528,6 @@ const Dashboard = () => {
                 <Loader className="w-12 h-12 text-blue-600 animate-spin" />
                 <p className="text-foreground font-medium">The data is being imported. it will take a few seconds</p>
                 {/* <p className="text-muted-foreground">{importerMessage}</p> */}
-                {/* {importerLogs.length > 0 && (
-                  <div className="w-full max-h-48 overflow-y-auto rounded-md bg-slate-950 p-3 text-left">
-                    {importerLogs.map((log, index) => (
-                      <p key={`${log}-${index}`} className="font-mono text-xs text-slate-100">
-                        {log}
-                      </p>
-                    ))}
-                  </div>
-                )} */}
               </div>
             )}
 
@@ -598,12 +551,50 @@ const Dashboard = () => {
             )}
 
             {importerStatus === "idle" && (
-              <div className="flex flex-col items-center gap-4">
-                <Upload className="w-12 h-12 text-blue-600" />
-                <p className="text-foreground">
-                  This will import all test data into the database. Continue?
-                </p>
-              </div>
+              // hasDashboardData ? (
+                <div
+                  className={`flex flex-col items-center gap-4 rounded-lg border-2 border-dashed px-6 py-8 transition-colors ${
+                    isJsonDragActive ? "border-blue-600 bg-blue-50" : "border-gray-300 bg-white"
+                  }`}
+                  onDragOver={handleJsonDragOver}
+                  onDragLeave={handleJsonDragLeave}
+                  onDrop={handleJsonDrop}
+                >
+                  <input
+                    ref={importerFileInputRef}
+                    type="file"
+                    accept="application/json,.json"
+                    className="hidden"
+                    onChange={handleJsonFileChange}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => importerFileInputRef.current?.click()}
+                    className="rounded-full p-3 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                    aria-label="Choose JSON file"
+                  >
+                    <Upload className="w-12 h-12 text-blue-600" />
+                  </button>
+                  <div className="space-y-1">
+                    <p className="text-foreground font-medium">
+                      {selectedJsonFile ? selectedJsonFile.name : "Click the upload icon or drop a JSON file here"}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Missing fields will be reported before import. Existing test case names are skipped.
+                    </p>
+                    {importerMessage && (
+                      <p className="text-sm text-red-600 whitespace-pre-line">{importerMessage}</p>
+                    )}
+                  </div>
+                </div>
+              // ) : (
+              //   <div className="flex flex-col items-center gap-4 px-6 py-8">
+              //     <Upload className="w-12 h-12 text-blue-600" />
+              //     {importerMessage && (
+              //       <p className="text-sm text-red-600 whitespace-pre-line">{importerMessage}</p>
+              //     )}
+              //   </div>
+              // )
             )}
           </div>
 
@@ -616,7 +607,7 @@ const Dashboard = () => {
                 Cancel
               </button>
               <button
-                onClick={runImporter}
+                onClick={handleImportClick}
                 disabled={importerLoading}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-400"
               >
@@ -629,7 +620,7 @@ const Dashboard = () => {
             <div className="flex gap-4 justify-end pt-4">
               <button
                 onClick={() => {
-                  setImporterDialogOpen(false);
+                  setImporterDialogOpen(true);
                   setImporterStatus("idle");
                 }}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"

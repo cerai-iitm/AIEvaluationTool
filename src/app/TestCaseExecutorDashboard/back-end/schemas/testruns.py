@@ -12,7 +12,10 @@ class TestRunResponse(BaseModel):
     domain: Optional[str] 
     duration_ms: Optional[int] = None
     average_score: Optional[float] = None
-
+    totalPages: Optional[int] = None
+    analysis_status: str
+    has_failed_cases: bool = False
+    
 class TestRunDetailsResponse(BaseModel):
     run_name: str
     testcase_name: str
@@ -23,6 +26,7 @@ class TestRunDetailsResponse(BaseModel):
     detail_id: int    
     score: Optional[float] = None
     evaluation_reason: Optional[str] = None  # ← add this
+    has_failed_cases: bool = False
 
 class TestRunSummaryResponse(BaseModel):
     run_id: int
@@ -33,6 +37,8 @@ class TestRunSummaryResponse(BaseModel):
     start_ts: str
     end_ts: Optional[str] = None
     average_score: Optional[float] = None
+    analysis_status: str = "failed"  # default status
+    
 
 
 class TestRunFullResponse(BaseModel):
@@ -56,6 +62,7 @@ class NewTestRun(BaseModel):
     target: Optional[str] = None  # 👈 optional now
     testPlan: str          # ✅ NAME, not ID
     testCaseId: Optional[str] = None
+    testCaseIds: Optional[List[str]] = None
     metric: str            # ✅ NAME
     metric: str
     maxTestCases: str

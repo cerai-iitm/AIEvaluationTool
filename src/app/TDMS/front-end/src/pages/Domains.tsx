@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import Sidebar from "@/components/Sidebar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,13 +14,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, X } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { API_ENDPOINTS } from "@/config/api";
 import { hasPermission } from "@/utils/permissions";
 import { HistoryButton } from "@/components/HistoryButton";
+import { PageHeaderWithBack } from "@/components/PageHeaderWithBack";
+import { NameCharacterCounter } from "@/components/NameCharacterCounter";
+import { isNameOverCharacterLimit } from "@/utils/nameValidation";
 
 // Types
 interface Domain {
@@ -169,6 +171,15 @@ const DomainList: React.FC = () => {
       return;
     }
 
+    if (isNameOverCharacterLimit(newDomainName)) {
+      toast({
+        title: "Validation Error",
+        description: "Domain name must be 40 characters or fewer",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const token = localStorage.getItem("access_token");
       const headers: HeadersInit = {
@@ -221,6 +232,15 @@ const DomainList: React.FC = () => {
       toast({
         title: "Validation Error",
         description: "Domain name and notes are required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isNameOverCharacterLimit(updateName)) {
+      toast({
+        title: "Validation Error",
+        description: "Domain name must be 40 characters or fewer",
         variant: "destructive",
       });
       return;
@@ -333,13 +353,10 @@ const DomainList: React.FC = () => {
 
   return (
     <div className="flex min-h-screen">
-      <aside className="fixed top-0 left-0 h-screen w-[220px] bg-[#5252c2] z-20">
-        <Sidebar />
-      </aside>
 
-      <main className="flex-1 bg-background ml-[220px] md:ml-[224px]">
+      <main className="flex-1 bg-background">
         <div className="p-4 md:p-8 flex flex-col h-screen">
-          <h1 className="text-2xl md:text-4xl font-bold mb-4 md:mb-8 text-center">Domains</h1>
+          <PageHeaderWithBack title="Domains" />
 
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             {/* <Select defaultValue="Domain">
@@ -373,8 +390,18 @@ const DomainList: React.FC = () => {
                 <Button
                   variant="ghost"
                   size="icon"
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                  aria-label="Go to first page"
+                >
+                  <ChevronsLeft className="w-4 h-4 md:w-5 md:h-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
+                  aria-label="Go to previous page"
                 >
                   <ChevronLeft className="w-4 h-4 md:w-5 md:h-5"></ChevronLeft>
                 </Button>
@@ -383,20 +410,30 @@ const DomainList: React.FC = () => {
                   size='icon'
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p+1))}
                   disabled={currentPage === totalPages}
+                  aria-label="Go to next page"
                 >
                   <ChevronRight className="w-4 h-4 md:w-5 md:h-5"></ChevronRight>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setCurrentPage(totalPages)}
+                  disabled={currentPage === totalPages}
+                  aria-label="Go to last page"
+                >
+                  <ChevronsRight className="w-4 h-4 md:w-5 md:h-5" />
                 </Button>
               </div>
             </div>
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto">
-            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[72vh] max-w-1/2 md:max-w-[500px] overflow-y-auto">
+            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[72vh] w-full max-w-[500px] overflow-y-auto">
               {isLoading ? (
                 <div className="flex items-center justify-center p-8">
                   <span>Loading...</span>
                 </div>
               ) : (
-                <table className="w-full min-w-[400px] table-fixed ">
+                <table className="w-full min-w-[400px]">
                   <thead className="border-b-2">
                     <tr>
                       <th className="sticky top-0 bg-white z-10 p-2 md:p-4 font-semibold text-center text-xs md:text-base">Domain ID</th>
@@ -423,6 +460,7 @@ const DomainList: React.FC = () => {
                             setHighlightedRowId(row.domain_id);
                           }}
                         >
+                          {/* <td className="p-2 text-center text-xs md:text-base">{(currentPage - 1) * itemsPerPage + index + 1}</td> */}
                           <td className="p-2 text-center text-xs md:text-base">{row.domain_id}</td>
                           <td className="p-2 text-xs md:text-base capitalize pl-6">{row.domain_name}</td>
                         </tr>
@@ -573,15 +611,21 @@ const DomainList: React.FC = () => {
             </button>
             <div className="flex flex-col md:flex-row items-center mb-6 md:mb-8 mt-4 md:mt-5 gap-2 md:gap-0">
               {/* <label className="font-semibold text-left md:text-lg min-w-[100px] md:min-w-[165px]">Domain :</label> */}
-              <label className="font-semibold text-lg text-left ml-8 p-2">Domain :</label>
-              <Input
-                value={updateName}
-                onChange={e => setUpdateName(e.target.value)}
-                className="bg-gray-100 rounded border px-3 md:px-4 py-2 text-sm md:text-lg flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200 capitalize mx-2 mr-8"
-              />
+              <label className="font-semibold text-lg text-left ml-8 p-2">Domain :<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
+              <div className="mx-2 mr-8 w-full flex-1">
+                <Input
+                  value={updateName}
+                  onChange={e => setUpdateName(e.target.value)}
+                  aria-invalid={isNameOverCharacterLimit(updateName)}
+                  className={`bg-gray-100 rounded border px-3 md:px-4 py-2 text-sm md:text-lg w-full focus:outline-none focus:ring focus:ring-blue-200 capitalize ${
+                    isNameOverCharacterLimit(updateName) ? "border-red-500" : ""
+                  }`}
+                />
+                <NameCharacterCounter value={updateName} />
+              </div>
             </div>
             <div className="flex justify-center items-center p-4">
-              <label className="text-base md:text-lg mr-2"> Notes </label>
+              <label className="text-base md:text-lg mr-2">Notes</label>
               <Input
                 value={addMessage}
                 onChange={e => setAddMessage(e.target.value)}
@@ -589,11 +633,16 @@ const DomainList: React.FC = () => {
               />
               <button
                 className={`mt-2 md:mt-0 md:ml-4 px-6 py-2 rounded text-sm md:text-lg font-semibold shadow transition ${
-                  updateName.trim() && addMessage.trim() 
+                  updateName.trim() && addMessage.trim() && !isNameOverCharacterLimit(updateName)
                     ? "bg-green-600 hover:bg-green-700 text-white cursor-pointer" 
                     : "bg-green-300 text-white cursor-not-allowed"
                 }`}
-                disabled={!updateName.trim() || !addMessage.trim() || updateName === selectedDomain?.domain_name }
+                disabled={
+                  !updateName.trim() ||
+                  !addMessage.trim() ||
+                  updateName === selectedDomain?.domain_name ||
+                  isNameOverCharacterLimit(updateName)
+                }
                 onClick={handleUpdate}
                 
               >
@@ -631,18 +680,23 @@ const DomainList: React.FC = () => {
             {/* Domain Name Row */}
             {/* <div className="flex flex-col items-center justify-center flex-1"> */}
             <div className="flex flex-col md:flex-row items-center mb-6 mb:mb-8 mt-4 md:mt-5 gap-2 md:gap-0">
-              <label className="font-semibold text-base md:text-lg ml-8 p-2">Domain :</label>
-              <Input
-                value={newDomainName}
-                onChange={e => setNewDomainName(e.target.value)}
-                className="bg-gray-100 rounded border px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 w-full md:w-auto  capitalize mx-2 mr-8"
-                maxLength={150}
-              />
+              <label className="font-semibold text-base md:text-lg ml-8 p-2">Domain :<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
+              <div className="mx-2 mr-8 w-full flex-1">
+                <Input
+                  value={newDomainName}
+                  onChange={e => setNewDomainName(e.target.value)}
+                  aria-invalid={isNameOverCharacterLimit(newDomainName)}
+                  className={`bg-gray-100 rounded border px-3 md:px-4 py-2 text-sm md:text-[17px] w-full capitalize ${
+                    isNameOverCharacterLimit(newDomainName) ? "border-red-500" : ""
+                  }`}
+                />
+                <NameCharacterCounter value={newDomainName} />
+              </div>
             </div>
             {/* </div> */}
             {/* Message Row + Submit Button */}
             <div className="flex flex-col md:flex-row items-center gap-2 md:gap-0">
-              <label className="text-base md:text-lg mr-2"> Notes   </label>
+              <label className="text-base md:text-lg mr-2">Notes</label>
               <Input
                 value={addMessage}
                 onChange={e => setAddMessage(e.target.value)}
@@ -651,12 +705,16 @@ const DomainList: React.FC = () => {
               <button
                 type="button"
                 className={`mt-2 md:mt-0 md:ml-4 px-6 py-2 rounded text-sm md:text-lg font-semibold shadow transition ${
-                  newDomainName.trim() && addMessage.trim() 
+                  newDomainName.trim() && addMessage.trim() && !isNameOverCharacterLimit(newDomainName)
                     ? "bg-green-600 hover:bg-green-700 text-white cursor-pointer" 
                     : "bg-green-300 text-white cursor-not-allowed"
                 }`}
                 onClick={handleAdd}
-                disabled={!newDomainName.trim() || !addMessage.trim()}
+                disabled={
+                  !newDomainName.trim() ||
+                  !addMessage.trim() ||
+                  isNameOverCharacterLimit(newDomainName)
+                }
               >
                 Submit
               </button>

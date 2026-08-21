@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import Sidebar from '@/components/Sidebar';
 import {Input} from '@/components/ui/input';
 import {Button} from '@/components/ui/button';
 import  {Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { API_ENDPOINTS } from '@/config/api';
 import { hasPermission, isUser } from '@/utils/permissions';
 import { HistoryButton } from "@/components/HistoryButton";
+import { PageHeaderWithBack } from "@/components/PageHeaderWithBack";
+import { NameCharacterCounter } from "@/components/NameCharacterCounter";
+import { isNameOverCharacterLimit } from "@/utils/nameValidation";
 
 
 interface Language {
@@ -136,6 +138,15 @@ const LanguageList: React.FC = () => {
             return;
         }
 
+        if (isNameOverCharacterLimit(newLanguageName)) {
+            toast({
+                title: "Validation Error",
+                description: "Language name must be 40 characters or fewer",
+                variant: "destructive",
+            });
+            return;
+        }
+
         try {
             const token = localStorage.getItem("access_token");
             const headers: HeadersInit = {
@@ -188,6 +199,15 @@ const LanguageList: React.FC = () => {
             toast({
                 title: "Validation Error",
                 description: "Language name and notes are required",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        if (isNameOverCharacterLimit(updateName)) {
+            toast({
+                title: "Validation Error",
+                description: "Language name must be 40 characters or fewer",
                 variant: "destructive",
             });
             return;
@@ -313,14 +333,11 @@ const LanguageList: React.FC = () => {
     return (
         <div className="flex min-h-screen">
             {/* Sidebar */}
-            <aside className="fixed top-0 left-0 h-screen w-[220px] bg-[#5252c2] z-20">
-                <Sidebar />
-            </aside>
 
             {/* Main content */}
-            <main className="flex-1 bg-background ml-[220px] md:ml-[224px]">
+            <main className="flex-1 bg-background">
                 <div className="p-4 md:p-8 flex flex-col h-screen">
-                    <h1 className="text-2xl md:text-4xl font-bold mb-4 md:mb-8 text-center">Languages</h1>
+                    <PageHeaderWithBack title="Languages" />
 
                     {/* Filter/Search Bar */}
                     <div className="flex flex-col sm:flex-row gap-4 mb-6">
@@ -354,8 +371,18 @@ const LanguageList: React.FC = () => {
                             <Button
                                 variant="ghost"
                                 size="icon"
+                                onClick={() => setCurrentPage(1)}
+                                disabled={currentPage === 1}
+                                aria-label="Go to first page"
+                            >
+                                <ChevronsLeft className="w-4 h-4 md:w-5 md:h-5" />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
                                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                                 disabled={currentPage === 1}
+                                aria-label="Go to previous page"
                             >
                                 <ChevronLeft className="w-4 h-4 md:w-5 md:h-5" />
                             </Button>
@@ -364,8 +391,18 @@ const LanguageList: React.FC = () => {
                                 size="icon"
                                 onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                                 disabled={currentPage === totalPages}
+                                aria-label="Go to next page"
                             >
                                 <ChevronRight className="w-4 h-4 md:w-5 md:h-5" />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setCurrentPage(totalPages)}
+                                disabled={currentPage === totalPages}
+                                aria-label="Go to last page"
+                            >
+                                <ChevronsRight className="w-4 h-4 md:w-5 md:h-5" />
                             </Button>
                         </div>
                     </div>
@@ -382,7 +419,7 @@ const LanguageList: React.FC = () => {
                                     <thead className="border-b-2">
                                         <tr>
                                             <th className="sticky top-0 bg-white z-10 p-2 md:p-4 font-semibold text-center text-xs md:text-base">Language ID</th>
-                                            <th className="sticky top-0 bg-white z-10 p-2 md:p-4 font-semibold text-left text-xs md:text-base">Language Name</th>
+                                            <th className="sticky top-0 bg-white z-10 p-2 md:p-4 font-semibold text-left text-xs md:text-base">Language </th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -393,7 +430,7 @@ const LanguageList: React.FC = () => {
                                                 </td>
                                             </tr>
                                         ) : (
-                                            paginatedLanguages.map(lang => (
+                                            paginatedLanguages.map((lang) => (
                                                 <tr 
                                                     key={lang.lang_id} 
                                                     className={`border-b cursor-pointer transition-colors duration-200 ${
@@ -553,30 +590,42 @@ const LanguageList: React.FC = () => {
                             ×
                         </button>
                         <div className="flex flex-col md:flex-row justify-center items-center mb-6 md:mb-8 mt-4 md:mt-5 gap-2 md:gap-0">
-                            <label className="font-semibold text-base ml-8 p-2">Language :</label>
-                            <Input
-                                value={updateName}
-                                onChange={e => setUpdateName(e.target.value)}
-                                maxLength={15}
-                                className="text-sm md:text-[17px] capitalize w-full md:w-1/2 "
-                            />
+                            <label className="font-semibold text-base ml-8 p-2">Language :<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
+                            <div className="w-full md:w-1/2">
+                                <Input
+                                    value={updateName}
+                                    onChange={e => setUpdateName(e.target.value)}
+                                    aria-invalid={isNameOverCharacterLimit(updateName)}
+                                    className={`text-sm md:text-[17px] capitalize w-full ${
+                                        isNameOverCharacterLimit(updateName) ? "border-red-500" : ""
+                                    }`}
+                                />
+                                <NameCharacterCounter value={updateName} />
+                            </div>
                         </div>
                         <div className="flex justify-center items-center p-4">
-                            <label className="text-base md:text-lg mr-2"> Notes </label>
+                            <label className="text-base md:text-lg mr-2">Notes</label>
                             <Input
                                 value={addMessage}
                                 onChange={e => setAddMessage(e.target.value)}
-                                maxLength={15}
                                 placeholder='Required'
                                 className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 focus:outline-none focus:ring focus:ring-blue-200 "
                             />
                             <button
                                 className={`mt-2 md:mt-0 md:ml-4 px-6 py-2 rounded text-sm md:text-lg font-semibold shadow transition ${
-                                    updateName.trim() && addMessage.trim() && updateName !== selectedLanguage?.lang_name
+                                    updateName.trim() &&
+                                    addMessage.trim() &&
+                                    updateName !== selectedLanguage?.lang_name &&
+                                    !isNameOverCharacterLimit(updateName)
                                         ? "bg-green-600 hover:bg-green-700 text-white cursor-pointer" 
                                         : "bg-green-300 text-white cursor-not-allowed"
                                 }`}
-                                disabled={!updateName.trim() || !addMessage.trim() || updateName === selectedLanguage?.lang_name }
+                                disabled={
+                                    !updateName.trim() ||
+                                    !addMessage.trim() ||
+                                    updateName === selectedLanguage?.lang_name ||
+                                    isNameOverCharacterLimit(updateName)
+                                }
                                 onClick={handleUpdate}
                                 
                             >
@@ -613,33 +662,43 @@ const LanguageList: React.FC = () => {
                         </button>
                         {/* Language Name Row */}
                         <div className="flex flex-col md:flex-row justify-center items-center mb-6 mb:mb-8 mt-4 md:mt-5 gap-2 md:gap-0">
-                            <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[115px]">Language :</label>
-                            <Input
-                                value={newLanguageName}
-                                onChange={e => setNewLanguageName(e.target.value)}
-                                className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] w-full md:w-1/2 capitalize"
-                                maxLength={15}
-                            />
+                            <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[115px]">Language :<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
+                            <div className="w-full md:w-1/2">
+                                <Input
+                                    value={newLanguageName}
+                                    onChange={e => setNewLanguageName(e.target.value)}
+                                    aria-invalid={isNameOverCharacterLimit(newLanguageName)}
+                                    className={`bg-gray-100 rounded border px-3 md:px-4 py-2 text-sm md:text-[17px] w-full capitalize ${
+                                        isNameOverCharacterLimit(newLanguageName) ? "border-red-500" : "border-gray-300"
+                                    }`}
+                                />
+                                <NameCharacterCounter value={newLanguageName} />
+                            </div>
                         </div>
                         {/* Message Row + Submit Button */}
                         <div className="flex flex-col md:flex-row items-center gap-2 md:gap-0">
-                            <label className="text-base md:text-lg mr-2"> Notes   </label>
+                            <label className="text-base md:text-lg mr-2">Notes</label>
                             <Input
                                 value={addMessage}
                                 onChange={e => setAddMessage(e.target.value)}
-                                maxLength={15}
                                 placeholder='Required'
                                 className=" rounded border px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
                             />
                             <button
                                 type="button"
                                 className={`mt-2 md:mt-0 md:ml-4 px-6 py-2 rounded text-sm md:text-lg font-semibold shadow transition ${
-                                    newLanguageName.trim() && addMessage.trim() 
+                                    newLanguageName.trim() &&
+                                    addMessage.trim() &&
+                                    !isNameOverCharacterLimit(newLanguageName)
                                         ? "bg-green-600 hover:bg-green-700 text-white cursor-pointer" 
                                         : "bg-green-300 text-white cursor-not-allowed"
                                 }`}
                                 onClick={handleAddLanguage}
-                                disabled={!newLanguageName.trim() || !addMessage.trim()}
+                                disabled={
+                                    !newLanguageName.trim() ||
+                                    !addMessage.trim() ||
+                                    isNameOverCharacterLimit(newLanguageName)
+                                }
                             >
                                 Submit
                             </button>

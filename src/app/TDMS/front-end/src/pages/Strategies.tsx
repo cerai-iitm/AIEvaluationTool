@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import Sidebar from "@/components/Sidebar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,14 +14,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, X } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { API_ENDPOINTS } from "@/config/api";
 import { hasPermission } from "@/utils/permissions";
 import { HistoryButton } from "@/components/HistoryButton";
+import { PageHeaderWithBack } from "@/components/PageHeaderWithBack";
 import { set } from "date-fns";
+import { NameCharacterCounter } from "@/components/NameCharacterCounter";
+import { isNameOverCharacterLimit } from "@/utils/nameValidation";
 
 // Types
 interface Strategy {
@@ -153,10 +155,19 @@ const StrategyList: React.FC = () => {
 
   // ADD handler
   const handleAdd = async () => {
-    if (!newStrategyName.trim() || !addMessage.trim()) {
+    if (!newStrategyName.trim() || !newStrategyDescription.trim() || !addMessage.trim()) {
       toast({
         title: "Validation Error",
-        description: "Strategy name and notes are required",
+        description: "Strategy name, description, and notes are required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isNameOverCharacterLimit(newStrategyName)) {
+      toast({
+        title: "Validation Error",
+        description: "Strategy name must be 40 characters or fewer",
         variant: "destructive",
       });
       return;
@@ -177,7 +188,7 @@ const StrategyList: React.FC = () => {
         headers,
         body: JSON.stringify({
           strategy_name: newStrategyName.trim(),
-          strategy_description: newStrategyDescription.trim() || null,
+          strategy_description: newStrategyDescription.trim(),
           notes: addMessage.trim() || null,
         }),
       });
@@ -212,10 +223,19 @@ const StrategyList: React.FC = () => {
 
   // UPDATE handler
   const handleUpdate = async () => {
-    if (!selectedStrategy || !updateName.trim() || !updateMessage.trim()) {
+    if (!selectedStrategy || !updateName.trim() || !updateDescription.trim() || !updateMessage.trim()) {
       toast({
         title: "Validation Error",
-        description: "Strategy name and notes are required",
+        description: "Strategy name, description, and notes are required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isNameOverCharacterLimit(updateName)) {
+      toast({
+        title: "Validation Error",
+        description: "Strategy name must be 40 characters or fewer",
         variant: "destructive",
       });
       return;
@@ -331,13 +351,10 @@ const StrategyList: React.FC = () => {
 
   return (
     <div className="flex min-h-screen">
-      <aside className="fixed top-0 left-0 h-screen w-[220px] bg-[#5252c2] z-20">
-        <Sidebar />
-      </aside>
 
-      <main className="flex-1 bg-background ml-[220px] md:ml-[224px]">
+      <main className="flex-1 bg-background">
         <div className="p-4 md:p-8 flex flex-col h-screen">
-          <h1 className="text-2xl md:text-4xl font-bold mb-4 md:mb-8 text-center">Strategies</h1>
+          <PageHeaderWithBack title="Strategies" />
 
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <Select defaultValue="Strategy">
@@ -371,8 +388,18 @@ const StrategyList: React.FC = () => {
                 <Button
                   variant="ghost"
                   size="icon"
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                  aria-label="Go to first page"
+                >
+                  <ChevronsLeft className="w-4 h-4 md:w-5 md:h-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
+                  aria-label="Go to previous page"
                 >
                   <ChevronLeft className="w-4 h-4 md:w-5 md:h-5"></ChevronLeft>
                 </Button>
@@ -381,15 +408,25 @@ const StrategyList: React.FC = () => {
                   size='icon'
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
+                  aria-label="Go to next page"
                 >
                   <ChevronRight className="w-4 h-4 md:w-5 md:h-5"></ChevronRight>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setCurrentPage(totalPages)}
+                  disabled={currentPage === totalPages}
+                  aria-label="Go to last page"
+                >
+                  <ChevronsRight className="w-4 h-4 md:w-5 md:h-5" />
                 </Button>
               </div>
             </div>
           </div>
           
           <div className="flex-1 min-h-0 overflow-y-auto">
-            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[73vh] max-w-[500px] mx-left overflow-y-auto">
+            <div className="bg-white rounded-lg shadow overflow-hidden max-h-[73vh] w-full overflow-y-auto">
               {isLoading ? (
                 <div className="flex items-center justify-center p-8">
                   <span>Loading...</span>
@@ -398,9 +435,9 @@ const StrategyList: React.FC = () => {
                 <table className="w-full table-fixed">
                   <thead className="border-b-2">
                     <tr>
-                      <th className="sticky top-0 z-10 p-4 font-semibold text-left w-[15%] ">Strategy ID</th>
-                      <th className="sticky top-0 z-10 p-2 font-semibold text-left w-[30%]">Strategy Name</th>
-                      {/* <th className="sticky top-0 z-10 pl-8 p-2 font-semibold text-left ">Strategy Description</th> */}
+                      <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left w-[120px]">Strategy ID</th>
+                      <th className="sticky top-0 bg-white z-10 p-2 font-semibold text-left w-[260px]">Strategy Name</th>
+                      <th className="sticky top-0 bg-white z-10 pl-8 p-2 font-semibold text-left">Strategy Description</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -411,7 +448,7 @@ const StrategyList: React.FC = () => {
                         </td>
                       </tr>
                     ) : (
-                      PaginatedStrategies.map((row) => (
+                      PaginatedStrategies.map((row, index) => (
                         <tr 
                           key={row.strategy_id}
                           className={`border-b cursor-pointer transition-colors duration-200 ${
@@ -423,9 +460,9 @@ const StrategyList: React.FC = () => {
                             setHighlightedRowId(row.strategy_id);
                           }}
                         >
-                          <td className="p-2 pl-12">{row.strategy_id}</td>
+                          <td className="p-2 pl-12">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                           <td className="p-2 truncate">{row.strategy_name}</td>
-                          {/* <td className="p-2 max-w-md truncate">{row.strategy_description || ""}</td> */}
+                          <td className="p-2 truncate">{row.strategy_description}</td>
                         </tr>
                       ))
                     )}
@@ -458,7 +495,7 @@ const StrategyList: React.FC = () => {
             setUpdateMessage("");
           }}
         >
-          <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-md"
+          <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-[80vw] max-w-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <button 
@@ -480,7 +517,7 @@ const StrategyList: React.FC = () => {
               {selectedStrategy.strategy_description && (
                 <div className="flex flex-col gap-1">
                   <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy</label>
-                  <Textarea className="text-sm md:text-base min-h-[80px] flex-1 w-full md:w-auto resize-none bg-muted" readOnly>{selectedStrategy.strategy_description}</Textarea>
+                  <Textarea className="text-sm md:text-base min-h-[140px] w-full resize-none bg-muted" readOnly>{selectedStrategy.strategy_description}</Textarea>
                 </div>
               )}
               {/* <div className="flex flex-col gap-2 md:gap-3">
@@ -548,7 +585,7 @@ const StrategyList: React.FC = () => {
               </p>
               <div className="mb-6">
                 <p className="text-sm md:text-base text-center capitalize font-semibold">
-                  <span className="font-medium">Strategy Name :</span> {selectedStrategy.strategy_name}
+                  <span className="font-medium">Strategy  :</span> {selectedStrategy.strategy_name}
                 </p>
               </div>
               <div className="flex gap-4 justify-center">
@@ -579,7 +616,7 @@ const StrategyList: React.FC = () => {
           //   setUpdateMessage("");
           // }}
         >
-          <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-lg min-h-[300px]"
+          <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-[80vw] max-w-2xl min-h-[300px]"
             onClick={(e) => e.stopPropagation()}
           >
             <button 
@@ -595,26 +632,30 @@ const StrategyList: React.FC = () => {
             </button>
             
             <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 mt-4 md:mt-5 gap-2 md:gap-0">
-              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy</label>
+              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
               <Input
                 value={updateName}
                 onChange={e => setUpdateName(e.target.value)}
-                className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-lg flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
+                aria-invalid={isNameOverCharacterLimit(updateName)}
+                className={`bg-gray-100 rounded border px-3 md:px-4 py-2 text-sm md:text-lg flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200 ${
+                  isNameOverCharacterLimit(updateName) ? "border-red-500" : "border-gray-300"
+                }`}
               />
+              <NameCharacterCounter value={updateName} />
             </div>
             
             <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 gap-2 md:gap-0">
-              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Description </label>
+              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Description</label>
               <Textarea
                 value={updateDescription}
                 onChange={e => setUpdateDescription(e.target.value)}
-                className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-lg flex-1 w-full md:w-auto min-h-[80px] resize-none focus:outline-none focus:ring focus:ring-blue-200"
+                className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-lg flex-1  min-h-[140px] resize-none focus:outline-none focus:ring focus:ring-blue-200"
                 placeholder="Enter strategy description..."
               />
             </div>
             
             <div className="flex flex-col md:flex-row items-center gap-2 md:gap-0">
-              <label className="text-base md:text-lg min-w-[60px]">Notes </label>
+              <label className="text-base md:text-lg min-w-[60px]">Notes</label>
               <Input
                 value={updateMessage}
                 onChange={e => setUpdateMessage(e.target.value)}
@@ -622,7 +663,12 @@ const StrategyList: React.FC = () => {
               />
               <button
                 className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={!updateName.trim() || !updateMessage.trim()}
+                disabled={
+                  !updateName.trim() ||
+                  !updateDescription.trim() ||
+                  !updateMessage.trim() ||
+                  isNameOverCharacterLimit(updateName)
+                }
                 onClick={handleUpdate}
               >
                 Submit
@@ -658,17 +704,20 @@ const StrategyList: React.FC = () => {
             
             <div className="flex flex-col items-center justify-center flex-1">
               <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 w-full gap-2 md:gap-0">
-                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy</label>
+                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
                 <Input
                   value={newStrategyName}
                   onChange={e => setNewStrategyName(e.target.value)}
-                  className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200"
-                  maxLength={150}
+                  aria-invalid={isNameOverCharacterLimit(newStrategyName)}
+                  className={`bg-gray-100 rounded border px-3 md:px-4 py-2 text-sm md:text-[17px] flex-1 w-full md:w-auto focus:outline-none focus:ring focus:ring-blue-200 ${
+                    isNameOverCharacterLimit(newStrategyName) ? "border-red-500" : "border-gray-300"
+                  }`}
                 />
+                <NameCharacterCounter value={newStrategyName} />
               </div>
               
               <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 w-full gap-2 md:gap-0">
-                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Description</label>
+                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Description<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
                 <Textarea
                   value={newStrategyDescription}
                   onChange={e => setNewStrategyDescription(e.target.value)}
@@ -679,7 +728,7 @@ const StrategyList: React.FC = () => {
             </div>
             
             <div className="flex flex-col md:flex-row items-center gap-2 md:gap-0">
-              <label className="text-base md:text-lg min-w-[60px]">Notes</label>
+              <label className="text-base md:text-lg min-w-[60px]">Notes<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
               <Input
                 value={addMessage}
                 onChange={e => setAddMessage(e.target.value)}
@@ -689,7 +738,12 @@ const StrategyList: React.FC = () => {
                 type="button"
                 className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleAdd}
-                disabled={!newStrategyName.trim() || !newStrategyDescription.trim() || !addMessage.trim()}
+                disabled={
+                  !newStrategyName.trim() ||
+                  !newStrategyDescription.trim() ||
+                  !addMessage.trim() ||
+                  isNameOverCharacterLimit(newStrategyName)
+                }
               >
                 Submit
               </button>

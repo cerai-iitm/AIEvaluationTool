@@ -1,16 +1,39 @@
+from typing import Optional
+
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 
-from services.analyse import get_analyse_status_service, start_analyse_service
+from services.analyse import (
+    check_analyse_health_service,
+    get_analyse_status_service,
+    start_analyse_service,
+    stop_analyse_service,
+)
 from services.testruns import get_test_run_service
 
 router = APIRouter()
 from configuration.database import get_db
 
+@router.get("/analyse/health")
+def check_health():
+    return check_analyse_health_service()
+
 @router.get("/analyse/{RunName}")
-def get_analyse(RunName: str, background_tasks: BackgroundTasks, db=Depends(get_db), mode: str = Query("rerun_all")):
+def get_analyse(
+    RunName: str,
+    background_tasks: BackgroundTasks,
+    db=Depends(get_db),
+    mode: str = Query("rerun_all"),
+    detail_ids: Optional[str] = Query(None),
+):
     print(f"[API] Received analysis request for run '{RunName}' with mode '{mode}'")
     try:
-        return start_analyse_service(RunName, db=db, background_tasks=background_tasks, mode=mode)
+        return start_analyse_service(
+            RunName,
+            db=db,
+            background_tasks=background_tasks,
+            mode=mode,
+            selected_detail_ids=detail_ids,
+        )
     except HTTPException:
         raise
     except Exception as e:
@@ -56,6 +79,16 @@ def get_analyse_details(RunName: str, db = Depends(get_db), mode: str = Query("r
 def get_analyse_status(RunName: str):
     try:
         return get_analyse_status_service(RunName)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/analyse/{RunName}/stop")
+def stop_analyse(RunName: str):
+    try:
+        return stop_analyse_service(RunName)
     except HTTPException:
         raise
     except Exception as e:

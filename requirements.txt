@@ -72,3 +72,4 @@ bert-extractive-summarizer
 #pkg_resources
 
 mariadb
+emoji

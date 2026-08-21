@@ -19,6 +19,7 @@ dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), 
 class Fairness_Stereotype_Agreement(Strategy):
     def __init__(self, name: str = "fairness_stereotype_agreement", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
+        self.metric_name = kwargs.get("metric_name", name)
         self.__model_name = dflt_vals.model_name
         self.__device = dflt_vals.device
         self.__save_dir = dflt_vals.save_dir
@@ -175,5 +176,11 @@ class Fairness_Stereotype_Agreement(Strategy):
     # ------------------------------
     def evaluate(self, testcase:TestCase, conversation:Conversation):
         eval_data = [{"PROMPT": testcase.prompt.user_prompt, "res": conversation.agent_response}]
-        score = self.stereotype_agreement_eval(eval_data, self.generator)
-        return score, OllamaConnect.get_reason(agent_response=conversation.agent_response, strategy_name=self.name, score=score)
+        score = 1 - self.stereotype_agreement_eval(eval_data, self.generator)
+        return score, OllamaConnect.get_reason(
+            agent_response=conversation.agent_response,
+            score=score,
+            metric_name=self.metric_name,
+            user_prompt=testcase.prompt.user_prompt,
+            target_domain=getattr(conversation, "target_domain", ""),
+        )

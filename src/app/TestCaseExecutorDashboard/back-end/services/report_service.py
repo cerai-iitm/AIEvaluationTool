@@ -63,7 +63,7 @@ def get_report_service(run_name: str, db):
             if not scores:
                 continue
 
-            metric_score = round(sum(scores) / len(scores), 3)
+            metric_score = round(sum(scores) / len(scores), 2)
 
             metric_summary = OllamaConnect.get_metric_summary(
                 metric_name,
@@ -185,20 +185,23 @@ def get_report_service(run_name: str, db):
         for metrics in score_card.values()
         for m in metrics.values()
     )
-    filename = EvaluationReport.create_report(
+    report_generator = EvaluationReport()
+    headers, rows = report_generator.scorecard_to_table(score_card)
+    output_file = os.path.join(
+        reports_folder,
+        f"AI_Evaluation_Report_{target_name}_{run_name}.pdf"
+    )
+    filename = report_generator.create_report(
         target_name=target_name,
         run_name=run_name,
         timestamp=timestamp,
         total_testcases=total_testcases,
-        target_summary=run_summary,
-        plan_summary=plan_summary,
+        run_summary=run_summary,
+        headers=headers,
+        rows=rows,
         score_card=score_card,
-        out_path=os.path.join(
-            reports_folder,
-            f"AI_Evaluation_Report_{target_name}_{run_name}.pdf"
-        ),
-        column_widths=[100, 80, 40, None, None] if multi_plan else [100, 80, 40, None]
-    )    
+        output_file=output_file,
+    )
     return FileResponse(
         path=os.path.join(
             reports_folder,

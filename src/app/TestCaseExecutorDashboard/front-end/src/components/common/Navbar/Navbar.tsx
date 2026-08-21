@@ -4,24 +4,9 @@ import styles from './Navbar.module.css';
 import logo from '../../../../src/assets/logo/cerai-logo.png';
 import iit from '../../../../src/assets/iitm/iit-logo.png';
 import wsai from '../../../../src/assets/logo/WSAI_Logo.png';
-import { clearSession } from '../../../utils/auth';
-import { AUTH_LOGOUT_URL, LOGIN_URL } from '../../../config/api';
+import { logoutAndRedirect } from '../../../utils/auth';
 
 const Navbar: React.FC = () => {
-  const handleLogout = async () => {
-    try {
-      await fetch(AUTH_LOGOUT_URL, {
-        method: 'GET',
-        credentials: 'include',
-      });
-    } catch (error) {
-      console.warn('Logout request failed', error);
-    }
-
-    clearSession();
-    window.location.replace(LOGIN_URL);
-  };
-
   return (
     <nav className={styles.navbar}>
       <div className={styles.navContainer}>
@@ -35,7 +20,7 @@ const Navbar: React.FC = () => {
           <span className={styles.userName}>
             {localStorage.getItem('user_name') || 'User'}
           </span>
-          <button onClick={handleLogout} className={styles.logoutButton}>
+          <button onClick={logoutAndRedirect} className={styles.logoutButton}>
             Logout
           </button>
 
