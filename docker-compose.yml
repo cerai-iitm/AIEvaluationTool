@@ -148,6 +148,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
+      - ./data:/app/data
       - interface_manager_logs:/app/src/app/interface_manager/logs:ro
       - ./config.json:/app/config.json
       - ./src/app/interface_manager/xpaths.json:/app/src/app/interface_manager/xpaths.json:ro
