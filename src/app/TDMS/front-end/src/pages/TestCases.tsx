@@ -53,7 +53,7 @@ interface TestCase {
 const TestCases = () => {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchField, setSearchField] = useState<"testcase" | "strategy" | "domain " | "metric">("testcase");
+  const [searchField, setSearchField] = useState<"testcase" | "strategy" | "domain" | "metric">("testcase");
   const [selectedCase, setSelectedCase] = useState<TestCase | null>(null);
   const [updateCase, setUpdateCase] = useState<TestCase | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -503,7 +503,7 @@ const TestCases = () => {
       return tc.name.toLowerCase().includes(q);
     } else if (searchField === "strategy") {
       return tc.strategyName.toLowerCase().includes(q);
-    } else if (searchField === "domain ") {
+    } else if (searchField === "domain") {
       return tc.domainName.toLowerCase().includes(q);
     } else if (searchField === "metric") {
       return tc.metricName.toLowerCase().includes(q);
