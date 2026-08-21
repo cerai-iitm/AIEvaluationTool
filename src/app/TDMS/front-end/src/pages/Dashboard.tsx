@@ -359,6 +359,14 @@ const Dashboard = () => {
     runImporter();
   };
 
+  const handleImporterDialogOpenChange = (open: boolean) => {
+    if (importerLoading && !open) {
+      return;
+    }
+
+    setImporterDialogOpen(open);
+  };
+
   const statCardHandlers = (stat: typeof stats[0]) => ({
     open: () => stat.onClick && stat.onClick(),
     history: () => fetchHistory(stat.title),
@@ -511,8 +519,20 @@ const Dashboard = () => {
       </Dialog>
 
       {/* Importer Dialog */}
-      <Dialog open={importerDialogOpen} onOpenChange={setImporterDialogOpen}>
-        <DialogContent className="max-w-md">
+      <Dialog open={importerDialogOpen} onOpenChange={handleImporterDialogOpenChange}>
+        <DialogContent
+          className={`max-w-md ${importerLoading ? "[&>button]:hidden" : ""}`}
+          onEscapeKeyDown={(event) => {
+            if (importerLoading) {
+              event.preventDefault();
+            }
+          }}
+          onInteractOutside={(event) => {
+            if (importerLoading) {
+              event.preventDefault();
+            }
+          }}
+        >
           <DialogHeader>
             <DialogTitle>
               {importerStatus === "loading" && "Importing Data..."}
@@ -619,10 +639,7 @@ const Dashboard = () => {
           {(importerStatus === "error" || importerStatus === "success") && (
             <div className="flex gap-4 justify-end pt-4">
               <button
-                onClick={() => {
-                  setImporterDialogOpen(true);
-                  setImporterStatus("idle");
-                }}
+                onClick={() => setImporterDialogOpen(false)}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
               >
                 Close
