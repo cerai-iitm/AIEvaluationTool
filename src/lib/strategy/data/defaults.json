@@ -80,12 +80,7 @@
         "default_metric" : "bleu" 
     },
     "tat_tpm_mvh" : {
-        "log_file" : "src/app/interface_manager/logs/interface_manager.log",
-        "prompt_key" : "Sending prompt to the bot",
-        "response_key" : "Received response from WhatsApp",
-        "time_period" : 1,
-        "ready_key" : "Driver ready for",
-        "quit_key" : "Driver quit successfully"
+        "time_period" : 1
     },
     "toxicity" : {
         "model_name" : "nicholasKluge/ToxiGuardrail"

@@ -122,7 +122,7 @@ const RunDetails: React.FC = () => {
   const formatScore = (score?: number | null) => {
     if (score === null || score === undefined) return "Analysis not completed";
     if (!Number.isFinite(score)) return "Analysis not completed";
-    return Number.isInteger(score) ? String(score) : score.toFixed(2);
+    return score.toFixed(2);
   };
 
   const isPlanCellEvent = (target: EventTarget | null) => {

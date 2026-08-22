@@ -1,10 +1,8 @@
-import json
 import warnings
 import os
 from pathlib import Path
 
 from lib.data import TestCase, Conversation
-from lib.orm import DB
 from .utils_new import FileLoader, OllamaConnect
 from .strategy_base import Strategy
 from .logger import get_logger
@@ -17,40 +15,6 @@ project_root = Path(__file__).parents[3]
 dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), simple=True, strat_name="compute_mtbf")
 
 
-def _build_db() -> DB:
-    """
-    Builds a standalone DB connection from config.json, mirroring
-    TestCaseExecutorDashboard/back-end/configuration/database.py, so this
-    strategy stays independent of the backend app package.
-    """
-    config_path = project_root / "config.json"
-    try:
-        with open(config_path, "r") as f:
-            config = json.load(f)
-    except FileNotFoundError:
-        config = {}
-
-    db_cfg = config.get("db", {})
-    engine_type = db_cfg.get("engine", "sqlite").lower()
-
-    if engine_type == "sqlite":
-        db_folder = project_root / "data"
-        db_path = db_folder / db_cfg.get("file", "AIEvaluationData.db")
-        db_url = f"sqlite:///{db_path}"
-    elif engine_type == "mariadb":
-        db_url = "mariadb+mariadbconnector://{user}:{password}@{host}:{port}/{database}".format(
-            user=db_cfg.get("user"),
-            password=db_cfg.get("password"),
-            host=db_cfg.get("host"),
-            port=db_cfg.get("port"),
-            database=db_cfg.get("database"),
-        )
-    else:
-        raise ValueError(f"Unsupported database engine: {engine_type}")
-
-    return DB(db_url=db_url, debug=False)
-
-
 # This module scores reliability from failed test-case details recorded in the DB,
 # instead of parsing a shared interaction log that isn't scoped to any one run.
 # Score = 1 - (failures / total requests): 1.0 when nothing failed, 0.0 when everything
@@ -58,7 +22,7 @@ def _build_db() -> DB:
 class Compute_MTBF(Strategy):
     def __init__(self, name: str = "compute_mtbf", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
-        self.db = _build_db()
+        self.db = FileLoader._build_db(project_root)
         self.metric_name = kwargs.get("metric_name", name)
 
     def _failure_stats(self, run_name: str = None):
