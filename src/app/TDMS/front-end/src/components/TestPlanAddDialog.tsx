@@ -118,6 +118,15 @@ export default function TestPlanAddDialog({
       return;
     }
 
+    if (selectedMetrics.length === 0) {
+      toast({
+        title: "Validation Error",
+        description: "At least one metric is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!notes.trim()) {
       toast({
         title: "Validation Error",
@@ -204,7 +213,7 @@ export default function TestPlanAddDialog({
         </DialogHeader>
         <div className="space-y-4 pt-4">
           <div className="space-y-2">
-            <Label className="text-base font-semibold">Test Plan :</Label>
+            <Label className="text-base font-semibold">Test Plan :<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -219,7 +228,7 @@ export default function TestPlanAddDialog({
           </div>
 
           <div className="space-y-2">
-            <Label className="text-base font-semibold">Description :</Label>
+            <Label className="text-base font-semibold">Description :<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
             <Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -235,7 +244,7 @@ export default function TestPlanAddDialog({
           </div>
 
           <div className="space-y-2">
-            <Label className="text-base font-semibold">Metrics :</Label>
+            <Label className="text-base font-semibold">Metrics :<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
             <div className="bg-muted p-4 rounded-md max-h-[200px] overflow-y-auto">
               {isFetchingMetrics ? (
                 <div className="text-sm text-muted-foreground">
@@ -268,7 +277,7 @@ export default function TestPlanAddDialog({
           </div>
 
           <div className="flex justify-center items-center p-4 ">
-            <Label className="text-base font-semibold mr-2">Notes :</Label>
+            <Label className="text-base font-semibold mr-2">Notes :<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
             <Input
               value={notes}
               onChange={(e) => setNotes(e.target.value)}

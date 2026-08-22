@@ -226,7 +226,6 @@ export default function TargetUpdateDialog({
     description.trim() !== (targetInitial.target_description || "") ||
     url.trim() !== (targetInitial.target_url || "") ||
     domain.trim() !== (targetInitial.domain_name || "") ||
-    notes.trim() !== (targetInitial.notes || "") ||
     sortedLanguages(selectedLanguages) !== sortedLanguages(targetInitial.lang_list || [])
   );
 
@@ -469,18 +468,14 @@ export default function TargetUpdateDialog({
     //   return;
     // }
 
-    if (
-      isWebAppTarget &&
-      hasAnyCredentials(credentials) &&
-      !areCredentialsComplete(credentials)
-    ) {
-      toast({
-        title: "Validation Error",
-        description: "Enter both username and password, or leave both blank",
-        variant: "destructive",
-      });
-      return;
-    }
+    // if (isWebAppTarget && !areCredentialsComplete(credentials)) {
+    //   toast({
+    //     title: "Validation Error",
+    //     description: "Username and password are required",
+    //     variant: "destructive",
+    //   });
+    //   return;
+    // }
 
     if (!hasChanges) {
       toast({
@@ -512,6 +507,7 @@ export default function TargetUpdateDialog({
             : targetInitial.lang_list || [],
         xpath_config_changed: hasXPathChanges,
         xpath_application_name: target.target_name,
+        credential_config_changed: hasCredentialChanges,
         notes: notes.trim() || null,
       };
 
@@ -655,7 +651,7 @@ export default function TargetUpdateDialog({
               </div>
 
               <div className="space-y-1 pb-4">
-                <Label className="text-base font-semibold">Description</Label>
+                <Label className="text-base font-semibold">Description<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
                 <Textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -666,7 +662,7 @@ export default function TargetUpdateDialog({
               </div>
               <div className="grid gap-4 pb-4 sm:grid-cols-2">
                 <div className="space-y-1 ">
-                  <Label className="text-base font-semibold">Type</Label>
+                  <Label className="text-base font-semibold">Type<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
                   <Select
                     value={type}
                     onValueChange={setType}
@@ -695,7 +691,7 @@ export default function TargetUpdateDialog({
 
 
                 <div className="space-y-1">
-                  <Label className="text-base font-semibold">Domain</Label>
+                  <Label className="text-base font-semibold">Domain<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
                   <Select
                     value={domain}
                     onValueChange={setDomain}
@@ -725,7 +721,7 @@ export default function TargetUpdateDialog({
                 </div>
               </div>
               <div className="space-y-1 pb-4">
-                <Label className="text-base font-semibold">URL</Label>
+                <Label className="text-base font-semibold">URL<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
                 <Input
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
@@ -767,7 +763,7 @@ export default function TargetUpdateDialog({
             </div>
 
             {/* <div className="flex flex-col gap-3 p-4 border-gray-300 bg-white sticky bottom-0 z-10 sm:flex-row sm:items-center sm:justify-center">
-              <Label className="text-base font-bold">Notes </Label>
+              <Label className="text-base font-bold">Notes</Label>
               <Input
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
@@ -831,7 +827,7 @@ export default function TargetUpdateDialog({
           ) : null}
         </Tabs>
             <div className="flex flex-col gap-3 p-4 border-gray-300 bg-white sticky bottom-0 z-10 sm:flex-row sm:items-center sm:justify-center">
-              <Label className="text-base font-bold">Notes </Label>
+              <Label className="text-base font-bold">Notes</Label>
               <Input
                 type="text"
                 value={notes}

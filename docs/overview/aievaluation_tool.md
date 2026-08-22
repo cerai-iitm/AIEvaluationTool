@@ -251,8 +251,8 @@ Together, these pieces support a complete evaluation lifecycle, from prompt and 
 
 ## Related Sections
 
-- [AI Evaluation Tool CLI](../ai_evaluation_tool_cli/index.md)
+- [AI Evaluation Tool CLI](../cli/index.md)
 - [Docker Setup](../docker_setup/index.md)
-- [TDMS + Dashboard UI](../TDMS_and_Dashboard_ui/index.md)
+- [UI](../ui/index.md)
 - [PQET](../pqet/index.md)
-- [TDMS + Dashboard UI](../TDMS_and_Dashboard_ui/index.md)
+- [UI](../ui/index.md)
