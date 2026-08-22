@@ -1,10 +1,10 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import styles from "./TestRunDetails.module.css";
 import Modal from "./Modal";
 import RunTimeline from "./RunTimeline";
 import DetailCard from "../common/DetailCard/DetailCard";
-import { API_BASE_URL, API_ENDPOINTS } from "../../config/api";
+import { API_BASE_URL, API_ENDPOINTS, WS_BASE_URL } from "../../config/api";
 import { redirectToLogin } from "../../utils/auth";
 
 interface RunSummary {
@@ -262,36 +262,100 @@ const RunDetails: React.FC = () => {
     }
   };
 
+  const fetchRunDetails = useCallback(
+    (silent = false) => {
+      if (!runName) return;
+      if (!silent) setLoading(true);
+      setError(null);
+
+      const params = new URLSearchParams();
+      if (activeFilters.metric) params.append("metric", activeFilters.metric);
+      if (activeFilters.status) params.append("status", activeFilters.status);
+
+      return fetch(API_ENDPOINTS.GET_TEST_RUN_DETAILS(runName, params.toString()), {
+        headers: getAuthHeaders(),
+        credentials: "include",
+      })
+        .then((res) => {
+          if (res.status === 401) {
+            redirectToLogin();
+            throw new Error("Unauthorized");
+          }
+          if (!res.ok) throw new Error(`API ${res.status}`);
+          return res.json();
+        })
+        .then((data) => {
+          setSummary(data.summary);
+          setDetails(data.details);
+        })
+        .catch((err) => setError(err.message))
+        .finally(() => {
+          if (!silent) setLoading(false);
+        });
+    },
+    [runName, activeFilters]
+  );
+
+  useEffect(() => {
+    fetchRunDetails();
+  }, [fetchRunDetails]);
+
+  // Live-update scores while an analysis is running elsewhere (e.g. the /analyse page,
+  // or another tab) instead of only picking them up on the next manual page refresh.
   useEffect(() => {
     if (!runName) return;
-    setLoading(true);
-    setError(null);
 
-    const params = new URLSearchParams();
-    if (activeFilters.metric) params.append("metric", activeFilters.metric);
-    if (activeFilters.status) params.append("status", activeFilters.status);
+    const ws = new WebSocket(`${WS_BASE_URL}/ws/test-run`);
+    let keepAliveTimer: number | null = null;
 
-    fetch(API_ENDPOINTS.GET_TEST_RUN_DETAILS(runName, params.toString()), {
-      headers: getAuthHeaders(),
-      credentials: "include",
-    })
-      .then((res) => {
-        if (res.status === 401) {
-          redirectToLogin();
-          throw new Error("Unauthorized");
-        }
-        if (!res.ok) throw new Error(`API ${res.status}`);
-        return res.json();
-      })
-      .then((data) => {
-        setSummary(data.summary);
-        
-        setDetails(data.details);
-        
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
-  }, [runName, activeFilters]);
+    ws.onopen = () => {
+      keepAliveTimer = window.setInterval(() => ws.send("ping"), 15_000);
+    };
+
+    ws.onmessage = (event: MessageEvent) => {
+      let payload: {
+        type?: string;
+        runName?: string;
+        detailId?: number;
+        score?: number | null;
+        status?: string;
+        error?: string;
+      } | null = null;
+      try {
+        payload = JSON.parse(event.data);
+      } catch {
+        return;
+      }
+      if (!payload || payload.runName !== runName) return;
+
+      if (payload.type === "ANALYSIS_PROGRESS" && payload.detailId !== undefined) {
+        const detailId = payload.detailId;
+        setDetails((prev) =>
+          prev.map((d) =>
+            d.detail_id === detailId
+              ? {
+                  ...d,
+                  score: payload!.score !== undefined ? payload!.score : d.score,
+                  status: payload!.status ?? d.status,
+                }
+              : d
+          )
+        );
+        return;
+      }
+
+      if (payload.type === "ANALYSIS_FINISHED" || payload.type === "ANALYSIS_STOPPED") {
+        // Re-fetch so the aggregated summary (e.g. average score) reflects the
+        // server-side recomputation once the whole analysis run has settled.
+        fetchRunDetails(true);
+      }
+    };
+
+    return () => {
+      if (keepAliveTimer) window.clearInterval(keepAliveTimer);
+      ws.close();
+    };
+  }, [runName, fetchRunDetails]);
 
   if (loading) return <p className={styles.loading}>Loading test run...</p>;
   if (error) return <p className={styles.error}>{error}</p>;
