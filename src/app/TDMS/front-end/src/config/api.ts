@@ -2,8 +2,6 @@
 export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "/tdms-api";
 
-export const WS_BASE_URL = API_BASE_URL.replace(/^http/i, "ws");
-
 export const AUTH_SERVICE_URL =
   import.meta.env.VITE_AUTH_SERVICE_URL || "http://localhost:7500";
 
@@ -222,6 +220,5 @@ export const API_ENDPOINTS = {
   TESTPLAN_METRICS_ALL: `${API_BASE_URL}/api/v2/testplans/metrics/all`,
 
   IMPORTER_RUN: `${API_BASE_URL}/api/importer/run`,
-  IMPORTER_STATUS_WS: `${WS_BASE_URL}/api/importer/ws`,
   TESTCASE_UPLOAD_JSON: `${API_BASE_URL}/api/v2/testcases/upload-json`,
 };

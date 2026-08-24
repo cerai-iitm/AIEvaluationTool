@@ -1,6 +1,6 @@
-# TDMS And Dashboard UI
+# UI
 
-This section documents the integrated local workflow between TDMS (Test Data Management System) and the Test Case Execution Dashboard without Docker.
+This section documents the full application UI: TDMS (Test Data Management System), the Test Case Execution Dashboard, authentication, roles, APIs, and local non-Docker setup.
 
 TDMS is used to curate and manage evaluation data. The dashboard is used to execute runs, monitor progress, and review analysis outputs.
 

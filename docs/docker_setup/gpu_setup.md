@@ -18,9 +18,32 @@ The README identifies these primary models for the LLM-as-judge and supporting e
 3. `sarvamai/sarvam-translate`
 4. `qwen3:32b`
 
-## Local GPU Setup
+## Compose-Managed Production Model Services
 
-Use this setup when the Docker machine and the GPU machine are the same host.
+Use the `prod` profile when you want Docker Compose to start the production model-serving services:
+
+- `ollama`
+- `ollama-init`
+- `ollama-warmup`
+- `sarvam-ai`
+
+```bash
+docker compose --profile prod up -d --build
+```
+
+For this mode, use Compose service names in `.env`:
+
+```env
+OLLAMA_URL="http://ollama:11434/"
+GPU_URL="http://sarvam-ai:16000/"
+LLM_AS_JUDGE_MODEL="qwen3:32b"
+```
+
+The `ollama-init` service pulls `${OLLAMA_MODEL:-qwen3:32b}` and `ollama-warmup` verifies that Ollama can generate a response.
+
+## Local Host GPU Setup
+
+Use this setup when the Docker machine and the GPU machine are the same host, but Ollama or Sarvam AI are served outside the main production profile.
 
 This is the simplest arrangement: Ollama runs on the host and Sarvam AI can either run as a Compose profile or as another reachable endpoint.
 
@@ -126,5 +149,6 @@ The README also notes that these smaller models may be downloaded during executi
 - Ollama is reachable
 - Sarvam AI is reachable
 - `.env` values match the actual ports
+- profile-specific URLs are correct (`ollama`/`sarvam-ai` inside Compose, `host.docker.internal` for host-served endpoints)
 - SSH tunneling is active for remote setups
 - Docker services can resolve `host.docker.internal`

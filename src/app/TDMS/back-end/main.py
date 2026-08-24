@@ -19,8 +19,8 @@ from api.v1.endpoints import (
     #     target,
     #     testCase,
     users,
-    importer,
 )
+from api.v2.endpoints import importer as importer_v2
 from api.v2.endpoints import (
     domain as domain_v2,
 )
@@ -101,7 +101,7 @@ async def root():
 
 
 app.include_router(dashboard.dashboard_router, tags=["Dashboard"])
-app.include_router(importer.importer_router, tags=["Importer"])
+app.include_router(importer_v2.importer_router, tags=["Importer"])
 # app.include_router(testCase.testcase_router, tags=["Test Cases"])
 # app.include_router(response.response_router, tags=["Responses"])
 # app.include_router(strategy.strategy_router, tags=["Strategies"])

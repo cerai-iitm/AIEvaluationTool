@@ -1,4 +1,4 @@
-# Conversational AI Evaluation Tool - v2.0
+# Conversational AI Evaluation Tool - v2.0.1
 
 ## 1. Overview
 
@@ -50,8 +50,13 @@ Detailed configuration guide: [Docker Setup and Configuration](docs/docker_setup
 ### 4.1 Build And Start
 
 ```bash
-docker compose build
-docker compose up
+docker compose up -d --build nginx
+```
+
+For the Docker development stack, use:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 ```
 
 ### 4.2 Open The Application
@@ -74,7 +79,7 @@ docker compose down -v
 - Docker CLI flow: [Docker Run CLI](docs/docker_setup/docker_run.md)
 - Docker UI flow: [Docker Run UI](docs/docker_setup/docker_run_ui.md)
 - GPU model setup: [Docker GPU Setup](docs/docker_setup/gpu_setup.md)
-- Non-Docker/local setup: [TDMS + Dashboard Setup](docs/TDMS_and_Dashboard_ui/setup.md)
+- Non-Docker/local setup: [UI Setup](docs/ui/setup.md)
 - Full docs portal: [AIEvaluationTool Documentation](https://cerai-iitm.github.io/AIEvaluationTool/)
 
 ## 5. How The Project Came To Life
