@@ -3979,7 +3979,7 @@ class DB:
                                  response_ts=result.response_ts.isoformat() if getattr(result, "response_ts") else None,
                                  evaluation_score=getattr(result, "evaluation_score"),
                                  evaluation_reason=getattr(result, "evaluation_reason"),
-                                 evaluation_ts=getattr(result, "evaluation_ts"),
+                                 evaluation_ts=result.evaluation_ts.isoformat() if getattr(result, "evaluation_ts") else None,
                                  conversation_id=getattr(result, 'conversation_id')) for result in results]
 
     # @BUG. Why is this put here!??
