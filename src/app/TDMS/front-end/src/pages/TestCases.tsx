@@ -50,10 +50,12 @@ interface TestCase {
   metricNameList?: string[];  // List of metric names
 }
 
+type SearchField = "testcase" | "strategy" | "domain" | "metric";
+
 const TestCases = () => {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchField, setSearchField] = useState<"testcase" | "strategy" | "domain " | "metric">("testcase");
+  const [searchField, setSearchField] = useState<SearchField>("testcase");
   const [selectedCase, setSelectedCase] = useState<TestCase | null>(null);
   const [updateCase, setUpdateCase] = useState<TestCase | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -495,18 +497,21 @@ const TestCases = () => {
   };
 
   const filteredCases = testCases.filter((tc) =>{
-    const q = searchQuery.toLowerCase();
+    const q = searchQuery.trim().toLowerCase();
 
     if (!q) return true;
 
     if (searchField === "testcase") {
-      return tc.name.toLowerCase().includes(q);
+      return (tc.name ?? "").toLowerCase().includes(q);
     } else if (searchField === "strategy") {
-      return tc.strategyName.toLowerCase().includes(q);
-    } else if (searchField === "domain ") {
-      return tc.domainName.toLowerCase().includes(q);
+      return (tc.strategyName ?? "").toLowerCase().includes(q);
+    } else if (searchField === "domain") {
+      return (tc.domainName ?? "").toLowerCase().includes(q);
     } else if (searchField === "metric") {
-      return tc.metricName.toLowerCase().includes(q);
+      const metricNames = tc.metricNameList?.length
+        ? tc.metricNameList.join(", ")
+        : tc.metricName;
+      return (metricNames ?? "").toLowerCase().includes(q);
     }
     return true;
   }
@@ -598,9 +603,15 @@ const TestCases = () => {
           <PageHeaderWithBack title="Test Cases" />
 
           <div className="flex gap-4 mb-6 ">
-            <Select defaultValue="testcase"
-              onValueChange={(value: "testcase" | "metric" | "strategy" | "domain") => setSearchField(value)}
-            >
+
+            <Select
+              value={searchField}
+              onValueChange={(value: SearchField) => {
+                setSearchField(value);
+                setCurrentPage(1);
+              }}
+>
+            
               <SelectTrigger className="w-40">
                 <SelectValue />
               </SelectTrigger>

@@ -3,6 +3,7 @@ from nltk.stem import WordNetLemmatizer
 import re
 import warnings
 import os
+import spacy
 import nltk
 from typing import List, Tuple
 from sentence_transformers import SentenceTransformer, util
@@ -29,7 +30,22 @@ class EntityRecognition(Strategy):
         self.metric_name = kwargs.get("metric_name", name)
         self.lemm = WordNetLemmatizer()
         self.model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+        self.nlp = spacy.load("en_core_web_sm")
 
+    def normalize_ner_tag(self, tag: str) -> str:
+
+        tag = tag.strip().upper()
+
+        label_mapping = {
+            "GPE": "LOCATION",
+            "LOC": "LOCATION",
+            "FAC": "LOCATION",
+            "PER": "PERSON",
+            "ORG": "ORGANIZATION"
+        }
+
+        return label_mapping.get(tag, tag)
+    
     def extract_entity_pairs(self, text: str) -> List[Tuple[str, str]]:
         """
         Extracts (entity, ner_tag) pairs from loosely structured dict-like strings.
@@ -42,7 +58,20 @@ class EntityRecognition(Strategy):
         )
         matches = pattern.findall(text)
 
-        return [(entity.strip().lower(), tag.strip().upper()) for entity, tag in matches]
+        if matches:
+
+            return [(entity.strip().lower(), tag.strip().upper()) for entity, tag in matches]
+
+        # Otherwise, treat the response as a normal sentence
+        doc = self.nlp(text)
+
+        return [
+            (
+                entity.text.strip().lower(),
+                self.normalize_ner_tag(entity.label_)
+            )
+            for entity in doc.ents
+        ]
 
     def ner_recognition(self, expected_str: str, response_str: str) -> tuple:
         """
@@ -50,7 +79,7 @@ class EntityRecognition(Strategy):
         """
         expected_pairs = set(self.extract_entity_pairs(expected_str))
         predicted_pairs = set(self.extract_entity_pairs(response_str))
-
+        
         return self.scoring(*self.semantic_matching(expected_pairs, predicted_pairs))#, self.scoring(*self.exact_matching(expected_pairs, predicted_pairs))
     
     def exact_matching(self, expected_pairs : set, predicted_pairs : set) -> tuple:
