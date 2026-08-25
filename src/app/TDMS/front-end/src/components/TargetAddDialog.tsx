@@ -833,24 +833,6 @@ export default function TargetAddDialog({
                 </div>
               </div>
 
-              {/* <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-center">
-                <Label className="text-base font-semibold">Notes</Label>
-                <Input
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Enter notes"
-                  className="bg-gray-200 rounded px-4 py-1 sm:mr-4 sm:max-w-md"
-                  required
-                />
-
-                <Button
-                  className="bg-accent hover:bg-accent/90 text-accent-foreground px-8"
-                  onClick={handleSubmit}
-                  disabled={!canSubmit || isSubmitting}
-                >
-                  {isSubmitting ? "Submitting..." : "Submit"}
-                </Button>
-              </div> 
             </div>
           </TabsContent>
 
