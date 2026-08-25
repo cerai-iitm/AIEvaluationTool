@@ -24,13 +24,33 @@ FileLoader._load_env_vars(__file__)
 logger = get_logger("entity_recognition")
 dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), simple=True, strat_name="entity_recognition")
 
+
+def ensure_spacy_model(model_name: str = "en_core_web_sm"):
+    """
+    Ensure the spaCy NER model is installed, downloading it if missing.
+    """
+    try:
+        return spacy.load(model_name)
+    except OSError:
+        logger.info(f"spaCy model '{model_name}' not found. Attempting to download it.")
+        try:
+            spacy.cli.download(model_name)
+        except SystemExit as e:
+            raise RuntimeError(
+                f"Failed to download spaCy model '{model_name}'. "
+                f"Install it manually, e.g. `uv pip install {model_name}` "
+                f"or `python -m spacy download {model_name}`."
+            ) from e
+        return spacy.load(model_name)
+
+
 class EntityRecognition(Strategy):
     def __init__(self, name: str = "entity_recognition", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
         self.metric_name = kwargs.get("metric_name", name)
         self.lemm = WordNetLemmatizer()
         self.model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
-        self.nlp = spacy.load("en_core_web_sm")
+        self.nlp = ensure_spacy_model("en_core_web_sm")
 
     def normalize_ner_tag(self, tag: str) -> str:
 
