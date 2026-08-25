@@ -185,6 +185,10 @@ def get_target_metadata(target_name: str):
         "languages": target.target_languages or []
     }
 
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
+
 @app.get("/__dev/config")
 def dev_config():
     if not os.getenv("DEV_CONFIG_ENABLED"):

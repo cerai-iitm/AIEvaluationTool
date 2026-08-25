@@ -603,12 +603,14 @@ const TestCases = () => {
           <PageHeaderWithBack title="Test Cases" />
 
           <div className="flex gap-4 mb-6 ">
+
             <Select
               value={searchField}
               onValueChange={(value: SearchField) => {
                 setSearchField(value);
                 setCurrentPage(1);
               }}
+
             >
               <SelectTrigger className="w-40">
                 <SelectValue />

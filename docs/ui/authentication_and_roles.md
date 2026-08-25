@@ -42,7 +42,7 @@ The frontend permission utility defines the following role behaviors:
 
 Notes:
 
-- The utility includes backward compatibility checks for a legacy `user` role.
+- The utility includes backward compatibility checks for a legacy `user` role, which is treated identically to `viewer` (e.g. `canViewActivity` maps `user` -> `viewer`).
 - History visibility is explicitly disabled for `viewer` in the current permission helpers.
 
 ## Cross-App Navigation Controls

@@ -221,7 +221,7 @@ python main.py
 ```
 ## GPU Setup
 
-For GPU setup instructions, refer to [GPU setup.](../ai_evaluation_tool_cli/gpu_setup.md).
+For GPU setup instructions, refer to [GPU setup.](../cli/gpu_setup.md).
 
 ## Run Frontend 
 
