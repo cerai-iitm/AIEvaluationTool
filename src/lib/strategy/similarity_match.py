@@ -230,7 +230,31 @@ class SimilarityMatchStrategy(Strategy):
                 """)
             case "BLEU" | "bleu":
                 score = self.bleu_score_metric(conversation.agent_response, testcase.response.response_text)
-                return float(score), OllamaConnect.get_reason(conversation.agent_response, float(score), metric_name=self.__metric_name, add_info=testcase.response.response_text)
+                return float(score), OllamaConnect.get_reason(conversation.agent_response, float(score), metric_name=self.__metric_name, add_info=f"""
+                Reference response:
+                {testcase.response.response_text}
+
+                The reported score is a BLEU score.
+
+                Generate the reason using these mandatory rules:
+                1. Compare the complete candidate response directly with the reference response.
+                2. Identify actual matching words and consecutive n-grams found in both texts.
+                3. Explain how different wording, word order, and unmatched candidate content affect n-gram precision.
+                4. Mention brevity penalty only when the candidate is shorter than the reference.
+                5. Do not discuss recall or F1 because BLEU is primarily based on modified n-gram precision and brevity penalty.
+                6. Do not invent synonyms, matches, reference content, or numerical component scores.
+                7. Do not claim semantic similarity unless it is directly evident from the provided texts.
+                8. Explain that BLEU measures lexical overlap rather than factual or semantic correctness.
+                9. Do not blame sentence count alone; focus on actual wording and ordered n-gram differences.
+                10. Base the explanation only on the provided candidate, reference, and score.
+
+                The explanation must follow this order:
+                - Actual word or n-gram matches
+                - Wording or word-order differences
+                - Effect on n-gram precision
+                - Brevity penalty, only if applicable
+                - Why these factors justify the final BLEU score
+                """)
             case "bart_score_similarity":
                 # Placeholder for BART score similarity logic
                 bart_scorer = BARTScorer(device='cpu', checkpoint='facebook/bart-large-cnn')
