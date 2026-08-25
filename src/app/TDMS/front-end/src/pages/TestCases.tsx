@@ -610,8 +610,8 @@ const TestCases = () => {
                 setSearchField(value);
                 setCurrentPage(1);
               }}
-
-            >
+>
+            
               <SelectTrigger className="w-40">
                 <SelectValue />
               </SelectTrigger>
