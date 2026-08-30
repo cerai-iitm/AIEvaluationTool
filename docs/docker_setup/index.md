@@ -26,7 +26,7 @@ Use this section when you want to run the platform from scratch with reproducibl
 The production Docker stack is built around the services defined in [docker-compose.yml][docker-compose]:
 
 - `db` for MariaDB
-- `selenium-browser` for Chrome automation and noVNC viewing
+- `selenium-browser` for Chromium automation and noVNC viewing
 - `interface-manager` for target communication
 - `auth-service` for authentication and route handling
 - `app-backend` for TCE backend and CLI execution commands
