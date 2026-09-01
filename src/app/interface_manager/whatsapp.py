@@ -5,6 +5,7 @@ from logger import get_logger
 from utils import (
     DriverManager,
     load_config,
+    get_session_config,
     login_app,
     logout_app,
     search_entity,
@@ -66,9 +67,25 @@ def get_ui_response_whatsapp():
     return {"ui": "Whatsapp Web Chat Interface", "features": ["smart-compose", "modular-layout"]}
 
 
+def get_driver_for_session(session_key: Optional[str] = None) -> webdriver.Chrome | None:
+    """
+    Returns this session's already-assigned driver, if any, without
+    acquiring a pool slot or launching a new browser session. Used by
+    /logout so it doesn't queue for/spin up a fresh session just to
+    immediately log it out.
+    """
+    with _slots_lock:
+        slot = _session_to_slot.get(session_key) if session_key else WHATSAPP_PROFILE_POOL[0]
+    if not slot:
+        return None
+    with _driver_managers_lock:
+        dm = _driver_managers.get(slot)
+    return dm.driver if dm else None
+
+
 def login_whatsapp(session_key: Optional[str] = None) -> webdriver.Chrome | None:
     """Login to WhatsApp Web using DriverManager and generic login_app."""
-    cfg = load_config()
+    cfg = get_session_config(session_key)
     url = cfg.get("whatsapp_url")
     slot = _acquire_slot(session_key) if session_key else WHATSAPP_PROFILE_POOL[0]
     try:
@@ -80,8 +97,11 @@ def login_whatsapp(session_key: Optional[str] = None) -> webdriver.Chrome | None
         return None
 
 
-def logout_whatsapp(driver: webdriver.Chrome) -> bool:
+def logout_whatsapp(driver: Optional[webdriver.Chrome] = None) -> bool:
     """Logout from WhatsApp Web using generic logout_app."""
+    if driver is None:
+        logger.info("No active WhatsApp Web driver to logout.")
+        return True
     return logout_app(driver, "whatsapp_web")
 
 

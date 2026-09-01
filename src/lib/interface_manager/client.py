@@ -87,11 +87,13 @@ class InterfaceManagerClient:
     # Public API
     # ---------------------------
 
-    def login(self) -> requests.Response:
-        return self._get("login")
+    def login(self, session_key: Optional[str] = None) -> requests.Response:
+        params = {"session_key": session_key} if session_key else None
+        return self._get("login", params=params)
 
-    def logout(self) -> requests.Response:
-        return self._get("logout")
+    def logout(self, session_key: Optional[str] = None) -> requests.Response:
+        params = {"session_key": session_key} if session_key else None
+        return self._get("logout", params=params)
 
     def close(self, session_key: Optional[str] = None) -> requests.Response:
         params = {"session_key": session_key} if session_key else None
@@ -251,12 +253,12 @@ class InterfaceManagerClient:
             {"response": [{"response": assistant_text}]}
         )
 
-    def apply_server_config(self) -> None:
+    def apply_server_config(self, session_key: Optional[str] = None) -> None:
         """
         Pull server config and bind relevant fields to the client runtime.
         Assumes flat config (no 'target' nesting).
         """
-        cfg = self.get_config()
+        cfg = self.get_config(session_key=session_key)
 
         # Bind agent/model name (required)
         agent = cfg.get("agent_name")
@@ -276,23 +278,25 @@ class InterfaceManagerClient:
             f"local_llm_base_url={self.local_llm_base_url}"
         )
 
-    def get_config(self) -> dict[str, Any]:
-        response = self._get("config")
+    def get_config(self, session_key: Optional[str] = None) -> dict[str, Any]:
+        params = {"session_key": session_key} if session_key else None
+        response = self._get("config", params=params)
         try:
             return response.json()
         except ValueError:
             raise RuntimeError("Invalid JSON response from /config endpoint")
 
-    def update_config(self, config: dict[str, Any]) -> None:
-        response = self._post("config", json=config)
+    def update_config(self, config: dict[str, Any], session_key: Optional[str] = None) -> None:
+        params = {"session_key": session_key} if session_key else None
+        response = self._post("config", json=config, params=params)
         if response.status_code == 200:
             self.logger.debug("Updating config.json on server")
         else:
             raise RuntimeError(f"Config update failed on server: {response.status_code} - {response.text}")
 
-    def sync_config(self, overrides: dict[str, Any]) -> bool:
+    def sync_config(self, overrides: dict[str, Any], session_key: Optional[str] = None) -> bool:
         try:
-            server_config = self.get_config()
+            server_config = self.get_config(session_key=session_key)
             self.logger.debug("Fetched server-side config.")
         except RuntimeError:
             self.logger.error("Could not fetch server config. Proceeding with empty config.")
@@ -303,7 +307,7 @@ class InterfaceManagerClient:
             if value is not None:
                 updated_config[key] = value
         try:
-            self.update_config(updated_config)
+            self.update_config(updated_config, session_key=session_key)
             self.logger.debug("Server config updated successfully.")
             return True
         except RuntimeError as e:

@@ -179,9 +179,10 @@ async def execute_testcases(
                     "agent_name": agent_name,
                     "application_url": application_url,
                     "selenium_mode": selenium_mode
-                }
+                },
+                session_key=str(run_id),
             )
-            client.apply_server_config()
+            client.apply_server_config(session_key=str(run_id))
         except Exception as e:
             if stop_requested():
                 await finish_aborted_run()

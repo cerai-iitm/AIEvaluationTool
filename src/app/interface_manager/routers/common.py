@@ -7,6 +7,7 @@ from whatsapp import (
     send_prompt_whatsapp,
     close_whatsapp,
     get_ui_response_whatsapp,
+    get_driver_for_session as get_whatsapp_driver_for_session,
 )
 from webapp import (
     login_webapp,
@@ -14,10 +15,11 @@ from webapp import (
     send_prompt,
     close_webapp,
     get_ui_response_webapp,
+    get_driver_for_session as get_webapp_driver_for_session,
 )
 
 from logger import get_logger
-from utils import load_config
+from utils import load_config, get_session_config, set_session_config
 from context import APIRuntimeContext
 from api_handler import handle_api_chat
 from pydantic import BaseModel
@@ -44,8 +46,8 @@ class PromptCreate(BaseModel):
 # -------------------------------
 # Helpers
 # -------------------------------
-def get_app_info():
-    config = load_config()
+def get_app_info(session_key: Optional[str] = None):
+    config = get_session_config(session_key)
     return config.get("application_type"), config.get("application_name")
 
 
@@ -53,17 +55,17 @@ def get_app_info():
 # Login
 # -------------------------------
 @router.get("/login")
-def login():
-    app_type, app_name = get_app_info()
+def login(session_key: Optional[str] = Query(None)):
+    app_type, app_name = get_app_info(session_key)
 
     if app_type == "WHATSAPP_WEB":
         logger.info("Login request: WhatsApp Web")
-        result = login_whatsapp()
+        result = login_whatsapp(session_key)
         return JSONResponse(content={"result": bool(result)})
 
     if str.upper(app_type) == "WEBAPP":
         logger.info(f"Login request: WebApp {app_name}")
-        result = login_webapp(app_name)
+        result = login_webapp(app_name, session_key)
         return JSONResponse(content={"result": bool(result)})
 
     return JSONResponse(content={"error": "Unsupported application type"})
@@ -73,17 +75,19 @@ def login():
 # Logout
 # -------------------------------
 @router.get("/logout")
-def logout():
-    app_type, app_name = get_app_info()
+def logout(session_key: Optional[str] = Query(None)):
+    app_type, app_name = get_app_info(session_key)
 
     if app_type == "WHATSAPP_WEB":
-        logger.info("Logout request: WhatsApp Web")
-        result = logout_whatsapp()
+        logger.info(f"Logout request: WhatsApp Web (session_key={session_key})")
+        driver = get_whatsapp_driver_for_session(session_key)
+        result = logout_whatsapp(driver)
         return JSONResponse(content={"result": bool(result)})
 
     if str.upper(app_type) == "WEBAPP":
-        logger.info(f"Logout request: WebApp {app_name}")
-        result = logout_webapp(app_name)
+        logger.info(f"Logout request: WebApp {app_name} (session_key={session_key})")
+        driver = get_webapp_driver_for_session(session_key)
+        result = logout_webapp(driver, app_name)
         return JSONResponse(content={"result": bool(result)})
 
     return JSONResponse(content={"error": "Unsupported application type"})
@@ -117,7 +121,7 @@ def logout():
 # which is what actually lets concurrent runs' /chat calls proceed in parallel.
 @router.post("/chat")
 def chat(prompt: PromptCreate):
-    app_type, app_name = get_app_info()
+    app_type, app_name = get_app_info(prompt.session_key)
 
     # ------------------------------------------------
     # WhatsApp Web (unchanged)
@@ -181,7 +185,7 @@ def chat(prompt: PromptCreate):
 # -------------------------------
 @router.get("/close")
 def close(session_key: Optional[str] = Query(None)):
-    app_type, app_name = get_app_info()
+    app_type, app_name = get_app_info(session_key)
 
     if app_type == "WHATSAPP_WEB":
         logger.info(f"Close request: WhatsApp Web (session_key={session_key})")
@@ -200,8 +204,8 @@ def close(session_key: Optional[str] = Query(None)):
 # Info
 # -------------------------------
 @router.post("/info")
-def chat_interface():
-    app_type, _ = get_app_info()
+def chat_interface(session_key: Optional[str] = Query(None)):
+    app_type, _ = get_app_info(session_key)
 
     if app_type == "WHATSAPP_WEB":
         return get_ui_response_whatsapp()
@@ -215,17 +219,23 @@ def chat_interface():
 # Config
 # -------------------------------
 @router.get("/config")
-def get_config():
+def get_config(session_key: Optional[str] = Query(None)):
+    if session_key:
+        return get_session_config(session_key)
     with open(config_path, "r") as file:
         return json.load(file)
 
 
 @router.post("/config")
-async def update_config(request: Request):
+async def update_config(request: Request, session_key: Optional[str] = Query(None)):
     try:
         new_config = await request.json()
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid JSON payload")
+
+    if session_key:
+        set_session_config(session_key, new_config)
+        return {"message": "Session config updated successfully"}
 
     try:
         with open(config_path, "w") as file:

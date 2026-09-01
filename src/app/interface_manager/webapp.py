@@ -9,6 +9,7 @@ from logger import get_logger
 from utils import (
     DriverManager,
     load_config,
+    get_session_config,
     load_xpaths,
     is_logged_in,
     login_app,
@@ -39,11 +40,23 @@ def get_ui_response_webapp():
     return {"ui": "Web Application Chat Interface", "features": ["smart-compose", "modular-layout"]}
 
 
+def get_driver_for_session(session_key: Optional[str] = None):
+    """
+    Returns this session's already-running driver, if one exists, without
+    launching a new browser session. Used by /logout so it doesn't spin up
+    a fresh Chrome instance just to immediately log it out.
+    """
+    key = session_key or "default"
+    with _driver_managers_lock:
+        dm = _driver_managers.get(key)
+    return dm.driver if dm else None
+
+
 def login_webapp(app_name: str, session_key: Optional[str] = None):
     """
     Wrapper for generic login_app.
     """
-    cfg = load_config()
+    cfg = get_session_config(session_key)
     url = cfg.get("application_url", "UNKNOWN")
     driver = get_driver_manager(session_key).get_driver(app_name, url)
     return login_app(driver, app_name)
@@ -53,6 +66,9 @@ def logout_webapp(driver, app_name: str):
     """
     Wrapper for generic logout_app.
     """
+    if driver is None:
+        logger.info(f"No active WebApp session for {app_name} to logout.")
+        return True
     return logout_app(driver, app_name)
 
 
@@ -93,7 +109,7 @@ def send_prompt(app_name: str, chat_id: int, prompt_list: List[str], session_key
     Send prompt(s) to a web application interface and collect responses.
     """
     results = []
-    cfg = load_config()
+    cfg = get_session_config(session_key)
     url = cfg.get("application_url", "UNKNOWN")
     app_name = app_name.lower()
     chat_cfg = load_xpaths()["applications"][app_name]["ChatPage"]

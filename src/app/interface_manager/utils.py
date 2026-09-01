@@ -2,8 +2,10 @@ import os
 import time
 import json
 import socket
+import threading
 import psutil
 import requests
+from typing import Optional
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -142,6 +144,33 @@ class DriverManager:
 def load_config() -> dict:
     with open(os.path.join(os.path.dirname(__file__), "config.json"), "r") as file:
         return json.load(file)
+
+
+# --------------------------------------------------------------------
+# Session-scoped Config Overrides
+# --------------------------------------------------------------------
+# Per-session config, keyed by the caller's session_key. Lets concurrent
+# users run different application_type/agent_name/etc. without one user's
+# config change (POST /config) affecting another user's session, instead
+# of everyone sharing the single config.json on disk.
+_session_overrides: dict[str, dict] = {}
+_session_overrides_lock = threading.Lock()
+
+
+def get_session_config(session_key: Optional[str] = None) -> dict:
+    """Base config.json merged with this session's overrides, if any."""
+    base = load_config()
+    if not session_key:
+        return base
+    with _session_overrides_lock:
+        overrides = _session_overrides.get(session_key)
+    return {**base, **overrides} if overrides else base
+
+
+def set_session_config(session_key: str, data: dict) -> None:
+    """Stores/replaces the config overrides for a single session."""
+    with _session_overrides_lock:
+        _session_overrides[session_key] = data
 
 
 def load_xpaths() -> dict:
