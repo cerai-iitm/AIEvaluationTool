@@ -93,6 +93,7 @@ services:
       - .env
     volumes:
       - interface_manager_logs:/app/src/app/interface_manager/logs
+      - interface_manager_profiles:/root
       - ./src/app/interface_manager/xpaths.json:/app/src/app/interface_manager/xpaths.json:ro
       - ./src/app/interface_manager/credentials.json:/app/src/app/interface_manager/credentials.json:ro
     healthcheck:
@@ -274,6 +275,7 @@ services:
 volumes:
   mariadb_data:
   interface_manager_logs:
+  interface_manager_profiles:
   ollama_data:
   sarvam_models:
   app:

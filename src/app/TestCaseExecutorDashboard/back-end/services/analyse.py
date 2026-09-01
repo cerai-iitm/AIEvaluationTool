@@ -203,11 +203,16 @@ def start_analyse_service(
 
 async def _safe_ws_send(message: dict):
     """
-    Best-effort WebSocket broadcast.
-    Analysis must not crash if a client disconnects or send fails.
+    Best-effort WebSocket send, scoped to the run this message is about
+    (via its runName) so concurrent analyses don't see each other's progress.
+    Must not crash if a client disconnects or send fails.
     """
     try:
-        await ws_manager.send_all(message)
+        run_name = message.get("runName")
+        if run_name is not None:
+            await ws_manager.send_to_run(run_name, message)
+        else:
+            await ws_manager.send_all(message)
     except Exception as e:
         try:
             logger.error(f"WebSocket send failed: {e}")

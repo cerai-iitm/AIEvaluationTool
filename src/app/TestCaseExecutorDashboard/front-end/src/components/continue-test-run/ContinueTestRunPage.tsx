@@ -414,14 +414,17 @@ const ContinueRunPage: React.FC = () => {
       setIsRunning(true);
 
       const ws = new WebSocket(`${WS_BASE_URL}/ws/test-run`);
-      wsRef.current = ws;  
+      wsRef.current = ws;
       ws.onopen = () => {
         console.log("WebSocket connected for continue");
-        ws.send(JSON.stringify(data));
+        ws.send(JSON.stringify({ type: "SUBSCRIBE", runId: data.runId }));
       };
 
       ws.onmessage = (event) => {
         const update = JSON.parse(event.data);
+        if (update.runId === undefined || String(update.runId) !== String(data.runId)) {
+          return;
+        }
         console.log("Continue update:", update);
       };
 

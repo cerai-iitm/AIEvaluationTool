@@ -1,5 +1,6 @@
+import threading
 import time
-from typing import List
+from typing import List, Optional
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -17,21 +18,34 @@ from utils import (
 
 logger = get_logger("webapp_driver")
 
-# Single DriverManager instance for WebApp
-driver_manager = DriverManager(profile_name="test_profile")
+# One DriverManager (and one Chrome session) per concurrent run, keyed by
+# session_key (the caller's run_id). This isolates concurrent runs' browser
+# automation instead of racing all of them through a single shared Chrome tab.
+_driver_managers: dict[str, DriverManager] = {}
+_driver_managers_lock = threading.Lock()
+
+
+def get_driver_manager(session_key: Optional[str] = None) -> DriverManager:
+    key = session_key or "default"
+    with _driver_managers_lock:
+        dm = _driver_managers.get(key)
+        if dm is None:
+            dm = DriverManager(profile_name=f"session_{key}")
+            _driver_managers[key] = dm
+        return dm
 
 
 def get_ui_response_webapp():
     return {"ui": "Web Application Chat Interface", "features": ["smart-compose", "modular-layout"]}
 
 
-def login_webapp(app_name: str):
+def login_webapp(app_name: str, session_key: Optional[str] = None):
     """
     Wrapper for generic login_app.
     """
     cfg = load_config()
     url = cfg.get("application_url", "UNKNOWN")
-    driver = driver_manager.get_driver(app_name, url)
+    driver = get_driver_manager(session_key).get_driver(app_name, url)
     return login_app(driver, app_name)
 
 
@@ -74,7 +88,7 @@ def search_llm(driver):
         return False
 
 
-def send_prompt(app_name: str, chat_id: int, prompt_list: List[str]) -> list[dict]:
+def send_prompt(app_name: str, chat_id: int, prompt_list: List[str], session_key: Optional[str] = None) -> list[dict]:
     """
     Send prompt(s) to a web application interface and collect responses.
     """
@@ -84,12 +98,12 @@ def send_prompt(app_name: str, chat_id: int, prompt_list: List[str]) -> list[dic
     app_name = app_name.lower()
     chat_cfg = load_xpaths()["applications"][app_name]["ChatPage"]
 
-    driver = driver_manager.get_driver(app_name, url)
+    driver = get_driver_manager(session_key).get_driver(app_name, url)
 
     # Ensure login
     # logout_cfg = load_xpaths()["applications"][app_name]["LogoutPage"]
     # logger.info("sending xpath: ", logout_cfg["send_element"])
-    login_ok = is_logged_in(driver, send_element=chat_cfg["send_button_element"]) or login_webapp(app_name)
+    login_ok = is_logged_in(driver, send_element=chat_cfg["send_button_element"]) or login_webapp(app_name, session_key)
     logger.info(f"after function running xpath: {chat_cfg['send_button_element']}")
     logger.info(f"login_ok: {login_ok}")
     for prompt in prompt_list:
@@ -105,13 +119,25 @@ def send_prompt(app_name: str, chat_id: int, prompt_list: List[str]) -> list[dic
     return results
 
 
-def close_webapp(app_name: str):
+def close_webapp(app_name: str, session_key: Optional[str] = None):
     """
-    Gracefully close the browser session.
+    Gracefully close the browser session. If session_key is given, closes
+    only that run's own driver; otherwise closes every tracked session
+    (used only for a full service shutdown, not per-run cleanup).
     """
     try:
-        logger.info(f"Closing WebApp session for {app_name}...")
-        driver_manager.quit()
+        logger.info(f"Closing WebApp session for {app_name} (session_key={session_key})...")
+        if session_key is not None:
+            with _driver_managers_lock:
+                dm = _driver_managers.pop(session_key, None)
+            if dm is not None:
+                dm.quit()
+        else:
+            with _driver_managers_lock:
+                managers = list(_driver_managers.values())
+                _driver_managers.clear()
+            for dm in managers:
+                dm.quit()
         logger.info(f"Session closed for {app_name}")
     except Exception as e:
         logger.warning(f"Driver quit issue for {app_name}: {e}")

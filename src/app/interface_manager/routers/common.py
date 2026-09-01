@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from typing import Optional, Dict, Any, List
 from whatsapp import (
@@ -38,6 +38,7 @@ class PromptCreate(BaseModel):
     chat_id: int
     prompt_list: List[str]
     api_context: Optional[Dict[str, Any]] = None
+    session_key: Optional[str] = None
 
 
 # -------------------------------
@@ -109,8 +110,13 @@ def logout():
 #     return JSONResponse(content={"error": "Unsupported application type"})
 
 # new one
+# Deliberately a plain `def`, not `async def`: the branches below block for
+# up to ~60s inside Selenium calls and never await anything, so declaring
+# this async would serialize every concurrent request on the single event
+# loop. FastAPI/Starlette runs a sync `def` route in its thread pool instead,
+# which is what actually lets concurrent runs' /chat calls proceed in parallel.
 @router.post("/chat")
-async def chat(prompt: PromptCreate):
+def chat(prompt: PromptCreate):
     app_type, app_name = get_app_info()
 
     # ------------------------------------------------
@@ -121,6 +127,7 @@ async def chat(prompt: PromptCreate):
         result = send_prompt_whatsapp(
             chat_id=prompt.chat_id,
             prompt_list=prompt.prompt_list,
+            session_key=prompt.session_key,
         )
         return JSONResponse(content={"response": result})
 
@@ -133,6 +140,7 @@ async def chat(prompt: PromptCreate):
             app_name=app_name,
             chat_id=prompt.chat_id,
             prompt_list=prompt.prompt_list,
+            session_key=prompt.session_key,
         )
         return JSONResponse(content={"response": result})
 
@@ -172,17 +180,17 @@ async def chat(prompt: PromptCreate):
 # Close
 # -------------------------------
 @router.get("/close")
-def close():
+def close(session_key: Optional[str] = Query(None)):
     app_type, app_name = get_app_info()
 
     if app_type == "WHATSAPP_WEB":
-        logger.info("Close request: WhatsApp Web")
-        close_whatsapp()
+        logger.info(f"Close request: WhatsApp Web (session_key={session_key})")
+        close_whatsapp(session_key=session_key)
         return JSONResponse(content={"message": "WhatsApp Web closed successfully"})
 
     if str.upper(app_type) == "WEBAPP":
-        logger.info(f"Close request: WebApp {app_name}")
-        close_webapp(app_name)
+        logger.info(f"Close request: WebApp {app_name} (session_key={session_key})")
+        close_webapp(app_name, session_key=session_key)
         return JSONResponse(content={"message": f"Closed WebApp {app_name}"})
 
     return JSONResponse(content={"error": "Unsupported application type"})

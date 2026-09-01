@@ -25,6 +25,7 @@ load_dotenv(ENV_PATH)
 class PromptCreate(BaseModel):
     chat_id: int
     prompt_list: List[str]
+    session_key: Optional[str] = None
 
 class InterfaceManagerClient:
     def __init__(self,
@@ -92,15 +93,16 @@ class InterfaceManagerClient:
     def logout(self) -> requests.Response:
         return self._get("logout")
 
-    def close(self) -> requests.Response:
-        return self._get("close")
+    def close(self, session_key: Optional[str] = None) -> requests.Response:
+        params = {"session_key": session_key} if session_key else None
+        return self._get("close", params=params)
 
-    def chat(self, chat_id: int, prompt_list: List[str]):
+    def chat(self, chat_id: int, prompt_list: List[str], session_key: Optional[str] = None):
         prompt = " ".join(prompt_list)
 
         # Legacy flows
         if self.application_type in ["WHATSAPP_WEB", "WEBAPP"]:
-            payload = PromptCreate(chat_id=chat_id, prompt_list=prompt_list).dict()
+            payload = PromptCreate(chat_id=chat_id, prompt_list=prompt_list, session_key=session_key).dict()
             return self._post("chat", json=payload)
 
         # Unified API flow
@@ -308,10 +310,10 @@ class InterfaceManagerClient:
             self.logger.error(f"Failed to update server config: {e}")
             return False
 
-    def _get(self, endpoint: str) -> requests.Response:
+    def _get(self, endpoint: str, params: Optional[dict] = None) -> requests.Response:
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
         try:
-            response = self.session.get(url, timeout=self.timeout)
+            response = self.session.get(url, params=params, timeout=self.timeout)
             response.raise_for_status()
             return response
         except requests.HTTPError as e:

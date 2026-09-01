@@ -122,23 +122,32 @@ def load_config():
 
 @app.websocket("/ws/test-run")
 async def websocket_endpoint(websocket: WebSocket):
-    
+
     await ws_manager.connect(websocket)
     try:
         while True:
             try:
-                await asyncio.wait_for(websocket.receive_text(), timeout=15)
+                raw = await asyncio.wait_for(websocket.receive_text(), timeout=15)
             except asyncio.TimeoutError:
                 await ws_manager.send_one(websocket, {"type": "HEARTBEAT"})
+                continue
+
+            try:
+                msg = json.loads(raw)
+            except (TypeError, ValueError):
+                continue
+
+            msg_type = msg.get("type")
+            if msg_type == "SUBSCRIBE" and msg.get("runId") is not None:
+                ws_manager.subscribe(websocket, msg["runId"])
+            elif msg_type == "ANALYSIS_SUBSCRIBE" and msg.get("runName") is not None:
+                ws_manager.subscribe(websocket, msg["runName"])
     except WebSocketDisconnect:
-        ws_manager.disconnect(websocket)
-        if ws_manager.is_empty():
-            on_frontend_disconnect(interface_manager_config)
+        run_ids = ws_manager.disconnect(websocket)
+        on_frontend_disconnect(interface_manager_config, run_ids=run_ids)
     except Exception:
-        ws_manager.disconnect(websocket)
-        
-        if ws_manager.is_empty():
-            on_frontend_disconnect(interface_manager_config)
+        run_ids = ws_manager.disconnect(websocket)
+        on_frontend_disconnect(interface_manager_config, run_ids=run_ids)
          
 @app.get(
     "/testcases/{testcase_name}",

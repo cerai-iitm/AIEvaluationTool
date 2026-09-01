@@ -1,7 +1,11 @@
 {
    "db": {
-        "engine":"sqlite",
-        "file": "AIEvaluationData.db"
+        "engine": "mariadb",
+        "host": "localhost",
+        "port": 3306,
+        "user": "aiet_user",
+        "password": "aiet_password",
+        "database": "aievaluationtool"
     },
     "examples":{
         "db_1":{

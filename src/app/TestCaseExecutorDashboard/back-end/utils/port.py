@@ -11,51 +11,74 @@ from services.ws_manager import ws_manager
 logger = get_logger(__name__)
 
 
-_active_stop_watcher: threading.Event | None = None
-_active_run_id: str | int | None = None
+_active_watchers: dict[str, threading.Event] = {}
 _active_stop_lock = threading.Lock()
 
 def set_active_stop_watcher(event, run_id=None):
-    global _active_stop_watcher, _active_run_id
+    """Registers (or removes, if event is None) the stop watcher for one run_id."""
+    global _active_watchers
     with _active_stop_lock:
-        _active_stop_watcher = event
-        _active_run_id = run_id if event is not None else None
+        if event is None:
+            if run_id is not None:
+                _active_watchers.pop(str(run_id), None)
+            return
+        _active_watchers[str(run_id)] = event
 
 def stop_active_run(run_id, config_path) -> bool:
-    """Signal the requested run to stop and shut down its Interface Manager."""
+    """Signal the requested run to stop and close its own Interface Manager browser session."""
     with _active_stop_lock:
-        if (
-            _active_stop_watcher is None
-            or _active_run_id is None
-            or str(_active_run_id) != str(run_id)
-            or _active_stop_watcher.is_set()
-        ):
+        watcher = _active_watchers.get(str(run_id))
+        if watcher is None or watcher.is_set():
             return False
-        _active_stop_watcher.set()
+        watcher.set()
 
     logger.info(f"🛑 Stop requested for test run {run_id}")
-    stop_interface_manager(config_path)
+    close_run_driver(run_id, config_path)
     return True
 
 def reset_frontend_disconnect_state():
     ws_manager.disconnected_by_frontend = False
 
 def is_frontend_disconnect_requested(stop_event: threading.Event | None = None) -> bool:
-    return ws_manager.disconnected_by_frontend or bool(stop_event and stop_event.is_set())
+    """
+    Whether THIS run should stop. Deliberately does not consult the shared
+    ws_manager.disconnected_by_frontend flag — that flag flips whenever ANY
+    browser tab disconnects (even one unrelated to this run), which would
+    otherwise abort every concurrently running test whenever any one user's
+    tab closes. This run's own stop_event is the only correct signal.
+    """
+    return bool(stop_event and stop_event.is_set())
 
-def on_frontend_disconnect(config_path):
-    
+def on_frontend_disconnect(config_path, run_ids=None):
+    """
+    A browser tab disconnected. Only close the browser session(s) for the
+    run(s) that tab was subscribed to — never the shared Interface Manager
+    service, which other concurrent runs still depend on.
+    """
     ws_manager.disconnected_by_frontend = True
+    run_ids = run_ids or []
     with _active_stop_lock:
-        if _active_stop_watcher is None:
-            logger.info("👀 Frontend disconnected, but no active run — nothing to kill")
-            return
-        _active_stop_watcher.set()
-    logger.info("🛑 Frontend tab closed — killing Interface Manager")
-    try:
-        stop_interface_manager(config_path)
-    except Exception as e:
-        logger.error(f"Failed to kill IM on tab close: {e}")
+        watchers = [(rid, _active_watchers.get(str(rid))) for rid in run_ids]
+
+    any_active = False
+    for rid, watcher in watchers:
+        if watcher is None:
+            continue
+        any_active = True
+        watcher.set()
+
+    if not any_active:
+        logger.info("👀 Frontend disconnected, but no active run for that tab — nothing to close")
+        return
+
+    logger.info(f"🛑 Frontend tab closed — closing browser session(s) for run(s): {run_ids}")
+    for rid, watcher in watchers:
+        if watcher is None:
+            continue
+        try:
+            close_run_driver(rid, config_path)
+        except Exception as e:
+            logger.error(f"Failed to close browser session for run {rid} on tab close: {e}")
 
 
 def check_service(url: str, name: str):
@@ -127,6 +150,31 @@ def ensure_interface_manager_port_running(
             )
     finally:
         sock.close()    
+
+
+def close_run_driver(run_id, config_path: str):
+    """
+    Close only this run's own browser session on the (shared) Interface
+    Manager service, by session_key=run_id — never the whole service, since
+    other concurrent runs may still be using it.
+    """
+    try:
+        with open(config_path, "r") as f:
+            config = json.load(f)
+
+        im_config = config.get("interface_manager", {})
+        is_docker = bool(im_config.get("docker"))
+        base_url = im_config.get("base_url") if is_docker else im_config.get("base_url_local")
+        if not base_url:
+            return
+
+        try:
+            requests.get(f"{base_url}/close", params={"session_key": str(run_id)}, timeout=3)
+            logger.info(f"Interface Manager /close called for run {run_id}")
+        except Exception as e:
+            logger.error(f"/close failed for run {run_id} (IM may already be dead): {e}")
+    except Exception as e:
+        logger.error(f"Failed to close browser session for run {run_id}: {e}")
 
 
 def stop_interface_manager(config_path: str, profile_path: str = "/home/varun/test_profile"):

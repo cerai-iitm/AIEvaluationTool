@@ -82,8 +82,8 @@ else:
 # Optional: keeping this if still needed elsewhere
 interface_manager_config = config_read.get("interface_manager", {})
 
-async def step(ws_payload, delay=0.1):
-    await ws_manager.send_all(ws_payload)
+async def step(run_id, ws_payload, delay=0.1):
+    await ws_manager.send_to_run(run_id, ws_payload)
     await asyncio.sleep(delay)
 
 
@@ -99,7 +99,7 @@ async def execute_testcases(
 
     client = None
     try:
-        
+
         stop_watcher = threading.Event()
         set_active_stop_watcher(stop_watcher, run_id)
 
@@ -117,7 +117,8 @@ async def execute_testcases(
             run.end_ts = datetime.now().isoformat()
             run.status = "STOPPED"
             db.add_or_update_testrun(run=run)
-            await ws_manager.send_all(
+            await ws_manager.send_to_run(
+                run_id,
                 {
                     "type": "RUN_FINISHED",
                     "runId": run_id,
@@ -149,7 +150,7 @@ async def execute_testcases(
             "WebApp": "WEBAPP",
             "API": "API",
         }
-        
+
         if target_obj.target_type not in APPLICATION_TYPE_MAP:
             raise ValueError(f"Unsupported target_type: {target_obj.target_type}")
 
@@ -162,8 +163,8 @@ async def execute_testcases(
             application_type=application_type,
             agent_name=agent_name,
         )
-        await ws_manager.send_all(
-            {"type": "RUN_STARTED", "runId": run_id, "total": len(testcases)}
+        await ws_manager.send_to_run(
+            run_id, {"type": "RUN_STARTED", "runId": run_id, "total": len(testcases)}
         )
 
         if stop_requested():
@@ -189,7 +190,8 @@ async def execute_testcases(
             run.status = "FAILED"
             run.end_ts = datetime.now().isoformat()
             db.add_or_update_testrun(run=run)
-            await ws_manager.send_all(
+            await ws_manager.send_to_run(
+                run_id,
                 {
                     "type": "RUN_FINISHED",
                     "runId": run_id,
@@ -244,6 +246,7 @@ async def execute_testcases(
                 db.add_or_update_conversation(conversation=conv)
 
                 await step(
+                    run_id,
                     {
                         "type": "STEP_UPDATE",
                         "runId": run_id,
@@ -252,7 +255,8 @@ async def execute_testcases(
                         "status": "DONE",
                     }
                 )
-                await ws_manager.send_all(
+                await ws_manager.send_to_run(
+                    run_id,
                     {
                         "type": "STEP_UPDATE",
                         "runId": run_id,
@@ -270,6 +274,7 @@ async def execute_testcases(
                     client.chat,
                     chat_id=testcase.testcase_id,
                     prompt_list=[message_to_agent],
+                    session_key=str(run_id),
                 )
                 if stop_requested():
                     await finish_aborted_run(rundetail)
@@ -281,6 +286,7 @@ async def execute_testcases(
                         f"Step 2 completed too fast ({step2_duration:.2f}s) — marking as FAILED"
                     )
                     await step(
+                        run_id,
                         {
                             "type": "STEP_UPDATE",
                             "runId": run_id,
@@ -293,6 +299,7 @@ async def execute_testcases(
                     db.add_or_update_testrun_detail(rundetail)
                     continue
                 await step(
+                    run_id,
                     {
                         "type": "STEP_UPDATE",
                         "runId": run_id,
@@ -301,7 +308,7 @@ async def execute_testcases(
                         "status": "DONE",
                     }
                 )
-                
+
                 data = response_from_agent.json().get("response")
                 agent_response = extract_agent_response(data)
 
@@ -318,6 +325,7 @@ async def execute_testcases(
                 db.add_or_update_conversation(conversation=conv)
 
                 await step(
+                    run_id,
                     {
                         "type": "STEP_UPDATE",
                         "runId": run_id,
@@ -328,6 +336,7 @@ async def execute_testcases(
                     }
                 )
                 await step(
+                    run_id,
                     {
                         "type": "STEP_UPDATE",
                         "runId": run_id,
@@ -337,6 +346,7 @@ async def execute_testcases(
                     }
                 )
                 await step(
+                    run_id,
                     {"type": "TESTCASE_FINISHED", "runId": run_id, "current": index}
                 )
                 rundetail.status = "COMPLETED"
@@ -364,8 +374,8 @@ async def execute_testcases(
         run.status = "COMPLETED"
 
         db.add_or_update_testrun(run=run)
-        await ws_manager.send_all(
-            {"type": "RUN_FINISHED", "runId": run_id, "status": "COMPLETED"}
+        await ws_manager.send_to_run(
+            run_id, {"type": "RUN_FINISHED", "runId": run_id, "status": "COMPLETED"}
         )
         logger.info(f"🏁 Background execution finished for run {run_id}")
 
@@ -375,7 +385,8 @@ async def execute_testcases(
         run.end_ts = datetime.now().isoformat()
         db.add_or_update_testrun(run=run)
         try:
-            await ws_manager.send_all(
+            await ws_manager.send_to_run(
+                run_id,
                 {
                     "type": "RUN_FINISHED",
                     "runId": run_id,
@@ -386,9 +397,9 @@ async def execute_testcases(
         except Exception as ws_error:
             logger.error(f"Failed to push RUN_FINISHED for failed run {run_id}: {ws_error}")
     finally:
-        set_active_stop_watcher(None)
+        set_active_stop_watcher(None, run_id)
         if client is not None:
             try:
-                client.close()
+                client.close(session_key=str(run_id))
             except Exception as close_error:
                 logger.error(f"Client close failed (IM already dead): {close_error}")

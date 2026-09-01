@@ -473,6 +473,10 @@ const NewTestRunPage: React.FC = () => {
     activeRunIdRef.current = runData.runId;
     pendingRunStartRef.current = false;
 
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: "SUBSCRIBE", runId: runData.runId }));
+    }
+
     const bufferedEvents = pendingEventsRef.current.filter(
       (pendingEvent) =>
         pendingEvent.runId !== undefined &&
