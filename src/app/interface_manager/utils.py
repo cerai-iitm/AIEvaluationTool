@@ -3,6 +3,7 @@ import time
 import json
 import socket
 import threading
+from urllib.parse import urlparse
 import psutil
 import requests
 from typing import Optional
@@ -31,6 +32,17 @@ def load_json(file_path):
         return json.load(f)
 
 logger = get_logger("interface_manager")
+
+
+def _remote_selenium_available(remote_url: str, timeout: float = 2.0) -> bool:
+    """Best-effort check whether a remote Selenium hub is reachable."""
+    try:
+        parsed = urlparse(remote_url)
+        port = parsed.port or (443 if parsed.scheme == "https" else 80)
+        with socket.create_connection((parsed.hostname, port), timeout=timeout):
+            return True
+    except OSError:
+        return False
 
 # --------------------------------------------------------------------
 # Driver Management
@@ -66,11 +78,11 @@ class DriverManager:
         opts.add_experimental_option("excludeSwitches", ["enable-logging"])
 
         cfg = load_config()
-        selenium_mode = str(cfg.get("selenium_mode", "local")).lower()
         remote_url = cfg.get("selenium_remote_url", "http://selenium-browser:4444/wd/hub")
+        use_remote = _remote_selenium_available(remote_url)
 
         try:
-            if selenium_mode == "remote":
+            if use_remote:
                 logger.info(f"Using Remote WebDriver at {remote_url}")
                 # opts.add_argument("--user-data-dir=/home/seluser/chrome-data")
                 self.driver = webdriver.Remote(
