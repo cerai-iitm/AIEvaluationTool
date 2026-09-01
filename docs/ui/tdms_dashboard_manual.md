@@ -12,10 +12,10 @@ The TDMS (Test Data Management System) is a comprehensive application designed t
 
 ### Logging In
 
-1. Open the TDMS application in your web browser
-2. Enter your username and password
-3. Click **Login** or press Enter
-4. Upon successful login, you will be redirected to the Dashboard
+- Open the TDMS application in your web browser
+- Enter your username and password
+- Click **Login** or press Enter
+- Upon successful login, you will be redirected to the Dashboard
 
 ![Dashboard after successful login](../../screenshots/afterLogin.png)
 
@@ -201,18 +201,23 @@ Targets represent the systems or applications being tested.
 
 1. Navigate to **Targets** from the dashboard
 2. Click **Add Target**
-3. Fill in the following details:
-   - **Target Name**: Name of the target system
-   - **Target Type**: Type of target (e.g., "WhatsApp", "WebApp")
-   - **Description** (optional): Additional details
-   - **Domain**: Select the domain
-   - **Languages**: Select one or more languages
+3. The add-target dialog is split into tabs:
+   - **General** tab:
+     - **Target Name**: Name of the target system
+     - **Target Type**: Type of target (e.g., "WhatsApp", "WebApp")
+     - **Description** (optional): Additional details
+     - **Domain**: Select the domain
+     - **Languages**: Select one or more languages
+   - **Credentials** tab (optional): Enter a username/password for the target. Leave blank to skip — if any credential field is filled, all required credential fields must be completed before submitting.
+   - **XPath Configuration** tab (shown only for target types that require it, e.g. WebApp): Configure per-field XPath selectors used by the interface manager to locate page elements, with per-field history.
 4. Click **Submit**
 
 ### Managing Targets
 
 - View all targets on the **Targets** page
-- Edit targets type and languages
+- Edit target type, languages, credentials, and XPath configuration
+- Credentials can be viewed/updated later from the target's own **Credentials** editor (`GET`/`POST`/`PUT /credentials/{target_name}`)
+- XPath configuration can be viewed/updated later from the target's own **XPath Configuration** editor (`GET`/`PUT /xpaths/applications/{app_name}`)
 - Delete targets (Admin and Manager users only)
 
 ---

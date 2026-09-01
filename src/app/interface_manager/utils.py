@@ -679,7 +679,7 @@ def handle_farmerchat(driver, prompt):
     smart_send_text(driver, textarea, prompt)
     textarea.send_keys(Keys.RETURN)
 
-    time.sleep(10)
+    time.sleep(30)
     
     text = wait_for_new_shadow_text(driver, shadow_host, response_selector, initial_count)
 
@@ -859,7 +859,7 @@ def wait_for_text_response(driver, xpath, timeout=60, stable_time=2):
 # WAIT FOR TEXT RESPONSE (SHADOW DOM)
 # ------------------------------------------------------------
 
-def wait_for_new_shadow_text(driver, shadow_host, selector, initial_count, timeout=60, stable_time=3, poll_interval=0.5):
+def wait_for_new_shadow_text(driver, shadow_host, selector, initial_count, timeout=60, stable_time=10, poll_interval=0.5):
 
     start = time.time()
     last_text = ""

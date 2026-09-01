@@ -584,14 +584,14 @@ export const TestCaseAddDialog = ({
       return;
     }
 
-    // if (!responseText.trim()) {
-    //   toast({
-    //     title: "Validation Error",
-    //     description: "Response text is required",
-    //     variant: "destructive",
-    //   });
-    //   return;
-    // }
+    if (!responseText.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Response text is required",
+        variant: "destructive",
+      });
+      return;
+    }
 
     // if response text is available means response type and response language is required
     if (responseText.trim()) {
@@ -780,7 +780,7 @@ export const TestCaseAddDialog = ({
 
           <div className="space-y-1 pt-1">
             <div className="space-y-1">
-              <Label className="text-base font-semibold">Test Case</Label>
+              <Label className="text-base font-semibold">Test Case<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
               <div className="relative">
                 <Input
                   placeholder="Enter new test case name"
@@ -830,7 +830,7 @@ export const TestCaseAddDialog = ({
                 {/* <Label className="text-base font-semibold">Prompt</Label> */}
               {/* </div> */}
               <div className="space-y-1">
-                <Label className="text-base font-semibold">User Prompt</Label>
+                <Label className="text-base font-semibold">User Prompt<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
                 <div className="relative">
                   <Textarea
                     value={userPrompts}
@@ -871,7 +871,7 @@ export const TestCaseAddDialog = ({
               {showDetails && (
                 <>
                   <div className="space-y-1">
-                    <Label className="text-sm font-semibold">System Prompt</Label>
+                    <Label className="text-sm font-semibold">System Prompt<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
                     <div className="relative">
                       <Textarea
                         value={systemPrompts}
@@ -917,7 +917,7 @@ export const TestCaseAddDialog = ({
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-sm font-semibold">Domain</Label>
+                      <Label className="text-sm font-semibold">Domain<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
                       <Select
                         value={domain}
                         onValueChange={(value) => {
@@ -951,7 +951,7 @@ export const TestCaseAddDialog = ({
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-sm font-semibold">Language</Label>
+                      <Label className="text-sm font-semibold">Language<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
                       <Select
                         value={language}
                         onValueChange={(value) => {
@@ -994,7 +994,7 @@ export const TestCaseAddDialog = ({
            
             <div className="space-y-1 pb-2">
               <div className="space-y-2">
-                <Label className="text-base font-semibold">Response</Label>
+                <Label className="text-base font-semibold">Response<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
                 <div className="relative">
                   <Textarea
                     value={responseText}
@@ -1037,7 +1037,7 @@ export const TestCaseAddDialog = ({
                 <>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-base font-semibold">Response Type</Label>
+                    <Label className="text-base font-semibold">Response Type<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
                     <Select 
                       value={responseType} 
                       onValueChange={(value) => {
@@ -1064,7 +1064,7 @@ export const TestCaseAddDialog = ({
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-base font-semibold">Language</Label>
+                    <Label className="text-base font-semibold">Language<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
                     <Select
                       value={responseLanguage}
                       onValueChange={(value) => {
@@ -1109,7 +1109,7 @@ export const TestCaseAddDialog = ({
             </div>
           
             <div className="space-y-1">
-              <Label className="text-base font-semibold">Strategy</Label>
+              <Label className="text-base font-semibold">Strategy<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
               <Select 
                 value={strategy} 
                 onValueChange={setStrategy}
@@ -1138,7 +1138,7 @@ export const TestCaseAddDialog = ({
 
             {showLLMPrompt && (
               <div className="space-y-2">
-                <Label className="text-base font-semibold">LLM Prompt</Label>
+                <Label className="text-base font-semibold">LLM Prompt<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
                 <div className="relative">
                   <Textarea
                     value={llmPrompt}
@@ -1192,7 +1192,7 @@ export const TestCaseAddDialog = ({
             
 
             <div className="space-y-2">
-              <Label className="text-base font-semibold">Metrics</Label>
+              <Label className="text-base font-semibold">Metrics<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
               <div className="bg-muted p-4 rounded-md max-h-[130px] overflow-y-auto">
                 {isFetchingMetrics ? (
                   <div className="text-sm text-muted-foreground">
@@ -1231,7 +1231,7 @@ export const TestCaseAddDialog = ({
             </div>
 
             <div className="flex justify-center items-center p-2 border-gray-300 bg-white sticky bottom-0 z-10">
-              <Label className="text-base font-semibold mr-2">Notes</Label>
+              <Label className="text-base font-semibold mr-2">Notes<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
               <Input
                 placeholder="Enter Notes"
                 type="text"

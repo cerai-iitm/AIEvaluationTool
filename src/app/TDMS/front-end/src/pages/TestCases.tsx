@@ -479,7 +479,35 @@ const TestCases = () => {
     }
   };
 
-  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE) || 1;
+  const filteredCases = testCases.filter((tc) =>{
+    const q = searchQuery.toLowerCase();
+
+    if (!q) return true;
+
+    if (searchField === "testcase") {
+      return tc.name.toLowerCase().includes(q);
+    } else if (searchField === "strategy") {
+      return tc.strategyName.toLowerCase().includes(q);
+    } else if (searchField === "domain") {
+      return tc.domainName.toLowerCase().includes(q);
+    } else if (searchField === "metric") {
+      return tc.metricName.toLowerCase().includes(q);
+    }
+    return true;
+  }
+    // tc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    // tc.strategyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    // tc.domainName.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  const totalItems = filteredCases.length;
+  const itemsPerPage = 15;
+  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+
+  // Pagination logic: get items for current page
+  const paginatedCases = filteredCases.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   // Calculate line count from text more accurately
   // Estimates based on typical textarea width (~700px) and average char width (~7px)

@@ -720,7 +720,7 @@ const Metrics: React.FC = () => {
             </button>
             
             <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 mt-4 md:mt-5 gap-2 md:gap-0">
-              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Metric</label>
+              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Metric<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
               <Input
                 value={updateName}
                 onChange={e => setUpdateName(e.target.value)}
@@ -734,7 +734,7 @@ const Metrics: React.FC = () => {
             </div>
             
             <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 gap-2 md:gap-0">
-              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Description</label>
+              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Description<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
               <Textarea
                 value={updateDescription}
                 onChange={e => setUpdateDescription(e.target.value)}
@@ -745,7 +745,7 @@ const Metrics: React.FC = () => {
             </div>
 
             <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 gap-2 md:gap-0">
-              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Source</label>
+              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Source<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
               <Input
                 value={updateSource}
                 onChange={e => setUpdateSource(e.target.value)}
@@ -756,7 +756,7 @@ const Metrics: React.FC = () => {
             </div>
 
             <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 gap-2 md:gap-0">
-              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Domain</label>
+              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Domain<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
               <Select
                 value={updateDomainName}
                 onValueChange={setUpdateDomainName}
@@ -776,7 +776,7 @@ const Metrics: React.FC = () => {
             </div>
 
             <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 gap-2 md:gap-0">
-              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Bench Mark</label>
+              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Bench Mark<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
               <Input
                 value={updateBenchmark}
                 onChange={e => setUpdateBenchmark(e.target.value)}
@@ -787,7 +787,7 @@ const Metrics: React.FC = () => {
             </div>
             
             <div className="flex flex-col md:flex-row items-center gap-2 md:gap-0">
-              <label className="text-base md:text-lg min-w-[60px]">Notes </label>
+              <label className="text-base md:text-lg min-w-[60px]">Notes</label>
               <Input
                 value={updateMessage}
                 onChange={e => setUpdateMessage(e.target.value)}
@@ -843,7 +843,7 @@ const Metrics: React.FC = () => {
             
             <div className="flex flex-col items-center justify-center flex-1">
               <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 w-full gap-2 md:gap-0">
-                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Metric</label>
+                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Metric<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
                 <Input
                   value={newMetricName}
                   onChange={e => setNewMetricName(e.target.value)}
@@ -857,7 +857,7 @@ const Metrics: React.FC = () => {
               </div>
               
               <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 w-full gap-2 md:gap-0">
-                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Description</label>
+                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Description<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
                 <Textarea
                   value={newMetricDescription}
                   onChange={e => setNewMetricDescription(e.target.value)}
@@ -868,7 +868,7 @@ const Metrics: React.FC = () => {
               </div>
 
               <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 w-full gap-2 md:gap-0">
-                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Source</label>
+                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Source<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
                 <Input
                   value={newMetricSource}
                   onChange={e => setNewMetricSource(e.target.value)}
@@ -879,7 +879,7 @@ const Metrics: React.FC = () => {
               </div>
 
               <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 w-full gap-2 md:gap-0">
-                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Domain</label>
+                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Domain<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
                 <Select
                   value={newDomainName}
                   onValueChange={setNewDomainName}
@@ -899,7 +899,7 @@ const Metrics: React.FC = () => {
               </div>
 
               <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 w-full gap-2 md:gap-0">
-                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Bench Mark</label>
+                <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Bench Mark<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
                 <Input
                   value={newMetricBenchmark}
                   onChange={e => setNewMetricBenchmark(e.target.value)}
@@ -911,7 +911,7 @@ const Metrics: React.FC = () => {
             </div>
             
             <div className="flex flex-col md:flex-row items-center gap-2 md:gap-0">
-              <label className="text-base md:text-lg min-w-[60px]">Notes</label>
+              <label className="text-base md:text-lg min-w-[60px]">Notes<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
               <Input
                 value={addMessage}
                 onChange={e => setAddMessage(e.target.value)}
