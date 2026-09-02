@@ -32,6 +32,51 @@ def load_json(file_path):
 logger = get_logger("interface_manager")
 
 # --------------------------------------------------------------------
+# Selenium Grid node resolution (for direct noVNC viewing)
+# --------------------------------------------------------------------
+def resolve_node_vnc_address(session_id: str) -> str | None:
+    """
+    Look up which chrome-node container is running `session_id` by querying
+    the Grid hub's /status endpoint, and return that node's "host:port" for
+    direct noVNC access (bypassing the hub's session-matching live-view
+    proxy, which is unreliable behind a reverse proxy).
+
+    Each node only ever runs one session (SE_NODE_MAX_SESSIONS=1), so once
+    we know the node, no further session disambiguation is needed there.
+
+    Returns None if the session/node can't be resolved — caller should
+    treat that as "no live view available right now".
+    """
+    cfg = load_config()
+    remote_url = cfg.get("selenium_remote_url", "http://selenium-hub:4444/wd/hub")
+    # remote_url is typically ".../wd/hub"; the status API is at hub root.
+    hub_base = remote_url.split("/wd/hub")[0].rstrip("/")
+
+    try:
+        resp = requests.get(f"{hub_base}/status", timeout=5)
+        resp.raise_for_status()
+        nodes = resp.json().get("value", {}).get("nodes", [])
+    except Exception as e:
+        logger.warning(f"Could not query Grid status at {hub_base}/status: {e}")
+        return None
+
+    for node in nodes:
+        for slot in node.get("slots", []):
+            session = slot.get("session")
+            if session and session.get("sessionId") == session_id:
+                node_uri = node.get("uri", "")
+                # node_uri looks like "http://172.18.0.5:5555" — VNC is on
+                # the same container's port 7900.
+                host = node_uri.split("://")[-1].split(":")[0]
+                if not host:
+                    return None
+                return f"{host}:7900"
+
+    logger.warning(f"No Grid node found running session {session_id}")
+    return None
+
+
+# --------------------------------------------------------------------
 # Driver Management
 # --------------------------------------------------------------------
 class DriverManager:

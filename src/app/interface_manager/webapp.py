@@ -13,6 +13,7 @@ from utils import (
     login_app,
     logout_app,
     send_message_webapp,
+    resolve_node_vnc_address,
 )
 
 logger = get_logger("webapp_driver")
@@ -108,14 +109,24 @@ def send_prompt(app_name: str, chat_id: int, prompt_list: List[str]) -> list[dic
 
 def get_view_path(chat_id: str) -> str | None:
     """
-    Return the noVNC live-view path (proxied through the Selenium Grid hub)
-    for the pooled session belonging to `chat_id`, or None if no session
-    is currently running for it.
+    Return the noVNC live-view path for the pooled session belonging to
+    `chat_id`, or None if no session is currently running for it.
+
+    This routes directly to the chrome-node running the session (via
+    /vnc-proxy/?target=<node-ip>:7900) rather than through the Grid hub's
+    own live-view proxy, which relies on Referer-header session matching
+    that's unreliable behind a reverse proxy.
     """
     session_id = driver_manager.get_session_id(chat_id)
     if not session_id:
         return None
-    return f"/selenium/session/{session_id}/se/vnc"
+    target = resolve_node_vnc_address(session_id)
+    if not target:
+        return None
+    # target ("ip:7900") goes in the path (not a query string) so that
+    # noVNC's relative sub-resource/websocket requests from the loaded
+    # page inherit it automatically.
+    return f"/vnc-proxy/{target}/"
 
 
 def close_webapp(app_name: str, chat_id: str = "default"):
