@@ -327,7 +327,6 @@ const Analysis: React.FC = () => {
   const [details, setDetails] = useState<RunDetail[]>([]);
   const [analysisStartTs, setAnalysisStartTs] = useState<string | null>(null);
   const [analysisEndTs, setAnalysisEndTs] = useState<string | null>(null);
-  const [analysisCurrent, setAnalysisCurrent] = useState(0);
   const [analysisTotal, setAnalysisTotal] = useState(0);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [selectedStepIndex, setSelectedStepIndex] = useState<number | null>(null);
@@ -401,9 +400,7 @@ const Analysis: React.FC = () => {
     if (payload.analysisStartTs) setAnalysisStartTs(payload.analysisStartTs);
     if (payload.analysisEndTs) setAnalysisEndTs(payload.analysisEndTs);
 
-    const current = toFiniteNumber(payload.current);
     const total = toFiniteNumber(payload.total);
-    if (current !== null) setAnalysisCurrent(current);
     if (total !== null) setAnalysisTotal(total);
 
     const detailId = toFiniteNumber(payload.detailId);
@@ -479,7 +476,6 @@ const Analysis: React.FC = () => {
         }
         if (!res.ok || !isMounted) return;
         const data: AnalyseStatusResponse = await res.json();
-        if (data.current !== undefined) setAnalysisCurrent(data.current);
         if (data.total !== undefined) setAnalysisTotal(data.total);
         if (data.analysis_start_ts) setAnalysisStartTs(data.analysis_start_ts);
         if (data.analysis_end_ts) setAnalysisEndTs(data.analysis_end_ts);
@@ -594,7 +590,6 @@ const Analysis: React.FC = () => {
             setIsStopped(true);
             setRunningDetailId(null);
             if (payload.analysisEndTs) setAnalysisEndTs(payload.analysisEndTs);
-            if (payload.current !== undefined) setAnalysisCurrent(payload.current);
             if (statusTimer) {
               window.clearInterval(statusTimer);
               statusTimer = null;
@@ -685,9 +680,9 @@ const Analysis: React.FC = () => {
     const totalScore = scoredItems.reduce((sum, d) => sum + d.score, 0);
     const overallScore = scoredItems.length > 0 ? totalScore / scoredItems.length : null;
     const totalCases = analysisTotal > 0 ? analysisTotal : orderedDetails.length;
-    const completed = Math.max(0, Math.min(analysisCurrent, totalCases));
+    const completed = orderedDetails.filter((d) => d.status === "COMPLETED").length;
     return { totalCases, completedCases: completed, overallScore };
-  }, [orderedDetails, analysisCurrent, analysisTotal]);
+  }, [orderedDetails, analysisTotal]);
 
   const displayedStepIndex = isCompleted
     ? (selectedStepIndex ?? Math.max(orderedDetails.length - 1, 0))
