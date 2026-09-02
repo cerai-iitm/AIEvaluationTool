@@ -10,6 +10,7 @@ from utils import (
     logout_app,
     search_entity,
     send_message_whatsapp,
+    selenium_pool,
 )
 
 logger = get_logger("whatsapp_driver")
@@ -58,13 +59,21 @@ def get_driver_manager(slot: str) -> DriverManager:
     with _driver_managers_lock:
         dm = _driver_managers.get(slot)
         if dm is None:
-            dm = DriverManager(profile_name=slot)
+            remote_url, _vnc_slot = selenium_pool.acquire(slot)
+            dm = DriverManager(profile_name=slot, remote_url=remote_url)
             _driver_managers[slot] = dm
         return dm
 
 
 def get_ui_response_whatsapp():
     return {"ui": "Whatsapp Web Chat Interface", "features": ["smart-compose", "modular-layout"]}
+
+
+def get_vnc_slot(session_key: Optional[str] = None) -> Optional[str]:
+    """The pool slot (matching /selenium/<slot>/) assigned to this session, if any."""
+    with _slots_lock:
+        slot = _session_to_slot.get(session_key) if session_key else WHATSAPP_PROFILE_POOL[0]
+    return selenium_pool.vnc_slot(slot) if slot else None
 
 
 def get_driver_for_session(session_key: Optional[str] = None) -> webdriver.Chrome | None:
@@ -157,13 +166,17 @@ def close_whatsapp(driver: webdriver.Chrome | None = None, session_key: Optional
                     dm = _driver_managers.pop(slot, None)
                 if dm is not None:
                     dm.quit()
+                selenium_pool.release(slot)
             _release_slot(session_key)
         else:
             with _driver_managers_lock:
+                slots = list(_driver_managers.keys())
                 managers = list(_driver_managers.values())
                 _driver_managers.clear()
             for dm in managers:
                 dm.quit()
+            for slot in slots:
+                selenium_pool.release(slot)
             with _slots_lock:
                 pending_keys = list(_session_to_slot)
             for key in pending_keys:

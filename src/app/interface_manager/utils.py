@@ -44,6 +44,63 @@ def _remote_selenium_available(remote_url: str, timeout: float = 2.0) -> bool:
     except OSError:
         return False
 
+
+# --------------------------------------------------------------------
+# Selenium Container Pool
+# --------------------------------------------------------------------
+# A fixed pool of standalone selenium/standalone-chrome containers
+# (selenium-browser-1..N in docker-compose), one session per container, so
+# each concurrent run gets its own noVNC feed at /selenium/<slot>/ instead of
+# several runs' browser windows overlapping on one shared virtual display.
+# Pool size must match the number of selenium-browser-N services defined in
+# docker-compose.yml/docker-compose.dev.yml and the matching nginx locations.
+SELENIUM_POOL_SIZE = int(os.environ.get("SELENIUM_POOL_SIZE", "5"))
+
+
+class SeleniumPoolExhausted(RuntimeError):
+    """Raised when every browser slot in the pool is currently assigned."""
+
+
+class SeleniumPool:
+    """Assigns each caller key (a run's session_key) a dedicated browser slot."""
+
+    def __init__(self, size: int):
+        self._members = [
+            (f"http://selenium-browser-{i}:4444/wd/hub", str(i))
+            for i in range(1, size + 1)
+        ]
+        self._free = list(range(size))
+        self._assigned: dict[str, int] = {}
+        self._lock = threading.Lock()
+
+    def acquire(self, key: str) -> tuple[str, str]:
+        """Returns (remote_url, vnc_slot) for this key, assigning a free slot if needed."""
+        with self._lock:
+            idx = self._assigned.get(key)
+            if idx is not None:
+                return self._members[idx]
+            if not self._free:
+                raise SeleniumPoolExhausted("All Selenium browser slots are currently in use")
+            idx = self._free.pop(0)
+            self._assigned[key] = idx
+            return self._members[idx]
+
+    def release(self, key: str) -> None:
+        with self._lock:
+            idx = self._assigned.pop(key, None)
+            if idx is not None:
+                self._free.append(idx)
+
+    def vnc_slot(self, key: str) -> Optional[str]:
+        """The slot number (matching /selenium/<slot>/) currently assigned to key, if any."""
+        with self._lock:
+            idx = self._assigned.get(key)
+            return self._members[idx][1] if idx is not None else None
+
+
+selenium_pool = SeleniumPool(SELENIUM_POOL_SIZE)
+
+
 # --------------------------------------------------------------------
 # Driver Management
 # --------------------------------------------------------------------
@@ -53,9 +110,12 @@ class DriverManager:
     Ensures reuse if alive, otherwise restarts with clean profile.
     """
 
-    def __init__(self, profile_name: str = "test_profile"):
+    def __init__(self, profile_name: str = "test_profile", remote_url: Optional[str] = None):
         self.profile_folder_path = os.path.join(os.path.expanduser("~"), profile_name)
         self.driver: webdriver.Chrome | None = None
+        # Explicit pool assignment, if any. When set, always use this remote
+        # hub instead of probing the single default selenium_remote_url.
+        self.remote_url = remote_url
 
     def get_driver(self, app_name: str, url: str) -> webdriver.Chrome:
         """
@@ -77,9 +137,13 @@ class DriverManager:
             opts.add_argument("--headless")
         opts.add_experimental_option("excludeSwitches", ["enable-logging"])
 
-        cfg = load_config()
-        remote_url = cfg.get("selenium_remote_url", "http://selenium-browser:4444/wd/hub")
-        use_remote = _remote_selenium_available(remote_url)
+        if self.remote_url:
+            remote_url = self.remote_url
+            use_remote = True
+        else:
+            cfg = load_config()
+            remote_url = cfg.get("selenium_remote_url", "http://selenium-browser-1:4444/wd/hub")
+            use_remote = _remote_selenium_available(remote_url)
 
         try:
             if use_remote:

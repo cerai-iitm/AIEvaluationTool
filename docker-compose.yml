@@ -18,9 +18,57 @@ services:
       timeout: 5s
       retries: 12
 
-  selenium-browser:
+  # Pool of 5 standalone Chrome containers, one session each, so concurrent
+  # runs get separate live views instead of overlapping on one shared
+  # display. Pool size must match SELENIUM_POOL_SIZE (interface-manager env)
+  # and the /selenium/<n>/ locations in docker/nginx/nginx.conf.
+  selenium-browser-1:
     image: selenium/standalone-chrome:latest
-    container_name: aiet-selenium
+    container_name: aiet-selenium-1
+    restart: unless-stopped
+    shm_size: 2gb
+    environment:
+      SE_VNC_NO_PASSWORD: "1"
+    expose:
+      - "4444"
+      - "7900"
+
+  selenium-browser-2:
+    image: selenium/standalone-chrome:latest
+    container_name: aiet-selenium-2
+    restart: unless-stopped
+    shm_size: 2gb
+    environment:
+      SE_VNC_NO_PASSWORD: "1"
+    expose:
+      - "4444"
+      - "7900"
+
+  selenium-browser-3:
+    image: selenium/standalone-chrome:latest
+    container_name: aiet-selenium-3
+    restart: unless-stopped
+    shm_size: 2gb
+    environment:
+      SE_VNC_NO_PASSWORD: "1"
+    expose:
+      - "4444"
+      - "7900"
+
+  selenium-browser-4:
+    image: selenium/standalone-chrome:latest
+    container_name: aiet-selenium-4
+    restart: unless-stopped
+    shm_size: 2gb
+    environment:
+      SE_VNC_NO_PASSWORD: "1"
+    expose:
+      - "4444"
+      - "7900"
+
+  selenium-browser-5:
+    image: selenium/standalone-chrome:latest
+    container_name: aiet-selenium-5
     restart: unless-stopped
     shm_size: 2gb
     environment:
@@ -85,8 +133,18 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      selenium-browser:
+      selenium-browser-1:
         condition: service_started
+      selenium-browser-2:
+        condition: service_started
+      selenium-browser-3:
+        condition: service_started
+      selenium-browser-4:
+        condition: service_started
+      selenium-browser-5:
+        condition: service_started
+    environment:
+      SELENIUM_POOL_SIZE: "5"
     expose:
       - "8000"
     env_file:

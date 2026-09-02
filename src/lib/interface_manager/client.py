@@ -278,6 +278,15 @@ class InterfaceManagerClient:
             f"local_llm_base_url={self.local_llm_base_url}"
         )
 
+    def get_selenium_slot(self, session_key: Optional[str] = None) -> dict[str, Any]:
+        """The browser-pool slot assigned to this run's live view, if any."""
+        params = {"session_key": session_key} if session_key else None
+        response = self._get("selenium-slot", params=params)
+        try:
+            return response.json()
+        except ValueError:
+            raise RuntimeError("Invalid JSON response from /selenium-slot endpoint")
+
     def get_config(self, session_key: Optional[str] = None) -> dict[str, Any]:
         params = {"session_key": session_key} if session_key else None
         response = self._get("config", params=params)

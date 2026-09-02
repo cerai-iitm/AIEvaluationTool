@@ -128,7 +128,8 @@ const NewTestRunPage: React.FC = () => {
   const isStartDisabled = !formData.testPlan || !formData.target || isRunning;
   const isTargetSelected = !!formData.target;
   const hasSelectedTestCases = formData.testCaseIds.length > 0;
-  const seleniumHref = "/selenium/";
+  const [seleniumHref, setSeleniumHref] = useState("/selenium/");
+  const [currentRunId, setCurrentRunId] = useState<string | number | null>(null);
   const selectedTarget = filters?.targets.find(
     (target) =>
       formatTargetOption(target) === formData.target ||
@@ -143,6 +144,7 @@ const NewTestRunPage: React.FC = () => {
     setRunCompleted(true);
     setIsRunning(false);
     setIsStopping(false);
+    setCurrentRunId(null);
   }, []);
 
   const handleWsMessage = useCallback((event: MessageEvent) => {
@@ -301,6 +303,45 @@ const NewTestRunPage: React.FC = () => {
   useEffect(() => {
     return () => closeLiveSocket();
   }, [closeLiveSocket]);
+
+  // Poll the interface-manager for this run's dedicated selenium-browser-N
+  // slot so the "Watch Live" link points at this run's own live view instead
+  // of the shared default (/selenium/).
+  useEffect(() => {
+    if (currentRunId === null || !isSeleniumTarget) return;
+
+    let cancelled = false;
+    let intervalId: number | undefined;
+
+    const poll = async () => {
+      try {
+        const res = await fetch(API_ENDPOINTS.GET_SELENIUM_SLOT(currentRunId), {
+          headers: getAuthHeaders(),
+          credentials: "include",
+        });
+        if (!res.ok || cancelled) return;
+        const data = await res.json();
+        if (!cancelled && data.path) {
+          setSeleniumHref(data.path);
+          if (intervalId !== undefined) {
+            window.clearInterval(intervalId);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch selenium slot", err);
+      }
+    };
+
+    poll();
+    intervalId = window.setInterval(poll, 3000);
+
+    return () => {
+      cancelled = true;
+      if (intervalId !== undefined) {
+        window.clearInterval(intervalId);
+      }
+    };
+  }, [currentRunId, isSeleniumTarget]);
 
   const fetchMetricsByPlan = async (planName: string) => {
     try {
@@ -471,6 +512,8 @@ const NewTestRunPage: React.FC = () => {
     setTotalTestCases(runData.totalTestCases);
     setRunName(runData.runName);
     activeRunIdRef.current = runData.runId;
+    setSeleniumHref("/selenium/");
+    setCurrentRunId(runData.runId);
     pendingRunStartRef.current = false;
 
     if (wsRef.current?.readyState === WebSocket.OPEN) {

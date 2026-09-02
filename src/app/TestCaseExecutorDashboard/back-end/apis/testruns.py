@@ -23,6 +23,7 @@ from services.testruns import (
     get_interface_manager_status_service,
     get_metrics_by_plan_service,
     get_run_evaluation_summary_service,
+    get_selenium_slot_service,
     get_test_run_service,
     get_test_run_summary_service,
     get_test_run_timeline_service,
@@ -42,6 +43,11 @@ def get_interface_manager_status():
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/test-runs/{run_id}/selenium-slot")
+def get_selenium_slot(run_id: int):
+    return get_selenium_slot_service(run_id)
+
 
 @router.post("/start-run")
 def start_run(data: NewTestRun, background_tasks: BackgroundTasks, db=Depends(get_db)):

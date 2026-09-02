@@ -8,6 +8,7 @@ from whatsapp import (
     close_whatsapp,
     get_ui_response_whatsapp,
     get_driver_for_session as get_whatsapp_driver_for_session,
+    get_vnc_slot as get_whatsapp_vnc_slot,
 )
 from webapp import (
     login_webapp,
@@ -16,10 +17,11 @@ from webapp import (
     close_webapp,
     get_ui_response_webapp,
     get_driver_for_session as get_webapp_driver_for_session,
+    get_vnc_slot as get_webapp_vnc_slot,
 )
 
 from logger import get_logger
-from utils import load_config, get_session_config, set_session_config
+from utils import load_config, get_session_config, set_session_config, SeleniumPoolExhausted
 from context import APIRuntimeContext
 from api_handler import handle_api_chat
 from pydantic import BaseModel
@@ -58,15 +60,18 @@ def get_app_info(session_key: Optional[str] = None):
 def login(session_key: Optional[str] = Query(None)):
     app_type, app_name = get_app_info(session_key)
 
-    if app_type == "WHATSAPP_WEB":
-        logger.info("Login request: WhatsApp Web")
-        result = login_whatsapp(session_key)
-        return JSONResponse(content={"result": bool(result)})
+    try:
+        if app_type == "WHATSAPP_WEB":
+            logger.info("Login request: WhatsApp Web")
+            result = login_whatsapp(session_key)
+            return JSONResponse(content={"result": bool(result)})
 
-    if str.upper(app_type) == "WEBAPP":
-        logger.info(f"Login request: WebApp {app_name}")
-        result = login_webapp(app_name, session_key)
-        return JSONResponse(content={"result": bool(result)})
+        if str.upper(app_type) == "WEBAPP":
+            logger.info(f"Login request: WebApp {app_name}")
+            result = login_webapp(app_name, session_key)
+            return JSONResponse(content={"result": bool(result)})
+    except SeleniumPoolExhausted as e:
+        raise HTTPException(status_code=503, detail=str(e))
 
     return JSONResponse(content={"error": "Unsupported application type"})
 
@@ -128,11 +133,14 @@ def chat(prompt: PromptCreate):
     # ------------------------------------------------
     if app_type == "WHATSAPP_WEB":
         logger.info("Chat request: WhatsApp Web")
-        result = send_prompt_whatsapp(
-            chat_id=prompt.chat_id,
-            prompt_list=prompt.prompt_list,
-            session_key=prompt.session_key,
-        )
+        try:
+            result = send_prompt_whatsapp(
+                chat_id=prompt.chat_id,
+                prompt_list=prompt.prompt_list,
+                session_key=prompt.session_key,
+            )
+        except SeleniumPoolExhausted as e:
+            raise HTTPException(status_code=503, detail=str(e))
         return JSONResponse(content={"response": result})
 
     # ------------------------------------------------
@@ -140,12 +148,15 @@ def chat(prompt: PromptCreate):
     # ------------------------------------------------
     if str.upper(app_type) == "WEBAPP":
         logger.info(f"Chat request: WebApp {app_name}")
-        result = send_prompt(
-            app_name=app_name,
-            chat_id=prompt.chat_id,
-            prompt_list=prompt.prompt_list,
-            session_key=prompt.session_key,
-        )
+        try:
+            result = send_prompt(
+                app_name=app_name,
+                chat_id=prompt.chat_id,
+                prompt_list=prompt.prompt_list,
+                session_key=prompt.session_key,
+            )
+        except SeleniumPoolExhausted as e:
+            raise HTTPException(status_code=503, detail=str(e))
         return JSONResponse(content={"response": result})
 
     # ------------------------------------------------
@@ -213,6 +224,28 @@ def chat_interface(session_key: Optional[str] = Query(None)):
         return get_ui_response_webapp()
 
     return {"error": "Unsupported application type"}
+
+
+# -------------------------------
+# Selenium live-view slot
+# -------------------------------
+@router.get("/selenium-slot")
+def selenium_slot(session_key: Optional[str] = Query(None)):
+    """
+    The browser-pool slot assigned to this session's live view, if a driver
+    has been started for it. Frontend can build the noVNC URL from this as
+    /selenium/<slot>/.
+    """
+    app_type, _ = get_app_info(session_key)
+
+    if app_type == "WHATSAPP_WEB":
+        slot = get_whatsapp_vnc_slot(session_key)
+    elif str.upper(app_type) == "WEBAPP":
+        slot = get_webapp_vnc_slot(session_key)
+    else:
+        slot = None
+
+    return JSONResponse(content={"slot": slot, "path": f"/selenium/{slot}/" if slot else None})
 
 
 # -------------------------------

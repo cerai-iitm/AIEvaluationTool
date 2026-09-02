@@ -15,6 +15,8 @@ from utils import (
     login_app,
     logout_app,
     send_message_webapp,
+    selenium_pool,
+    SeleniumPoolExhausted,
 )
 
 logger = get_logger("webapp_driver")
@@ -22,6 +24,9 @@ logger = get_logger("webapp_driver")
 # One DriverManager (and one Chrome session) per concurrent run, keyed by
 # session_key (the caller's run_id). This isolates concurrent runs' browser
 # automation instead of racing all of them through a single shared Chrome tab.
+# Each DriverManager is also assigned its own selenium-browser-N container
+# from the shared pool, so a run's live view (/selenium/<slot>/) shows only
+# that run instead of overlapping with other concurrent runs.
 _driver_managers: dict[str, DriverManager] = {}
 _driver_managers_lock = threading.Lock()
 
@@ -31,9 +36,16 @@ def get_driver_manager(session_key: Optional[str] = None) -> DriverManager:
     with _driver_managers_lock:
         dm = _driver_managers.get(key)
         if dm is None:
-            dm = DriverManager(profile_name=f"session_{key}")
+            remote_url, _vnc_slot = selenium_pool.acquire(key)
+            dm = DriverManager(profile_name=f"session_{key}", remote_url=remote_url)
             _driver_managers[key] = dm
         return dm
+
+
+def get_vnc_slot(session_key: Optional[str] = None) -> Optional[str]:
+    """The pool slot (matching /selenium/<slot>/) assigned to this session, if any."""
+    key = session_key or "default"
+    return selenium_pool.vnc_slot(key)
 
 
 def get_ui_response_webapp():
@@ -148,12 +160,16 @@ def close_webapp(app_name: str, session_key: Optional[str] = None):
                 dm = _driver_managers.pop(session_key, None)
             if dm is not None:
                 dm.quit()
+            selenium_pool.release(session_key)
         else:
             with _driver_managers_lock:
+                keys = list(_driver_managers.keys())
                 managers = list(_driver_managers.values())
                 _driver_managers.clear()
             for dm in managers:
                 dm.quit()
+            for key in keys:
+                selenium_pool.release(key)
         logger.info(f"Session closed for {app_name}")
     except Exception as e:
         logger.warning(f"Driver quit issue for {app_name}: {e}")

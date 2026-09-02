@@ -17,8 +17,9 @@ import tempfile
 from lib.data import Run
 from schemas import TestRunFullResponse, TestRunSummaryResponse, TestRunDetailsResponse,TestRunResponse, NewTestRun, FilterResponse, EvaluationItemResponse, RunEvaluationSummaryResponse
 from fastapi.responses import FileResponse
-from tasks.test_run_tasks import execute_testcases
+from tasks.test_run_tasks import execute_testcases, interface_manager_url
 from utils.port import ensure_interface_manager_port_running, reset_frontend_disconnect_state
+import requests
 
 logger = get_logger(__name__)
 
@@ -38,6 +39,24 @@ def get_interface_manager_status_service():
     return {
         "docker": _as_bool(config.get("interface_manager", {}).get("docker", False)),
     }
+
+def get_selenium_slot_service(run_id: int) -> dict:
+    """
+    Which selenium-browser-N pool slot (if any) the interface-manager has
+    assigned to this run's live Selenium view. Returns {"slot": None,
+    "path": None} if the run hasn't started a browser session (yet).
+    """
+    try:
+        response = requests.get(
+            f"{interface_manager_url}/selenium-slot",
+            params={"session_key": str(run_id)},
+            timeout=5,
+        )
+        response.raise_for_status()
+        return response.json()
+    except requests.RequestException as e:
+        logger.warning(f"Could not fetch selenium slot for run {run_id}: {e}")
+        return {"slot": None, "path": None}
 
 def _parse_timeline_timestamp(value: Optional[str]) -> Optional[float]:
     if not value:
