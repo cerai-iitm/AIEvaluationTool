@@ -65,7 +65,7 @@ class DriverManager:
 
         cfg = load_config()
         selenium_mode = str(cfg.get("selenium_mode", "local")).lower()
-        remote_url = cfg.get("selenium_remote_url", "http://selenium-browser:4444/wd/hub")
+        remote_url = cfg.get("selenium_remote_url", "http://selenium-hub:4444/wd/hub")
 
         try:
             if selenium_mode == "remote":
