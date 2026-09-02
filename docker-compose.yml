@@ -18,16 +18,31 @@ services:
       timeout: 5s
       retries: 12
 
-  selenium-browser:
-    image: selenium/standalone-chrome:latest
-    container_name: aiet-selenium
+  selenium-hub:
+    image: selenium/hub:latest
+    container_name: aiet-selenium-hub
+    restart: unless-stopped
+    expose:
+      - "4442"
+      - "4443"
+      - "4444"
+
+  chrome-node:
+    image: selenium/node-chrome:latest
     restart: unless-stopped
     shm_size: 2gb
+    depends_on:
+      - selenium-hub
     environment:
+      SE_EVENT_BUS_HOST: selenium-hub
+      SE_EVENT_BUS_PUBLISH_PORT: "4442"
+      SE_EVENT_BUS_SUBSCRIBE_PORT: "4443"
+      SE_NODE_MAX_SESSIONS: "1"
       SE_VNC_NO_PASSWORD: "1"
-    expose:
-      - "4444"
-      - "7900"
+    ports:
+      - "7900-7924:7900"
+    deploy:
+      replicas: ${SELENIUM_NODE_COUNT:-25}
 
   ollama:
     image: ollama/ollama:latest
@@ -85,7 +100,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      selenium-browser:
+      selenium-hub:
         condition: service_started
     expose:
       - "8000"

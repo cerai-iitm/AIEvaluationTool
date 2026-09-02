@@ -2,6 +2,7 @@ import os
 import time
 import json
 import socket
+import threading
 import psutil
 import requests
 from selenium import webdriver
@@ -35,105 +36,96 @@ logger = get_logger("interface_manager")
 # --------------------------------------------------------------------
 class DriverManager:
     """
-    Manage a Selenium Chrome WebDriver instance with profile isolation.
-    Ensures reuse if alive, otherwise restarts with clean profile.
+    Manage a pool of Selenium Chrome WebDriver sessions, one per key
+    (e.g. chat_id / run id), so concurrent test runs get isolated
+    browser sessions instead of sharing a single cached driver.
     """
 
     def __init__(self, profile_name: str = "test_profile"):
-        self.profile_folder_path = os.path.join(os.path.expanduser("~"), profile_name)
-        self.driver: webdriver.Chrome | None = None
+        self.profile_name = profile_name
+        self.drivers: dict[str, webdriver.Chrome] = {}
+        self._lock = threading.Lock()
 
-    def get_driver(self, app_name: str, url: str) -> webdriver.Chrome:
+    def get_driver(self, key: str, app_name: str, url: str) -> webdriver.Chrome:
         """
-        Returns a cached driver if alive, otherwise creates a new one.
+        Returns the cached driver for `key` if alive, otherwise creates a new one.
+        `key` should be a stable per-run identifier (e.g. chat_id) so concurrent
+        runs each get their own browser session instead of colliding on one.
         """
-        if self.driver and self._is_alive():
-            logger.info(f"Reusing existing Chrome session for {app_name}")
-            return self.driver
+        key = str(key)
+        with self._lock:
+            driver = self.drivers.get(key)
+            if driver and self._is_alive(driver):
+                logger.info(f"Reusing existing Chrome session for {app_name} (key={key})")
+                return driver
 
-        self.close_chrome_with_profile()
+            logger.info(f"Launching {app_name} at {url} (key={key})")
+            opts = Options()
+            opts.add_argument("--no-sandbox")
+            opts.add_argument("--start-maximized")
+            mode = load_json('config.json').get('headless', 'False')
+            # to turn off headless mode - remove the below line or comment it out.
+            if mode == "True":
+                opts.add_argument("--headless")
+            opts.add_experimental_option("excludeSwitches", ["enable-logging"])
 
-        logger.info(f"Launching {app_name} at {url}")
-        opts = Options()
-        opts.add_argument("--no-sandbox")
-        opts.add_argument("--start-maximized")
-        mode = load_json('config.json').get('headless', 'False')
-        # to turn off headless mode - remove the below line or comment it out.
-        if mode == "True":
-            opts.add_argument("--headless")
-        opts.add_experimental_option("excludeSwitches", ["enable-logging"])
+            cfg = load_config()
+            selenium_mode = str(cfg.get("selenium_mode", "local")).lower()
+            remote_url = cfg.get("selenium_remote_url", "http://selenium-hub:4444/wd/hub")
 
-        cfg = load_config()
-        selenium_mode = str(cfg.get("selenium_mode", "local")).lower()
-        remote_url = cfg.get("selenium_remote_url", "http://selenium-browser:4444/wd/hub")
+            try:
+                if selenium_mode == "remote":
+                    logger.info(f"Using Remote WebDriver at {remote_url} (key={key})")
+                    driver = webdriver.Remote(
+                        command_executor=remote_url,
+                        options=opts
+                    )
+                else:
+                    # Local mode: give each key its own profile dir so
+                    # concurrent local sessions don't collide.
+                    profile_path = f"{os.path.join(os.path.expanduser('~'), self.profile_name)}_{key}"
+                    opts.add_argument(f"user-data-dir={profile_path}")
+                    logger.info(f"Using local Chrome WebDriver (key={key})")
+                    driver = webdriver.Chrome(options=opts)
 
+                driver.get(url)
+                logger.info(f"Driver ready for {app_name} (key={key})")
+                self.drivers[key] = driver
+                return driver
+            except WebDriverException as e:
+                logger.error(f"Failed to start Chrome for {app_name} (key={key}): {e}")
+                self.drivers.pop(key, None)
+                raise
+
+    def _is_alive(self, driver: webdriver.Chrome) -> bool:
+        """Check if a driver session is still valid."""
         try:
-            if selenium_mode == "remote":
-                logger.info(f"Using Remote WebDriver at {remote_url}")
-                # opts.add_argument("--user-data-dir=/home/seluser/chrome-data")
-                self.driver = webdriver.Remote(
-                    command_executor=remote_url,
-                    options=opts
-                )
-            else:
-                opts.add_argument(f"user-data-dir={self.profile_folder_path}")
-                logger.info("Using local Chrome WebDriver")
-                self.driver = webdriver.Chrome(options=opts)
-
-            self.driver.get(url)
-            logger.info(f"Driver ready for {app_name}")
-            return self.driver
-        except WebDriverException as e:
-            logger.error(f"Failed to start Chrome for {app_name}: {e}")
-            self.driver = None
-            raise
-
-        # try:
-        #     # service = Service(ChromeDriverManager().install())
-        #     # self.driver = webdriver.Chrome(service=service, options=opts)
-        #     # @bugfix: Use the below line to load driver faster -- Balayogi 12.01.2026
-        #     self.driver = webdriver.Chrome(options=opts)
-        #     self.driver.get(url)
-        #     logger.info(f"Driver ready for {app_name}")
-        #     return self.driver
-        # except WebDriverException as e:
-        #     logger.error(f"Failed to start Chrome for {app_name}: {e}")
-        #     self.driver = None
-        #     raise
-
-    def _is_alive(self) -> bool:
-        """Check if the cached driver is still valid."""
-        try:
-            _ = self.driver.title
+            _ = driver.title
             return True
         except Exception:
             return False
- 
-    def close_chrome_with_profile(self) -> bool:
-        """Kill any Chrome process using this profile."""
-        closed_any = False
-        for proc in psutil.process_iter(["name", "cmdline"]):
-            try:
-                if "chrome" in (proc.info["name"] or "").lower():
-                    cmdline = " ".join(proc.info["cmdline"] or [])
-                    if f"user-data-dir={self.profile_folder_path}" in cmdline:
-                        proc.kill()
-                        closed_any = True
-                        logger.info(f"Killed Chrome with profile {self.profile_folder_path}")
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                continue
-        return closed_any
 
-    def quit(self):
-        """Cleanly quit the driver."""
-        if self.driver:
+    def get_session_id(self, key: str) -> str | None:
+        """Return the Selenium session id for `key`, if a session is pooled."""
+        driver = self.drivers.get(str(key))
+        return driver.session_id if driver else None
+
+    def quit(self, key: str):
+        """Cleanly quit and remove the driver for `key`."""
+        key = str(key)
+        with self._lock:
+            driver = self.drivers.pop(key, None)
+        if driver:
             try:
-                self.driver.quit()
-                logger.info("Driver quit successfully")
+                driver.quit()
+                logger.info(f"Driver quit successfully (key={key})")
             except Exception as e:
-                logger.warning(f"Error while quitting driver: {e}")
-            finally:
-                self.driver = None
+                logger.warning(f"Error while quitting driver (key={key}): {e}")
+
+    def quit_all(self):
+        """Quit every pooled driver session."""
+        for key in list(self.drivers.keys()):
+            self.quit(key)
 
 
 # --------------------------------------------------------------------

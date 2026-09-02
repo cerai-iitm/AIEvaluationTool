@@ -25,13 +25,14 @@ def get_ui_response_webapp():
     return {"ui": "Web Application Chat Interface", "features": ["smart-compose", "modular-layout"]}
 
 
-def login_webapp(app_name: str):
+def login_webapp(app_name: str, chat_id: str = "default"):
     """
-    Wrapper for generic login_app.
+    Wrapper for generic login_app. `chat_id` selects which pooled
+    browser session to use so concurrent runs stay isolated.
     """
     cfg = load_config()
     url = cfg.get("application_url", "UNKNOWN")
-    driver = driver_manager.get_driver(app_name, url)
+    driver = driver_manager.get_driver(chat_id, app_name, url)
     return login_app(driver, app_name)
 
 
@@ -84,7 +85,7 @@ def send_prompt(app_name: str, chat_id: int, prompt_list: List[str]) -> list[dic
     app_name = app_name.lower()
     chat_cfg = load_xpaths()["applications"][app_name]["ChatPage"]
 
-    driver = driver_manager.get_driver(app_name, url)
+    driver = driver_manager.get_driver(chat_id, app_name, url)
 
     # Ensure login
     # logout_cfg = load_xpaths()["applications"][app_name]["LogoutPage"]
@@ -105,14 +106,26 @@ def send_prompt(app_name: str, chat_id: int, prompt_list: List[str]) -> list[dic
     return results
 
 
-def close_webapp(app_name: str):
+def get_view_path(chat_id: str) -> str | None:
     """
-    Gracefully close the browser session.
+    Return the noVNC live-view path (proxied through the Selenium Grid hub)
+    for the pooled session belonging to `chat_id`, or None if no session
+    is currently running for it.
+    """
+    session_id = driver_manager.get_session_id(chat_id)
+    if not session_id:
+        return None
+    return f"/selenium/session/{session_id}/se/vnc"
+
+
+def close_webapp(app_name: str, chat_id: str = "default"):
+    """
+    Gracefully close the browser session for `chat_id`.
     """
     try:
-        logger.info(f"Closing WebApp session for {app_name}...")
-        driver_manager.quit()
-        logger.info(f"Session closed for {app_name}")
+        logger.info(f"Closing WebApp session for {app_name} (chat_id={chat_id})...")
+        driver_manager.quit(chat_id)
+        logger.info(f"Session closed for {app_name} (chat_id={chat_id})")
     except Exception as e:
-        logger.warning(f"Driver quit issue for {app_name}: {e}")
+        logger.warning(f"Driver quit issue for {app_name} (chat_id={chat_id}): {e}")
     return True

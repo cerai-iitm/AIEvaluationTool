@@ -95,6 +95,9 @@ class InterfaceManagerClient:
     def close(self) -> requests.Response:
         return self._get("close")
 
+    def view(self, chat_id) -> requests.Response:
+        return self._get(f"view/{chat_id}")
+
     def chat(self, chat_id: int, prompt_list: List[str]):
         prompt = " ".join(prompt_list)
 
