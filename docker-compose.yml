@@ -120,7 +120,6 @@ services:
       context: .
       dockerfile: Dockerfile.app-backend
       target: auth-service
-    container_name: aiet-auth-service
     restart: unless-stopped
     depends_on:
       db:
@@ -147,7 +146,6 @@ services:
       context: .
       dockerfile: Dockerfile.app-backend
       target: app-backend
-    container_name: aiet-app-backend
     restart: unless-stopped
     depends_on:
       interface-manager:
@@ -203,7 +201,6 @@ services:
       context: .
       dockerfile: Dockerfile.app-backend
       target: tdms-backend
-    container_name: aiet-tdms-backend
     restart: unless-stopped
     depends_on:
       auth-service:
