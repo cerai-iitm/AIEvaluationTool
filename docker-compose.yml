@@ -75,6 +75,7 @@ services:
 
   ollama-warmup:
     image: curlimages/curl:latest
+    container_name: aiet-ollama-warmup
     profiles: ["prod"]
     depends_on:
       ollama-init:

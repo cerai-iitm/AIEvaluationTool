@@ -58,3 +58,4 @@ reports/
 chrome-data/
 run_app.sh
 .venv/
+nltk_data/

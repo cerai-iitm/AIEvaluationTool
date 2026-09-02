@@ -115,13 +115,13 @@ async def execute_testcases(
                 rundetail.status = "FAILED"
                 db.add_or_update_testrun_detail(rundetail)
             run.end_ts = datetime.now().isoformat()
-            run.status = "FAILED"
+            run.status = "STOPPED"
             db.add_or_update_testrun(run=run)
             await ws_manager.send_all(
                 {
                     "type": "RUN_FINISHED",
                     "runId": run_id,
-                    "status": "FAILED",
+                    "status": "STOPPED",
                     "error": stop_reason,
                 }
             )
@@ -234,7 +234,8 @@ async def execute_testcases(
                     run_detail_id=rundetail_id,
                     testcase=testcase.name,
                 )
-                conv_id = db.add_or_update_conversation(conversation=conv)
+                # even if the conversation already exists (continue-run), override it with the new information.
+                conv_id = db.add_or_update_conversation(conversation=conv, override=True)
                 logger.info(f"A new conversation is created with ID: {conv_id}")
 
                 rundetail.status = "RUNNING"
@@ -323,6 +324,7 @@ async def execute_testcases(
                         "testcaseIndex": index,
                         "step": 3,
                         "status": "DONE",
+                        "agentResponse": agent_response,
                     }
                 )
                 await step(
@@ -350,6 +352,12 @@ async def execute_testcases(
                     rundetail.status = "FAILED"
                     db.add_or_update_testrun_detail(rundetail)
                 continue
+
+        # A stop can arrive after the final testcase-level check. Do not let
+        # that race turn an explicitly stopped run into a successful one.
+        if stop_requested():
+            await finish_aborted_run()
+            return
 
         stop_watcher.set()
         run.end_ts = datetime.now().isoformat()

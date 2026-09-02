@@ -50,10 +50,12 @@ interface TestCase {
   metricNameList?: string[];  // List of metric names
 }
 
+type SearchField = "testcase" | "strategy" | "domain" | "metric";
+
 const TestCases = () => {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchField, setSearchField] = useState<"testcase" | "strategy" | "domain " | "metric">("testcase");
+  const [searchField, setSearchField] = useState<SearchField>("testcase");
   const [selectedCase, setSelectedCase] = useState<TestCase | null>(null);
   const [updateCase, setUpdateCase] = useState<TestCase | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -495,18 +497,21 @@ const TestCases = () => {
   };
 
   const filteredCases = testCases.filter((tc) =>{
-    const q = searchQuery.toLowerCase();
+    const q = searchQuery.trim().toLowerCase();
 
     if (!q) return true;
 
     if (searchField === "testcase") {
-      return tc.name.toLowerCase().includes(q);
+      return (tc.name ?? "").toLowerCase().includes(q);
     } else if (searchField === "strategy") {
-      return tc.strategyName.toLowerCase().includes(q);
-    } else if (searchField === "domain ") {
-      return tc.domainName.toLowerCase().includes(q);
+      return (tc.strategyName ?? "").toLowerCase().includes(q);
+    } else if (searchField === "domain") {
+      return (tc.domainName ?? "").toLowerCase().includes(q);
     } else if (searchField === "metric") {
-      return tc.metricName.toLowerCase().includes(q);
+      const metricNames = tc.metricNameList?.length
+        ? tc.metricNameList.join(", ")
+        : tc.metricName;
+      return (metricNames ?? "").toLowerCase().includes(q);
     }
     return true;
   }
@@ -598,9 +603,15 @@ const TestCases = () => {
           <PageHeaderWithBack title="Test Cases" />
 
           <div className="flex gap-4 mb-6 ">
-            <Select defaultValue="testcase"
-              // onValueChange={(value: "testcase" | "metric" | "strategy" | "domain") => setSearchField(value)}
-            >
+
+            <Select
+              value={searchField}
+              onValueChange={(value: SearchField) => {
+                setSearchField(value);
+                setCurrentPage(1);
+              }}
+>
+            
               <SelectTrigger className="w-40">
                 <SelectValue />
               </SelectTrigger>
@@ -701,15 +712,16 @@ const TestCases = () => {
             </div> */}
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto">
-          <div className="bg-white rounded-lg shadow overflow-hidden max-w-7xl mx-left  max-h-[73vh] overflow-y-auto">
+          <div className="bg-white rounded-lg shadow overflow-hidden w-full overflow-y-auto overflow-x-auto">
             <table className="w-full table-fixed">
               <thead className="border-b-2">
                 <tr>
-                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">Test Case ID</th>
-                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">Test Case </th>
-                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">Strategy </th>
-                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold   text-left">Domain </th>
-                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left">Language</th>
+                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left w-[12%]">Testcase ID</th>
+                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left w-[12%]">Testcases</th>
+                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left w-[20%]">Metrics</th>
+                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left w-[12%]">Strategies</th>
+                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left w-[12%]">Domains</th>
+                  <th className="sticky top-0 bg-white z-10 p-4 font-semibold text-left w-[12%]">Languages</th>
                 </tr>
               </thead>
               <tbody>
@@ -767,7 +779,7 @@ const TestCases = () => {
         </div>
       </main>
 
-      <button
+      {/* <button
         onClick={() => {
           resetImporter();
           setImporterDialogOpen(true);
@@ -786,7 +798,7 @@ const TestCases = () => {
             <span>Import Data</span>
           </>
         )}
-      </button>
+      </button> */}
 
       <Dialog open={!!selectedCase} onOpenChange={() => setSelectedCase(null)}>
         <DialogContent 
@@ -1015,9 +1027,9 @@ const TestCases = () => {
                 >
                   <Upload className="w-12 h-12 text-blue-600" />
                 </button>
-                <div className="space-y-1">
-                  <p className="text-foreground font-medium">
-                    {selectedJsonFile ? selectedJsonFile.name : "Click the upload icon or drop a JSON file here"}
+                <div className="w-full space-y-1">
+                  <p className="w-full text-foreground font-medium">
+                    {selectedJsonFile ? selectedJsonFile.name.length > 40 ? `${selectedJsonFile.name.slice(0, 40)}...` : selectedJsonFile.name : "Click the upload icon or drop a JSON file here"}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     Missing fields will be reported before import. Existing test case names are skipped.

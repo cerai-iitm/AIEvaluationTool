@@ -625,7 +625,7 @@ const DomainList: React.FC = () => {
               </div>
             </div>
             <div className="flex justify-center items-center p-4">
-              <label className="text-base md:text-lg mr-2"> Notes </label>
+              <label className="text-base md:text-lg mr-2">Notes</label>
               <Input
                 value={addMessage}
                 onChange={e => setAddMessage(e.target.value)}
@@ -696,7 +696,7 @@ const DomainList: React.FC = () => {
             {/* </div> */}
             {/* Message Row + Submit Button */}
             <div className="flex flex-col md:flex-row items-center gap-2 md:gap-0">
-              <label className="text-base md:text-lg mr-2"> Notes   </label>
+              <label className="text-base md:text-lg mr-2">Notes</label>
               <Input
                 value={addMessage}
                 onChange={e => setAddMessage(e.target.value)}

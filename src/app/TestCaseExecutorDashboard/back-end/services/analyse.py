@@ -18,6 +18,7 @@ analysis_jobs_lock = Lock()
 
 ollama_url = os.getenv("OLLAMA_URL")
 NO_FAILED_TESTCASES_MESSAGE = "No failed testcases found"
+ANALYSABLE_RUN_STATUSES = {"COMPLETED", "STOPPED"}
 
 def check_analyse_health_service():
     try:
@@ -136,11 +137,11 @@ def start_analyse_service(
                 status_code=404,
                 detail=f"Run with name '{run_name}' not found."
             )
-        if run.status != "COMPLETED":
-            logger.error(f"Run '{run_name}' is not completed. Current status: {run.status}")
+        if run.status not in ANALYSABLE_RUN_STATUSES:
+            logger.error(f"Run '{run_name}' cannot be analysed. Current status: {run.status}")
             raise HTTPException(
                 status_code=400,
-                detail=f"Run '{run_name}' is not completed. Current status: {run.status}"
+                detail=f"Run '{run_name}' cannot be analysed. Current status: {run.status}"
             )
 
         with analysis_jobs_lock:

@@ -118,6 +118,15 @@ export default function TestPlanAddDialog({
       return;
     }
 
+    if (selectedMetrics.length === 0) {
+      toast({
+        title: "Validation Error",
+        description: "At least one metric is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!notes.trim()) {
       toast({
         title: "Validation Error",

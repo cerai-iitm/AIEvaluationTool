@@ -578,14 +578,14 @@ export const TestCaseAddDialog = ({
       return;
     }
 
-    // if (!responseText.trim()) {
-    //   toast({
-    //     title: "Validation Error",
-    //     description: "Response text is required",
-    //     variant: "destructive",
-    //   });
-    //   return;
-    // }
+    if (!responseText.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Response text is required",
+        variant: "destructive",
+      });
+      return;
+    }
 
     // if response text is available means response type and response language is required
     if (responseText.trim()) {
