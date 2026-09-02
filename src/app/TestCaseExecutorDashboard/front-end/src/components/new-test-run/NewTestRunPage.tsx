@@ -139,6 +139,10 @@ const NewTestRunPage: React.FC = () => {
   const isSeleniumTarget =
     selectedTargetType === "whatsapp" || selectedTargetType === "webapp";
   const shouldShowSeleniumLink = showSeleniumLink && Boolean(runName) && isSeleniumTarget;
+  // Only render the link once a real per-run session URL is resolved —
+  // the static "/selenium/" fallback no longer serves a working viewer,
+  // so never surface it as clickable.
+  const canViewExecution = shouldShowSeleniumLink && Boolean(seleniumViewUrl);
 
   const handleRunFinished = useCallback(() => {
     setRunCompleted(true);
@@ -762,9 +766,9 @@ const NewTestRunPage: React.FC = () => {
           runName={runName}
           liveEvents={liveEvents}
           onRunFinished={handleRunFinished}
-          showTestExecutionLink={shouldShowSeleniumLink}
+          showTestExecutionLink={canViewExecution}
           seleniumHref={seleniumHref}
-        />}       
+        />}
       </div>
       
     </div>

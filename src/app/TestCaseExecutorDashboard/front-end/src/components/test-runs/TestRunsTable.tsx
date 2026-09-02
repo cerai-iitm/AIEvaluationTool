@@ -671,7 +671,7 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
           </div>
         )}
         <div className="table-footer">
-          Showing {currentRuns.length} of {safeFilteredRuns[0]?.totalPages! * itemsPerPage} test runs
+          Showing {currentRuns.length} of {(safeFilteredRuns[0]?.totalPages ?? 0) * itemsPerPage} test runs
         </div>
       </div>
 

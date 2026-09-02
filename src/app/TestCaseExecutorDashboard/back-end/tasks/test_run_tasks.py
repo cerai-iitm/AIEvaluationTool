@@ -269,6 +269,7 @@ async def execute_testcases(
                     client.chat,
                     chat_id=testcase.testcase_id,
                     prompt_list=[message_to_agent],
+                    run_id=run_id,
                 )
                 if stop_requested():
                     await finish_aborted_run(rundetail)
@@ -381,6 +382,6 @@ async def execute_testcases(
         set_active_stop_watcher(None)
         if client is not None:
             try:
-                client.close()
+                client.close(run_id=run_id)
             except Exception as close_error:
                 logger.error(f"Client close failed (IM already dead): {close_error}")

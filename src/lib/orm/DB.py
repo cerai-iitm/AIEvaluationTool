@@ -2305,7 +2305,7 @@ class DB:
                        run_name=str(result.run_name),
                        target_id=getattr(result, 'target_id'),
                        start_ts=result.start_ts.isoformat(),
-                       end_ts=result.end_ts.isoformat(),
+                       end_ts=result.end_ts.isoformat() if getattr(result, "end_ts") else None,
                        status=str(result.status),
                        run_id=getattr(result, 'run_id'))
 
