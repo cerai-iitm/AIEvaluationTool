@@ -67,6 +67,7 @@ const NewTestRunPage: React.FC = () => {
   const [planMetrics, setPlanMetrics] = useState<string[]>([]);
   const [liveEvents, setLiveEvents] = useState<TestRunEvent[]>([]);
   const [showSeleniumLink, setShowSeleniumLink] = useState(false);
+  const [seleniumViewUrl, setSeleniumViewUrl] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const wsConnectingRef = useRef<Promise<void> | null>(null);
   const activeRunIdRef = useRef<string | number | null>(null);
@@ -128,7 +129,7 @@ const NewTestRunPage: React.FC = () => {
   const isStartDisabled = !formData.testPlan || !formData.target || isRunning;
   const isTargetSelected = !!formData.target;
   const hasSelectedTestCases = formData.testCaseIds.length > 0;
-  const seleniumHref = "/selenium/";
+  const seleniumHref = seleniumViewUrl || "/selenium/";
   const selectedTarget = filters?.targets.find(
     (target) =>
       formatTargetOption(target) === formData.target ||
@@ -170,6 +171,49 @@ const NewTestRunPage: React.FC = () => {
       activeRunIdRef.current = null;
     }
   }, []);
+
+  useEffect(() => {
+    if (!isRunning || !shouldShowSeleniumLink) {
+      setSeleniumViewUrl(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchViewUrl = async () => {
+      const runId = activeRunIdRef.current;
+      if (runId === null) return;
+
+      try {
+        const res = await fetch(API_ENDPOINTS.GET_EXECUTION_VIEW(runId), {
+          headers: getAuthHeaders(),
+          credentials: "include",
+        });
+
+        if (res.status === 401) {
+          redirectToLogin();
+          return;
+        }
+
+        if (!res.ok) return; // no session running yet for this run — keep polling
+
+        const data = await res.json();
+        if (!cancelled && data?.view_path) {
+          setSeleniumViewUrl(data.view_path);
+        }
+      } catch (err) {
+        console.error("Error fetching Selenium view URL:", err);
+      }
+    };
+
+    fetchViewUrl();
+    const intervalId = window.setInterval(fetchViewUrl, 5000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [isRunning, shouldShowSeleniumLink]);
 
   useEffect(() => {
     const handleBeforeUnload = () => {

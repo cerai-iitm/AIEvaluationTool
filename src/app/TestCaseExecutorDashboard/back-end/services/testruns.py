@@ -15,6 +15,7 @@ from configuration.paths import (
 import tempfile
 
 from lib.data import Run
+from lib.interface_manager import InterfaceManagerClient
 from schemas import TestRunFullResponse, TestRunSummaryResponse, TestRunDetailsResponse,TestRunResponse, NewTestRun, FilterResponse, EvaluationItemResponse, RunEvaluationSummaryResponse
 from fastapi.responses import FileResponse
 from tasks.test_run_tasks import execute_testcases
@@ -30,6 +31,59 @@ def _as_bool(value):
     if isinstance(value, str):
         return value.strip().lower() in {"1", "true", "yes", "on"}
     return bool(value)
+
+def _resolve_interface_manager_base_url() -> str:
+    with open(interface_manager_config, "r") as f:
+        config = json.load(f)
+
+    if config.get("interface_manager", {}).get("docker"):
+        return config.get("interface_manager", {}).get(
+            "base_url", "http://interface-manager:8000"
+        )
+    return "http://localhost:8000"
+
+
+def get_execution_view_service(db, run_id: int):
+    """
+    Resolve the run's currently-running testcase (chat_id) and return the
+    noVNC live-view path for its pooled Selenium session, so the frontend
+    can show a per-run view instead of one shared static link.
+    """
+    run = db.get_run_by_id(run_id)
+    if not run:
+        raise HTTPException(status_code=404, detail="Run not found")
+
+    details = db.get_run_details_by_run_id(run_id)
+    running_detail = next((d for d in details if d.status == "RUNNING"), None)
+    if not running_detail:
+        raise HTTPException(
+            status_code=404, detail="No test case is currently running for this run"
+        )
+
+    testcase = db.get_testcase_by_name(running_detail.testcase_name)
+    if not testcase:
+        raise HTTPException(status_code=404, detail="Active test case not found")
+
+    target_obj = db.get_target_by_name(run.target)
+    application_type_map = {"WhatsApp": "WHATSAPP_WEB", "WebApp": "WEBAPP", "API": "API"}
+    application_type = application_type_map.get(getattr(target_obj, "target_type", None))
+    if application_type not in ("WHATSAPP_WEB", "WEBAPP"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"No live view available for target type '{getattr(target_obj, 'target_type', None)}'",
+        )
+
+    client = InterfaceManagerClient(
+        base_url=_resolve_interface_manager_base_url(),
+        application_type=application_type,
+    )
+    try:
+        response = client.view(testcase.testcase_id)
+    except RuntimeError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+    return response.json()
+
 
 def get_interface_manager_status_service():
     with open(interface_manager_config, "r") as f:

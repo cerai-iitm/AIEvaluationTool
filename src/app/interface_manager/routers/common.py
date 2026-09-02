@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, Request
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
 from typing import Optional, Dict, Any, List
 from whatsapp import (
@@ -7,6 +8,7 @@ from whatsapp import (
     send_prompt_whatsapp,
     close_whatsapp,
     get_ui_response_whatsapp,
+    get_view_path as get_view_path_whatsapp,
 )
 from webapp import (
     login_webapp,
@@ -14,6 +16,7 @@ from webapp import (
     send_prompt,
     close_webapp,
     get_ui_response_webapp,
+    get_view_path as get_view_path_webapp,
 )
 
 from logger import get_logger
@@ -118,7 +121,11 @@ async def chat(prompt: PromptCreate):
     # ------------------------------------------------
     if app_type == "WHATSAPP_WEB":
         logger.info("Chat request: WhatsApp Web")
-        result = send_prompt_whatsapp(
+        # send_prompt_whatsapp is blocking Selenium I/O; run it off the
+        # event loop thread so concurrent /chat requests for different
+        # chat_ids don't serialize behind each other.
+        result = await run_in_threadpool(
+            send_prompt_whatsapp,
             chat_id=prompt.chat_id,
             prompt_list=prompt.prompt_list,
         )
@@ -129,7 +136,9 @@ async def chat(prompt: PromptCreate):
     # ------------------------------------------------
     if str.upper(app_type) == "WEBAPP":
         logger.info(f"Chat request: WebApp {app_name}")
-        result = send_prompt(
+        # send_prompt is blocking Selenium I/O; same reasoning as above.
+        result = await run_in_threadpool(
+            send_prompt,
             app_name=app_name,
             chat_id=prompt.chat_id,
             prompt_list=prompt.prompt_list,
@@ -151,8 +160,10 @@ async def chat(prompt: PromptCreate):
         # Build runtime context
         ctx = APIRuntimeContext.from_dict(prompt.api_context)
 
-        # Execute API call (this is where logs happen)
-        result = handle_api_chat(
+        # Execute API call (this is where logs happen); blocking network
+        # I/O, so run it off the event loop thread like the other branches.
+        result = await run_in_threadpool(
+            handle_api_chat,
             ctx=ctx,
             payload={
                 "chat_id": prompt.chat_id,
@@ -166,6 +177,37 @@ async def chat(prompt: PromptCreate):
     # Unsupported
     # ------------------------------------------------
     return JSONResponse(content={"error": "Unsupported application type"})
+
+
+# -------------------------------
+# View (per-run live VNC path)
+# -------------------------------
+@router.get("/view/{chat_id}")
+def view(chat_id: str):
+    """
+    Return the noVNC live-view path for the pooled Selenium session
+    belonging to `chat_id`, so each run can be watched individually
+    instead of everyone sharing one static /selenium/ link.
+    """
+    app_type, app_name = get_app_info()
+
+    if app_type == "WHATSAPP_WEB":
+        path = get_view_path_whatsapp(chat_id)
+    elif str.upper(app_type) == "WEBAPP":
+        path = get_view_path_webapp(chat_id)
+    else:
+        return JSONResponse(
+            status_code=400,
+            content={"error": f"No live view available for application type '{app_type}'"},
+        )
+
+    if not path:
+        return JSONResponse(
+            status_code=404,
+            content={"error": f"No active session for chat_id={chat_id}"},
+        )
+
+    return JSONResponse(content={"chat_id": chat_id, "view_path": path})
 
 
 # -------------------------------
