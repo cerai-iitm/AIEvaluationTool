@@ -1,20 +1,28 @@
 from fastapi import BackgroundTasks, HTTPException, logger
 from lib.strategy.strategy_implementor import StrategyImplementor
 from datetime import datetime
-from threading import Lock
 import asyncio
+import json
 import os
 import requests
 from lib.utils import get_logger, get_logger_verbosity
 logger = get_logger(__name__)
 from services.ws_manager import ws_manager
+from services.redis_client import redis_client
 
 ollama_port = os.getenv("OLLAMA_URL")
 gpu_url = os.getenv("GPU_URL")
 
-
-analysis_jobs = {}
-analysis_jobs_lock = Lock()
+# Analysis job progress used to be a per-process in-memory dict, which
+# broke as soon as app-backend ran as multiple replicas: the replica that
+# started (and is running) a job could differ from the replica serving a
+# given browser's status poll/WebSocket, so that replica's dict simply had
+# no entry for the job — a permanently "stuck" UI even though the job was
+# genuinely progressing/completing elsewhere. Storing it in Redis instead
+# makes it visible to every replica regardless of which one is running the
+# background task.
+ANALYSIS_JOB_KEY_PREFIX = "analysis_job:"
+ANALYSIS_JOB_TTL_SECONDS = 24 * 60 * 60  # jobs are transient; avoid unbounded growth
 
 ollama_url = os.getenv("OLLAMA_URL")
 NO_FAILED_TESTCASES_MESSAGE = "No failed testcases found"
@@ -45,37 +53,47 @@ def check_analyse_health_service():
 #             detail=f"{name} service is not reachable at {url}"
 #         )
     
+def _job_key(run_name: str) -> str:
+    return f"{ANALYSIS_JOB_KEY_PREFIX}{run_name}"
+
+
+def _get_analysis_job(run_name: str) -> dict:
+    try:
+        raw = redis_client.get(_job_key(run_name))
+    except Exception as e:
+        logger.warning(f"Redis read failed for analysis job '{run_name}': {e}")
+        return {}
+    return json.loads(raw) if raw else {}
+
+
 def _set_analysis_job(run_name: str, **updates):
-    with analysis_jobs_lock:
-        current = analysis_jobs.get(run_name, {})
-        current.update(updates)
-        analysis_jobs[run_name] = current
-        return current
+    current = _get_analysis_job(run_name)
+    current.update(updates)
+    try:
+        redis_client.set(_job_key(run_name), json.dumps(current), ex=ANALYSIS_JOB_TTL_SECONDS)
+    except Exception as e:
+        logger.warning(f"Redis write failed for analysis job '{run_name}': {e}")
+    return current
 
 
 def get_analyse_status_service(run_name: str):
-    with analysis_jobs_lock:
-        state = analysis_jobs.get(run_name)
-        if not state:
-            return {"run_name": run_name, "status": "IDLE"}
-        return {"run_name": run_name, **state}
+    state = _get_analysis_job(run_name)
+    if not state:
+        return {"run_name": run_name, "status": "IDLE"}
+    return {"run_name": run_name, **state}
 
 
 def stop_analyse_service(run_name: str):
-    with analysis_jobs_lock:
-        state = analysis_jobs.get(run_name)
-        if not state or state.get("status") not in ("RUNNING", "STOPPING"):
-            raise HTTPException(status_code=409, detail="This analysis is not active")
-        state["status"] = "STOPPING"
-        state["stop_requested"] = True
-        analysis_jobs[run_name] = state
+    state = _get_analysis_job(run_name)
+    if not state or state.get("status") not in ("RUNNING", "STOPPING"):
+        raise HTTPException(status_code=409, detail="This analysis is not active")
+    _set_analysis_job(run_name, status="STOPPING", stop_requested=True)
     logger.info(f"Stop requested for analysis '{run_name}'")
     return {"run_name": run_name, "status": "stopping"}
 
 
 def _analysis_stop_requested(run_name: str) -> bool:
-    with analysis_jobs_lock:
-        return bool(analysis_jobs.get(run_name, {}).get("stop_requested"))
+    return bool(_get_analysis_job(run_name).get("stop_requested"))
 
 
 def _is_retry_failed_candidate(db, detail) -> bool:
@@ -143,10 +161,9 @@ def start_analyse_service(
                 detail=f"Run '{run_name}' is not completed. Current status: {run.status}"
             )
 
-        with analysis_jobs_lock:
-            existing = analysis_jobs.get(run_name)
-            if existing and existing.get("status") == "RUNNING":
-                return {"run_name": run_name, "status": "running"}
+        existing = _get_analysis_job(run_name)
+        if existing and existing.get("status") == "RUNNING":
+            return {"run_name": run_name, "status": "running"}
 
         run_details = db.get_all_run_details_by_run_name(run_name=run.run_name)
         run_details = [

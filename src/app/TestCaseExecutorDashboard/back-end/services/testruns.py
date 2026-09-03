@@ -10,8 +10,9 @@ import randomname
 from lib.utils import get_logger, get_logger_verbosity
 from configuration.paths import (
     ROOT_CONFIG_PATH as interface_manager_config,
-    wb,
+    TEMPLATE_PATH,
 )
+from openpyxl import load_workbook
 import tempfile
 
 from lib.data import Run
@@ -656,6 +657,13 @@ def download_evaluation_report_service(db, run_name: str):
     for d in details:
         if d.conversation_id not in conversation_cache:
             conversation_cache[d.conversation_id] = db.get_conversation_by_id(d.conversation_id)
+
+    # Load a fresh workbook per request instead of reusing a shared
+    # module-level Workbook: the old shared instance accumulated rows from
+    # every report ever generated on this process (never cleared) and had
+    # no locking, so two concurrent requests mutating the same in-memory
+    # openpyxl sheets could race, hang, or corrupt each other's output.
+    wb = load_workbook(TEMPLATE_PATH)
 
     ws_summary = wb["Run_Summary"]
     testcases = set()

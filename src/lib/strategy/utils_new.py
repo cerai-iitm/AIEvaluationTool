@@ -146,7 +146,7 @@ class CustomOllamaModel(DeepEvalBaseLLM):
     def __init__(self, model_name : str, url : str, *args, **kwargs):
         self.model_name = model_name
         self.ollama_url = f"{url.rstrip()}"
-        self.ollama_client = Client(host=self.ollama_url)
+        self.ollama_client = Client(host=self.ollama_url, timeout=120)
         self.score_reason = None
         self.steps = None
     
@@ -169,7 +169,7 @@ class CustomOllamaModel(DeepEvalBaseLLM):
         return None
     
     async def a_generate(self, input:str, *args, **kwargs):
-        client = AsyncClient(host=self.ollama_url)
+        client = AsyncClient(host=self.ollama_url, timeout=120)
         messages = [{"role": "user", "content": f'{input} /nothink'}]
         response = await client.chat(
             model=self.model_name,
@@ -196,7 +196,7 @@ class OllamaConnect:
 
     @staticmethod
     def prompt_model(text:str, fields:List[str], model_names:List[str] = None, options:dict = None) -> List[dict]:
-        ollama_client = Client(host=OllamaConnect.ollama_url)
+        ollama_client = Client(host=OllamaConnect.ollama_url, timeout=120)
         tries = OllamaConnect.dflt_vals.n_tries
         resp_in_format = []
         models = OllamaConnect.dflt_vals.model_names if model_names is None else model_names
