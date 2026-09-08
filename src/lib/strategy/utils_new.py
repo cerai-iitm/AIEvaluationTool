@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 import json
 import ast
 import csv
+from datetime import datetime
 from .logger import get_logger
 from types import SimpleNamespace
 import hashlib
@@ -27,6 +28,92 @@ class FileLoader:
         else:
             load_dotenv(env_path)
     
+    @staticmethod
+    def _build_db(project_root):
+        """
+        Builds a standalone DB connection from config.json, so strategies that need
+        direct DB access (e.g. run-level aggregates) stay independent of the
+        backend app package's own configuration/database.py.
+
+        :param project_root - repo root path (e.g. Path(__file__).parents[3] from the strategy module).
+        """
+        from lib.orm import DB
+
+        config_path = os.path.join(str(project_root), "config.json")
+        try:
+            with open(config_path, "r") as f:
+                config = json.load(f)
+        except FileNotFoundError:
+            config = {}
+
+        db_cfg = config.get("db", {})
+        engine_type = db_cfg.get("engine", "sqlite").lower()
+
+        if engine_type == "sqlite":
+            db_path = os.path.join(str(project_root), "data", db_cfg.get("file", "AIEvaluationData.db"))
+            db_url = f"sqlite:///{db_path}"
+        elif engine_type == "mariadb":
+            db_url = "mariadb+mariadbconnector://{user}:{password}@{host}:{port}/{database}".format(
+                user=db_cfg.get("user"),
+                password=db_cfg.get("password"),
+                host=db_cfg.get("host"),
+                port=db_cfg.get("port"),
+                database=db_cfg.get("database"),
+            )
+        else:
+            raise ValueError(f"Unsupported database engine: {engine_type}")
+
+        return DB(db_url=db_url, debug=False)
+
+    @staticmethod
+    def _collect_run_stats(db, run_name: str) -> dict:
+        """
+        Gathers per-run timing data in a single pass: the run's start/end window
+        (from TestRuns), and each conversation's prompt/response timestamps and
+        whether it received a response.
+
+        Falls back to the first prompt / last response timestamps for the run's
+        window when TestRuns.start_ts/end_ts aren't available (e.g. an in-progress run).
+
+        :return dict with start_ts, end_ts, prompt_times, response_times, tats
+        (per-conversation turn-around seconds), and successful_requests.
+        """
+        run = db.get_run_by_name(run_name)
+        conversations = db.get_agent_responses_by_run_name(run_name)
+
+        prompt_times = []
+        response_times = []
+        tats = []
+        successful_requests = 0
+
+        for conversation in conversations:
+            prompt_ts = datetime.fromisoformat(conversation.prompt_ts) if conversation.prompt_ts else None
+            response_ts = datetime.fromisoformat(conversation.response_ts) if conversation.response_ts else None
+
+            if prompt_ts:
+                prompt_times.append(prompt_ts)
+            if response_ts:
+                response_times.append(response_ts)
+            if conversation.agent_response and prompt_ts and response_ts:
+                successful_requests += 1
+                tats.append((response_ts - prompt_ts).total_seconds())
+
+        start_ts = datetime.fromisoformat(run.start_ts) if run and run.start_ts else None
+        end_ts = datetime.fromisoformat(run.end_ts) if run and run.end_ts else None
+        if start_ts is None:
+            start_ts = min(prompt_times) if prompt_times else None
+        if end_ts is None:
+            end_ts = max(response_times) if response_times else None
+
+        return {
+            "start_ts": start_ts,
+            "end_ts": end_ts,
+            "prompt_times": prompt_times,
+            "response_times": response_times,
+            "tats": tats,
+            "successful_requests": successful_requests,
+        }
+
     @staticmethod
     def _load_file_content(run_file_path:str, req_folder_path:str = "", file_name:str = "", **kwargs):
         data_dir = os.path.join(os.path.dirname(run_file_path), req_folder_path) if req_folder_path != '' else os.path.dirname(run_file_path)

@@ -590,7 +590,7 @@ const LanguageList: React.FC = () => {
                             ×
                         </button>
                         <div className="flex flex-col md:flex-row justify-center items-center mb-6 md:mb-8 mt-4 md:mt-5 gap-2 md:gap-0">
-                            <label className="font-semibold text-base ml-8 p-2">Language :<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
+                            <label className="font-semibold text-base ml-8 p-2">Language :</label>
                             <div className="w-full md:w-1/2">
                                 <Input
                                     value={updateName}
@@ -662,7 +662,7 @@ const LanguageList: React.FC = () => {
                         </button>
                         {/* Language Name Row */}
                         <div className="flex flex-col md:flex-row justify-center items-center mb-6 mb:mb-8 mt-4 md:mt-5 gap-2 md:gap-0">
-                            <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[115px]">Language :<span className="ml-1 text-red-600" aria-hidden="true">*</span></label>
+                            <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[115px]">Language :</label>
                             <div className="w-full md:w-1/2">
                                 <Input
                                     value={newLanguageName}

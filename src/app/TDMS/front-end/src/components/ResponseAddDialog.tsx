@@ -232,7 +232,7 @@ export const ResponseAddDialog = ({
 
           <div className="space-y-4 pt-4">
             <div className="space-y-2">
-              <Label className="text-base font-semibold">Response<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
+              <Label className="text-base font-semibold">Response</Label>
               <Textarea
                 value={responseText}
                 onChange={(e) => setResponseText(e.target.value)}
@@ -244,7 +244,7 @@ export const ResponseAddDialog = ({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-base font-semibold">Type<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
+                <Label className="text-base font-semibold">Type</Label>
                 <Select value={responseType} onValueChange={setResponseType}>
                   <SelectTrigger className="bg-muted capitalize">
                     <SelectValue placeholder="Select response type" />
@@ -260,7 +260,7 @@ export const ResponseAddDialog = ({
               </div>
 
               <div className="space-y-2">
-                <Label className="text-base font-semibold">Language<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
+                <Label className="text-base font-semibold">Language</Label>
                 <Select
                   value={language}
                   onValueChange={setLanguage}
@@ -364,7 +364,7 @@ export const ResponseAddDialog = ({
             </div>
 
             <div className="flex justify-center items-center p-4 border-gray-300 bg-white sticky bottom-0 z-10">
-              <Label className="text-base font-semibold mr-4">Notes<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
+              <Label className="text-base font-semibold mr-4">Notes</Label>
               <Input
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}

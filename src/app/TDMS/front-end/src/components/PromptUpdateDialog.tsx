@@ -312,7 +312,7 @@ export function PromptUpdateDialog({
         </DialogHeader>
         <div className="flex-1 p-1 overflow-y-auto space-y-6 pb-5">
           <div className="space-y-1">
-            <Label className="text-base font-semibold">User Prompt<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
+            <Label className="text-base font-semibold">User Prompt</Label>
             <Textarea
               value={userPrompt}
               onChange={(e) => setUserPrompt(e.target.value)}
@@ -334,7 +334,7 @@ export function PromptUpdateDialog({
             </div>
           </div>
           <div className="space-y-1">
-            <Label className="text-base font-semibold">System Prompt<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
+            <Label className="text-base font-semibold">System Prompt</Label>
             <div className="relative">
               <Textarea
                 value={systemPrompt}
@@ -374,7 +374,7 @@ export function PromptUpdateDialog({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <Label className="text-base font-semibold">Language<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
+              <Label className="text-base font-semibold">Language</Label>
               <Select
                 value={language || undefined}
                 onValueChange={setLanguage}
@@ -405,7 +405,7 @@ export function PromptUpdateDialog({
               </Select>
             </div>
             <div className="space-y-1 pb-4">
-              <Label className="text-base font-semibold">Domain<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
+              <Label className="text-base font-semibold">Domain</Label>
               <Select
                 value={domain || undefined}
                 onValueChange={setDomain}
@@ -437,7 +437,7 @@ export function PromptUpdateDialog({
         </div>
 
         <div className="sticky bottom-0 bg-white pt-4 p-2 flex justify-center items-center gap-4 border-gray-200 z-10">
-          <Label className="text-base font-bold mr-2">Notes<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
+          <Label className="text-base font-bold mr-2">Notes</Label>
           <Input
             value={notes}
             onChange={(e) => setNotes(e.target.value)}

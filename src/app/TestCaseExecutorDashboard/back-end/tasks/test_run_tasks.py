@@ -234,7 +234,8 @@ async def execute_testcases(
                     run_detail_id=rundetail_id,
                     testcase=testcase.name,
                 )
-                conv_id = db.add_or_update_conversation(conversation=conv)
+                # even if the conversation already exists (continue-run), override it with the new information.
+                conv_id = db.add_or_update_conversation(conversation=conv, override=True)
                 logger.info(f"A new conversation is created with ID: {conv_id}")
 
                 rundetail.status = "RUNNING"

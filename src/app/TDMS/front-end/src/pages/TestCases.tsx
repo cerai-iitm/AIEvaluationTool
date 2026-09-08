@@ -50,6 +50,8 @@ interface TestCase {
   metricNameList?: string[];  // List of metric names
 }
 
+type SearchField = "testcase" | "strategy" | "domain" | "metric";
+
 interface ApiTestCase {
   testcase_id?: number;
   id?: number;
@@ -82,7 +84,7 @@ const FETCH_BATCH_SIZE = 100;
 const TestCases = () => {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchField, setSearchField] = useState<"testcase" | "strategy" | "domain" | "metric">("testcase");
+  const [searchField, setSearchField] = useState<SearchField>("testcase");
   const [selectedCase, setSelectedCase] = useState<TestCase | null>(null);
   const [updateCase, setUpdateCase] = useState<TestCase | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -607,12 +609,15 @@ const TestCases = () => {
           <PageHeaderWithBack title="Test Cases" />
 
           <div className="flex gap-4 mb-6 ">
-            <Select defaultValue="testcase"
-              onValueChange={(value: "testcase" | "metric" | "strategy" | "domain") => {
+
+            <Select
+              value={searchField}
+              onValueChange={(value: SearchField) => {
                 setSearchField(value);
                 setCurrentPage(1);
               }}
-            >
+>
+            
               <SelectTrigger className="w-40">
                 <SelectValue />
               </SelectTrigger>

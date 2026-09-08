@@ -3,6 +3,7 @@ from nltk.stem import WordNetLemmatizer
 import re
 import warnings
 import os
+import spacy
 import nltk
 from typing import List, Tuple
 from sentence_transformers import SentenceTransformer, util
@@ -23,13 +24,48 @@ FileLoader._load_env_vars(__file__)
 logger = get_logger("entity_recognition")
 dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), simple=True, strat_name="entity_recognition")
 
+
+def ensure_spacy_model(model_name: str = "en_core_web_sm"):
+    """
+    Ensure the spaCy NER model is installed, downloading it if missing.
+    """
+    try:
+        return spacy.load(model_name)
+    except OSError:
+        logger.info(f"spaCy model '{model_name}' not found. Attempting to download it.")
+        try:
+            spacy.cli.download(model_name)
+        except SystemExit as e:
+            raise RuntimeError(
+                f"Failed to download spaCy model '{model_name}'. "
+                f"Install it manually, e.g. `uv pip install {model_name}` "
+                f"or `python -m spacy download {model_name}`."
+            ) from e
+        return spacy.load(model_name)
+
+
 class EntityRecognition(Strategy):
     def __init__(self, name: str = "entity_recognition", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
         self.metric_name = kwargs.get("metric_name", name)
         self.lemm = WordNetLemmatizer()
         self.model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+        self.nlp = ensure_spacy_model("en_core_web_sm")
 
+    def normalize_ner_tag(self, tag: str) -> str:
+
+        tag = tag.strip().upper()
+
+        label_mapping = {
+            "GPE": "LOCATION",
+            "LOC": "LOCATION",
+            "FAC": "LOCATION",
+            "PER": "PERSON",
+            "ORG": "ORGANIZATION"
+        }
+
+        return label_mapping.get(tag, tag)
+    
     def extract_entity_pairs(self, text: str) -> List[Tuple[str, str]]:
         """
         Extracts (entity, ner_tag) pairs from loosely structured dict-like strings.
@@ -42,7 +78,20 @@ class EntityRecognition(Strategy):
         )
         matches = pattern.findall(text)
 
-        return [(entity.strip().lower(), tag.strip().upper()) for entity, tag in matches]
+        if matches:
+
+            return [(entity.strip().lower(), tag.strip().upper()) for entity, tag in matches]
+
+        # Otherwise, treat the response as a normal sentence
+        doc = self.nlp(text)
+
+        return [
+            (
+                entity.text.strip().lower(),
+                self.normalize_ner_tag(entity.label_)
+            )
+            for entity in doc.ents
+        ]
 
     def ner_recognition(self, expected_str: str, response_str: str) -> tuple:
         """
@@ -50,7 +99,7 @@ class EntityRecognition(Strategy):
         """
         expected_pairs = set(self.extract_entity_pairs(expected_str))
         predicted_pairs = set(self.extract_entity_pairs(response_str))
-
+        
         return self.scoring(*self.semantic_matching(expected_pairs, predicted_pairs))#, self.scoring(*self.exact_matching(expected_pairs, predicted_pairs))
     
     def exact_matching(self, expected_pairs : set, predicted_pairs : set) -> tuple:

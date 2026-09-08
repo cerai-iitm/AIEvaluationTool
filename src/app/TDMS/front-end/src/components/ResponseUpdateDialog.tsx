@@ -378,7 +378,7 @@ export const ResponseUpdateDialog = ({
             </div>
 
             <div className="flex justify-center items-center p-4 border-gray-300 bg-white sticky bottom-0 z-10">
-              <Label className="text-base font-semibold mr-4">Notes<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
+              <Label className="text-base font-semibold mr-4">Notes</Label>
               <Input
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
