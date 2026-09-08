@@ -77,6 +77,7 @@ interface TestCasePageResponse {
 }
 
 const ITEMS_PER_PAGE = 15;
+const FETCH_BATCH_SIZE = 100;
 
 const TestCases = () => {
   const { toast } = useToast();
@@ -89,6 +90,7 @@ const TestCases = () => {
   const [testCases, setTestCases] = useState<TestCase[]>([]);
   const [totalItems, setTotalItems] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isDetailLoading, setIsDetailLoading] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -110,6 +112,7 @@ const TestCases = () => {
   const systemPromptsRef = useRef<HTMLTextAreaElement>(null);
   const responseTextRef = useRef<HTMLTextAreaElement>(null);
   const llmPromptRef = useRef<HTMLTextAreaElement>(null);
+  const testCaseFetchRequestRef = useRef(0);
 
   const mapItem = (item: ApiTestCase): TestCase => ({
     id: item.testcase_id ?? item.id ?? 0,
@@ -129,7 +132,11 @@ const TestCases = () => {
   });
 
   const fetchTestCases = async () => {
+    const requestId = testCaseFetchRequestRef.current + 1;
+    testCaseFetchRequestRef.current = requestId;
+
     setIsLoading(true);
+    setIsLoadingMore(false);
 
     try {
       const token = localStorage.getItem("access_token");
@@ -142,40 +149,76 @@ const TestCases = () => {
           headers["Authorization"] = `Bearer ${token}`;
       }
 
-      const params = new URLSearchParams({
-        limit: String(ITEMS_PER_PAGE),
-        offset: String((currentPage - 1) * ITEMS_PER_PAGE),
-      });
-
       const trimmedSearch = searchQuery.trim();
-      if (trimmedSearch) {
-        params.set("search", trimmedSearch);
-        params.set("field", searchField.trim());
-      }
 
-      const apiUrl = `${API_ENDPOINTS.TESTCASES_V2}?${params.toString()}`;
-      
-      const response = await fetch(apiUrl, { 
-        method: "GET",
-        headers,
-      });
+      const fetchBatch = async (offset: number) => {
+        const params = new URLSearchParams({
+          limit: String(FETCH_BATCH_SIZE),
+          offset: String(offset),
+        });
 
-      if (!response.ok) {
-        let errorMessage = `HTTP ${response.status}`;
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.detail || errorData.message || errorMessage;
-        } catch {
-          const errorText = await response.text();
-          errorMessage = errorText || errorMessage;
+        if (trimmedSearch) {
+          params.set("search", trimmedSearch);
+          params.set("field", searchField.trim());
         }
-        throw new Error(`${errorMessage} (Status: ${response.status})`);
+
+        const response = await fetch(`${API_ENDPOINTS.TESTCASES_V2}?${params.toString()}`, {
+          method: "GET",
+          headers,
+        });
+
+        if (!response.ok) {
+          let errorMessage = `HTTP ${response.status}`;
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.detail || errorData.message || errorMessage;
+          } catch {
+            const errorText = await response.text();
+            errorMessage = errorText || errorMessage;
+          }
+          throw new Error(`${errorMessage} (Status: ${response.status})`);
+        }
+
+        return response.json() as Promise<TestCasePageResponse>;
+      };
+
+      const firstBatch = await fetchBatch(0);
+      if (testCaseFetchRequestRef.current !== requestId) {
+        return;
       }
-      
-      const data: TestCasePageResponse = await response.json();
-      setTestCases(Array.isArray(data.items) ? data.items.map(mapItem) : []);
-      setTotalItems(data.total ?? 0);
+
+      const firstItems = Array.isArray(firstBatch.items) ? firstBatch.items.map(mapItem) : [];
+      setTestCases(firstItems);
+      setTotalItems(firstBatch.total ?? firstItems.length);
+      setIsLoading(false);
+
+      const total = firstBatch.total ?? firstItems.length;
+      if (firstItems.length >= total) {
+        return;
+      }
+
+      setIsLoadingMore(true);
+      for (let offset = FETCH_BATCH_SIZE; offset < total; offset += FETCH_BATCH_SIZE) {
+        const batch = await fetchBatch(offset);
+        if (testCaseFetchRequestRef.current !== requestId) {
+          return;
+        }
+
+        const nextItems = Array.isArray(batch.items) ? batch.items.map(mapItem) : [];
+        setTestCases((currentItems) => {
+          const seenIds = new Set(currentItems.map((item) => item.id));
+          return [
+            ...currentItems,
+            ...nextItems.filter((item) => !seenIds.has(item.id)),
+          ];
+        });
+        setTotalItems(batch.total ?? total);
+      }
     } catch (error) {
+      if (testCaseFetchRequestRef.current !== requestId) {
+        return;
+      }
+
       console.error("Error fetching test cases:", error);
       const errorMessage = error instanceof Error 
         ? error.message 
@@ -189,7 +232,10 @@ const TestCases = () => {
       setTestCases([]);
       setTotalItems(0);
     } finally {
-      setIsLoading(false);
+      if (testCaseFetchRequestRef.current === requestId) {
+        setIsLoading(false);
+        setIsLoadingMore(false);
+      }
     }
   };
 
@@ -226,7 +272,7 @@ const TestCases = () => {
 
     return () => window.clearTimeout(timeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, searchQuery, searchField, refreshKey]);
+  }, [searchQuery, searchField, refreshKey]);
 
   const handleUpdateSuccess = () => {
     // Preserve the highlighted row ID after update
@@ -479,7 +525,13 @@ const TestCases = () => {
     }
   };
 
+  const loadedItems = testCases.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
+  const loadedPages = Math.max(1, Math.ceil(loadedItems / ITEMS_PER_PAGE));
+  const paginatedCases = testCases.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   // Calculate line count from text more accurately
   // Estimates based on typical textarea width (~700px) and average char width (~7px)
@@ -593,8 +645,9 @@ const TestCases = () => {
                   ? "0"
                   : `${(currentPage - 1) * ITEMS_PER_PAGE + 1} - ${Math.min(
                       currentPage * ITEMS_PER_PAGE,
-                      totalItems
+                      loadedItems,
                     )} of ${totalItems}`}
+                {isLoadingMore && " (loading more...)"}
               </span>
               <div className="flex gap-1">
                 <Button
@@ -619,9 +672,9 @@ const TestCases = () => {
                   variant="ghost"
                   size="icon"
                   onClick={() =>
-                    setCurrentPage((p) => Math.min(totalPages, p + 1))
+                    setCurrentPage((p) => Math.min(isLoadingMore ? loadedPages : totalPages, p + 1))
                   }
-                  disabled={currentPage === totalPages}
+                  disabled={currentPage >= (isLoadingMore ? loadedPages : totalPages)}
                   aria-label="Go to next page"
                 >
                   <ChevronRight className="w-5 h-5" />
@@ -630,7 +683,7 @@ const TestCases = () => {
                   variant="ghost"
                   size="icon"
                   onClick={() => setCurrentPage(totalPages)}
-                  disabled={currentPage === totalPages}
+                  disabled={isLoadingMore || currentPage === totalPages}
                   aria-label="Go to last page"
                 >
                   <ChevronsRight className="w-5 h-5" />
@@ -680,14 +733,14 @@ const TestCases = () => {
                       Loading test cases...
                     </td>
                   </tr>
-                ) : testCases.length === 0 ? (
+                ) : paginatedCases.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="p-8 text-center text-muted-foreground">
                       No test cases found
                     </td>
                   </tr>
                 ) : (
-                  testCases.map((testCase) => (
+                  paginatedCases.map((testCase) => (
                     <tr
                       key={testCase.id}
                       className={`border-b cursor-pointer transition-colors duration-200 ${

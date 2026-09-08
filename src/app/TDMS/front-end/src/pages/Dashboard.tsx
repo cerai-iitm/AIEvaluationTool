@@ -595,8 +595,11 @@ const Dashboard = () => {
                   >
                     <Upload className="w-12 h-12 text-blue-600" />
                   </button>
-                  <div className="space-y-1">
-                    <p className="text-foreground font-medium">
+                  <div className="w-full min-w-0 space-y-1">
+                    <p
+                      className="truncate w-[360px] text-foreground font-medium"
+                      title={selectedJsonFile?.name}
+                    >
                       {selectedJsonFile ? selectedJsonFile.name : "Click the upload icon or drop a JSON file here"}
                     </p>
                     <p className="text-sm text-muted-foreground">
@@ -628,7 +631,7 @@ const Dashboard = () => {
               </button>
               <button
                 onClick={handleImportClick}
-                disabled={importerLoading}
+                disabled={importerLoading || !selectedJsonFile}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-400"
               >
                 Import
