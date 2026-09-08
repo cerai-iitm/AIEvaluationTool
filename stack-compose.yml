@@ -124,7 +124,7 @@ services:
     environment:
       OLLAMA_KEEP_ALIVE: "-1"
       OLLAMA_NUM_PARALLEL: "20"
-      OLLAMA_CONTEXT_LENGTH: "5120"
+      OLLAMA_CONTEXT_LENGTH: "4096"
       # Swarm rejects the modern `deploy.resources.reservations.devices`
       # GPU syntax outright (see docker_stack.md Section 1.2), so GPU
       # access here relies on the legacy nvidia-container-runtime path:
@@ -139,11 +139,9 @@ services:
     volumes:
       - ollama_data:/root/.ollama
     deploy:
-      replicas: 1
+      replicas: 2
       restart_policy:
         condition: any
-      placement:
-        constraints: [node.labels.primary == true]
 
   ollama-init:
     image: ollama/ollama:latest
@@ -155,24 +153,24 @@ services:
     deploy:
       # one-shot: retry a few times if the pull fails, never restart
       # after it exits 0
-      replicas: 1
+      replicas: 2
       restart_policy:
         condition: on-failure
         max_attempts: 3
 
-  ollama-warmup:
-    image: curlimages/curl:latest
-    depends_on:
-      - ollama-init
-    command: >
-      sh -c "
-      curl http://ollama:11434/api/generate
-      -d '{\"model\":\"${OLLAMA_MODEL:-qwen3:32b}\",\"prompt\":\"hi\",\"stream\":false}'
-      "
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: none
+  # ollama-warmup:
+  #   image: curlimages/curl:latest
+  #   depends_on:
+  #     - ollama-init
+  #   command: >
+  #     sh -c "
+  #     curl http://ollama:11434/api/generate
+  #     -d '{\"model\":\"${OLLAMA_MODEL:-qwen3:32b}\",\"prompt\":\"hi\",\"stream\":false}'
+  #     "
+  #   deploy:
+  #     replicas: 1
+  #     restart_policy:
+  #       condition: none
 
   interface-manager:
     image: ${REGISTRY:-localhost:5000}/aiet-interface-manager:${TAG:-latest}
@@ -279,11 +277,13 @@ services:
     volumes:
       - sarvam_models:/models
     deploy:
-      replicas: 1
+      replicas: 2
       restart_policy:
         condition: any
-      placement:
-        constraints: [node.labels.primary == true]
+      # placement:
+      #   constraints: [node.labels.gpu == true]
+      #   preferences:
+      #     - spread: node.id
 
   tdms-backend:
     image: ${REGISTRY:-localhost:5000}/aiet-tdms-backend:${TAG:-latest}
