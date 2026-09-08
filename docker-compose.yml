@@ -54,7 +54,7 @@ services:
     ports:
       - "7900-7924:7900"
     deploy:
-      replicas: ${SELENIUM_NODE_COUNT:-25}
+      replicas: ${SELENIUM_NODE_COUNT:-2}
 
   ollama:
     image: ollama/ollama:latest
@@ -62,7 +62,7 @@ services:
     restart: unless-stopped
     environment:
       - OLLAMA_KEEP_ALIVE=-1
-      - OLLAMA_NUM_PARALLEL=10
+      - OLLAMA_NUM_PARALLEL=20
       - OLLAMA_CONTEXT_LENGTH=5120
     profiles: ["prod"]
     expose:
@@ -106,7 +106,6 @@ services:
       context: .
       dockerfile: Dockerfile.app-backend
       target: interface-manager
-    container_name: aiet-interface-manager
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
