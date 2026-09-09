@@ -1,11 +1,12 @@
-from datetime import datetime
 import warnings
 import os
+from pathlib import Path
+
 from lib.data import TestCase, Conversation
-from .utils_new import FileLoader
+from .utils_new import FileLoader, OllamaConnect
 from .strategy_base import Strategy
 from .logger import get_logger
-from pathlib import Path
+
 warnings.filterwarnings("ignore")
 
 FileLoader._load_env_vars(__file__)
@@ -13,67 +14,82 @@ logger = get_logger("compute_mtbf")
 project_root = Path(__file__).parents[3]
 dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), simple=True, strat_name="compute_mtbf")
 
-# this module compute mean time between failures from the log file generated during interaction with AI agents
+
+# This module scores reliability from failed test-case details recorded in the DB,
+# instead of parsing a shared interaction log that isn't scoped to any one run.
+# Score = 1 - (failures / total requests): 1.0 when nothing failed, 0.0 when everything
+# did, stable regardless of how failures happen to be spaced out over time.
 class Compute_MTBF(Strategy):
     def __init__(self, name: str = "compute_mtbf", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
-        self.file_path = project_root / Path(dflt_vals.file_path)
+        self.db = FileLoader._build_db(project_root)
+        self.metric_name = kwargs.get("metric_name", name)
 
-    def extract_failure_timestamps(self, log_path, keyword="ERROR"):
+    def _failure_stats(self, run_name: str = None):
         """
-        Extracts timestamps of log entries containing a specified keyword from a log file
+        Counts FAILED vs total test-case details, scoped to a single run when
+        run_name is given, otherwise across every run in the DB.
 
-        :param log_path(str) - Path to the log file
-        :param keyword (str, optional) - The keyword to search for in log lines. Defaults to "ERROR"
-        :return List[datetime] - A list of 'datetime' objects corresponding to the timestamps of matched log entries.
+        :return (failures, total) - failure count and total request count.
         """
-        timestamps = []
-        with open(log_path, 'r', encoding='utf-8') as file:
-            for line in file:
-                if f"[{keyword}]" in line:
-                    try:
-                        first_bracket = line.find("[") + 1
-                        second_bracket = line.find("]")
-                        ts_str = line[first_bracket:second_bracket].strip()
-                        
-                        ts = datetime.strptime(ts_str, "%Y-%m-%d %H:%M:%S,%f")
-                        timestamps.append(ts)
-                    except Exception as e:
-                        logger.info(f"Skipping line: {line.strip()} -> Error: {e}")
-        return timestamps
+        run_names = [run_name] if run_name is not None else [r.run_name for r in self.db.get_all_runs()]
 
-    def calculate_mtbf_from_timestamps(self, timestamps):
+        failures = 0
+        total = 0
+        for name in run_names:
+            for detail in self.db.get_all_run_details_by_run_name(name):
+                total += 1
+                if detail.status == "FAILED":
+                    failures += 1
+        return failures, total
+
+    def compute_run_mtbf(self, run_name: str):
         """
-        Calculates the Mean Time Between Failures (MTBF) from a list of failure timestamps
-
-        :param timestamps (List[datetime]) - A list of 'datetime' objects representing failure times, ordered chronologicallly.
-        :return MTBF (float) - Mean Time Between Failures in hours, uptimes (List[float]) - List of time intervals between failures, in hours.
+        Computes the reliability score using only the requests recorded within a single test run.
         """
-        if len(timestamps) < 2:
-            raise ValueError("At least two failure timestamps are needed to compute MTBF.")
+        failures, total = self._failure_stats(run_name=run_name)
+        if total == 0:
+            reason = f"No test-case details recorded in run '{run_name}'."
+            logger.info(reason)
+            return None, reason
 
-        uptimes = [
-            (timestamps[i] - timestamps[i - 1]).total_seconds() / 3600
-            for i in range(1, len(timestamps))
-        ]
-        mtbf = sum(uptimes) / len(uptimes)
-        logger.info(f"Mean Time Between Failure (MTBF) in hrs: {mtbf}")
-        return mtbf, uptimes
+        score = 1 - (failures / total)
+        reason = (
+            f"Reliability score for run '{run_name}' is {score:.4f} "
+            f"({failures} failure(s) out of {total} request(s))."
+        )
+        logger.info(reason)
+        return score, reason
+
+    def compute_overall_mtbf(self):
+        """
+        Computes the reliability score using every request recorded across all test runs.
+        """
+        failures, total = self._failure_stats(run_name=None)
+        if total == 0:
+            reason = "No test-case details recorded across all runs."
+            logger.info(reason)
+            return None, reason
+
+        score = 1 - (failures / total)
+        reason = (
+            f"Overall reliability score across all runs is {score:.4f} "
+            f"({failures} failure(s) out of {total} request(s))."
+        )
+        logger.info(reason)
+        return score, reason
 
     def evaluate(self, testcase:TestCase, conversation:Conversation):
         """
-        Calculate Mean Time Between Failures (MTBF) using the interaction log file
-
-        :param filepath - The log file captured during the interacting with AI Agents
-        :return : A time representing the mean time between failures.
+        Calculate a reliability score (1 - failure rate) across every request recorded
+        in the database, not just the test run this conversation belongs to.
         """
-        if not self.file_path:
-            raise ValueError("file_path is not provided in strategy kwargs.")
-        timestamps = self.extract_failure_timestamps(self.file_path)
-        mtbf_time, uptime = self.calculate_mtbf_from_timestamps(timestamps)
-        return mtbf_time, f"The Mean Time Between Failures (MTBF) is {mtbf_time} hours, with individual uptimes between failures as follows: {uptime} hours."
-
-# Example usage
-# file_path = "data/whatsapp_driver.log"
-# mtbf = Compute_MTBF(file_path=log_file)
+        # Default metric
+        score, reason = self.compute_overall_mtbf()
+        if dflt_vals.model_reason:
+            try:
+                reason = OllamaConnect.get_reason(conversation.agent_response, score, metric_name=self.metric_name)
+            except Exception as e:
+                logger.error(f"Could not fetch the reason for score from Ollama, falling back to the deterministic reason: {e}")
+        return score, reason
 

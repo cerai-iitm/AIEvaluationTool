@@ -85,7 +85,7 @@ const ReasonCard = ({ score, reason }: { score: number | null; reason: string | 
         <div className="d-flex align-items-start">
           <div className="flex-grow-1">
             <h6 className="card-title mb-2 fw-semibold">Evaluation Reason</h6>
-            <p className="card-text mb-0 text-secondary" style={{ lineHeight: '1.6' }}>{reason}</p>
+            <p className="card-text mb-0 text-secondary" style={{ lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>{reason}</p>
           </div>
         </div>
       </div>

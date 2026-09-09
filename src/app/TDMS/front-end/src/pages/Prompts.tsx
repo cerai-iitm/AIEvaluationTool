@@ -214,8 +214,8 @@ const Prompts = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="user_prompt">User Prompt</SelectItem>
-                <SelectItem value="domain">Domain</SelectItem>
                 <SelectItem value="language">Language</SelectItem>
+                <SelectItem value="domain">Domain</SelectItem>
               </SelectContent>
             </Select>
 

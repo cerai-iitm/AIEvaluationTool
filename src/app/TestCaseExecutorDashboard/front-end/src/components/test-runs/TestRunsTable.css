@@ -296,6 +296,11 @@ th.col-evaluation .header-content {
   color: #1e40af;
 }
 
+.status-stopped {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
 .status-failed {
   background-color: #fee2e2;
   color: #991b1b;

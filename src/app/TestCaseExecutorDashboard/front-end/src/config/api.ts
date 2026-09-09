@@ -1,5 +1,5 @@
 export const API_BASE_URL =
-  process.env.REACT_APP_API_BASE_URL !;
+  process.env.REACT_APP_API_BASE_URL || "http://localhost:7000";
 
 export const AUTH_SERVICE_URL =
   process.env.REACT_APP_AUTH_SERVICE_URL || "http://localhost:7500";
@@ -59,9 +59,21 @@ export const AUTH_LOGOUT_URL = `${AUTH_SERVICE_URL}/web/logout`;
 }  
 
 
-export const WS_BASE_URL = API_BASE_URL.startsWith("https")
-  ? API_BASE_URL.replace("https://", "wss://")
-  : API_BASE_URL.replace("http://", "ws://");
+const getWebSocketBaseUrl = (apiBaseUrl: string): string => {
+  if (apiBaseUrl.startsWith("https://")) {
+    return apiBaseUrl.replace("https://", "wss://");
+  }
+
+  if (apiBaseUrl.startsWith("http://")) {
+    return apiBaseUrl.replace("http://", "ws://");
+  }
+
+  const basePath = apiBaseUrl.startsWith("/") ? apiBaseUrl : `/${apiBaseUrl}`;
+  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+  return `${protocol}//${window.location.host}${basePath}`;
+};
+
+export const WS_BASE_URL = getWebSocketBaseUrl(API_BASE_URL);
 
 export const WS_ENDPOINTS = {
   TEST_RUN: `${WS_BASE_URL}/ws/test-run`,
