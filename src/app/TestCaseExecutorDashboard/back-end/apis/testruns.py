@@ -20,6 +20,7 @@ from services.testruns import (
     delete_test_run_service,
     download_evaluation_report_service,
     get_all_test_runs_service,
+    get_execution_view_service,
     get_interface_manager_status_service,
     get_metrics_by_plan_service,
     get_run_evaluation_summary_service,
@@ -58,6 +59,16 @@ def stop_run(run_id: int):
     if not stop_active_run(run_id, ROOT_CONFIG_PATH):
         raise HTTPException(status_code=409, detail="This test run is not active")
     return {"message": "Stop requested", "runId": run_id}
+
+
+@router.get("/test-runs/{run_id}/view")
+def get_execution_view(run_id: int, db=Depends(get_db)):
+    try:
+        return get_execution_view_service(db=db, run_id=run_id)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/continue-run")
