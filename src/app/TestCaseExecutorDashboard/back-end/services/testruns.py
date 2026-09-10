@@ -10,8 +10,9 @@ import randomname
 from lib.utils import get_logger, get_logger_verbosity
 from configuration.paths import (
     ROOT_CONFIG_PATH as interface_manager_config,
-    wb,
+    TEMPLATE_PATH,
 )
+from openpyxl import load_workbook
 import tempfile
 
 from lib.data import Run
@@ -45,44 +46,40 @@ def _resolve_interface_manager_base_url() -> str:
 
 def get_execution_view_service(db, run_id: int):
     """
-    Resolve the run's currently-running testcase (chat_id) and return the
-    noVNC live-view path for its pooled Selenium session, so the frontend
-    can show a per-run view instead of one shared static link.
+    Return the noVNC live-view path for the run's pooled Selenium session,
+    so the frontend can show a per-run view instead of one shared static
+    link. All test cases in a run share one session/node (pooled by
+    run_id), so this path stays stable for the whole run.
     """
-    run = db.get_run_by_id(run_id)
-    if not run:
-        raise HTTPException(status_code=404, detail="Run not found")
-
-    details = db.get_run_details_by_run_id(run_id)
-    running_detail = next((d for d in details if d.status == "RUNNING"), None)
-    if not running_detail:
-        raise HTTPException(
-            status_code=404, detail="No test case is currently running for this run"
-        )
-
-    testcase = db.get_testcase_by_name(running_detail.testcase_name)
-    if not testcase:
-        raise HTTPException(status_code=404, detail="Active test case not found")
-
-    target_obj = db.get_target_by_name(run.target)
-    application_type_map = {"WhatsApp": "WHATSAPP_WEB", "WebApp": "WEBAPP", "API": "API"}
-    application_type = application_type_map.get(getattr(target_obj, "target_type", None))
-    if application_type not in ("WHATSAPP_WEB", "WEBAPP"):
-        raise HTTPException(
-            status_code=400,
-            detail=f"No live view available for target type '{getattr(target_obj, 'target_type', None)}'",
-        )
-
-    client = InterfaceManagerClient(
-        base_url=_resolve_interface_manager_base_url(),
-        application_type=application_type,
-    )
     try:
-        response = client.view(testcase.testcase_id)
-    except RuntimeError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        run = db.get_run_by_id(run_id)
+        if not run:
+            raise HTTPException(status_code=404, detail="Run not found")
 
-    return response.json()
+        target_obj = db.get_target_by_name(run.target)
+        application_type_map = {"WhatsApp": "WHATSAPP_WEB", "WebApp": "WEBAPP", "API": "API"}
+        application_type = application_type_map.get(getattr(target_obj, "target_type", None))
+        if application_type not in ("WHATSAPP_WEB", "WEBAPP"):
+            raise HTTPException(
+                status_code=400,
+                detail=f"No live view available for target type '{getattr(target_obj, 'target_type', None)}'",
+            )
+
+        client = InterfaceManagerClient(
+            base_url=_resolve_interface_manager_base_url(),
+            application_type=application_type,
+        )
+        try:
+            response = client.view(run_id)
+        except RuntimeError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+
+        return response.json()
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(f"get_execution_view_service failed for run_id={run_id}")
+        raise HTTPException(status_code=500, detail=f"get_execution_view_service error: {e}")
 
 
 def get_interface_manager_status_service():
@@ -660,6 +657,13 @@ def download_evaluation_report_service(db, run_name: str):
     for d in details:
         if d.conversation_id not in conversation_cache:
             conversation_cache[d.conversation_id] = db.get_conversation_by_id(d.conversation_id)
+
+    # Load a fresh workbook per request instead of reusing a shared
+    # module-level Workbook: the old shared instance accumulated rows from
+    # every report ever generated on this process (never cleared) and had
+    # no locking, so two concurrent requests mutating the same in-memory
+    # openpyxl sheets could race, hang, or corrupt each other's output.
+    wb = load_workbook(TEMPLATE_PATH)
 
     ws_summary = wb["Run_Summary"]
     testcases = set()

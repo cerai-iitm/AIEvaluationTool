@@ -52,6 +52,35 @@ interface TestCase {
 
 type SearchField = "testcase" | "strategy" | "domain" | "metric";
 
+interface ApiTestCase {
+  testcase_id?: number;
+  id?: number;
+  testcase_name?: string;
+  strategy_name?: string;
+  domain_name?: string;
+  domain?: string;
+  user_prompt?: string;
+  system_prompt?: string;
+  response_text?: string;
+  llm_judge_prompt?: string;
+  prompt?: string;
+  lang_name?: string;
+  lang?: string;
+  metric_name?: string;
+  metric?: { name?: string } | string;
+  metric_name_list?: string[];
+}
+
+interface TestCasePageResponse {
+  items: ApiTestCase[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+const ITEMS_PER_PAGE = 15;
+const FETCH_BATCH_SIZE = 100;
+
 const TestCases = () => {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
@@ -61,7 +90,10 @@ const TestCases = () => {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [testCases, setTestCases] = useState<TestCase[]>([]);
+  const [totalItems, setTotalItems] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isDetailLoading, setIsDetailLoading] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [testCaseToDelete, setTestCaseToDelete] = useState<TestCase | null>(null);
@@ -82,53 +114,31 @@ const TestCases = () => {
   const systemPromptsRef = useRef<HTMLTextAreaElement>(null);
   const responseTextRef = useRef<HTMLTextAreaElement>(null);
   const llmPromptRef = useRef<HTMLTextAreaElement>(null);
+  const testCaseFetchRequestRef = useRef(0);
+
+  const mapItem = (item: ApiTestCase): TestCase => ({
+    id: item.testcase_id ?? item.id ?? 0,
+    name: item.testcase_name ?? "",
+    strategyName: item.strategy_name ?? "",
+    domainName: item.domain_name ?? item.domain ?? "",
+    userPrompts: item.user_prompt ?? "",
+    systemPrompts: item.system_prompt ?? "",
+    responseText: item.response_text ?? "",
+    llmPrompt: item.llm_judge_prompt ?? item.prompt ?? "",
+    language: item.lang_name ?? item.lang ?? "",
+    metricName:
+      item.metric_name ??
+      (typeof item.metric === "object" ? item.metric?.name : item.metric) ??
+      "",
+    metricNameList: item.metric_name_list ?? (item.metric_name ? item.metric_name.split(", ").filter(Boolean) : []),
+  });
 
   const fetchTestCases = async () => {
+    const requestId = testCaseFetchRequestRef.current + 1;
+    testCaseFetchRequestRef.current = requestId;
+
     setIsLoading(true);
-    setTestCases([]); // Clear previous data while loading
-    
-    // Helper function to map API response items to TestCase interface
-    const mapItem = (item: any, index?: number): TestCase => {
-      if (index !== undefined) {
-        console.log(`Mapping item ${index}:`, item);
-      }
-      return {
-        id: item.testcase_id ?? item.id ?? 0,
-        name: item.testcase_name ?? "",
-        strategyName: item.strategy_name ?? "",
-        domainName: item.domain_name ?? item.domain ?? "",
-        userPrompts: item.user_prompt ?? "",
-        systemPrompts: item.system_prompt ?? "",
-        responseText: item.response_text ?? "",
-        llmPrompt: item.llm_judge_prompt ?? item.prompt ?? "",
-        language: item.lang_name ?? item.lang ?? "",
-        metricName: item.metric_name ?? item.metric?.name ?? item.metric ?? "",
-        metricNameList: item.metric_name_list ?? (item.metric_name ? item.metric_name.split(", ").filter(Boolean) : []),
-      };
-    };
-
-    // // Helper function to parse and map response data
-    // const parseAndMapData = (data: any, source: string): TestCase[] => {
-    //   console.log(`Parsed ${source} API Response:`, data);
-    //   console.log(`Is Array:`, Array.isArray(data));
-    //   console.log(`Data type:`, typeof data);
-    //   console.log(`Data length:`, Array.isArray(data) ? data.length : "N/A");
-
-    //   if (Array.isArray(data)) {
-    //     if (data.length === 0) {
-    //       console.log(`Received empty array from ${source} API`);
-    //       return [];
-    //     }
-    //     return data.map((item: any, index: number) => mapItem(item, index));
-    //   } else if (data && typeof data === 'object' && data.items && Array.isArray(data.items)) {
-    //     // Fallback: check if it's wrapped in items (for backward compatibility)
-    //     return data.items.map((item: any) => mapItem(item));
-    //   } else {
-    //     console.error(`Unexpected data format from ${source}:`, data);
-    //     console.error("Data keys:", data && typeof data === 'object' ? Object.keys(data) : 'N/A');
-    //     return [];
-    //   }
-    // };
+    setIsLoadingMore(false);
 
     try {
       const token = localStorage.getItem("access_token");
@@ -138,107 +148,79 @@ const TestCases = () => {
 
       // Add auth token if available
       if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
+          headers["Authorization"] = `Bearer ${token}`;
       }
 
-      // FIRST: Fetch first 45 test cases
-      const apiUrl = `${API_ENDPOINTS.TESTCASES_V2}`;
-      console.log("Fetching first test cases from:", apiUrl);
-      console.log("Headers:", { ...headers, Authorization: token ? "Bearer ***" : "None" });
-      
-      const response = await fetch(apiUrl, { 
-        method: "GET",
-        headers,
-      });
-      
-      console.log("Response status:", response.status);
-      console.log("Response headers:", Object.fromEntries(response.headers.entries()));
-      
-      // Handle non-OK responses for first endpoint
-      if (!response.ok) {
-        let errorMessage = `HTTP ${response.status}`;
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.detail || errorData.message || errorMessage;
-          console.error("API Error Response (JSON):", errorData);
-        } catch {
-          const errorText = await response.text();
-          errorMessage = errorText || errorMessage;
-          console.error("API Error Response (Text):", errorText);
+      const trimmedSearch = searchQuery.trim();
+
+      const fetchBatch = async (offset: number) => {
+        const params = new URLSearchParams({
+          limit: String(FETCH_BATCH_SIZE),
+          offset: String(offset),
+        });
+
+        if (trimmedSearch) {
+          params.set("search", trimmedSearch);
+          params.set("field", searchField.trim());
         }
-        throw new Error(`${errorMessage} (Status: ${response.status})`);
-      }
-      
-      // Parse response
-      let data;
-      try {
-        const text = await response.text();
-        console.log("Raw first response text:", text.substring(0, 500)); // Log first 500 chars
-        data = text ? JSON.parse(text) : [];
-      } catch (parseError) {
-        console.error("JSON Parse Error:", parseError);
-        throw new Error("Invalid JSON response from server");
+
+        const response = await fetch(`${API_ENDPOINTS.TESTCASES_V2}?${params.toString()}`, {
+          method: "GET",
+          headers,
+        });
+
+        if (!response.ok) {
+          let errorMessage = `HTTP ${response.status}`;
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.detail || errorData.message || errorMessage;
+          } catch {
+            const errorText = await response.text();
+            errorMessage = errorText || errorMessage;
+          }
+          throw new Error(`${errorMessage} (Status: ${response.status})`);
+        }
+
+        return response.json() as Promise<TestCasePageResponse>;
+      };
+
+      const firstBatch = await fetchBatch(0);
+      if (testCaseFetchRequestRef.current !== requestId) {
+        return;
       }
 
-      if (Array.isArray(data)){
-        // Handle empty array
-        if (data.length === 0 ) {
-          console.log("|Received empty array from API");
-          setTestCases([]);
+      const firstItems = Array.isArray(firstBatch.items) ? firstBatch.items.map(mapItem) : [];
+      setTestCases(firstItems);
+      setTotalItems(firstBatch.total ?? firstItems.length);
+      setIsLoading(false);
+
+      const total = firstBatch.total ?? firstItems.length;
+      if (firstItems.length >= total) {
+        return;
+      }
+
+      setIsLoadingMore(true);
+      for (let offset = FETCH_BATCH_SIZE; offset < total; offset += FETCH_BATCH_SIZE) {
+        const batch = await fetchBatch(offset);
+        if (testCaseFetchRequestRef.current !== requestId) {
           return;
         }
-      
 
-        // Map data
-        const mappedData: TestCase[] = data.map((item: any, index: number) => {
-          console.log(`Mapping item ${index}:`, item);
-          return {
-            id: item.testcase_id ?? item.id ?? 0,
-            name: item.testcase_name ?? "",
-            strategyName: item.strategy_name ?? "",
-            domainName: item.domain_name ?? item.domain ?? "",
-            userPrompts: item.user_prompt ?? "",
-            systemPrompts: item.system_prompt ?? "",
-            responseText: item.response_text ?? "",
-            llmPrompt: item.llm_judge_prompt ?? item.prompt ?? "",
-            language: item.lang_name ?? item.lang ?? "",
-            metricName: item.metric_name ?? item.metric?.name ?? item.metric ?? "",
-            metricNameList: item.metric_name_list ?? (item.metric_name ? item.metric_name.split(", ").filter(Boolean) : []),
-          }
-        })
-
-      console.log("Mapped test cases:", mappedData);
-      console.log("Total first test cases mapped:", mappedData.length);
-      setTestCases(mappedData);
-      }else {
-        // Fallback: check if it's wrapped in items (for backward compatibility)
-        if (data && typeof data === 'object' && data.items && Array.isArray(data.items)) {
-          const mappedData: TestCase[] = data.items.map((item: any) => ({
-            id: item.testcase_id ?? item.id ?? 0,
-            name: item.testcase_name ?? "",
-            strategyName: item.strategy_name ?? "",
-            domainName: item.domain_name ?? item.domain ?? "",
-            userPrompts: item.user_prompt ?? "",
-            systemPrompts: item.system_prompt ?? "",
-            responseText: item.response_text ?? "",
-            llmPrompt: item.llm_judge_prompt ?? item.prompt ?? "",
-            language: item.lang_name ?? item.lang ?? "",
-            metricName: item.metric_name ?? item.metric?.name ?? item.metric ?? "",
-            metricNameList: item.metric_name_list ?? (item.metric_name ? item.metric_name.split(", ").filter(Boolean) : []),
-          }));
-          setTestCases(mappedData);
-        } else {
-          console.error("Unexpected data format:", data);
-          console.error("Data keys:", data && typeof data === 'object' ? Object.keys(data) : 'N/A');
-          toast({
-            title: "Error",
-            description: `Invalid data format received from server. Expected array, got ${typeof data}`,
-            variant: "destructive",
-          });
-          setTestCases([]);
-        }
+        const nextItems = Array.isArray(batch.items) ? batch.items.map(mapItem) : [];
+        setTestCases((currentItems) => {
+          const seenIds = new Set(currentItems.map((item) => item.id));
+          return [
+            ...currentItems,
+            ...nextItems.filter((item) => !seenIds.has(item.id)),
+          ];
+        });
+        setTotalItems(batch.total ?? total);
       }
     } catch (error) {
+      if (testCaseFetchRequestRef.current !== requestId) {
+        return;
+      }
+
       console.error("Error fetching test cases:", error);
       const errorMessage = error instanceof Error 
         ? error.message 
@@ -249,9 +231,13 @@ const TestCases = () => {
         description: errorMessage,
         variant: "destructive",
       });
-      setTestCases([]); // Set empty array on error to prevent showing stale data
+      setTestCases([]);
+      setTotalItems(0);
     } finally {
-      setIsLoading(false);
+      if (testCaseFetchRequestRef.current === requestId) {
+        setIsLoading(false);
+        setIsLoadingMore(false);
+      }
     }
   };
 
@@ -279,9 +265,16 @@ const TestCases = () => {
     };
 
     fetchUserRole();
-    fetchTestCases();
+  }, []);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      fetchTestCases();
+    }, 300);
+
+    return () => window.clearTimeout(timeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refreshKey]);
+  }, [searchQuery, searchField, refreshKey]);
 
   const handleUpdateSuccess = () => {
     // Preserve the highlighted row ID after update
@@ -441,6 +434,44 @@ const TestCases = () => {
     setDeleteDialogOpen(true);
   };
 
+  const fetchTestCaseDetails = async (testCase: TestCase) => {
+    setHighlightedRowId(testCase.id);
+    setSelectedCase(testCase);
+    setIsDetailLoading(true);
+
+    try {
+      const token = localStorage.getItem("access_token");
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+      };
+
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(API_ENDPOINTS.TESTCASE_BY_ID_V2(testCase.id), {
+        method: "GET",
+        headers,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data: ApiTestCase = await response.json();
+      setSelectedCase(mapItem(data));
+    } catch (error) {
+      console.error("Error fetching test case details:", error);
+      toast({
+        title: "Failed to Load Test Case",
+        description: error instanceof Error ? error.message : "Failed to load test case details",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDetailLoading(false);
+    }
+  };
+
   const handleDeleteConfirm = async () => {
     if (!testCaseToDelete) return;
 
@@ -496,37 +527,12 @@ const TestCases = () => {
     }
   };
 
-  const filteredCases = testCases.filter((tc) =>{
-    const q = searchQuery.trim().toLowerCase();
-
-    if (!q) return true;
-
-    if (searchField === "testcase") {
-      return (tc.name ?? "").toLowerCase().includes(q);
-    } else if (searchField === "strategy") {
-      return (tc.strategyName ?? "").toLowerCase().includes(q);
-    } else if (searchField === "domain") {
-      return (tc.domainName ?? "").toLowerCase().includes(q);
-    } else if (searchField === "metric") {
-      const metricNames = tc.metricNameList?.length
-        ? tc.metricNameList.join(", ")
-        : tc.metricName;
-      return (metricNames ?? "").toLowerCase().includes(q);
-    }
-    return true;
-  }
-    // tc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    // tc.strategyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    // tc.domainName.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-  const totalItems = filteredCases.length;
-  const itemsPerPage = 15;
-  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
-
-  // Pagination logic: get items for current page
-  const paginatedCases = filteredCases.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+  const loadedItems = testCases.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
+  const loadedPages = Math.max(1, Math.ceil(loadedItems / ITEMS_PER_PAGE));
+  const paginatedCases = testCases.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
   );
 
   // Calculate line count from text more accurately
@@ -642,10 +648,11 @@ const TestCases = () => {
               <span className="text-sm text-muted-foreground">
                 {totalItems === 0
                   ? "0"
-                  : `${(currentPage - 1) * itemsPerPage + 1} - ${Math.min(
-                      currentPage * itemsPerPage,
-                      totalItems
+                  : `${(currentPage - 1) * ITEMS_PER_PAGE + 1} - ${Math.min(
+                      currentPage * ITEMS_PER_PAGE,
+                      loadedItems,
                     )} of ${totalItems}`}
+                {isLoadingMore && " (loading more...)"}
               </span>
               <div className="flex gap-1">
                 <Button
@@ -670,9 +677,9 @@ const TestCases = () => {
                   variant="ghost"
                   size="icon"
                   onClick={() =>
-                    setCurrentPage((p) => Math.min(totalPages, p + 1))
+                    setCurrentPage((p) => Math.min(isLoadingMore ? loadedPages : totalPages, p + 1))
                   }
-                  disabled={currentPage === totalPages}
+                  disabled={currentPage >= (isLoadingMore ? loadedPages : totalPages)}
                   aria-label="Go to next page"
                 >
                   <ChevronRight className="w-5 h-5" />
@@ -681,7 +688,7 @@ const TestCases = () => {
                   variant="ghost"
                   size="icon"
                   onClick={() => setCurrentPage(totalPages)}
-                  disabled={currentPage === totalPages}
+                  disabled={isLoadingMore || currentPage === totalPages}
                   aria-label="Go to last page"
                 >
                   <ChevronsRight className="w-5 h-5" />
@@ -690,7 +697,7 @@ const TestCases = () => {
             </div>
             {/* <div className="ml-auto flex items-center gap-4">
               <span className="text-sm text-muted-foreground">
-                1 - {itemsPerPage} of {totalItems}
+                1 - {ITEMS_PER_PAGE} of {totalItems}
               </span>
               <div className="flex gap-1">
                 <Button
@@ -746,10 +753,7 @@ const TestCases = () => {
                           ? "bg-primary/10 hover:bg-primary/15 border-primary/30"
                           : "hover:bg-muted/50"
                       }`}
-                      onClick={() => {
-                        setSelectedCase(testCase);
-                        setHighlightedRowId(testCase.id);
-                      }}
+                      onClick={() => fetchTestCaseDetails(testCase)}
                     >
                       <td className="p-2 pl-12">{testCase.id}</td>
                       <td className="p-2 pl-2 max-w-[200px] whitespace-normal break-words">{testCase.name}</td>
@@ -817,7 +821,11 @@ const TestCases = () => {
             </Button> */}
           </DialogHeader>
 
-          {selectedCase && (
+          {isDetailLoading ? (
+            <div className="p-8 text-center text-muted-foreground">
+              Loading test case details...
+            </div>
+          ) : selectedCase && (
             <div className="flex-1 p-1 overflow-y-auto space-y-6 pb-5">
             {/* <div className="space-y-4 pt-4"> */}
               {/* <div className=" flex flex-row align-center justify-center">

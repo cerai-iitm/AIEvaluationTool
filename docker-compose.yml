@@ -18,6 +18,18 @@ services:
       timeout: 5s
       retries: 12
 
+  redis:
+    image: redis:7-alpine
+    container_name: aiet-redis
+    restart: unless-stopped
+    expose:
+      - "6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
   selenium-hub:
     image: selenium/hub:latest
     container_name: aiet-selenium-hub
@@ -42,7 +54,7 @@ services:
     ports:
       - "7900-7924:7900"
     deploy:
-      replicas: ${SELENIUM_NODE_COUNT:-25}
+      replicas: ${SELENIUM_NODE_COUNT:-2}
 
   ollama:
     image: ollama/ollama:latest
@@ -50,6 +62,8 @@ services:
     restart: unless-stopped
     environment:
       - OLLAMA_KEEP_ALIVE=-1
+      - OLLAMA_NUM_PARALLEL=20
+      - OLLAMA_CONTEXT_LENGTH=5120
     profiles: ["prod"]
     expose:
       - "11434"
@@ -93,7 +107,6 @@ services:
       context: .
       dockerfile: Dockerfile.app-backend
       target: interface-manager
-    container_name: aiet-interface-manager
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -121,7 +134,6 @@ services:
       context: .
       dockerfile: Dockerfile.app-backend
       target: auth-service
-    container_name: aiet-auth-service
     restart: unless-stopped
     depends_on:
       db:
@@ -148,10 +160,11 @@ services:
       context: .
       dockerfile: Dockerfile.app-backend
       target: app-backend
-    container_name: aiet-app-backend
     restart: unless-stopped
     depends_on:
       interface-manager:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       sarvam-ai:
         condition: service_started
@@ -178,7 +191,6 @@ services:
       context: .
       dockerfile: Dockerfile.app-backend
       target: sarvam-ai
-    container_name: aiet-sarvam-ai
     restart: unless-stopped
     profiles: ["sarvam", "prod"]
     expose:
@@ -204,7 +216,6 @@ services:
       context: .
       dockerfile: Dockerfile.app-backend
       target: tdms-backend
-    container_name: aiet-tdms-backend
     restart: unless-stopped
     depends_on:
       auth-service:
