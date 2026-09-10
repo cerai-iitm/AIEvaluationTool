@@ -173,7 +173,9 @@ services:
   #       condition: none
 
   interface-manager:
-    image: ${REGISTRY:-localhost:5000}/aiet-interface-manager:${TAG:-latest}
+    image: h1manshuj/aiet-backend:latest
+    working_dir: /app/src/app/interface_manager
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
@@ -203,7 +205,9 @@ services:
         constraints: [node.labels.primary == true]   # owns xpaths.json/credentials.json bind mounts
 
   auth-service:
-    image: ${REGISTRY:-localhost:5000}/aiet-auth-service:${TAG:-latest}
+    image: h1manshuj/aiet-backend:latest
+    working_dir: /app/src/app/auth_service
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7500"]
     depends_on:
       - db
     expose:
@@ -229,7 +233,9 @@ services:
         constraints: [node.labels.primary == true]   # owns ./data bind mount
 
   app-backend:
-    image: ${REGISTRY:-localhost:5000}/aiet-app-backend:${TAG:-latest}
+    image: h1manshuj/aiet-backend:latest
+    working_dir: /app/src/app/TestCaseExecutorDashboard
+    command: ["python", "back-end/main.py"]
     depends_on:
       - interface-manager
       - redis
@@ -265,7 +271,9 @@ services:
         constraints: [node.labels.primary == true]
 
   sarvam-ai:
-    image: ${REGISTRY:-localhost:5000}/aiet-sarvam-ai:${TAG:-latest}
+    image: h1manshuj/aiet-backend:latest
+    working_dir: /app/src/app/sarvam_ai
+    command: ["python", "main.py"]
     expose:
       - "16000"
     environment:
@@ -286,7 +294,9 @@ services:
       #     - spread: node.id
 
   tdms-backend:
-    image: ${REGISTRY:-localhost:5000}/aiet-tdms-backend:${TAG:-latest}
+    image: h1manshuj/aiet-backend:latest
+    working_dir: /app/src/app/TDMS/back-end
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7250"]
     depends_on:
       - auth-service
     expose:
@@ -311,7 +321,7 @@ services:
         constraints: [node.labels.primary == true]   # owns ./data, xpaths.json, credentials.json bind mounts
 
   app-front-end:
-    image: ${REGISTRY:-localhost:5000}/aiet-app-frontend:${TAG:-latest}
+    image: h1manshuj/aiet-app-frontend:latest
     depends_on:
       - app-backend
       - auth-service
@@ -321,7 +331,7 @@ services:
         condition: any
 
   tdms-frontend:
-    image: ${REGISTRY:-localhost:5000}/aiet-tdms-frontend:${TAG:-latest}
+    image: h1manshuj/aiet-tdms-frontend:latest
     depends_on:
       - tdms-backend
       - auth-service
