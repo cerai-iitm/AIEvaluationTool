@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 import errno
 import json
 import time
@@ -13,8 +13,10 @@ from schemas import (
     TestCaseCreateV2,
     TestCaseDetailResponse,
     TestCaseListResponse,
+    TestCasePageResponse,
     TestCaseUpdateV2,
 )
+from sqlalchemy import func
 from sqlalchemy.orm import joinedload
 from utils.activity_logger import log_activity
 
@@ -24,7 +26,7 @@ from lib.data.response import Response as ResponseData
 from lib.data.response import Response
 from lib.data.test_case import TestCase as TestCaseModel
 from lib.orm.DB import DB
-from lib.orm.tables import Prompts, TestCases, Metrics
+from lib.orm.tables import Domains, Languages, MetricTestCaseMapping, Prompts, Strategies, TestCases, Metrics
 
 testcase_router = APIRouter(prefix="/api/v2/testcases")
 
@@ -57,46 +59,113 @@ def _get_username_from_token(authorization: Optional[str]) -> Optional[str]:
 
 @testcase_router.get(
     "",
-    response_model=List[TestCaseListResponse],
+    response_model=TestCasePageResponse,
     summary="List all test cases (v2)",
 )
-def list_testcases(db: DB = Depends(_get_db)):
+def list_testcases(
+    limit: int = 15,
+    offset: int = 0,
+    search: Optional[str] = None,
+    field: Optional[str] = None,
+    db: DB = Depends(_get_db),
+):
+    limit = max(1, min(limit, 100))
+    offset = max(0, offset)
+
     with db.Session() as session:
-        testcases = (
+        base_query = (
             session.query(TestCases)
-            .options(joinedload(TestCases.judge_prompt))
-            .options(joinedload(TestCases.prompt))
-            .options(joinedload(TestCases.response))
-            .options(joinedload(TestCases.strategy))
-            .options(joinedload(TestCases.metrics))
+            .join(Prompts, TestCases.prompt_id == Prompts.prompt_id)
+            .join(Strategies, TestCases.strategy_id == Strategies.strategy_id)
+            .join(Domains, Prompts.domain_id == Domains.domain_id)
+            .join(Languages, Prompts.lang_id == Languages.lang_id)
+        )
+
+        search_value = search.strip() if search else ""
+        if search_value:
+            search_filter = f"%{search_value.lower()}%"
+            if field == "strategy":
+                base_query = base_query.filter(func.lower(Strategies.strategy_name).like(search_filter))
+            elif field == "domain":
+                base_query = base_query.filter(func.lower(Domains.domain_name).like(search_filter))
+            elif field == "metric":
+                base_query = (
+                    base_query
+                    .outerjoin(MetricTestCaseMapping, TestCases.testcase_id == MetricTestCaseMapping.testcase_id)
+                    .outerjoin(Metrics, MetricTestCaseMapping.metric_id == Metrics.metric_id)
+                    .filter(func.lower(Metrics.metric_name).like(search_filter))
+                )
+            else:
+                base_query = base_query.filter(func.lower(TestCases.testcase_name).like(search_filter))
+
+        total = (
+            base_query
+            .with_entities(func.count(func.distinct(TestCases.testcase_id)))
+            .scalar()
+            or 0
+        )
+
+        testcase_ids = [
+            row[0]
+            for row in (
+                base_query
+                .with_entities(TestCases.testcase_id)
+                .distinct()
+                .order_by(TestCases.testcase_id)
+                .offset(offset)
+                .limit(limit)
+                .all()
+            )
+        ]
+
+        if not testcase_ids:
+            return TestCasePageResponse(items=[], total=total, limit=limit, offset=offset)
+
+        rows = (
+            session.query(
+                TestCases.testcase_id,
+                TestCases.testcase_name,
+                Strategies.strategy_name,
+                Domains.domain_name,
+                Languages.lang_name,
+                Metrics.metric_name,
+            )
+            .join(Prompts, TestCases.prompt_id == Prompts.prompt_id)
+            .join(Strategies, TestCases.strategy_id == Strategies.strategy_id)
+            .join(Domains, Prompts.domain_id == Domains.domain_id)
+            .join(Languages, Prompts.lang_id == Languages.lang_id)
+            .outerjoin(MetricTestCaseMapping, TestCases.testcase_id == MetricTestCaseMapping.testcase_id)
+            .outerjoin(Metrics, MetricTestCaseMapping.metric_id == Metrics.metric_id)
+            .filter(TestCases.testcase_id.in_(testcase_ids))
+            .order_by(TestCases.testcase_id)
             .all()
         )
-        if not testcases:
-            raise HTTPException(status_code=404, detail="No test cases found")
-        
+
+        results_by_id: Dict[int, TestCaseListResponse] = {}
+        for row in rows:
+            existing = results_by_id.get(row.testcase_id)
+            if existing is None:
+                existing = TestCaseListResponse(
+                    testcase_id=row.testcase_id,
+                    testcase_name=row.testcase_name,
+                    strategy_name=row.strategy_name,
+                    domain_name=row.domain_name,
+                    lang_name=row.lang_name,
+                    metric_name="",
+                    metric_name_list=[],
+                )
+                results_by_id[row.testcase_id] = existing
+
+            if row.metric_name and row.metric_name not in existing.metric_name_list:
+                existing.metric_name_list.append(row.metric_name)
+
         results = []
+        for testcase_id in testcase_ids:
+            result = results_by_id[testcase_id]
+            result.metric_name = ", ".join(result.metric_name_list)
+            results.append(result)
         
-        for testcase in testcases:
-            # Get metric names as a list
-            metric_name_list = [m.metric_name for m in testcase.metrics] if testcase.metrics else []
-            # Get metric names as a comma-separated string for backward compatibility
-            metric_names = ", ".join(metric_name_list) if metric_name_list else ""
-            
-            results.append(TestCaseListResponse(
-                testcase_id=testcase.testcase_id,
-                testcase_name=testcase.testcase_name,
-                user_prompt=testcase.prompt.user_prompt,
-                system_prompt=testcase.prompt.system_prompt,
-                response_text=getattr(testcase.response, "response_text", None),
-                strategy_name=getattr(testcase.strategy, "strategy_name", ""),  # Get strategy name as string
-                llm_judge_prompt=getattr(testcase.judge_prompt, "prompt", None),
-                domain_name=str(testcase.prompt.domain.domain_name),  # Convert to string
-                lang_name=str(testcase.prompt.lang.lang_name),      # Convert to string
-                metric_name=metric_names,  # Use the joined metric names for backward compatibility
-                metric_name_list=metric_name_list  # List of metric names
-            ))
-        
-        return results
+        return TestCasePageResponse(items=results, total=total, limit=limit, offset=offset)
 
     # testcases = db.testcases
 

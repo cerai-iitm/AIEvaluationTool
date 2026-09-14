@@ -25,7 +25,7 @@ load_dotenv(ENV_PATH)
 class PromptCreate(BaseModel):
     chat_id: int
     prompt_list: List[str]
-    session_key: Optional[str] = None
+    run_id: Optional[int] = None
 
 class InterfaceManagerClient:
     def __init__(self,
@@ -95,16 +95,19 @@ class InterfaceManagerClient:
         params = {"session_key": session_key} if session_key else None
         return self._get("logout", params=params)
 
-    def close(self, session_key: Optional[str] = None) -> requests.Response:
-        params = {"session_key": session_key} if session_key else None
+    def close(self, run_id: Optional[int] = None) -> requests.Response:
+        params = {"run_id": run_id} if run_id is not None else None
         return self._get("close", params=params)
 
-    def chat(self, chat_id: int, prompt_list: List[str], session_key: Optional[str] = None):
+    def view(self, run_id) -> requests.Response:
+        return self._get(f"view/{run_id}")
+
+    def chat(self, chat_id: int, prompt_list: List[str], run_id: Optional[int] = None):
         prompt = " ".join(prompt_list)
 
         # Legacy flows
         if self.application_type in ["WHATSAPP_WEB", "WEBAPP"]:
-            payload = PromptCreate(chat_id=chat_id, prompt_list=prompt_list, session_key=session_key).dict()
+            payload = PromptCreate(chat_id=chat_id, prompt_list=prompt_list, run_id=run_id).dict()
             return self._post("chat", json=payload)
 
         # Unified API flow
@@ -112,6 +115,7 @@ class InterfaceManagerClient:
             payload = {
                 "chat_id": chat_id,
                 "prompt_list": prompt_list,
+                "run_id": run_id,
                 "api_context": {
                     "provider": self._auto_detect_provider(),
                     "agent_name": self.agent_name,

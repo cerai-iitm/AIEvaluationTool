@@ -10,7 +10,7 @@ from utils import (
     logout_app,
     search_entity,
     send_message_whatsapp,
-    selenium_pool,
+    resolve_node_vnc_address,
 )
 
 logger = get_logger("whatsapp_driver")
@@ -69,36 +69,25 @@ def get_ui_response_whatsapp():
     return {"ui": "Whatsapp Web Chat Interface", "features": ["smart-compose", "modular-layout"]}
 
 
-def get_vnc_slot(session_key: Optional[str] = None) -> Optional[str]:
-    """The pool slot (matching /selenium/<slot>/) assigned to this session, if any."""
-    with _slots_lock:
-        slot = _session_to_slot.get(session_key) if session_key else WHATSAPP_PROFILE_POOL[0]
-    return selenium_pool.vnc_slot(slot) if slot else None
+def login_whatsapp(session_key: str = "default") -> webdriver.Chrome | None:
+    """Login to WhatsApp Web using DriverManager and generic login_app.
 
+    `session_key` (the run_id) selects the pooled browser session — every
+    test case in a run reuses the same session, so the QR-code scan only
+    has to happen once per run, not once per test case.
 
-def get_driver_for_session(session_key: Optional[str] = None) -> webdriver.Chrome | None:
+    NOTE: WhatsApp Web only allows a WhatsApp account to be linked as a
+    device on a small, fixed number of browsers at once (WhatsApp's own
+    linked-devices limit). Pooling sessions here does not bypass that —
+    true concurrency for WHATSAPP_WEB is capped by WhatsApp itself, not by
+    this code — but reusing one session per run keeps concurrent RUNS
+    within that limit instead of burning a slot per test case.
     """
-    Returns this session's already-assigned driver, if any, without
-    acquiring a pool slot or launching a new browser session. Used by
-    /logout so it doesn't queue for/spin up a fresh session just to
-    immediately log it out.
-    """
-    with _slots_lock:
-        slot = _session_to_slot.get(session_key) if session_key else WHATSAPP_PROFILE_POOL[0]
-    if not slot:
-        return None
-    with _driver_managers_lock:
-        dm = _driver_managers.get(slot)
-    return dm.driver if dm else None
-
-
-def login_whatsapp(session_key: Optional[str] = None) -> webdriver.Chrome | None:
-    """Login to WhatsApp Web using DriverManager and generic login_app."""
-    cfg = get_session_config(session_key)
+    cfg = load_config()
     url = cfg.get("whatsapp_url")
     slot = _acquire_slot(session_key) if session_key else WHATSAPP_PROFILE_POOL[0]
     try:
-        driver = get_driver_manager(slot).get_driver("WhatsApp Web", url)
+        driver = driver_manager.get_driver(session_key, "WhatsApp Web", url)
         login_app(driver, "whatsapp_web")
         return driver
     except Exception as e:
@@ -124,10 +113,16 @@ def send_whatsapp_message(driver: webdriver.Chrome, prompt: str) -> str:
     return send_message_whatsapp(driver, prompt)
 
 
-def send_prompt_whatsapp(chat_id: int, prompt_list: list[str], session_key: Optional[str] = None) -> list[dict]:
-    """Send multiple prompts to WhatsApp Web and collect responses."""
+def send_prompt_whatsapp(chat_id: int, prompt_list: list[str], session_key: str = None) -> list[dict]:
+    """Send multiple prompts to WhatsApp Web and collect responses.
+
+    `session_key` (typically the run_id) selects the pooled browser
+    session; falls back to `chat_id` if not given, for backward
+    compatibility.
+    """
     results = []
-    driver = login_whatsapp(session_key)
+    key = session_key if session_key is not None else str(chat_id)
+    driver = login_whatsapp(key)
     if not driver:
         logger.error("Could not initialize WhatsApp Web driver.")
         return [{"chat_id": chat_id, "prompt": p, "response": "No response received"} for p in prompt_list]
@@ -147,41 +142,31 @@ def send_prompt_whatsapp(chat_id: int, prompt_list: list[str], session_key: Opti
     return results
 
 
-def close_whatsapp(driver: webdriver.Chrome | None = None, session_key: Optional[str] = None):
+def get_view_path(session_key: str) -> str | None:
     """
-    Close WhatsApp Web session gracefully and release its pool slot so a
-    queued session can proceed. If session_key is omitted, closes every
-    tracked session (used only for a full service shutdown).
+    Return the noVNC live-view path for the pooled session belonging to
+    `session_key` (the run_id), or None if no session is currently running
+    for it.
+
+    Routes directly to the chrome-node running the session rather than
+    through the Grid hub's Referer-dependent live-view proxy.
     """
+    session_id = driver_manager.get_session_id(session_key)
+    if not session_id:
+        return None
+    target = resolve_node_vnc_address(session_id)
+    if not target:
+        return None
+    return f"/vnc-proxy/{target}/"
+
+
+def close_whatsapp(driver: webdriver.Chrome | None = None, session_key: str = "default"):
+    """Close WhatsApp Web session gracefully."""
     try:
         if driver:
             driver.quit()
             logger.info("Driver quit successfully.")
-
-        if session_key is not None:
-            with _slots_lock:
-                slot = _session_to_slot.get(session_key)
-            if slot is not None:
-                with _driver_managers_lock:
-                    dm = _driver_managers.pop(slot, None)
-                if dm is not None:
-                    dm.quit()
-                selenium_pool.release(slot)
-            _release_slot(session_key)
-        else:
-            with _driver_managers_lock:
-                slots = list(_driver_managers.keys())
-                managers = list(_driver_managers.values())
-                _driver_managers.clear()
-            for dm in managers:
-                dm.quit()
-            for slot in slots:
-                selenium_pool.release(slot)
-            with _slots_lock:
-                pending_keys = list(_session_to_slot)
-            for key in pending_keys:
-                _release_slot(key)
-
-        logger.info(f"WhatsApp Web session closed successfully (session_key={session_key}).")
+        driver_manager.quit(session_key)
+        logger.info("WhatsApp Web session closed successfully.")
     except Exception as e:
         logger.error(f"Error closing WhatsApp Web session: {e}")

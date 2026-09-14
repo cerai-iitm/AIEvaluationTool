@@ -3,7 +3,6 @@ import time
 import json
 import socket
 import threading
-from urllib.parse import urlparse
 import psutil
 import requests
 from typing import Optional
@@ -33,72 +32,49 @@ def load_json(file_path):
 
 logger = get_logger("interface_manager")
 
+# --------------------------------------------------------------------
+# Selenium Grid node resolution (for direct noVNC viewing)
+# --------------------------------------------------------------------
+def resolve_node_vnc_address(session_id: str) -> str | None:
+    """
+    Look up which chrome-node container is running `session_id` by querying
+    the Grid hub's /status endpoint, and return that node's "host:port" for
+    direct noVNC access (bypassing the hub's session-matching live-view
+    proxy, which is unreliable behind a reverse proxy).
 
-def _remote_selenium_available(remote_url: str, timeout: float = 2.0) -> bool:
-    """Best-effort check whether a remote Selenium hub is reachable."""
+    Each node only ever runs one session (SE_NODE_MAX_SESSIONS=1), so once
+    we know the node, no further session disambiguation is needed there.
+
+    Returns None if the session/node can't be resolved — caller should
+    treat that as "no live view available right now".
+    """
+    cfg = load_config()
+    remote_url = cfg.get("selenium_remote_url", "http://selenium-hub:4444/wd/hub")
+    # remote_url is typically ".../wd/hub"; the status API is at hub root.
+    hub_base = remote_url.split("/wd/hub")[0].rstrip("/")
+
     try:
-        parsed = urlparse(remote_url)
-        port = parsed.port or (443 if parsed.scheme == "https" else 80)
-        with socket.create_connection((parsed.hostname, port), timeout=timeout):
-            return True
-    except OSError:
-        return False
+        resp = requests.get(f"{hub_base}/status", timeout=5)
+        resp.raise_for_status()
+        nodes = resp.json().get("value", {}).get("nodes", [])
+    except Exception as e:
+        logger.warning(f"Could not query Grid status at {hub_base}/status: {e}")
+        return None
 
+    for node in nodes:
+        for slot in node.get("slots", []):
+            session = slot.get("session")
+            if session and session.get("sessionId") == session_id:
+                node_uri = node.get("uri", "")
+                # node_uri looks like "http://172.18.0.5:5555" — VNC is on
+                # the same container's port 7900.
+                host = node_uri.split("://")[-1].split(":")[0]
+                if not host:
+                    return None
+                return f"{host}:7900"
 
-# --------------------------------------------------------------------
-# Selenium Container Pool
-# --------------------------------------------------------------------
-# A fixed pool of standalone selenium/standalone-chrome containers
-# (selenium-browser-1..N in docker-compose), one session per container, so
-# each concurrent run gets its own noVNC feed at /selenium/<slot>/ instead of
-# several runs' browser windows overlapping on one shared virtual display.
-# Pool size must match the number of selenium-browser-N services defined in
-# docker-compose.yml/docker-compose.dev.yml and the matching nginx locations.
-SELENIUM_POOL_SIZE = int(os.environ.get("SELENIUM_POOL_SIZE", "5"))
-
-
-class SeleniumPoolExhausted(RuntimeError):
-    """Raised when every browser slot in the pool is currently assigned."""
-
-
-class SeleniumPool:
-    """Assigns each caller key (a run's session_key) a dedicated browser slot."""
-
-    def __init__(self, size: int):
-        self._members = [
-            (f"http://selenium-browser-{i}:4444/wd/hub", str(i))
-            for i in range(1, size + 1)
-        ]
-        self._free = list(range(size))
-        self._assigned: dict[str, int] = {}
-        self._lock = threading.Lock()
-
-    def acquire(self, key: str) -> tuple[str, str]:
-        """Returns (remote_url, vnc_slot) for this key, assigning a free slot if needed."""
-        with self._lock:
-            idx = self._assigned.get(key)
-            if idx is not None:
-                return self._members[idx]
-            if not self._free:
-                raise SeleniumPoolExhausted("All Selenium browser slots are currently in use")
-            idx = self._free.pop(0)
-            self._assigned[key] = idx
-            return self._members[idx]
-
-    def release(self, key: str) -> None:
-        with self._lock:
-            idx = self._assigned.pop(key, None)
-            if idx is not None:
-                self._free.append(idx)
-
-    def vnc_slot(self, key: str) -> Optional[str]:
-        """The slot number (matching /selenium/<slot>/) currently assigned to key, if any."""
-        with self._lock:
-            idx = self._assigned.get(key)
-            return self._members[idx][1] if idx is not None else None
-
-
-selenium_pool = SeleniumPool(SELENIUM_POOL_SIZE)
+    logger.warning(f"No Grid node found running session {session_id}")
+    return None
 
 
 # --------------------------------------------------------------------
@@ -106,112 +82,96 @@ selenium_pool = SeleniumPool(SELENIUM_POOL_SIZE)
 # --------------------------------------------------------------------
 class DriverManager:
     """
-    Manage a Selenium Chrome WebDriver instance with profile isolation.
-    Ensures reuse if alive, otherwise restarts with clean profile.
+    Manage a pool of Selenium Chrome WebDriver sessions, one per key
+    (e.g. chat_id / run id), so concurrent test runs get isolated
+    browser sessions instead of sharing a single cached driver.
     """
 
-    def __init__(self, profile_name: str = "test_profile", remote_url: Optional[str] = None):
-        self.profile_folder_path = os.path.join(os.path.expanduser("~"), profile_name)
-        self.driver: webdriver.Chrome | None = None
-        # Explicit pool assignment, if any. When set, always use this remote
-        # hub instead of probing the single default selenium_remote_url.
-        self.remote_url = remote_url
+    def __init__(self, profile_name: str = "test_profile"):
+        self.profile_name = profile_name
+        self.drivers: dict[str, webdriver.Chrome] = {}
+        self._lock = threading.Lock()
 
-    def get_driver(self, app_name: str, url: str) -> webdriver.Chrome:
+    def get_driver(self, key: str, app_name: str, url: str) -> webdriver.Chrome:
         """
-        Returns a cached driver if alive, otherwise creates a new one.
+        Returns the cached driver for `key` if alive, otherwise creates a new one.
+        `key` should be a stable per-run identifier (e.g. chat_id) so concurrent
+        runs each get their own browser session instead of colliding on one.
         """
-        if self.driver and self._is_alive():
-            logger.info(f"Reusing existing Chrome session for {app_name}")
-            return self.driver
+        key = str(key)
+        with self._lock:
+            driver = self.drivers.get(key)
+            if driver and self._is_alive(driver):
+                logger.info(f"Reusing existing Chrome session for {app_name} (key={key})")
+                return driver
 
-        self.close_chrome_with_profile()
+            logger.info(f"Launching {app_name} at {url} (key={key})")
+            opts = Options()
+            opts.add_argument("--no-sandbox")
+            opts.add_argument("--start-maximized")
+            mode = load_json('config.json').get('headless', 'False')
+            # to turn off headless mode - remove the below line or comment it out.
+            if mode == "True":
+                opts.add_argument("--headless")
+            opts.add_experimental_option("excludeSwitches", ["enable-logging"])
 
-        logger.info(f"Launching {app_name} at {url}")
-        opts = Options()
-        opts.add_argument("--no-sandbox")
-        opts.add_argument("--start-maximized")
-        mode = load_json('config.json').get('headless', 'False')
-        # to turn off headless mode - remove the below line or comment it out.
-        if mode == "True":
-            opts.add_argument("--headless")
-        opts.add_experimental_option("excludeSwitches", ["enable-logging"])
-
-        if self.remote_url:
-            remote_url = self.remote_url
-            use_remote = True
-        else:
             cfg = load_config()
-            remote_url = cfg.get("selenium_remote_url", "http://selenium-browser-1:4444/wd/hub")
-            use_remote = _remote_selenium_available(remote_url)
+            selenium_mode = str(cfg.get("selenium_mode", "local")).lower()
+            remote_url = cfg.get("selenium_remote_url", "http://selenium-hub:4444/wd/hub")
 
+            try:
+                if selenium_mode == "remote":
+                    logger.info(f"Using Remote WebDriver at {remote_url} (key={key})")
+                    driver = webdriver.Remote(
+                        command_executor=remote_url,
+                        options=opts
+                    )
+                else:
+                    # Local mode: give each key its own profile dir so
+                    # concurrent local sessions don't collide.
+                    profile_path = f"{os.path.join(os.path.expanduser('~'), self.profile_name)}_{key}"
+                    opts.add_argument(f"user-data-dir={profile_path}")
+                    logger.info(f"Using local Chrome WebDriver (key={key})")
+                    driver = webdriver.Chrome(options=opts)
+
+                driver.get(url)
+                logger.info(f"Driver ready for {app_name} (key={key})")
+                self.drivers[key] = driver
+                return driver
+            except WebDriverException as e:
+                logger.error(f"Failed to start Chrome for {app_name} (key={key}): {e}")
+                self.drivers.pop(key, None)
+                raise
+
+    def _is_alive(self, driver: webdriver.Chrome) -> bool:
+        """Check if a driver session is still valid."""
         try:
-            if use_remote:
-                logger.info(f"Using Remote WebDriver at {remote_url}")
-                # opts.add_argument("--user-data-dir=/home/seluser/chrome-data")
-                self.driver = webdriver.Remote(
-                    command_executor=remote_url,
-                    options=opts
-                )
-            else:
-                opts.add_argument(f"user-data-dir={self.profile_folder_path}")
-                logger.info("Using local Chrome WebDriver")
-                self.driver = webdriver.Chrome(options=opts)
-
-            self.driver.get(url)
-            logger.info(f"Driver ready for {app_name}")
-            return self.driver
-        except WebDriverException as e:
-            logger.error(f"Failed to start Chrome for {app_name}: {e}")
-            self.driver = None
-            raise
-
-        # try:
-        #     # service = Service(ChromeDriverManager().install())
-        #     # self.driver = webdriver.Chrome(service=service, options=opts)
-        #     # @bugfix: Use the below line to load driver faster -- Balayogi 12.01.2026
-        #     self.driver = webdriver.Chrome(options=opts)
-        #     self.driver.get(url)
-        #     logger.info(f"Driver ready for {app_name}")
-        #     return self.driver
-        # except WebDriverException as e:
-        #     logger.error(f"Failed to start Chrome for {app_name}: {e}")
-        #     self.driver = None
-        #     raise
-
-    def _is_alive(self) -> bool:
-        """Check if the cached driver is still valid."""
-        try:
-            _ = self.driver.title
+            _ = driver.title
             return True
         except Exception:
             return False
- 
-    def close_chrome_with_profile(self) -> bool:
-        """Kill any Chrome process using this profile."""
-        closed_any = False
-        for proc in psutil.process_iter(["name", "cmdline"]):
-            try:
-                if "chrome" in (proc.info["name"] or "").lower():
-                    cmdline = " ".join(proc.info["cmdline"] or [])
-                    if f"user-data-dir={self.profile_folder_path}" in cmdline:
-                        proc.kill()
-                        closed_any = True
-                        logger.info(f"Killed Chrome with profile {self.profile_folder_path}")
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                continue
-        return closed_any
 
-    def quit(self):
-        """Cleanly quit the driver."""
-        if self.driver:
+    def get_session_id(self, key: str) -> str | None:
+        """Return the Selenium session id for `key`, if a session is pooled."""
+        driver = self.drivers.get(str(key))
+        return driver.session_id if driver else None
+
+    def quit(self, key: str):
+        """Cleanly quit and remove the driver for `key`."""
+        key = str(key)
+        with self._lock:
+            driver = self.drivers.pop(key, None)
+        if driver:
             try:
-                self.driver.quit()
-                logger.info("Driver quit successfully")
+                driver.quit()
+                logger.info(f"Driver quit successfully (key={key})")
             except Exception as e:
-                logger.warning(f"Error while quitting driver: {e}")
-            finally:
-                self.driver = None
+                logger.warning(f"Error while quitting driver (key={key}): {e}")
+
+    def quit_all(self):
+        """Quit every pooled driver session."""
+        for key in list(self.drivers.keys()):
+            self.quit(key)
 
 
 # --------------------------------------------------------------------

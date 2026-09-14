@@ -18,64 +18,43 @@ services:
       timeout: 5s
       retries: 12
 
-  # Pool of 5 standalone Chrome containers, one session each, so concurrent
-  # runs get separate live views instead of overlapping on one shared
-  # display. Pool size must match SELENIUM_POOL_SIZE (interface-manager env)
-  # and the /selenium/<n>/ locations in docker/nginx/nginx.conf.
-  selenium-browser-1:
-    image: selenium/standalone-chrome:latest
-    container_name: aiet-selenium-1
+  redis:
+    image: redis:7-alpine
+    container_name: aiet-redis
     restart: unless-stopped
-    shm_size: 2gb
-    environment:
-      SE_VNC_NO_PASSWORD: "1"
     expose:
-      - "4444"
-      - "7900"
+      - "6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
 
-  selenium-browser-2:
-    image: selenium/standalone-chrome:latest
-    container_name: aiet-selenium-2
+  selenium-hub:
+    image: selenium/hub:latest
+    container_name: aiet-selenium-hub
     restart: unless-stopped
-    shm_size: 2gb
-    environment:
-      SE_VNC_NO_PASSWORD: "1"
     expose:
+      - "4442"
+      - "4443"
       - "4444"
-      - "7900"
 
-  selenium-browser-3:
-    image: selenium/standalone-chrome:latest
-    container_name: aiet-selenium-3
+  chrome-node:
+    image: selenium/node-chrome:latest
     restart: unless-stopped
     shm_size: 2gb
+    depends_on:
+      - selenium-hub
     environment:
+      SE_EVENT_BUS_HOST: selenium-hub
+      SE_EVENT_BUS_PUBLISH_PORT: "4442"
+      SE_EVENT_BUS_SUBSCRIBE_PORT: "4443"
+      SE_NODE_MAX_SESSIONS: "1"
       SE_VNC_NO_PASSWORD: "1"
-    expose:
-      - "4444"
-      - "7900"
-
-  selenium-browser-4:
-    image: selenium/standalone-chrome:latest
-    container_name: aiet-selenium-4
-    restart: unless-stopped
-    shm_size: 2gb
-    environment:
-      SE_VNC_NO_PASSWORD: "1"
-    expose:
-      - "4444"
-      - "7900"
-
-  selenium-browser-5:
-    image: selenium/standalone-chrome:latest
-    container_name: aiet-selenium-5
-    restart: unless-stopped
-    shm_size: 2gb
-    environment:
-      SE_VNC_NO_PASSWORD: "1"
-    expose:
-      - "4444"
-      - "7900"
+    ports:
+      - "7900-7924:7900"
+    deploy:
+      replicas: ${SELENIUM_NODE_COUNT:-2}
 
   ollama:
     image: ollama/ollama:latest
@@ -83,6 +62,8 @@ services:
     restart: unless-stopped
     environment:
       - OLLAMA_KEEP_ALIVE=-1
+      - OLLAMA_NUM_PARALLEL=20
+      - OLLAMA_CONTEXT_LENGTH=5120
     profiles: ["prod"]
     expose:
       - "11434"
@@ -126,22 +107,13 @@ services:
       context: .
       dockerfile: Dockerfile.app-backend
       target: interface-manager
-    container_name: aiet-interface-manager
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
       db:
         condition: service_healthy
-      selenium-browser-1:
-        condition: service_started
-      selenium-browser-2:
-        condition: service_started
-      selenium-browser-3:
-        condition: service_started
-      selenium-browser-4:
-        condition: service_started
-      selenium-browser-5:
+      selenium-hub:
         condition: service_started
     environment:
       SELENIUM_POOL_SIZE: "5"
@@ -165,7 +137,6 @@ services:
       context: .
       dockerfile: Dockerfile.app-backend
       target: auth-service
-    container_name: aiet-auth-service
     restart: unless-stopped
     depends_on:
       db:
@@ -192,10 +163,11 @@ services:
       context: .
       dockerfile: Dockerfile.app-backend
       target: app-backend
-    container_name: aiet-app-backend
     restart: unless-stopped
     depends_on:
       interface-manager:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       sarvam-ai:
         condition: service_started
@@ -222,7 +194,6 @@ services:
       context: .
       dockerfile: Dockerfile.app-backend
       target: sarvam-ai
-    container_name: aiet-sarvam-ai
     restart: unless-stopped
     profiles: ["sarvam", "prod"]
     expose:
@@ -248,7 +219,6 @@ services:
       context: .
       dockerfile: Dockerfile.app-backend
       target: tdms-backend
-    container_name: aiet-tdms-backend
     restart: unless-stopped
     depends_on:
       auth-service:

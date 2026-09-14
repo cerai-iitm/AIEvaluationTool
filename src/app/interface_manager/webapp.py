@@ -15,8 +15,7 @@ from utils import (
     login_app,
     logout_app,
     send_message_webapp,
-    selenium_pool,
-    SeleniumPoolExhausted,
+    resolve_node_vnc_address,
 )
 
 logger = get_logger("webapp_driver")
@@ -52,25 +51,15 @@ def get_ui_response_webapp():
     return {"ui": "Web Application Chat Interface", "features": ["smart-compose", "modular-layout"]}
 
 
-def get_driver_for_session(session_key: Optional[str] = None):
+def login_webapp(app_name: str, session_key: str = "default"):
     """
-    Returns this session's already-running driver, if one exists, without
-    launching a new browser session. Used by /logout so it doesn't spin up
-    a fresh Chrome instance just to immediately log it out.
-    """
-    key = session_key or "default"
-    with _driver_managers_lock:
-        dm = _driver_managers.get(key)
-    return dm.driver if dm else None
-
-
-def login_webapp(app_name: str, session_key: Optional[str] = None):
-    """
-    Wrapper for generic login_app.
+    Wrapper for generic login_app. `session_key` selects which pooled
+    browser session to use — pass the run_id so every test case in a run
+    reuses the same logged-in session instead of logging in per test case.
     """
     cfg = get_session_config(session_key)
     url = cfg.get("application_url", "UNKNOWN")
-    driver = get_driver_manager(session_key).get_driver(app_name, url)
+    driver = driver_manager.get_driver(session_key, app_name, url)
     return login_app(driver, app_name)
 
 
@@ -116,22 +105,27 @@ def search_llm(driver):
         return False
 
 
-def send_prompt(app_name: str, chat_id: int, prompt_list: List[str], session_key: Optional[str] = None) -> list[dict]:
+def send_prompt(app_name: str, chat_id: int, prompt_list: List[str], session_key: str = None) -> list[dict]:
     """
     Send prompt(s) to a web application interface and collect responses.
+
+    `session_key` (typically the run_id) selects the pooled browser session;
+    all test cases in the same run share one session/node. Falls back to
+    `chat_id` if no session_key is given, for backward compatibility.
     """
     results = []
     cfg = get_session_config(session_key)
     url = cfg.get("application_url", "UNKNOWN")
     app_name = app_name.lower()
     chat_cfg = load_xpaths()["applications"][app_name]["ChatPage"]
+    key = session_key if session_key is not None else str(chat_id)
 
-    driver = get_driver_manager(session_key).get_driver(app_name, url)
+    driver = driver_manager.get_driver(key, app_name, url)
 
     # Ensure login
     # logout_cfg = load_xpaths()["applications"][app_name]["LogoutPage"]
     # logger.info("sending xpath: ", logout_cfg["send_element"])
-    login_ok = is_logged_in(driver, send_element=chat_cfg["send_button_element"]) or login_webapp(app_name, session_key)
+    login_ok = is_logged_in(driver, send_element=chat_cfg["send_button_element"]) or login_webapp(app_name, key)
     logger.info(f"after function running xpath: {chat_cfg['send_button_element']}")
     logger.info(f"login_ok: {login_ok}")
     for prompt in prompt_list:
@@ -147,30 +141,37 @@ def send_prompt(app_name: str, chat_id: int, prompt_list: List[str], session_key
     return results
 
 
-def close_webapp(app_name: str, session_key: Optional[str] = None):
+def get_view_path(session_key: str) -> str | None:
     """
-    Gracefully close the browser session. If session_key is given, closes
-    only that run's own driver; otherwise closes every tracked session
-    (used only for a full service shutdown, not per-run cleanup).
+    Return the noVNC live-view path for the pooled session belonging to
+    `session_key` (the run_id), or None if no session is currently running
+    for it.
+
+    This routes directly to the chrome-node running the session rather than
+    through the Grid hub's own live-view proxy, which relies on
+    Referer-header session matching that's unreliable behind a reverse
+    proxy.
+    """
+    session_id = driver_manager.get_session_id(session_key)
+    if not session_id:
+        return None
+    target = resolve_node_vnc_address(session_id)
+    if not target:
+        return None
+    # target ("ip:7900") goes in the path (not a query string) so that
+    # noVNC's relative sub-resource/websocket requests from the loaded
+    # page inherit it automatically.
+    return f"/vnc-proxy/{target}/"
+
+
+def close_webapp(app_name: str, session_key: str = "default"):
+    """
+    Gracefully close the browser session for `session_key` (the run_id).
     """
     try:
         logger.info(f"Closing WebApp session for {app_name} (session_key={session_key})...")
-        if session_key is not None:
-            with _driver_managers_lock:
-                dm = _driver_managers.pop(session_key, None)
-            if dm is not None:
-                dm.quit()
-            selenium_pool.release(session_key)
-        else:
-            with _driver_managers_lock:
-                keys = list(_driver_managers.keys())
-                managers = list(_driver_managers.values())
-                _driver_managers.clear()
-            for dm in managers:
-                dm.quit()
-            for key in keys:
-                selenium_pool.release(key)
-        logger.info(f"Session closed for {app_name}")
+        driver_manager.quit(session_key)
+        logger.info(f"Session closed for {app_name} (session_key={session_key})")
     except Exception as e:
-        logger.warning(f"Driver quit issue for {app_name}: {e}")
+        logger.warning(f"Driver quit issue for {app_name} (session_key={session_key}): {e}")
     return True

@@ -67,6 +67,7 @@ const NewTestRunPage: React.FC = () => {
   const [planMetrics, setPlanMetrics] = useState<string[]>([]);
   const [liveEvents, setLiveEvents] = useState<TestRunEvent[]>([]);
   const [showSeleniumLink, setShowSeleniumLink] = useState(false);
+  const [seleniumViewUrl, setSeleniumViewUrl] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const wsConnectingRef = useRef<Promise<void> | null>(null);
   const activeRunIdRef = useRef<string | number | null>(null);
@@ -128,8 +129,7 @@ const NewTestRunPage: React.FC = () => {
   const isStartDisabled = !formData.testPlan || !formData.target || isRunning;
   const isTargetSelected = !!formData.target;
   const hasSelectedTestCases = formData.testCaseIds.length > 0;
-  const [seleniumHref, setSeleniumHref] = useState("/selenium/");
-  const [currentRunId, setCurrentRunId] = useState<string | number | null>(null);
+  const seleniumHref = seleniumViewUrl || "/selenium/";
   const selectedTarget = filters?.targets.find(
     (target) =>
       formatTargetOption(target) === formData.target ||
@@ -139,6 +139,10 @@ const NewTestRunPage: React.FC = () => {
   const isSeleniumTarget =
     selectedTargetType === "whatsapp" || selectedTargetType === "webapp";
   const shouldShowSeleniumLink = showSeleniumLink && Boolean(runName) && isSeleniumTarget;
+  // Only render the link once a real per-run session URL is resolved —
+  // the static "/selenium/" fallback no longer serves a working viewer,
+  // so never surface it as clickable.
+  const canViewExecution = shouldShowSeleniumLink && Boolean(seleniumViewUrl);
 
   const handleRunFinished = useCallback(() => {
     setRunCompleted(true);
@@ -172,6 +176,49 @@ const NewTestRunPage: React.FC = () => {
       activeRunIdRef.current = null;
     }
   }, []);
+
+  useEffect(() => {
+    if (!isRunning || !shouldShowSeleniumLink) {
+      setSeleniumViewUrl(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchViewUrl = async () => {
+      const runId = activeRunIdRef.current;
+      if (runId === null) return;
+
+      try {
+        const res = await fetch(API_ENDPOINTS.GET_EXECUTION_VIEW(runId), {
+          headers: getAuthHeaders(),
+          credentials: "include",
+        });
+
+        if (res.status === 401) {
+          redirectToLogin();
+          return;
+        }
+
+        if (!res.ok) return; // no session running yet for this run — keep polling
+
+        const data = await res.json();
+        if (!cancelled && data?.view_path) {
+          setSeleniumViewUrl(data.view_path);
+        }
+      } catch (err) {
+        console.error("Error fetching Selenium view URL:", err);
+      }
+    };
+
+    fetchViewUrl();
+    const intervalId = window.setInterval(fetchViewUrl, 5000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [isRunning, shouldShowSeleniumLink]);
 
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -766,9 +813,9 @@ const NewTestRunPage: React.FC = () => {
           runName={runName}
           liveEvents={liveEvents}
           onRunFinished={handleRunFinished}
-          showTestExecutionLink={shouldShowSeleniumLink}
+          showTestExecutionLink={canViewExecution}
           seleniumHref={seleniumHref}
-        />}       
+        />}
       </div>
       
     </div>

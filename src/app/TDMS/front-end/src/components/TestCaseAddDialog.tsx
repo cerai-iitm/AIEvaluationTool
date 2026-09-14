@@ -379,15 +379,21 @@ export const TestCaseAddDialog = ({
           headers["Authorization"] = `Bearer ${token}`;
         }
 
-        // Use the endpoint which returns JSON instead of streaming
-        const response = await fetch(`${API_ENDPOINTS.TESTCASES_V2}`, { headers });
+        const params = new URLSearchParams({
+          limit: "100",
+          offset: "0",
+          search: name,
+          field: "testcase",
+        });
+
+        const response = await fetch(`${API_ENDPOINTS.TESTCASES_V2}?${params.toString()}`, { headers });
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const data = await response.json();
-        const testCases = Array.isArray(data) ? data : [];
+        const testCases = Array.isArray(data) ? data : data.items ?? [];
         
         // Check if any test case has the same name (case-insensitive)
         const nameExists = testCases.some(
