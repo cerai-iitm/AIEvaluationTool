@@ -124,7 +124,7 @@ services:
     environment:
       OLLAMA_KEEP_ALIVE: "-1"
       OLLAMA_NUM_PARALLEL: "20"
-      OLLAMA_CONTEXT_LENGTH: "5120"
+      OLLAMA_CONTEXT_LENGTH: "4096"
       # Swarm rejects the modern `deploy.resources.reservations.devices`
       # GPU syntax outright (see docker_stack.md Section 1.2), so GPU
       # access here relies on the legacy nvidia-container-runtime path:
@@ -139,11 +139,9 @@ services:
     volumes:
       - ollama_data:/root/.ollama
     deploy:
-      replicas: 1
+      replicas: 2
       restart_policy:
         condition: any
-      placement:
-        constraints: [node.labels.primary == true]
 
   ollama-init:
     image: ollama/ollama:latest
@@ -155,27 +153,29 @@ services:
     deploy:
       # one-shot: retry a few times if the pull fails, never restart
       # after it exits 0
-      replicas: 1
+      replicas: 2
       restart_policy:
         condition: on-failure
         max_attempts: 3
 
-  ollama-warmup:
-    image: curlimages/curl:latest
-    depends_on:
-      - ollama-init
-    command: >
-      sh -c "
-      curl http://ollama:11434/api/generate
-      -d '{\"model\":\"${OLLAMA_MODEL:-qwen3:32b}\",\"prompt\":\"hi\",\"stream\":false}'
-      "
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: none
+  # ollama-warmup:
+  #   image: curlimages/curl:latest
+  #   depends_on:
+  #     - ollama-init
+  #   command: >
+  #     sh -c "
+  #     curl http://ollama:11434/api/generate
+  #     -d '{\"model\":\"${OLLAMA_MODEL:-qwen3:32b}\",\"prompt\":\"hi\",\"stream\":false}'
+  #     "
+  #   deploy:
+  #     replicas: 1
+  #     restart_policy:
+  #       condition: none
 
   interface-manager:
-    image: ${REGISTRY:-localhost:5000}/aiet-interface-manager:${TAG:-latest}
+    image: h1manshuj/aiet-backend:latest
+    working_dir: /app/src/app/interface_manager
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
@@ -205,7 +205,9 @@ services:
         constraints: [node.labels.primary == true]   # owns xpaths.json/credentials.json bind mounts
 
   auth-service:
-    image: ${REGISTRY:-localhost:5000}/aiet-auth-service:${TAG:-latest}
+    image: h1manshuj/aiet-backend:latest
+    working_dir: /app/src/app/auth_service
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7500"]
     depends_on:
       - db
     expose:
@@ -231,7 +233,9 @@ services:
         constraints: [node.labels.primary == true]   # owns ./data bind mount
 
   app-backend:
-    image: ${REGISTRY:-localhost:5000}/aiet-app-backend:${TAG:-latest}
+    image: h1manshuj/aiet-backend:latest
+    working_dir: /app/src/app/TestCaseExecutorDashboard
+    command: ["python", "back-end/main.py"]
     depends_on:
       - interface-manager
       - redis
@@ -267,7 +271,9 @@ services:
         constraints: [node.labels.primary == true]
 
   sarvam-ai:
-    image: ${REGISTRY:-localhost:5000}/aiet-sarvam-ai:${TAG:-latest}
+    image: h1manshuj/aiet-backend:latest
+    working_dir: /app/src/app/sarvam_ai
+    command: ["python", "main.py"]
     expose:
       - "16000"
     environment:
@@ -279,14 +285,18 @@ services:
     volumes:
       - sarvam_models:/models
     deploy:
-      replicas: 1
+      replicas: 2
       restart_policy:
         condition: any
-      placement:
-        constraints: [node.labels.primary == true]
+      # placement:
+      #   constraints: [node.labels.gpu == true]
+      #   preferences:
+      #     - spread: node.id
 
   tdms-backend:
-    image: ${REGISTRY:-localhost:5000}/aiet-tdms-backend:${TAG:-latest}
+    image: h1manshuj/aiet-backend:latest
+    working_dir: /app/src/app/TDMS/back-end
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7250"]
     depends_on:
       - auth-service
     expose:
@@ -311,7 +321,7 @@ services:
         constraints: [node.labels.primary == true]   # owns ./data, xpaths.json, credentials.json bind mounts
 
   app-front-end:
-    image: ${REGISTRY:-localhost:5000}/aiet-app-frontend:${TAG:-latest}
+    image: h1manshuj/aiet-app-frontend:latest
     depends_on:
       - app-backend
       - auth-service
@@ -321,7 +331,7 @@ services:
         condition: any
 
   tdms-frontend:
-    image: ${REGISTRY:-localhost:5000}/aiet-tdms-frontend:${TAG:-latest}
+    image: h1manshuj/aiet-tdms-frontend:latest
     depends_on:
       - tdms-backend
       - auth-service

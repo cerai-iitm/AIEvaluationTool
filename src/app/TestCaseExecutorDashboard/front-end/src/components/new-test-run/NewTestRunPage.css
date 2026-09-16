@@ -90,11 +90,27 @@ h1 {
 
 /* Filters Container */
 .filters-container {
+  position: relative;
   background-color: white;
   padding: 2rem;
   border-radius: 0.75rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   width: 100%;
+}
+
+.form-required-notice {
+  position: absolute;
+  top: 1rem;
+  right: 2rem;
+  color: #dc2626;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.required-asterisk {
+  color: #dc2626;
+  font-size: 0.875rem;
+  font-weight: 600;
 }
 
 .filters-row {

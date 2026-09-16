@@ -155,10 +155,10 @@ const StrategyList: React.FC = () => {
 
   // ADD handler
   const handleAdd = async () => {
-    if (!newStrategyName.trim() || !addMessage.trim()) {
+    if (!newStrategyName.trim() || !newStrategyDescription.trim() || !addMessage.trim()) {
       toast({
         title: "Validation Error",
-        description: "Strategy name and notes are required",
+        description: "Strategy name, description, and notes are required",
         variant: "destructive",
       });
       return;
@@ -188,7 +188,7 @@ const StrategyList: React.FC = () => {
         headers,
         body: JSON.stringify({
           strategy_name: newStrategyName.trim(),
-          strategy_description: newStrategyDescription.trim() || null,
+          strategy_description: newStrategyDescription.trim(),
           notes: addMessage.trim() || null,
         }),
       });
@@ -223,10 +223,10 @@ const StrategyList: React.FC = () => {
 
   // UPDATE handler
   const handleUpdate = async () => {
-    if (!selectedStrategy || !updateName.trim() || !updateMessage.trim()) {
+    if (!selectedStrategy || !updateName.trim() || !updateDescription.trim() || !updateMessage.trim()) {
       toast({
         title: "Validation Error",
-        description: "Strategy name and notes are required",
+        description: "Strategy name, description, and notes are required",
         variant: "destructive",
       });
       return;
@@ -448,7 +448,7 @@ const StrategyList: React.FC = () => {
                         </td>
                       </tr>
                     ) : (
-                      PaginatedStrategies.map((row) => (
+                      PaginatedStrategies.map((row, index) => (
                         <tr 
                           key={row.strategy_id}
                           className={`border-b cursor-pointer transition-colors duration-200 ${
@@ -460,7 +460,7 @@ const StrategyList: React.FC = () => {
                             setHighlightedRowId(row.strategy_id);
                           }}
                         >
-                          <td className="p-2 pl-12">{row.strategy_id}</td>
+                          <td className="p-2 pl-12">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                           <td className="p-2 truncate">{row.strategy_name}</td>
                           <td className="p-2 truncate">{row.strategy_description}</td>
                         </tr>
@@ -495,7 +495,7 @@ const StrategyList: React.FC = () => {
             setUpdateMessage("");
           }}
         >
-          <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-[90vw] max-w-4xl"
+          <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-[80vw] max-w-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <button 
@@ -616,7 +616,7 @@ const StrategyList: React.FC = () => {
           //   setUpdateMessage("");
           // }}
         >
-          <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-full max-w-lg min-h-[300px]"
+          <div className="relative bg-white rounded-lg shadow-xl px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 w-[80vw] max-w-2xl min-h-[300px]"
             onClick={(e) => e.stopPropagation()}
           >
             <button 
@@ -631,7 +631,7 @@ const StrategyList: React.FC = () => {
               ×
             </button>
             
-            <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 mt-4 md:mt-5 gap-2 md:gap-0">
+            <div className="flex flex-col md:flex-col items-left mb-0 md:mb-0 mt-4 md:mt-5 gap-2 md:gap-0">
               <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px]">Strategy</label>
               <Input
                 value={updateName}
@@ -645,17 +645,17 @@ const StrategyList: React.FC = () => {
             </div>
             
             <div className="flex flex-col md:flex-col items-left mb-4 md:mb-6 gap-2 md:gap-0">
-              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Description </label>
+              <label className="font-semibold text-base md:text-lg min-w-[140px] md:min-w-[165px] mt-2">Description</label>
               <Textarea
                 value={updateDescription}
                 onChange={e => setUpdateDescription(e.target.value)}
-                className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-lg flex-1 w-full md:w-auto min-h-[80px] resize-none focus:outline-none focus:ring focus:ring-blue-200"
+                className="bg-gray-100 rounded border border-gray-300 px-3 md:px-4 py-2 text-sm md:text-lg flex-1  min-h-[140px] resize-none focus:outline-none focus:ring focus:ring-blue-200"
                 placeholder="Enter strategy description..."
               />
             </div>
             
             <div className="flex flex-col md:flex-row items-center gap-2 md:gap-0">
-              <label className="text-base md:text-lg min-w-[60px]">Notes </label>
+              <label className="text-base md:text-lg min-w-[60px]">Notes</label>
               <Input
                 value={updateMessage}
                 onChange={e => setUpdateMessage(e.target.value)}
@@ -665,6 +665,7 @@ const StrategyList: React.FC = () => {
                 className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={
                   !updateName.trim() ||
+                  !updateDescription.trim() ||
                   !updateMessage.trim() ||
                   isNameOverCharacterLimit(updateName)
                 }

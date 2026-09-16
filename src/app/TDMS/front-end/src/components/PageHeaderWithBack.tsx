@@ -14,7 +14,7 @@ export const PageHeaderWithBack = ({ title }: PageHeaderWithBackProps) => {
     <div className="mb-4 grid gap-3 md:mb-8 md:grid-cols-[1fr_auto_1fr] md:items-center">
       <Button
         type="button"
-        variant="outline"
+        variant="normal"
         className="w-fit justify-self-start"
         onClick={() => navigate("/dashboard")}
       >

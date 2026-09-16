@@ -114,10 +114,9 @@ def main():
         logger.error(f"Run with name '{args.run_name}' not found.")
         return
     
-    # we don't want to deal with incomplete runs.
-    #@NOTE we may have a force option, a little later, to evaluate an incomplete run.
-    if run.status != "COMPLETED":
-        logger.error(f"Run '{args.run_name}' is not completed. Current status: {run.status}")
+    # Completed responses from a stopped run are still valid analysis inputs.
+    if run.status not in ("COMPLETED", "STOPPED"):
+        logger.error(f"Run '{args.run_name}' cannot be analysed. Current status: {run.status}")
         return
 
     run_details = db.get_all_run_details_by_run_name(run_name=run.run_name)
@@ -265,4 +264,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

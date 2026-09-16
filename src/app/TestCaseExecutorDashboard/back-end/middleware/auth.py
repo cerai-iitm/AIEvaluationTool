@@ -11,7 +11,7 @@ ALGORITHM = "HS256"
 class AuthMiddleware(BaseHTTPMiddleware):
     def __init__(self, app, exclude_paths=None):
         super().__init__(app)
-        self.exclude_paths = exclude_paths or ["/docs", "/openapi.json", "/redoc"]
+        self.exclude_paths = exclude_paths or ["/docs", "/openapi.json", "/redoc", "/health"]
 
     async def dispatch(self, request: Request, call_next):
         path = request.url.path

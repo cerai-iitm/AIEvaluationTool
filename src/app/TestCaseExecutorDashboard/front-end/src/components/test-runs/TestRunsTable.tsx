@@ -537,6 +537,7 @@ const TestRunsTable: React.FC<Props> = ({ filters, onFilterChange }) => {
                       <span className={`status-badge ${
                         run.status === "COMPLETED" || run.status === "PASSED" ? "status-completed"
                         : run.status === "RUNNING" || run.status === "IN_PROGRESS" ? "status-running"
+                        : run.status === "STOPPED" ? "status-stopped"
                         : run.status === "FAILED" ? "status-failed"
                         : "status-default"
                       }`}>
