@@ -17,6 +17,8 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         normal: "border/90 hover:bg-secondary/20",
         linkd: "underline-offset-4 hover:underline",
+        submit:
+          "bg-gradient-to-b from-lime-400 to-green-700 text-white rounded shadow font-semibold border border-green-800 hover:from-lime-400/90 hover:to-green-700/90",
       },
       size: {
         default: "h-10 px-4 py-2",

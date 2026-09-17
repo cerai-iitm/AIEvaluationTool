@@ -9,12 +9,68 @@ import {
 import { FileCode2, Loader2, Plus, Save, Trash2 } from "lucide-react";
 import { API_ENDPOINTS } from "@/config/api";
 import { useToast } from "@/hooks/use-toast";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
+
+interface ElementSpec {
+  key: string;
+  required: boolean;
+  hint: string;
+}
+
+interface PageSpec {
+  elements: ElementSpec[];
+}
+
+// Mirrors what src/app/interface_manager/utils.py actually reads:
+// login_app/logout_app for LoginPage/LogoutPage, and
+// handle_generic_webapp's three response-capture modes for ChatPage.
+// Keeping this in sync with utils.py is what lets a target built purely
+// from these picklists work with no backend code changes.
+const PAGE_SCHEMA: Record<string, PageSpec> = {
+  LoginPage: {
+    elements: [
+      { key: "email_input_element", required: true, hint: "Username/email input field" },
+      { key: "password_input_element", required: true, hint: "Password input field" },
+      { key: "login_button_element", required: true, hint: "Sign-in / submit button" },
+    ],
+  },
+  LogoutPage: {
+    elements: [
+      { key: "profile_pic_element", required: false, hint: "Presence check used to detect an already-logged-in session" },
+      { key: "profile_element", required: false, hint: "Opens the account/profile menu before logging out" },
+      { key: "logout_button_element", required: true, hint: "Sign-out button" },
+    ],
+  },
+  ChatPage: {
+    elements: [
+      { key: "prompt_input_box_element", required: true, hint: "Where the prompt text is typed" },
+      { key: "agent_response_element", required: true, hint: "Where the agent's reply text appears" },
+      { key: "send_button_element", required: false, hint: "Only clicked if submit_via_click is 'true'; otherwise Enter submits" },
+      { key: "submit_via_click", required: false, hint: "Set to 'true' to click send_button_element instead of pressing Enter" },
+      { key: "shadow_root_element", required: false, hint: "CSS selector for a shadow-DOM host — enables shadow-DOM mode" },
+      { key: "message_in_element", required: false, hint: "XPath for incoming chat bubbles — pairs with message_out_element for turn/bubble mode" },
+      { key: "message_out_element", required: false, hint: "XPath for outgoing chat bubbles — pairs with message_in_element" },
+      { key: "response_timeout", required: false, hint: "Max seconds to wait for a response" },
+      { key: "response_stable_time", required: false, hint: "Seconds the response must stop changing before it's considered final" },
+      { key: "response_poll_interval", required: false, hint: "Seconds between polls while waiting for a response" },
+      { key: "pre_send_wait", required: false, hint: "Shadow-DOM mode only: fixed seconds to wait after sending, before polling" },
+    ],
+  },
+};
+
+const KNOWN_PAGE_NAMES = Object.keys(PAGE_SCHEMA);
 
 type XPathPages = Record<string, Record<string, string>>;
 
@@ -93,6 +149,27 @@ const XPathConfigurationEditor = forwardRef<
   const pageNames = useMemo(() => sortPages(pages), [pages]);
   const activeElements = activePage ? pages[activePage] || {} : {};
   const hasChanges = JSON.stringify(pages) !== savedSignature;
+
+  const activeSchema = PAGE_SCHEMA[activePage];
+  const activeSchemaByKey = useMemo(() => {
+    const map: Record<string, ElementSpec> = {};
+    for (const el of activeSchema?.elements ?? []) {
+      map[el.key] = el;
+    }
+    return map;
+  }, [activeSchema]);
+  const availableSchemaElements = useMemo(
+    () => (activeSchema?.elements ?? []).filter((el) => activeElements[el.key] === undefined),
+    [activeSchema, activeElements],
+  );
+  const missingRequiredElements = useMemo(
+    () => (activeSchema?.elements ?? []).filter((el) => el.required && !activeElements[el.key]),
+    [activeSchema, activeElements],
+  );
+  const availablePageNames = useMemo(
+    () => KNOWN_PAGE_NAMES.filter((name) => !pages[name]),
+    [pages],
+  );
 
   const authHeaders = useCallback((): HeadersInit => {
     const headers: HeadersInit = {
@@ -173,7 +250,17 @@ const XPathConfigurationEditor = forwardRef<
     onPagesChange?.(pages);
   }, [hasLoadedConfig, onPagesChange, pages]);
 
-  const addPage = () => {
+  const addPage = (explicitName?: string) => {
+    if (explicitName) {
+      if (pages[explicitName]) {
+        setActivePage(explicitName);
+        return;
+      }
+      setPages((current) => ({ ...current, [explicitName]: {} }));
+      setActivePage(explicitName);
+      return;
+    }
+
     let index = pageNames.length + 1;
     let nextName = `Page${index}`;
     while (pages[nextName]) {
@@ -207,8 +294,20 @@ const XPathConfigurationEditor = forwardRef<
     });
   };
 
-  const addElement = () => {
+  const addElement = (explicitName?: string) => {
     if (!activePage) return;
+
+    if (explicitName) {
+      if (activeElements[explicitName] !== undefined) return;
+      setPages((current) => ({
+        ...current,
+        [activePage]: {
+          ...(current[activePage] || {}),
+          [explicitName]: "",
+        },
+      }));
+      return;
+    }
 
     setPages((current) => {
       const pageConfig = current[activePage] || {};
@@ -403,16 +502,34 @@ const XPathConfigurationEditor = forwardRef<
           <div className="rounded-md border">
             <div className="flex items-center justify-between border-b p-3 bg-white">
               <Label className="font-semibold">Pages</Label>
-              <Button
-                type="button"
-                size="icon"
-                // variant="outline"
-                onClick={addPage}
-                disabled={disabled}
-                aria-label="Add page"
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    type="button"
+                    size="icon"
+                    disabled={disabled}
+                    aria-label="Add page"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  {availablePageNames.length > 0 ? (
+                    <>
+                      <DropdownMenuLabel>Standard pages</DropdownMenuLabel>
+                      {availablePageNames.map((name) => (
+                        <DropdownMenuItem key={name} onSelect={() => addPage(name)}>
+                          {name}
+                        </DropdownMenuItem>
+                      ))}
+                      <DropdownMenuSeparator />
+                    </>
+                  ) : null}
+                  <DropdownMenuItem onSelect={() => addPage()}>
+                    Custom page…
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
             <ScrollArea className="h-[380px]">
               <div className="space-y-2 p-3">
@@ -466,17 +583,58 @@ const XPathConfigurationEditor = forwardRef<
                   {activePage || "Select a page"}
                 </Label>
               </div>
-              <Button
-                type="button"
-                // variant="outline"
-                onClick={addElement}
-                disabled={disabled || !activePage}
-                className="gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                Add Element
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    type="button"
+                    disabled={disabled || !activePage}
+                    className="gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add Element
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-80">
+                  {availableSchemaElements.length > 0 ? (
+                    <>
+                      <DropdownMenuLabel>{activePage} fields</DropdownMenuLabel>
+                      <div className="max-h-[320px] overflow-y-auto">
+                        {availableSchemaElements.map((el) => (
+                          <DropdownMenuItem
+                            key={el.key}
+                            onSelect={() => addElement(el.key)}
+                            className="flex flex-col items-start gap-1 py-2"
+                          >
+                            <span className="font-mono text-xs">
+                              {el.key}
+                              {el.required ? (
+                                <span className="ml-1 font-sans text-[10px] font-semibold text-red-600">
+                                  * required
+                                </span>
+                              ) : null}
+                            </span>
+                            <span className="text-xs text-muted-foreground whitespace-normal">
+                              {el.hint}
+                            </span>
+                          </DropdownMenuItem>
+                        ))}
+                      </div>
+                      <DropdownMenuSeparator />
+                    </>
+                  ) : null}
+                  <DropdownMenuItem onSelect={() => addElement()}>
+                    Custom element…
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
+
+            {activePage && missingRequiredElements.length > 0 ? (
+              <div className="mx-3 mt-3 rounded-md border border-amber-300 bg-amber-50 p-2 text-xs text-amber-800">
+                Missing required for {activePage}:{" "}
+                {missingRequiredElements.map((el) => el.key).join(", ")}
+              </div>
+            ) : null}
 
             <ScrollArea className="h-[380px]">
               <div className="space-y-3 p-3">
@@ -495,8 +653,13 @@ const XPathConfigurationEditor = forwardRef<
                       className="grid gap-3 rounded-md border p-3 xl:grid-cols-[220px_minmax(0,1fr)_40px] bg-white"
                     >
                       <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">
+                        <Label className="flex items-center gap-2 text-xs text-muted-foreground">
                           Element Name
+                          {activeSchemaByKey[elementName]?.required ? (
+                            <span className="text-[10px] font-semibold text-red-600">
+                              * required
+                            </span>
+                          ) : null}
                         </Label>
                         <Input
                           defaultValue={elementName}
@@ -506,6 +669,11 @@ const XPathConfigurationEditor = forwardRef<
                           disabled={disabled}
                           className="bg-background font-mono text-sm"
                         />
+                        {activeSchemaByKey[elementName]?.hint ? (
+                          <p className="text-xs text-muted-foreground">
+                            {activeSchemaByKey[elementName].hint}
+                          </p>
+                        ) : null}
                       </div>
                       <div className="space-y-1">
                         <Label className="text-xs text-muted-foreground">
