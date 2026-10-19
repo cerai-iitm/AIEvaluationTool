@@ -11,7 +11,8 @@ Docker packages the main evaluation services into a reproducible environment. Th
 The Docker setup centers around these services:
 
 - `db` for MariaDB
-- `selenium-browser` for browser automation and live browser viewing
+- `selenium-hub` and `chrome-node` for browser automation and live browser viewing
+- `redis` for shared job state
 - `interface-manager` for target interaction
 - `auth-service`, `app-backend`, `app-front-end`, `tdms-backend`, `tdms-frontend`
 - `nginx` as the single public entrypoint

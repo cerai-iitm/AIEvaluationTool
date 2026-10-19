@@ -1,99 +1,74 @@
 # Setup And Configuration
 
-This page explains how to run the AI Evaluation Tool from scratch using Docker, with separate flows for:
+This page takes you from a fresh clone to a running application in Docker, and lists every setting you can change.
 
-- production UI usage through `nginx`
-- development usage with exposed service ports
-- CLI-based usage through the backend container
-
-It is aligned with the current Compose stack (`app-backend`, `app-front-end`, `auth-service`, `tdms-backend`, `tdms-frontend`, `nginx`) and the development override file (`docker-compose.dev.yml`).
+- Want to just use the UI? Follow the [Quick Start](#quick-start).
+- Want to run importer, execution, analysis and reports from the command line? See [CLI Workflow](#cli-workflow).
+- Running on more than one machine? See [Multi-Node Stack](./multi_node_stack.md).
 
 ## Prerequisites
 
 - Docker Engine `24+`
 - Docker Compose `v2+`
-- Repository cloned locally
+- The repository cloned locally
+- Port `8100` free on your machine (or a different port, see [Changing The Port](./docker_run_ui.md#changing-the-port))
+- An NVIDIA GPU and `nvidia-container-toolkit` **only** if you run the bundled model services (`--profile prod`). See [GPU Setup](./gpu_setup.md).
 
-## Current Docker Stack
+## Quick Start
 
-Primary services in [docker-compose.yml][docker-compose]:
+1. **Create `.env`:**
 
-- `db` (MariaDB)
-- `selenium-browser` (Chrome + WebDriver + noVNC)
-- `interface-manager` (target interaction service)
-- `auth-service` (authentication and route redirects)
-- `app-backend` (TCE backend + CLI runtime environment)
-- `tdms-backend` (TDMS API)
-- `app-front-end` (TCE UI build)
-- `tdms-frontend` (TDMS UI build)
-- `nginx` (single public entrypoint and reverse proxy)
+   ```bash
+   cp .env.example .env
+   ```
 
-Public access is through `nginx` on `http://localhost:${NGINX_PORT:-80}`.
+2. **Fill in the values you need** (see [The `.env` File](#environment-file-env)). The model endpoints and API keys depend on which metrics you run.
 
-## Compose Modes
+3. **Start the application:**
 
-### Production Mode
+   ```bash
+   docker compose up -d --build
+   ```
 
-Use only `docker-compose.yml` for the production-style local stack.
+   The first build takes about 10 minutes. This starts every service, including the database, Redis and the Selenium grid with its browser nodes. (Do not start only `nginx`: that skips the browser nodes, so web-target runs would have no browser.)
 
-```bash
-docker compose up -d --build nginx
-```
+4. **Check it is healthy:**
 
-This exposes only the nginx entrypoint to the host. Backend, database, Selenium, and frontend services communicate over the internal Docker network.
+   ```bash
+   docker compose ps
+   ```
 
-### Development Mode
+5. **Open the application** at [http://localhost:8100/](http://localhost:8100/) and log in. A default account is `admin` / `admin123`; change it after the first login. Details: [Authentication And Roles](../ui/authentication_and_roles.md).
 
-Use both Compose files when developing or debugging services directly:
+Next: [Docker Run UI](./docker_run_ui.md) explains the addresses, ports and screens.
 
-```bash
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
-```
+## Services In The Stack
 
-The development override bind-mounts the repository into service containers and exposes direct ports for the individual services.
+Services in [docker-compose.yml](../../docker-compose.yml):
 
-Development URLs:
+| Service | Purpose | Started By Default |
+|---|---|---|
+| `db` | MariaDB database | yes |
+| `redis` | shared job and WebSocket state | yes |
+| `selenium-hub` | Selenium grid hub | yes |
+| `chrome-node` | browser nodes (`SELENIUM_NODE_COUNT`, default 2) | yes |
+| `interface-manager` | talks to the target application through the browser | yes |
+| `auth-service` | login, tokens, role-based redirects | yes |
+| `app-backend` | TCE backend; also the container for CLI commands | yes |
+| `tdms-backend` | TDMS API | yes |
+| `app-front-end` | TCE UI | yes |
+| `tdms-frontend` | TDMS UI | yes |
+| `nginx` | the single public entrypoint and reverse proxy | yes |
+| `ollama`, `ollama-init`, `ollama-warmup` | local LLM judge model (needs an NVIDIA GPU) | only with `--profile prod` |
+| `sarvam-ai` | Sarvam AI model service (needs an NVIDIA GPU) | with `--profile prod` or `--profile sarvam` |
 
-- TCE frontend dev server: `http://localhost:3000`
-- TDMS frontend dev server: `http://localhost:8080`
-- Dashboard backend API docs: `http://localhost:7000/docs`
-- TDMS backend: `http://localhost:7250`
-- Auth service docs: `http://localhost:7500/docs`
-- Interface Manager docs: `http://localhost:8000/docs`
-- Selenium live browser: `http://localhost:7900`
+Only `nginx` (and the browser live-view ports `7900` to `7924`) is published on your machine. Everything else talks over the internal Docker network. For the full ports table, see [Docker Run UI](./docker_run_ui.md#ports).
 
-In development mode, use the direct frontend ports above as the primary UI entrypoints. The production nginx route uses `docker/nginx/nginx.conf`; use a development nginx config only if you explicitly wire it into Compose.
+## Environment File (`.env`)
 
-### Compose Profiles
+Docker Compose reads `.env` in the repository root. It is not committed to git, so each machine has its own.
 
-The Docker stack also includes optional model-serving profiles:
-
-- `prod`: enables Compose-managed Ollama services (`ollama`, `ollama-init`, `ollama-warmup`) and `sarvam-ai`.
-- `sarvam`: enables only the Compose-managed Sarvam AI service.
-
-Use `prod` when you want the Docker stack to include the bundled model-serving services:
-
-```bash
-docker compose --profile prod up -d --build
-```
-
-Use `sarvam` when Ollama is hosted elsewhere but Sarvam AI should run through Compose:
-
-```bash
-docker compose --profile sarvam up -d sarvam-ai
-```
-
-## Configuration Files To Prepare
-
-### 1. Root and Strategy `.env`
-
-Create `.env` if not present:
-
-```bash
-cp .env.example .env
-```
-
-Minimal runtime values:
+### Required Settings
 
 ```env
 OLLAMA_URL="http://host.docker.internal:11434/"
@@ -104,120 +79,108 @@ PERSPECTIVE_API_KEY=""
 SARVAM_API_KEY=""
 GEMINI_API_KEY=""
 OPENAI_API_KEY=""
+TIME_ZONE="Asia/Kolkata"
 ```
 
+| Variable | Meaning |
+|---|---|
+| `OLLAMA_URL` | Ollama server used as the judge model. `host.docker.internal` means "the machine running Docker". |
+| `GPU_URL` | Sarvam AI service endpoint |
+| `LLM_AS_JUDGE_MODEL` | model name used for judging |
+| `HF_TOKEN` | Hugging Face token (for downloading models) |
+| `PERSPECTIVE_API_KEY`, `SARVAM_API_KEY`, `GEMINI_API_KEY`, `OPENAI_API_KEY` | keys for the integrations you use; leave empty for ones you do not |
+| `TIME_ZONE` | time zone for timestamps |
 
-### 2. Optional `.env` Overrides (All Compose-Tunable Variables)
+### Optional Settings
 
-Use these only when you need custom ports, DB credentials, or custom frontend/backend routes:
+Everything below has a default. Set a variable in `.env` only to change it.
+
+| Variable | Default | Description | To Apply A Change |
+|---|---|---|---|
+| `NGINX_PORT` | `8100` | public port | `docker compose up -d` |
+| `SELENIUM_NODE_COUNT` | `2` | number of browser nodes (max `25` on one machine) | `docker compose up -d` |
+| `OLLAMA_MODEL` | `qwen3:32b` | model pulled by the bundled Ollama (`--profile prod`) | `docker compose --profile prod up -d` |
+| `REGISTRY` | `h1manshuj` | image name prefix | `docker compose up -d --build` |
+| `TAG` | `latest` | image tag | `docker compose up -d --build` |
+| `MARIADB_ROOT_PASSWORD` | `root_password` | database | see note below |
+| `MARIADB_DATABASE` | `aievaluationtool` | database | see note below |
+| `MARIADB_USER` | `aiet_user` | database | see note below |
+| `MARIADB_PASSWORD` | `aiet_password` | database | see note below |
+| `DB_HOST` | `db` | where services find the database | `docker compose up -d` |
+| `DB_PORT` | `3306` | where services find the database | `docker compose up -d` |
+| `TCE_APP_URL` | `/` | where `admin` and `manager` land after login | `docker compose up -d` |
+| `TDMS_APP_URL` | `/tdms/dashboard` | where `curator` and `viewer` land after login | `docker compose up -d` |
+| `AUTH_SERVICE_URL` | `http://auth-service:7500` | how `tdms-backend` reaches the auth service | `docker compose up -d` |
+
+**Database credentials:** MariaDB only reads these on its very first start, when it creates the data volume. Changing them later does nothing until you delete the volume (`docker compose down -v`, which erases all data). The defaults are placeholders: change them before putting real data in, and set them **before** the first start.
+
+**Frontend build settings:** these are baked into the frontend images when they are built. After changing one, rebuild with `docker compose up -d --build`. The defaults are already correct for the standard setup; change them only if you serve the app under different paths.
+
+| Variable | Default |
+|---|---|
+| `REACT_APP_API_BASE_URL` | `/api` |
+| `REACT_APP_AUTH_SERVICE_URL` | `/auth` |
+| `REACT_APP_TDMS_API_BASE_URL` | `/tdms-api` |
+| `REACT_APP_TEST_DATA_URL` | `/tdms/dashboard` |
+| `REACT_APP_USER_LIST_URL` | `/tdms/users` |
+| `VITE_API_BASE_URL` | `/tdms-api` |
+| `VITE_AUTH_SERVICE_URL` | `/auth` |
+| `VITE_TEST_RUNS_HOME_URL` | `/` |
+
+## Configuration Files
+
+| File | Used for | What to check |
+|---|---|---|
+| `config.json` (repository root) | the CLI flow and `app-backend` | `db.host` is `db`; `interface_manager.docker` is `true`; `interface_manager.base_url` is `http://interface-manager:8000` |
+| `src/app/interface_manager/config.json` | browser automation | `selenium_mode` is `"remote"` and `selenium_remote_url` is `"http://selenium-hub:4444/wd/hub"` |
+| `src/app/interface_manager/xpaths.json` | element selectors for web and WhatsApp targets | stable relative XPaths for login fields, prompt box, response area, logout |
+| `src/app/interface_manager/credentials.json` | logins for the target web applications | add or update the entry for each target you test |
+| `data/` | test data files for the importer | the files you want to import are present |
+
+`xpaths.json` and `credentials.json` are mounted into the containers, so edit them on your machine and restart `interface-manager` (`docker compose restart interface-manager`). They are not read from the image.
+
+## Compose Profiles
+
+Profiles switch on optional model-serving containers. They need an NVIDIA GPU.
+
+| Profile | Adds |
+|---|---|
+| `prod` | `ollama`, `ollama-init`, `ollama-warmup` and `sarvam-ai` |
+| `sarvam` | only `sarvam-ai` |
+
+Run the whole application together with the bundled models:
+
+```bash
+docker compose --profile prod up -d --build
+```
+
+Then point the model URLs at the Compose service names in `.env`:
 
 ```env
-# Public port for nginx
-NGINX_PORT=80
-
-# MariaDB
-MARIADB_ROOT_PASSWORD=root_password
-MARIADB_DATABASE=aievaluationtool
-MARIADB_USER=aiet_user
-MARIADB_PASSWORD=aiet_password
-
-# Service-level DB fallback values
-DB_HOST=db
-DB_PORT=3306
-
-# Auth redirects / route integration
-TCE_APP_URL=/
-TDMS_APP_URL=/tdms/dashboard
-AUTH_SERVICE_URL=http://auth-service:7500
-
-# TCE frontend build args
-REACT_APP_API_BASE_URL=/api
-REACT_APP_AUTH_SERVICE_URL=/auth
-REACT_APP_TDMS_API_BASE_URL=/tdms-api
-REACT_APP_TEST_DATA_URL=/tdms/dashboard
-REACT_APP_USER_LIST_URL=/tdms/users
-
-# TDMS frontend build args
-VITE_API_BASE_URL=/tdms-api
-VITE_AUTH_SERVICE_URL=/auth
-VITE_TEST_RUNS_HOME_URL=/
+OLLAMA_URL="http://ollama:11434/"
+GPU_URL="http://sarvam-ai:16000/"
 ```
 
-### 3. Root `config.json` (Required For CLI Flow)
-
-Keep Docker-aware values:
-
-- `db.host` should be `db`
-- `interface_manager.docker` should be `true`
-- `interface_manager.base_url` should be `http://interface-manager:8000`
-
-
-## Section 1: Run Production UI (Recommended For Most Users)
-
-### Step 1: Start Production UI Stack
+Run only Sarvam AI while Ollama is hosted elsewhere:
 
 ```bash
-docker compose up -d --build nginx
+docker compose --profile sarvam up -d sarvam-ai
 ```
 
-Bringing up `nginx` starts required dependencies (`app-front-end`, `tdms-frontend`, `app-backend`, `tdms-backend`, `auth-service`, `interface-manager`, `db`, `selenium-browser`).
-
-### Step 2: Verify Containers
-
-```bash
-docker compose ps
+```env
+GPU_URL="http://sarvam-ai:16000/"
 ```
 
-### Step 3: Open The Application
+More options, including remote GPU servers: [GPU Setup](./gpu_setup.md).
 
-- Main UI (TCE): `http://localhost:${NGINX_PORT:-80}/`
-- TDMS UI: `http://localhost:${NGINX_PORT:-80}/tdms/`
-- Selenium live view (via nginx): `http://localhost:${NGINX_PORT:-80}/selenium/`
-- Stack health check: `http://localhost:${NGINX_PORT:-80}/healthz`
+## CLI Workflow
 
-For detailed UI workflows after startup, refer to:
+Use `app-backend` as the CLI container. These commands run from the host with `docker compose run`; for an interactive shell instead, see [Docker Run CLI](./docker_run.md).
 
-- [UI Overview](../ui/index.md)
-- [Authentication And Roles](../ui/authentication_and_roles.md)
-- [TDMS Dashboard Manual](../ui/tdms_dashboard_manual.md)
-- [Test Runs Manual](../ui/test_runs_manual.md)
-- [Run Configuration Manual](../ui/run_configuration_manual.md)
-- [Analysis And Run Details Manual](../ui/analysis_and_run_details_manual.md)
-
-## Section 2: Run Development Stack
-
-Use this mode when you need live frontend development servers, direct backend ports, or easier debugging.
+### Step 1: Start The Core Services
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
-```
-
-Check status:
-
-```bash
-docker compose -f docker-compose.yml -f docker-compose.dev.yml ps
-```
-
-Open:
-
-- TCE frontend: `http://localhost:3000`
-- TDMS frontend: `http://localhost:8080`
-- Selenium live browser: `http://localhost:7900`
-
-Stop development stack:
-
-```bash
-docker compose -f docker-compose.yml -f docker-compose.dev.yml down
-```
-
-## Section 3: Run Through CLI (Importer, Execution, Analysis, Report)
-
-Use `app-backend` as the CLI runtime container.
-
-### Step 1: Ensure Core Services Are Running
-
-```bash
-docker compose up -d db selenium-browser interface-manager auth-service tdms-backend app-backend
+docker compose up -d db redis selenium-hub chrome-node interface-manager auth-service tdms-backend app-backend
 ```
 
 ### Step 2: Import Test Data
@@ -227,7 +190,7 @@ docker compose run --rm --no-deps -w /app app-backend \
 python src/app/importer/main.py --config config.json
 ```
 
-### Step 3: Inspect Plans/Metrics (Optional but Recommended)
+### Step 3: Inspect Plans And Metrics (Optional)
 
 ```bash
 docker compose run --rm --no-deps -w /app app-backend \
@@ -239,7 +202,7 @@ docker compose run --rm --no-deps -w /app app-backend \
 python src/app/testcase_executor/main.py --config config.json --get-metrics
 ```
 
-### Step 4: Execute Testcases
+### Step 4: Execute Test Cases
 
 ```bash
 docker compose run --rm --no-deps -w /app app-backend \
@@ -253,64 +216,38 @@ docker compose run --rm --no-deps -w /app app-backend \
 python src/app/response_analyzer/analyze.py --config config.json --run-name <run_name>
 ```
 
-### Step 6: Generate Report
+### Step 6: Generate The Report
 
 ```bash
 docker compose run --rm --no-deps -w /app app-backend \
 python src/app/response_analyzer/report.py --config config.json --run-name <run_name> --get-report
 ```
 
-## Optional: Use Built-In Model Services
+## Stop And Reset
 
-### Full Production Model Profile
-
-Use the `prod` profile to start the production stack with Compose-managed Ollama and Sarvam AI:
-
-```bash
-docker compose --profile prod up -d --build
-```
-
-When using this mode, set model URLs to the Compose service names:
-
-```env
-OLLAMA_URL="http://ollama:11434/"
-GPU_URL="http://sarvam-ai:16000/"
-```
-
-### Sarvam AI Only
-
-If you want Compose-managed Sarvam instead of an external `GPU_URL` endpoint:
-
-```bash
-docker compose --profile sarvam up -d sarvam-ai
-```
-
-Then set:
-
-```env
-GPU_URL="http://sarvam-ai:16000/"
-```
-
-## Shutdown And Reset
-
-Stop all containers:
+Stop everything, keeping data:
 
 ```bash
 docker compose down
 ```
 
-Stop and remove volumes (full reset):
+Stop and delete all data (database, models, logs):
 
 ```bash
 docker compose down -v
 ```
 
-## Final Pre-Run Checklist
+## Pre-Run Checklist
 
-- `.env` created and validated
-- Docker service names used in `config.json`
+- `.env` created, with the model URLs and keys you need
+- port `8100` free, or `NGINX_PORT` set to a free one
+- database passwords changed from the defaults (before the first start)
+- `config.json` uses the Docker service names (`db`, `interface-manager`)
 - remote Selenium enabled in `src/app/interface_manager/config.json`
-- test data files present under `data/`
-- target application details configured correctly
+- `xpaths.json` and `credentials.json` match the targets you will test
+- test data files are present under `data/`
 
-[docker-compose]: ../../docker-compose.yml
+## Development And Multi-Node Setups
+
+- Hot-reload development with separate ports: [Docker Run UI, Development Stack](./docker_run_ui.md#development-stack)
+- Several machines, many users: [Multi-Node Stack](./multi_node_stack.md)
