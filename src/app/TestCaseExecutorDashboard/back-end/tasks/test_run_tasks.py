@@ -234,7 +234,8 @@ async def execute_testcases(
                     run_detail_id=rundetail_id,
                     testcase=testcase.name,
                 )
-                conv_id = db.add_or_update_conversation(conversation=conv)
+                # even if the conversation already exists (continue-run), override it with the new information.
+                conv_id = db.add_or_update_conversation(conversation=conv, override=True)
                 logger.info(f"A new conversation is created with ID: {conv_id}")
 
                 rundetail.status = "RUNNING"
@@ -269,6 +270,7 @@ async def execute_testcases(
                     client.chat,
                     chat_id=testcase.testcase_id,
                     prompt_list=[message_to_agent],
+                    run_id=run_id,
                 )
                 if stop_requested():
                     await finish_aborted_run(rundetail)
@@ -388,6 +390,6 @@ async def execute_testcases(
         set_active_stop_watcher(None)
         if client is not None:
             try:
-                client.close()
+                client.close(run_id=run_id)
             except Exception as close_error:
                 logger.error(f"Client close failed (IM already dead): {close_error}")

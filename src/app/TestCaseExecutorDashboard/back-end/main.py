@@ -116,6 +116,14 @@ app.include_router(analyse_router)
 app.include_router(conversations_router)
 app.include_router(report_router)
 
+
+@app.on_event("startup")
+async def _start_ws_pubsub_listener():
+    # Every replica must run this so WebSocket broadcasts published by
+    # whichever replica is running a background task (test run/analysis)
+    # reach clients connected to this replica too. See services/ws_manager.py.
+    await ws_manager.start_pubsub_listener()
+
 def load_config():
     with open(config_path , "r") as f:
         return json.load(f)
@@ -184,6 +192,10 @@ def get_target_metadata(target_name: str):
         ),
         "languages": target.target_languages or []
     }
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
 
 @app.get("/__dev/config")
 def dev_config():

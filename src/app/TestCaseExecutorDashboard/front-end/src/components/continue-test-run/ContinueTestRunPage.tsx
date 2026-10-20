@@ -72,6 +72,7 @@ const ContinueRunPage: React.FC = () => {
   const [languageOptions, setLanguageOptions] = useState<string[]>([]);
   const [showSeleniumLink, setShowSeleniumLink] = useState(false);
   const [hasContinuedRunStarted, setHasContinuedRunStarted] = useState(false);
+  const [seleniumViewUrl, setSeleniumViewUrl] = useState<string | null>(null);
   useNavigationBlocker(isRunning);
   const wsRef = useRef<WebSocket | null>(null);
   const activeRunIdRef = useRef<string | number | null>(null);
@@ -89,7 +90,7 @@ const ContinueRunPage: React.FC = () => {
 
   const isStartDisabled = !formData.testPlan || isRunning;
   const hasSelectedTestCases = formData.testCaseIds.length > 0;
-  const seleniumHref = "/selenium/";
+  const seleniumHref = seleniumViewUrl || "/selenium/";
   const existingRunTarget = normalizeTargetName(existingRun?.target);
   const selectedTarget = filters?.targets.find(
     (target) => normalizeTargetName(target.filter_name) === existingRunTarget
@@ -99,7 +100,11 @@ const ContinueRunPage: React.FC = () => {
     selectedTargetType === "whatsapp" || selectedTargetType === "webapp";
   const shouldShowSeleniumLink =
     showSeleniumLink && hasContinuedRunStarted && isSeleniumTarget;
-  
+  // Only render the link once a real per-run session URL is resolved —
+  // the static "/selenium/" fallback no longer serves a working viewer,
+  // so never surface it as clickable.
+  const canViewExecution = shouldShowSeleniumLink && Boolean(seleniumViewUrl);
+
 
   const { runName } = useParams();
 
@@ -109,6 +114,49 @@ const ContinueRunPage: React.FC = () => {
     setIsStopping(false);
     activeRunIdRef.current = null;
   }, []);
+
+  useEffect(() => {
+    if (!isRunning || !shouldShowSeleniumLink) {
+      setSeleniumViewUrl(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchViewUrl = async () => {
+      const runId = activeRunIdRef.current;
+      if (runId === null) return;
+
+      try {
+        const res = await fetch(API_ENDPOINTS.GET_EXECUTION_VIEW(runId), {
+          headers: getAuthHeaders(),
+          credentials: "include",
+        });
+
+        if (res.status === 401) {
+          redirectToLogin();
+          return;
+        }
+
+        if (!res.ok) return; // no session running yet for this run — keep polling
+
+        const data = await res.json();
+        if (!cancelled && data?.view_path) {
+          setSeleniumViewUrl(data.view_path);
+        }
+      } catch (err) {
+        console.error("Error fetching Selenium view URL:", err);
+      }
+    };
+
+    fetchViewUrl();
+    const intervalId = window.setInterval(fetchViewUrl, 5000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [isRunning, shouldShowSeleniumLink]);
 
   useEffect(() => {
     const fetchFilters = async () => {
@@ -693,7 +741,7 @@ const ContinueRunPage: React.FC = () => {
                       metricName={formData.metric}
                       testCaseName={formData.testCaseIds.join(", ")}
                       onRunFinished={handleRunFinished}
-                      showTestExecutionLink={shouldShowSeleniumLink}
+                      showTestExecutionLink={canViewExecution}
                       seleniumHref={seleniumHref}
                     />
                   )}

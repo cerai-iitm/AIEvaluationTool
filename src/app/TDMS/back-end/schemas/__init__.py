@@ -62,6 +62,7 @@ from .testcase import (
     TestCaseId,
     TestCaseIds,
     TestCaseListResponse,
+    TestCasePageResponse,
     TestCaseUpdate,
     TestCaseUpdateV2,
 )

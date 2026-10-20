@@ -6,7 +6,7 @@ import { Sidebar } from './components/Sidebar';
 import { DocViewer } from './components/DocViewer';
 import { TableOfContents } from './components/TableOfContents';
 import { SearchBar } from './components/SearchBar';
-import { DOCS_CONFIG, DOC_IDS, DocId, DocSectionId } from './constants/docs';
+import { DOCS_CONFIG, DOC_IDS, DocId, DocSectionId, getDocIdBySlug, getDocSlug } from './constants/docs';
 import aiEvalLogoDark from './assets/ai_eval_logo_dark.png';
 import aiEvalLogoLight from './assets/ai_eval_logo_light.png';
 import ceraiLogo from './assets/cerai-logo.png';
@@ -24,8 +24,11 @@ const createEmptyHeadingsMap = (): Record<DocId, Heading[]> =>
     return map;
   }, {} as Record<DocId, Heading[]>);
 
+// Page opened by the URL hash, e.g. #/docker-setup/run-ui
+const getDocIdFromHash = () => getDocIdBySlug(window.location.hash.replace(/^#\/?/, '').replace(/\/$/, ''));
+
 export default function App() {
-  const [activeDoc, setActiveDoc] = useState<DocId>('overview-home');
+  const [activeDoc, setActiveDoc] = useState<DocId>(() => getDocIdFromHash() ?? 'overview-home');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [content, setContent] = useState<string>('');
@@ -33,7 +36,10 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeHeadingId, setActiveHeadingId] = useState<string | null>(null);
-  const [accordionSectionId, setAccordionSectionId] = useState<DocSectionId | null>(null);
+  const [accordionSectionId, setAccordionSectionId] = useState<DocSectionId | null>(() => {
+    const docId = getDocIdFromHash();
+    return docId ? DOCS_CONFIG[docId].sectionId : null;
+  });
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('theme');
@@ -44,6 +50,8 @@ export default function App() {
   });
   const mainRef = useRef<HTMLDivElement>(null);
   const pendingHeadingRef = useRef<{ docId: DocId; headingId: string } | null>(null);
+  const urlSyncedRef = useRef(false);
+  const ownHashRef = useRef<string | null>(null);
   const activeDocIndex = DOC_IDS.indexOf(activeDoc);
   const previousDocId = activeDocIndex > 0 ? DOC_IDS[activeDocIndex - 1] : null;
   const nextDocId = activeDocIndex < DOC_IDS.length - 1 ? DOC_IDS[activeDocIndex + 1] : null;
@@ -186,10 +194,12 @@ export default function App() {
     setActiveDoc(docId);
   };
 
-  const navigateToDoc = (docId: DocId, options?: { syncSidebarSection?: boolean }) => {
+  const navigateToDoc = (docId: DocId, options?: { syncSidebarSection?: boolean; headingId?: string }) => {
     if (options?.syncSidebarSection) {
       setAccordionSectionId(DOCS_CONFIG[docId].sectionId);
     }
+
+    pendingHeadingRef.current = options?.headingId ? { docId, headingId: options.headingId } : null;
 
     setActiveDoc(docId);
   };
@@ -200,6 +210,41 @@ export default function App() {
 
   useEffect(() => {
     fetchAllHeadings();
+  }, []);
+
+  // Keep the URL (#/section/page) in step with the open page, so each page has its own link.
+  useEffect(() => {
+    const target = `#/${getDocSlug(activeDoc)}`;
+    if (window.location.hash !== target) {
+      if (urlSyncedRef.current) {
+        ownHashRef.current = target;
+        window.location.hash = target; // adds a history entry, so Back returns to the previous page
+      } else {
+        window.history.replaceState(null, '', target); // first load: fix the URL without a history entry
+      }
+    }
+    urlSyncedRef.current = true;
+    document.title = `${DOCS_CONFIG[activeDoc].title} | AI Evaluation Tool Guide`;
+  }, [activeDoc]);
+
+  // Back/Forward and manually edited links change the hash; open the matching page.
+  useEffect(() => {
+    const handleHashChange = () => {
+      if (ownHashRef.current === window.location.hash) {
+        ownHashRef.current = null; // change made by the effect above; the page is already open
+        return;
+      }
+      const docId = getDocIdFromHash();
+      if (!docId) {
+        window.location.replace(`#/${getDocSlug('overview-home')}`); // unknown page: show the overview
+        return;
+      }
+      setActiveDoc(docId);
+      setAccordionSectionId(DOCS_CONFIG[docId].sectionId);
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
   useEffect(() => {
@@ -360,7 +405,7 @@ export default function App() {
                   loading={loading}
                   error={error}
                   onRetry={fetchActiveDoc}
-                  onNavigate={(docId) => navigateToDoc(docId, { syncSidebarSection: true })}
+                  onNavigate={(docId, headingId) => navigateToDoc(docId, { syncSidebarSection: true, headingId })}
                   previousDoc={
                     previousDocId
                       ? {

@@ -117,6 +117,22 @@ const docsConfig = {
     url: buildRawDocUrl('docker_setup/docker_run.md'),
     githubUrl: buildGithubDocUrl('docker_setup/docker_run.md'),
   },
+  'docker-setup-stack': {
+    title: 'Multi-Node Stack',
+    navTitle: 'Multi-Node Stack',
+    path: 'docker_setup/multi_node_stack.md',
+    sectionId: 'docker-setup',
+    url: buildRawDocUrl('docker_setup/multi_node_stack.md'),
+    githubUrl: buildGithubDocUrl('docker_setup/multi_node_stack.md'),
+  },
+  'docker-setup-scaling': {
+    title: 'Scaling And Capacity',
+    navTitle: 'Scaling',
+    path: 'docker_setup/scaling_and_capacity.md',
+    sectionId: 'docker-setup',
+    url: buildRawDocUrl('docker_setup/scaling_and_capacity.md'),
+    githubUrl: buildGithubDocUrl('docker_setup/scaling_and_capacity.md'),
+  },
   'cli-home': {
     title: 'AI Evaluation Tool CLI',
     navTitle: 'Overview',
@@ -195,6 +211,14 @@ const docsConfig = {
     sectionId: 'ui',
     url: buildRawDocUrl('ui/tdms_dashboard_manual.md'),
     githubUrl: buildGithubDocUrl('ui/tdms_dashboard_manual.md'),
+  },
+  'ui-web-app-targets': {
+    title: 'Web App Target Configuration',
+    navTitle: 'Web App Targets',
+    path: 'ui/web_app_target_configuration.md',
+    sectionId: 'ui',
+    url: buildRawDocUrl('ui/web_app_target_configuration.md'),
+    githubUrl: buildGithubDocUrl('ui/web_app_target_configuration.md'),
   },
   'tdms-dashboard-manual-testruns': {
     title: 'Test Runs User Manual',
@@ -280,7 +304,7 @@ export const DOC_SECTIONS: DocSection[] = [
   {
     id: 'docker-setup',
     title: 'Docker Setup',
-    docIds: ['docker-setup-home', 'docker-setup-config', 'docker-setup-gpu', 'docker-setup-run-ui', 'docker-setup-run'],
+    docIds: ['docker-setup-home', 'docker-setup-config', 'docker-setup-gpu', 'docker-setup-run-ui', 'docker-setup-run', 'docker-setup-stack', 'docker-setup-scaling'],
   },
   {
     id: 'ui',
@@ -291,6 +315,7 @@ export const DOC_SECTIONS: DocSection[] = [
       'tdms-dashboard-architecture',
       'tdms-dashboard-auth',
       'tdms-dashboard-manual-tdms',
+      'ui-web-app-targets',
       'tdms-dashboard-manual-testruns',
       'tdms-dashboard-manual-run-config',
       'tdms-dashboard-manual-analysis',
@@ -308,6 +333,19 @@ export const DOC_SECTIONS: DocSection[] = [
 const DOC_ID_BY_PATH = new Map<string, DocId>(
   DOC_IDS.map((docId) => [normalizeDocPath(DOCS_CONFIG[docId].path), docId])
 );
+
+// URL form of a page: "<section>/<page>", e.g. docker-setup/run-ui
+export function getDocSlug(docId: DocId) {
+  const { sectionId } = DOCS_CONFIG[docId];
+  const prefix = `${sectionId}-`;
+  return `${sectionId}/${docId.startsWith(prefix) ? docId.slice(prefix.length) : docId}`;
+}
+
+const DOC_ID_BY_SLUG = new Map<string, DocId>(DOC_IDS.map((docId) => [getDocSlug(docId), docId]));
+
+export function getDocIdBySlug(slug: string) {
+  return DOC_ID_BY_SLUG.get(slug) ?? null;
+}
 
 export function normalizeDocPath(path: string) {
   return path.replace(/^\.?\//, '').replace(/^docs\//, '').replace(/\\/g, '/');

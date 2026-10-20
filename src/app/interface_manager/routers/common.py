@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, Request
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
 from typing import Optional, Dict, Any, List
 from whatsapp import (
@@ -7,6 +8,7 @@ from whatsapp import (
     send_prompt_whatsapp,
     close_whatsapp,
     get_ui_response_whatsapp,
+    get_view_path as get_view_path_whatsapp,
 )
 from webapp import (
     login_webapp,
@@ -14,6 +16,7 @@ from webapp import (
     send_prompt,
     close_webapp,
     get_ui_response_webapp,
+    get_view_path as get_view_path_webapp,
 )
 
 from logger import get_logger
@@ -37,6 +40,7 @@ config_path = os.path.join(os.path.dirname(__file__), "..", "config.json")
 class PromptCreate(BaseModel):
     chat_id: int
     prompt_list: List[str]
+    run_id: Optional[int] = None
     api_context: Optional[Dict[str, Any]] = None
 
 
@@ -112,27 +116,40 @@ def logout():
 @router.post("/chat")
 async def chat(prompt: PromptCreate):
     app_type, app_name = get_app_info()
+    # Pool the browser session by run_id (when provided) so every test
+    # case in a run reuses the same session/node instead of opening a new
+    # one each time — this is what lets a WhatsApp Web login persist for
+    # the whole run instead of needing a fresh QR scan per test case.
+    session_key = str(prompt.run_id) if prompt.run_id is not None else str(prompt.chat_id)
 
     # ------------------------------------------------
-    # WhatsApp Web (unchanged)
+    # WhatsApp Web
     # ------------------------------------------------
     if app_type == "WHATSAPP_WEB":
         logger.info("Chat request: WhatsApp Web")
-        result = send_prompt_whatsapp(
+        # send_prompt_whatsapp is blocking Selenium I/O; run it off the
+        # event loop thread so concurrent /chat requests for different
+        # runs don't serialize behind each other.
+        result = await run_in_threadpool(
+            send_prompt_whatsapp,
             chat_id=prompt.chat_id,
             prompt_list=prompt.prompt_list,
+            session_key=session_key,
         )
         return JSONResponse(content={"response": result})
 
     # ------------------------------------------------
-    # WebApp (unchanged)
+    # WebApp
     # ------------------------------------------------
     if str.upper(app_type) == "WEBAPP":
         logger.info(f"Chat request: WebApp {app_name}")
-        result = send_prompt(
+        # send_prompt is blocking Selenium I/O; same reasoning as above.
+        result = await run_in_threadpool(
+            send_prompt,
             app_name=app_name,
             chat_id=prompt.chat_id,
             prompt_list=prompt.prompt_list,
+            session_key=session_key,
         )
         return JSONResponse(content={"response": result})
 
@@ -151,8 +168,10 @@ async def chat(prompt: PromptCreate):
         # Build runtime context
         ctx = APIRuntimeContext.from_dict(prompt.api_context)
 
-        # Execute API call (this is where logs happen)
-        result = handle_api_chat(
+        # Execute API call (this is where logs happen); blocking network
+        # I/O, so run it off the event loop thread like the other branches.
+        result = await run_in_threadpool(
+            handle_api_chat,
             ctx=ctx,
             payload={
                 "chat_id": prompt.chat_id,
@@ -169,20 +188,53 @@ async def chat(prompt: PromptCreate):
 
 
 # -------------------------------
-# Close
+# View (per-run live VNC path)
 # -------------------------------
-@router.get("/close")
-def close():
+@router.get("/view/{run_id}")
+def view(run_id: str):
+    """
+    Return the noVNC live-view path for the pooled Selenium session
+    belonging to `run_id`, so each run can be watched individually — all
+    test cases in that run share the same session, so this stays stable
+    for the whole run instead of changing between test cases.
+    """
     app_type, app_name = get_app_info()
 
     if app_type == "WHATSAPP_WEB":
-        logger.info("Close request: WhatsApp Web")
-        close_whatsapp()
+        path = get_view_path_whatsapp(run_id)
+    elif str.upper(app_type) == "WEBAPP":
+        path = get_view_path_webapp(run_id)
+    else:
+        return JSONResponse(
+            status_code=400,
+            content={"error": f"No live view available for application type '{app_type}'"},
+        )
+
+    if not path:
+        return JSONResponse(
+            status_code=404,
+            content={"error": f"No active session for run_id={run_id}"},
+        )
+
+    return JSONResponse(content={"run_id": run_id, "view_path": path})
+
+
+# -------------------------------
+# Close
+# -------------------------------
+@router.get("/close")
+def close(run_id: Optional[int] = None):
+    app_type, app_name = get_app_info()
+    session_key = str(run_id) if run_id is not None else "default"
+
+    if app_type == "WHATSAPP_WEB":
+        logger.info(f"Close request: WhatsApp Web (session_key={session_key})")
+        close_whatsapp(session_key=session_key)
         return JSONResponse(content={"message": "WhatsApp Web closed successfully"})
 
     if str.upper(app_type) == "WEBAPP":
-        logger.info(f"Close request: WebApp {app_name}")
-        close_webapp(app_name)
+        logger.info(f"Close request: WebApp {app_name} (session_key={session_key})")
+        close_webapp(app_name, session_key=session_key)
         return JSONResponse(content={"message": f"Closed WebApp {app_name}"})
 
     return JSONResponse(content={"error": "Unsupported application type"})

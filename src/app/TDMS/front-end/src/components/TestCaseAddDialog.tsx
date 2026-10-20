@@ -379,15 +379,21 @@ export const TestCaseAddDialog = ({
           headers["Authorization"] = `Bearer ${token}`;
         }
 
-        // Use the endpoint which returns JSON instead of streaming
-        const response = await fetch(`${API_ENDPOINTS.TESTCASES_V2}`, { headers });
+        const params = new URLSearchParams({
+          limit: "100",
+          offset: "0",
+          search: name,
+          field: "testcase",
+        });
+
+        const response = await fetch(`${API_ENDPOINTS.TESTCASES_V2}?${params.toString()}`, { headers });
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const data = await response.json();
-        const testCases = Array.isArray(data) ? data : [];
+        const testCases = Array.isArray(data) ? data : data.items ?? [];
         
         // Check if any test case has the same name (case-insensitive)
         const nameExists = testCases.some(
@@ -774,7 +780,7 @@ export const TestCaseAddDialog = ({
 
           <div className="space-y-1 pt-1">
             <div className="space-y-1">
-              <Label className="text-base font-semibold">Test Case<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
+              <Label className="text-base font-semibold">Test Case</Label>
               <div className="relative">
                 <Input
                   placeholder="Enter new test case name"
@@ -824,7 +830,7 @@ export const TestCaseAddDialog = ({
                 {/* <Label className="text-base font-semibold">Prompt</Label> */}
               {/* </div> */}
               <div className="space-y-1">
-                <Label className="text-base font-semibold">User Prompt<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
+                <Label className="text-base font-semibold">User Prompt</Label>
                 <div className="relative">
                   <Textarea
                     value={userPrompts}
@@ -865,7 +871,7 @@ export const TestCaseAddDialog = ({
               {showDetails && (
                 <>
                   <div className="space-y-1">
-                    <Label className="text-sm font-semibold">System Prompt<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
+                    <Label className="text-sm font-semibold">System Prompt</Label>
                     <div className="relative">
                       <Textarea
                         value={systemPrompts}
@@ -911,7 +917,7 @@ export const TestCaseAddDialog = ({
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-sm font-semibold">Domain<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
+                      <Label className="text-sm font-semibold">Domain</Label>
                       <Select
                         value={domain}
                         onValueChange={(value) => {
@@ -945,7 +951,7 @@ export const TestCaseAddDialog = ({
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-sm font-semibold">Language<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
+                      <Label className="text-sm font-semibold">Language</Label>
                       <Select
                         value={language}
                         onValueChange={(value) => {
@@ -988,7 +994,7 @@ export const TestCaseAddDialog = ({
            
             <div className="space-y-1 pb-2">
               <div className="space-y-2">
-                <Label className="text-base font-semibold">Response<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
+                <Label className="text-base font-semibold">Response</Label>
                 <div className="relative">
                   <Textarea
                     value={responseText}
@@ -1031,7 +1037,7 @@ export const TestCaseAddDialog = ({
                 <>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-base font-semibold">Response Type<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
+                    <Label className="text-base font-semibold">Response Type</Label>
                     <Select 
                       value={responseType} 
                       onValueChange={(value) => {
@@ -1058,7 +1064,7 @@ export const TestCaseAddDialog = ({
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-base font-semibold">Language<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
+                    <Label className="text-base font-semibold">Language</Label>
                     <Select
                       value={responseLanguage}
                       onValueChange={(value) => {
@@ -1103,7 +1109,7 @@ export const TestCaseAddDialog = ({
             </div>
           
             <div className="space-y-1">
-              <Label className="text-base font-semibold">Strategy<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
+              <Label className="text-base font-semibold">Strategy</Label>
               <Select 
                 value={strategy} 
                 onValueChange={setStrategy}
@@ -1132,7 +1138,7 @@ export const TestCaseAddDialog = ({
 
             {showLLMPrompt && (
               <div className="space-y-2">
-                <Label className="text-base font-semibold">LLM Prompt<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
+                <Label className="text-base font-semibold">LLM Prompt</Label>
                 <div className="relative">
                   <Textarea
                     value={llmPrompt}
@@ -1186,7 +1192,7 @@ export const TestCaseAddDialog = ({
             
 
             <div className="space-y-2">
-              <Label className="text-base font-semibold">Metrics<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
+              <Label className="text-base font-semibold">Metrics</Label>
               <div className="bg-muted p-4 rounded-md max-h-[130px] overflow-y-auto">
                 {isFetchingMetrics ? (
                   <div className="text-sm text-muted-foreground">
@@ -1225,7 +1231,7 @@ export const TestCaseAddDialog = ({
             </div>
 
             <div className="flex justify-center items-center p-2 border-gray-300 bg-white sticky bottom-0 z-10">
-              <Label className="text-base font-semibold mr-2">Notes<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
+              <Label className="text-base font-semibold mr-2">Notes</Label>
               <Input
                 placeholder="Enter Notes"
                 type="text"

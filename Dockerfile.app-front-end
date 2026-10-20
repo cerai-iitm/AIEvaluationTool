@@ -1,3 +1,4 @@
+# check=skip=SecretsUsedInArgOrEnv
 FROM node:20-alpine AS build
 
 WORKDIR /build
@@ -27,6 +28,6 @@ COPY --from=build /build/build /usr/share/nginx/html
 
 EXPOSE 80
 
-HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD wget -q -O /dev/null http://localhost/healthz || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD wget -q -O /dev/null http://127.0.0.1/healthz || exit 1
 
 CMD ["nginx", "-g", "daemon off;"]

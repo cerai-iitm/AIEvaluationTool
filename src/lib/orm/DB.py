@@ -2305,7 +2305,7 @@ class DB:
                        run_name=str(result.run_name),
                        target_id=getattr(result, 'target_id'),
                        start_ts=result.start_ts.isoformat(),
-                       end_ts=result.end_ts.isoformat(),
+                       end_ts=result.end_ts.isoformat() if getattr(result, "end_ts") else None,
                        status=str(result.status),
                        run_id=getattr(result, 'run_id'))
 
@@ -3979,7 +3979,7 @@ class DB:
                                  response_ts=result.response_ts.isoformat() if getattr(result, "response_ts") else None,
                                  evaluation_score=getattr(result, "evaluation_score"),
                                  evaluation_reason=getattr(result, "evaluation_reason"),
-                                 evaluation_ts=getattr(result, "evaluation_ts"),
+                                 evaluation_ts=result.evaluation_ts.isoformat() if getattr(result, "evaluation_ts") else None,
                                  conversation_id=getattr(result, 'conversation_id')) for result in results]
 
     # @BUG. Why is this put here!??

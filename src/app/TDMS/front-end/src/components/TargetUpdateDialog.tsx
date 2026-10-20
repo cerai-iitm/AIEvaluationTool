@@ -651,7 +651,7 @@ export default function TargetUpdateDialog({
               </div>
 
               <div className="space-y-1 pb-4">
-                <Label className="text-base font-semibold">Description<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
+                <Label className="text-base font-semibold">Description</Label>
                 <Textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -662,7 +662,7 @@ export default function TargetUpdateDialog({
               </div>
               <div className="grid gap-4 pb-4 sm:grid-cols-2">
                 <div className="space-y-1 ">
-                  <Label className="text-base font-semibold">Type<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
+                  <Label className="text-base font-semibold">Type</Label>
                   <Select
                     value={type}
                     onValueChange={setType}
@@ -691,7 +691,7 @@ export default function TargetUpdateDialog({
 
 
                 <div className="space-y-1">
-                  <Label className="text-base font-semibold">Domain<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
+                  <Label className="text-base font-semibold">Domain</Label>
                   <Select
                     value={domain}
                     onValueChange={setDomain}
@@ -721,7 +721,7 @@ export default function TargetUpdateDialog({
                 </div>
               </div>
               <div className="space-y-1 pb-4">
-                <Label className="text-base font-semibold">URL<span className="ml-1 text-red-600" aria-hidden="true">*</span></Label>
+                <Label className="text-base font-semibold">URL</Label>
                 <Input
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
@@ -842,7 +842,8 @@ export default function TargetUpdateDialog({
               />
               <Button
                 onClick={handleSubmit}
-                className="bg-gradient-to-b from-lime-400 to-green-700 text-white px-6 py-1 rounded shadow font-semibold border border-green-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                variant="submit"
+                className="px-6"
                 disabled={!hasChanges || !notes.trim() || isLoading || selectedLanguages.length === 0 ||
                   (!hasPermission(currentUserRole, "canUpdateTables") &&
                     !hasPermission(currentUserRole, "canUpdateRecords"))

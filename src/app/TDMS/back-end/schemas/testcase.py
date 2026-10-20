@@ -57,6 +57,13 @@ class TestCaseListResponse(BaseModel):
     metric_name_list: List[str]  # New field for list of metric names
 
 
+class TestCasePageResponse(BaseModel):
+    items: List[TestCaseListResponse]
+    total: int
+    limit: int
+    offset: int
+
+
 class TestCaseDetailResponse(TestCaseListResponse):
     strategy_id: Optional[int] = None
     prompt_id: Optional[int] = None
