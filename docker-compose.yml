@@ -107,7 +107,7 @@ services:
       context: .
       dockerfile: Dockerfile.app-backend
       target: runtime-base
-    image: h1manshuj/aiet-backend:latest
+    image: cerai/aiet-backend:latest
     working_dir: /app/src/app/interface_manager
     command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
     restart: unless-stopped
@@ -137,7 +137,7 @@ services:
       context: .
       dockerfile: Dockerfile.app-backend
       target: runtime-base
-    image: h1manshuj/aiet-backend:latest
+    image: cerai/aiet-backend:latest
     working_dir: /app/src/app/auth_service
     command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7500"]
     restart: unless-stopped
@@ -166,7 +166,7 @@ services:
       context: .
       dockerfile: Dockerfile.app-backend
       target: runtime-base
-    image: h1manshuj/aiet-backend:latest
+    image: cerai/aiet-backend:latest
     working_dir: /app/src/app/TestCaseExecutorDashboard
     command: ["python", "back-end/main.py"]
     restart: unless-stopped
@@ -200,7 +200,7 @@ services:
       context: .
       dockerfile: Dockerfile.app-backend
       target: runtime-base
-    image: h1manshuj/aiet-backend:latest
+    image: cerai/aiet-backend:latest
     working_dir: /app/src/app/sarvam_ai
     command: ["python", "main.py"]
     restart: unless-stopped
@@ -228,7 +228,7 @@ services:
       context: .
       dockerfile: Dockerfile.app-backend
       target: runtime-base
-    image: h1manshuj/aiet-backend:latest
+    image: cerai/aiet-backend:latest
     working_dir: /app/src/app/TDMS/back-end
     command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7250"]
     restart: unless-stopped
@@ -261,7 +261,7 @@ services:
         REACT_APP_TDMS_API_BASE_URL: ${REACT_APP_TDMS_API_BASE_URL:-/tdms-api}
         REACT_APP_TEST_DATA_URL: ${REACT_APP_TEST_DATA_URL:-/tdms/dashboard}
         REACT_APP_USER_LIST_URL: ${REACT_APP_USER_LIST_URL:-/tdms/users}
-    image: h1manshuj/aiet-app-frontend:latest
+    image: cerai/aiet-app-frontend:latest
     container_name: aiet-app-frontend
     restart: unless-stopped
     depends_on:
@@ -278,7 +278,7 @@ services:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/tdms-api}
         VITE_AUTH_SERVICE_URL: ${VITE_AUTH_SERVICE_URL:-/auth}
         VITE_TEST_RUNS_HOME_URL: ${VITE_TEST_RUNS_HOME_URL:-/}
-    image: h1manshuj/aiet-tdms-frontend:latest
+    image: cerai/aiet-tdms-frontend:latest
     container_name: aiet-tdms-frontend
     restart: unless-stopped
     depends_on:
