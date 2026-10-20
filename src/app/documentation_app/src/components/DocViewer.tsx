@@ -508,7 +508,17 @@ export function DocViewer({
 
               if (href.startsWith('#')) {
                 return (
-                  <a href={href} {...props}>
+                  <a
+                    href={href}
+                    {...props}
+                    onClick={(e) => {
+                      // Scroll instead of following the link: changing the hash would replace the page URL.
+                      e.preventDefault();
+                      document
+                        .getElementById(decodeURIComponent(href.slice(1)))
+                        ?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                  >
                     {children}
                   </a>
                 );

@@ -325,6 +325,19 @@ const DOC_ID_BY_PATH = new Map<string, DocId>(
   DOC_IDS.map((docId) => [normalizeDocPath(DOCS_CONFIG[docId].path), docId])
 );
 
+// URL form of a page: "<section>/<page>", e.g. docker-setup/run-ui
+export function getDocSlug(docId: DocId) {
+  const { sectionId } = DOCS_CONFIG[docId];
+  const prefix = `${sectionId}-`;
+  return `${sectionId}/${docId.startsWith(prefix) ? docId.slice(prefix.length) : docId}`;
+}
+
+const DOC_ID_BY_SLUG = new Map<string, DocId>(DOC_IDS.map((docId) => [getDocSlug(docId), docId]));
+
+export function getDocIdBySlug(slug: string) {
+  return DOC_ID_BY_SLUG.get(slug) ?? null;
+}
+
 export function normalizeDocPath(path: string) {
   return path.replace(/^\.?\//, '').replace(/^docs\//, '').replace(/\\/g, '/');
 }
