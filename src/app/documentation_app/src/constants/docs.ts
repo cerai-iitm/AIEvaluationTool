@@ -117,6 +117,22 @@ const docsConfig = {
     url: buildRawDocUrl('docker_setup/docker_run.md'),
     githubUrl: buildGithubDocUrl('docker_setup/docker_run.md'),
   },
+  'docker-setup-stack': {
+    title: 'Multi-Node Stack',
+    navTitle: 'Multi-Node Stack',
+    path: 'docker_setup/multi_node_stack.md',
+    sectionId: 'docker-setup',
+    url: buildRawDocUrl('docker_setup/multi_node_stack.md'),
+    githubUrl: buildGithubDocUrl('docker_setup/multi_node_stack.md'),
+  },
+  'docker-setup-scaling': {
+    title: 'Scaling And Capacity',
+    navTitle: 'Scaling',
+    path: 'docker_setup/scaling_and_capacity.md',
+    sectionId: 'docker-setup',
+    url: buildRawDocUrl('docker_setup/scaling_and_capacity.md'),
+    githubUrl: buildGithubDocUrl('docker_setup/scaling_and_capacity.md'),
+  },
   'cli-home': {
     title: 'AI Evaluation Tool CLI',
     navTitle: 'Overview',
@@ -280,7 +296,7 @@ export const DOC_SECTIONS: DocSection[] = [
   {
     id: 'docker-setup',
     title: 'Docker Setup',
-    docIds: ['docker-setup-home', 'docker-setup-config', 'docker-setup-gpu', 'docker-setup-run-ui', 'docker-setup-run'],
+    docIds: ['docker-setup-home', 'docker-setup-config', 'docker-setup-gpu', 'docker-setup-run-ui', 'docker-setup-run', 'docker-setup-stack', 'docker-setup-scaling'],
   },
   {
     id: 'ui',
