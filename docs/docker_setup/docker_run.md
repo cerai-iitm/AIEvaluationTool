@@ -14,7 +14,7 @@ It is the operational companion to [Setup And Configuration](./setup_and_configu
 From the host machine:
 
 ```bash
-docker compose up -d --build db redis selenium-hub chrome-node interface-manager auth-service tdms-backend app-backend
+docker compose up -d db redis selenium-hub chrome-node interface-manager auth-service tdms-backend app-backend
 ```
 
 Check status:
@@ -90,7 +90,7 @@ docker compose --profile sarvam up -d sarvam-ai
 If you want Compose to start both Ollama and Sarvam AI model services, use the `prod` profile:
 
 ```bash
-docker compose --profile prod up -d --build
+docker compose --profile prod up -d
 ```
 
 With this profile, model endpoints should use Compose service names:

@@ -8,10 +8,10 @@ On a fresh clone, with Docker and Docker Compose installed:
 
 ```bash
 cp .env.example .env            # then edit the values you need
-docker compose up -d --build
+docker compose up -d
 ```
 
-Then open [http://localhost:8100/](http://localhost:8100/) and log in with a default account (for example `admin` / `admin123`). The first build takes about 10 minutes.
+Then open [http://localhost:8100/](http://localhost:8100/) and log in with a default account (for example `admin` / `admin123`). The first start can take about 10 minutes while the images download.
 
 - **Port `8100` is the default and can be changed.** If it is taken, set `NGINX_PORT` in `.env`. See [Changing The Port](./docker_run_ui.md#changing-the-port).
 - Everything is served through that one port. The other services are internal.
@@ -56,7 +56,7 @@ The application is a set of containers defined in [docker-compose.yml](../../doc
 | File | Purpose |
 |---|---|
 | `docker-compose.yml` | the main stack. Publishes only `nginx` (and the live-view ports `7900` to `7924`). |
-| `docker-compose.dev.yml` | development override: hot-reload frontends and published backend ports. Always used **on top of** the main file. |
+| `docker-compose.dev.yml` | standalone development stack: hot-reload frontends, published backend ports, images built locally. Used on its own, without the main file. |
 | `stack-compose.yml` | the same application for a multi-node Docker Swarm. See [Multi-Node Stack](./multi_node_stack.md). |
 
 Profiles for the main file (they add GPU model services):

@@ -15,7 +15,7 @@ From the repository root, after preparing `.env` and the config files in [Setup 
 docker compose up -d
 ```
 
-This starts every service: the database, Redis, the Selenium grid with its browser nodes, the backends, the frontends and `nginx`. The first build usually takes about 10 minutes, depending on network speed and image compilation time.
+This starts every service: the database, Redis, the Selenium grid with its browser nodes, the backends, the frontends and `nginx`. The first start usually takes about 10 minutes, depending on network speed, while the images download.
 
 Check that everything is up:
 
@@ -24,6 +24,22 @@ docker compose ps
 ```
 
 All services should be `running`, and the ones with health checks `healthy`.
+
+## Start With Model Services (Profiles)
+
+By default the application expects the Ollama and Sarvam AI model servers to run elsewhere. To start them in Docker as well (needs an NVIDIA GPU), add a profile. What each profile contains, and the `.env` values to set, are in [Compose Profiles](./setup_and_configuration.md#compose-profiles).
+
+The whole application plus the bundled Ollama and Sarvam AI:
+
+```bash
+docker compose --profile prod up -d
+```
+
+The whole application plus only Sarvam AI, when Ollama is hosted elsewhere:
+
+```bash
+docker compose --profile sarvam up -d
+```
 
 ## Application Addresses
 
@@ -125,20 +141,27 @@ The two landing addresses are set by `TCE_APP_URL` and `TDMS_APP_URL`, described
 
 ## Development Stack
 
-Use this when editing frontend or backend code. It runs the hot-reload dev servers and publishes the backend ports on your machine.
+Use this when editing frontend or backend code. It runs the hot-reload dev servers and publishes the backend ports on your machine. It is a separate, standalone file: it does not need `docker-compose.yml`.
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+docker compose -f docker-compose.dev.yml up -d --build
 ```
 
-`docker-compose.dev.yml` is an override: always pass it **after** `docker-compose.yml` as shown. To avoid retyping, set it once for your shell:
+The development stack builds the application images (`aiet-backend:dev`, `aiet-app-frontend:dev`, `aiet-tdms-frontend:dev`) from your local source and never pulls them from Docker Hub. Only the standard third-party images (MariaDB, Redis, Selenium, nginx) are downloaded. It runs under its own project name, so its containers and data are separate from the production-style stack.
+
+Every command for this stack needs the same `-f` option, for example:
 
 ```bash
-export COMPOSE_FILE=docker-compose.yml:docker-compose.dev.yml
-docker compose up -d --build
+docker compose -f docker-compose.dev.yml ps
+docker compose -f docker-compose.dev.yml logs -f app-backend
+docker compose -f docker-compose.dev.yml down
 ```
 
-On Windows, separate the files with `;` instead of `:`.
+To avoid retyping it, set it once for your shell:
+
+```bash
+export COMPOSE_FILE=docker-compose.dev.yml
+```
 
 In development there is no single entrypoint; each part has its own port:
 
@@ -155,12 +178,12 @@ In development there is no single entrypoint; each part has its own port:
 Differences from the production-style stack:
 
 - The frontends call the backends with absolute `localhost` addresses, and the login redirects point to `3000` and `8080`.
-- The repository is mounted into the backend containers. Restart a backend container to pick up Python changes: `docker compose restart app-backend`.
+- The repository is mounted into the backend containers. Restart a backend container to pick up Python changes: `docker compose -f docker-compose.dev.yml restart app-backend`.
 - Frontend source changes reload in the browser by themselves.
+- Ollama is not included. Set `OLLAMA_URL` in `.env` to a server you run yourself. Sarvam AI is available with `--profile sarvam`.
+- Do not run it together with the production-style stack: both use ports `7900` to `7924` and `8100`. Stop one first, or change the ports.
 - Port clash on `3000`, `8080`, `7000`, `7250`, `7500`, `8000` or `3306`? Change the left-hand number of that port in `docker-compose.dev.yml`. If you change `3000`, `7000`, `7250`, `7500` or `8080`, also update the matching `localhost` addresses in the same file.
-- `nginx` still starts, on port `8100`, but it is not the entrypoint. The only reason to use it in development is the live view: the **View Test Execution** link is a path that only nginx serves. If the link does not show the browser from the dev frontend, copy its path (`/vnc-proxy/...`) and open it on `http://localhost:8100` instead.
-
-Stop and reset work the same as below; pass the same `-f` files, or keep `COMPOSE_FILE` set.
+- `nginx` also starts, on port `8100`, but it is not the entrypoint. Its only use in development is the live view: the **View Test Execution** link is a path that only nginx serves. If the link does not show the browser from the dev frontend, copy its path (`/vnc-proxy/...`) and open it on `http://localhost:8100` instead.
 
 ## Detailed User Manuals
 
@@ -181,6 +204,8 @@ Stops and removes containers; data is kept:
 docker compose down
 ```
 
+For the development stack, add `-f docker-compose.dev.yml`.
+
 ## Reset The Stack (Delete Data)
 
 Also deletes the volumes (database, downloaded models, logs). This cannot be undone:
@@ -191,13 +216,20 @@ docker compose down -v
 
 ## Restarting The Stack
 
-`--build` is not required to start the application. It is only needed when the code has changed. If you have already built the images and nothing changed, start with:
+Start the stack again with the same command. It reuses the images already on your machine, so it starts quickly:
 
 ```bash
 docker compose up -d
 ```
 
-This reuses the existing images, so it starts faster. Add `--build` again after you pull new code, edit the source, or change a frontend build setting (`REACT_APP_*` or `VITE_*`). Without it, Docker keeps running the old images and your changes will not appear.
+To run code you changed locally instead of the published images, build first and then start:
+
+```bash
+docker compose build
+docker compose up -d
+```
+
+The development stack is different: it always runs your own source, so start it with `--build`. See [Development Stack](#development-stack).
 
 ## Troubleshooting
 

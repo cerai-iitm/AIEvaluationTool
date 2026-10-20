@@ -54,20 +54,15 @@ The defaults above come from [stack-compose.yml](../../stack-compose.yml). If yo
 
 ## Images And The Registry
 
-Both compose files name images `${REGISTRY}/aiet-<name>:${TAG}`:
+Both compose files use these images, published in the [`cerai` namespace on Docker Hub](https://hub.docker.com/u/cerai):
 
 | Image | Used by |
 |---|---|
-| `aiet-backend` | `interface-manager`, `auth-service`, `app-backend`, `tdms-backend`, `sarvam-ai` (one shared image; the `command` and `working_dir` of each service choose what runs) |
-| `aiet-app-frontend` | `app-front-end` |
-| `aiet-tdms-frontend` | `tdms-frontend` |
+| `cerai/aiet-backend:latest` | `interface-manager`, `auth-service`, `app-backend`, `tdms-backend`, `sarvam-ai` (one shared image; the `command` and `working_dir` of each service choose what runs) |
+| `cerai/aiet-app-frontend:latest` | `app-front-end` |
+| `cerai/aiet-tdms-frontend:latest` | `tdms-frontend` |
 
-| Variable | Default | Meaning |
-|---|---|---|
-| `REGISTRY` | `h1manshuj` | Docker Hub namespace, or `host:port` of a private registry |
-| `TAG` | `latest` | Image tag |
-
-The default `REGISTRY` is a temporary placeholder and will move to the project's own namespace. To use a different one, set `REGISTRY` in `.env`. Nothing else needs to change.
+To use your own builds or another registry, change the `image:` lines in `stack-compose.yml`. See [step 7](#7-make-the-images-available-to-every-node).
 
 ## Accessing The Application
 
@@ -81,7 +76,7 @@ Swarm's routing mesh opens the nginx port on **every** node, so the application 
 - Two or more machines on the same private network (or VPC), each with Docker Engine 24+.
 - An NVIDIA driver and `nvidia-container-toolkit` on every machine whose GPU you want to use. See [GPU Setup](./gpu_setup.md).
 - Ports **2377/tcp**, **7946/tcp+udp** and **4789/udp** open between the machines (and only between them).
-- A registry that all machines can pull from.
+- Docker Hub access (or your own registry) that all machines can pull from.
 
 Continue with [Swarm Deployment](#swarm-deployment).
 
@@ -104,7 +99,7 @@ Terms used below:
 | 4. Verify the cluster | manager |
 | 5. Label the manager | manager |
 | 6. Set `nvidia` as default runtime | manager (and any GPU worker) |
-| 7. Set up a registry | registry on manager; trust it on both |
+| 7. Make the images available | both (only when using your own registry) |
 | 8. Build and push images | manager |
 | 9. Prepare `.env` and config files | manager |
 | 10. Deploy | manager |
@@ -190,11 +185,17 @@ sudo systemctl restart docker
 
 Do this on every machine that has a GPU you want `ollama` and `sarvam-ai` to use. Install the driver and toolkit first: [GPU Setup](./gpu_setup.md).
 
-### 7. Set Up A Registry
+### 7. Make The Images Available To Every Node
 
 Every node must be able to pull the three images. Choose **one** option.
 
-#### Option A: Private Registry (No Account Needed)
+#### Option A: Use The Published Images (Default)
+
+`stack-compose.yml` pulls the public `cerai/aiet-*` images from [Docker Hub](https://hub.docker.com/u/cerai). Nothing to set up: skip step 8.
+
+#### Option B: Use Your Own Registry
+
+Use this for code changes that are not published yet, or to keep images in your own network. A private registry needs no account.
 
 On the manager:
 
@@ -212,20 +213,14 @@ On **both** machines, add to `/etc/docker/daemon.json`, then restart Docker:
 sudo systemctl restart docker
 ```
 
-Then set `REGISTRY=<manager-private-ip>:5000` in `.env`.
-
-#### Option B: Docker Hub Or Another Public Registry
-
-Run `docker login` on the manager. Nothing else is needed on either machine. Set `REGISTRY=<dockerhub-username>` in `.env`.
-
-If the repository is **private**, the worker must also be able to pull it. Either run `docker login` on the worker too, or deploy with `--with-registry-auth` in step 10.
+Then replace `cerai/` with `<manager-private-ip>:5000/` in the seven `image:` lines of `stack-compose.yml`, and build and push the images in step 8. Your own Docker Hub namespace works the same way: use `<your-username>/` and run `docker login` on the manager. If that repository is private, also add `--with-registry-auth` to the `docker stack deploy` command in step 10.
 
 ### 8. Build And Push Images (Manager)
 
-From the repository root. `REGISTRY` and `TAG` are the same values you will put in `.env`:
+Only needed with Option B, or when publishing new images to Docker Hub. From the repository root, set the registry or namespace you chose and build:
 
 ```bash
-export REGISTRY=<registry-or-dockerhub-username>
+export REGISTRY=<registry-or-namespace>   # for example <manager-private-ip>:5000
 export TAG=latest
 
 docker build -f Dockerfile.app-backend --target runtime-base \
@@ -252,7 +247,7 @@ done
 
 The `--build-arg` values shown are the defaults. They are baked into the frontend images, so changing them means rebuilding and pushing again.
 
-Repeat this step, then step 10, whenever application code changes.
+Repeat this step, then step 10, whenever application code changes. The registry in `stack-compose.yml` must match the one you pushed to.
 
 ### 9. Prepare `.env` And Config Files (Manager)
 
@@ -271,8 +266,6 @@ Optional overrides:
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `REGISTRY` | `h1manshuj` | where images are pulled from (must match step 8) |
-| `TAG` | `latest` | image tag (must match step 8) |
 | `NGINX_PORT` | `8100` | public port on every node |
 | `SELENIUM_NODE_COUNT` | `25` | number of browser nodes |
 | `APP_BACKEND_REPLICAS` | `2` | number of `app-backend` copies |
@@ -296,12 +289,6 @@ set -a
 source .env
 set +a
 docker stack deploy -c stack-compose.yml aiet
-```
-
-For a private Docker Hub repository where the worker is not logged in, add `--with-registry-auth`:
-
-```bash
-docker stack deploy --with-registry-auth -c stack-compose.yml aiet
 ```
 
 ### 11. Verify The Deployment (Manager)
@@ -328,7 +315,7 @@ The stack is named `aiet`, so services are addressed as `aiet_<service>`. Run al
 | Pause one service | `docker service scale aiet_chrome-node=0` |
 | Restart a service (rolling) | `docker service update --force aiet_app-backend` |
 | Roll back a bad update | `docker service rollback aiet_app-backend` |
-| Ship a new image | rebuild and push (step 8), then `docker service update --image $REGISTRY/aiet-backend:$TAG aiet_app-backend` |
+| Ship a new image | rebuild and push (step 8), then `docker service update --image cerai/aiet-backend:latest aiet_app-backend` |
 | Stop everything | `docker stack rm aiet` |
 
 Notes:
@@ -343,7 +330,7 @@ Notes:
 |---|---|
 | Worker shows `Down` in `docker node ls` | UDP 4789 or 7946 blocked, here or in the cloud security group. Recheck step 1. |
 | Task stuck `Pending` | No node matches the placement. Check the `primary` label (step 5) and `docker stack ps aiet --no-trunc`. |
-| `No such image` or pull errors on the worker | The worker cannot reach the registry. Recheck step 7, or deploy with `--with-registry-auth`. |
+| `No such image` or pull errors on the worker | The worker cannot reach the registry (Docker Hub, or your own registry in Option B). Check its internet access and recheck step 7. |
 | 502 from nginx after updating a service | nginx cached the old container address. Run `docker service update --force aiet_nginx`. |
 | Early connection errors in logs on first start | Normal. Swarm does not wait for dependencies; services retry until `db` and the others are ready. |
 | Service starts but config or data is missing | It was scheduled on a node without the bind-mounted files. Keep the `primary` pin, or copy the files (step 9). |

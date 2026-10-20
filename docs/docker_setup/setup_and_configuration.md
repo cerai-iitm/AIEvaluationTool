@@ -3,7 +3,7 @@
 This page takes you from a fresh clone to a running application in Docker, and lists every setting you can change.
 
 - Want to just use the UI? Follow the [Quick Start](#quick-start).
-- Want to run importer, execution, analysis and reports from the command line? See [CLI Workflow](#cli-workflow).
+- Want to run importer, execution, analysis and reports from the command line? See [Docker Run CLI](./docker_run.md).
 - Running on more than one machine? See [Multi-Node Stack](./multi_node_stack.md).
 
 ## Prerequisites
@@ -22,15 +22,15 @@ This page takes you from a fresh clone to a running application in Docker, and l
    cp .env.example .env
    ```
 
-2. **Fill in the values you need** (see [The `.env` File](#environment-file-env)). The model endpoints and API keys depend on which metrics you run.
+2. **Fill in the values you need** (see [Environment File (`.env`)](#environment-file-env)). The model endpoints and API keys depend on which metrics you run.
 
 3. **Start the application:**
 
    ```bash
-   docker compose up -d --build
+   docker compose up -d
    ```
 
-   The first build takes about 10 minutes. This starts every service, including the database, Redis and the Selenium grid with its browser nodes. (Do not start only `nginx`: that skips the browser nodes, so web-target runs would have no browser.)
+   The first start can take about 10 minutes while the images download. This starts every service, including the database, Redis and the Selenium grid with its browser nodes. (Do not start only `nginx`: that skips the browser nodes, so web-target runs would have no browser.)
 
 4. **Check it is healthy:**
 
@@ -70,6 +70,8 @@ Docker Compose reads `.env` in the repository root. It is not committed to git, 
 
 ### Required Settings
 
+Example values; set them for your own servers and keys. `.env.example` leaves the model URLs empty.
+
 ```env
 OLLAMA_URL="http://host.docker.internal:11434/"
 GPU_URL="http://host.docker.internal:16000/"
@@ -100,8 +102,6 @@ Everything below has a default. Set a variable in `.env` only to change it.
 | `NGINX_PORT` | `8100` | public port | `docker compose up -d` |
 | `SELENIUM_NODE_COUNT` | `2` | number of browser nodes (max `25` on one machine) | `docker compose up -d` |
 | `OLLAMA_MODEL` | `qwen3:32b` | model pulled by the bundled Ollama (`--profile prod`) | `docker compose --profile prod up -d` |
-| `REGISTRY` | `h1manshuj` | image name prefix | `docker compose up -d --build` |
-| `TAG` | `latest` | image tag | `docker compose up -d --build` |
 | `MARIADB_ROOT_PASSWORD` | `root_password` | database | see note below |
 | `MARIADB_DATABASE` | `aievaluationtool` | database | see note below |
 | `MARIADB_USER` | `aiet_user` | database | see note below |
@@ -114,7 +114,7 @@ Everything below has a default. Set a variable in `.env` only to change it.
 
 **Database credentials:** MariaDB only reads these on its very first start, when it creates the data volume. Changing them later does nothing until you delete the volume (`docker compose down -v`, which erases all data). The defaults are placeholders: change them before putting real data in, and set them **before** the first start.
 
-**Frontend build settings:** these are baked into the frontend images when they are built. After changing one, rebuild with `docker compose up -d --build`. The defaults are already correct for the standard setup; change them only if you serve the app under different paths.
+**Frontend build settings:** these are baked into the frontend images when they are built, so changing one has no effect on the published images. To apply a change, build the frontends yourself with `docker compose build app-front-end tdms-frontend`, then run `docker compose up -d`. The defaults are already correct for the standard setup; change them only if you serve the app under different paths.
 
 | Variable | Default |
 |---|---|
@@ -141,101 +141,24 @@ Everything below has a default. Set a variable in `.env` only to change it.
 
 ## Compose Profiles
 
-Profiles switch on optional model-serving containers. They need an NVIDIA GPU.
+Profiles switch on optional model-serving containers. They are not started by default and need an NVIDIA GPU.
 
-| Profile | Adds |
-|---|---|
-| `prod` | `ollama`, `ollama-init`, `ollama-warmup` and `sarvam-ai` |
-| `sarvam` | only `sarvam-ai` |
+| Profile | Adds | Use it when |
+|---|---|---|
+| `prod` | `ollama`, `ollama-init`, `ollama-warmup` and `sarvam-ai` | you want the whole application together with the bundled models |
+| `sarvam` | only `sarvam-ai` | Ollama is hosted elsewhere but Sarvam AI should run in Docker |
 
-Run the whole application together with the bundled models:
+With no profile, the application expects both model servers to be reachable at the addresses in `.env`.
 
-```bash
-docker compose --profile prod up -d --build
-```
+Set the model URLs in `.env` to match how you run the models:
 
-Then point the model URLs at the Compose service names in `.env`:
+| Setup | `OLLAMA_URL` | `GPU_URL` |
+|---|---|---|
+| `prod` profile | `http://ollama:11434/` | `http://sarvam-ai:16000/` |
+| `sarvam` profile | your own Ollama server | `http://sarvam-ai:16000/` |
+| No profile | your own Ollama server | your own Sarvam AI server |
 
-```env
-OLLAMA_URL="http://ollama:11434/"
-GPU_URL="http://sarvam-ai:16000/"
-```
-
-Run only Sarvam AI while Ollama is hosted elsewhere:
-
-```bash
-docker compose --profile sarvam up -d sarvam-ai
-```
-
-```env
-GPU_URL="http://sarvam-ai:16000/"
-```
-
-More options, including remote GPU servers: [GPU Setup](./gpu_setup.md).
-
-## CLI Workflow
-
-Use `app-backend` as the CLI container. These commands run from the host with `docker compose run`; for an interactive shell instead, see [Docker Run CLI](./docker_run.md).
-
-### Step 1: Start The Core Services
-
-```bash
-docker compose up -d db redis selenium-hub chrome-node interface-manager auth-service tdms-backend app-backend
-```
-
-### Step 2: Import Test Data
-
-```bash
-docker compose run --rm --no-deps -w /app app-backend \
-python src/app/importer/main.py --config config.json
-```
-
-### Step 3: Inspect Plans And Metrics (Optional)
-
-```bash
-docker compose run --rm --no-deps -w /app app-backend \
-python src/app/testcase_executor/main.py --config config.json --get-plans
-```
-
-```bash
-docker compose run --rm --no-deps -w /app app-backend \
-python src/app/testcase_executor/main.py --config config.json --get-metrics
-```
-
-### Step 4: Execute Test Cases
-
-```bash
-docker compose run --rm --no-deps -w /app app-backend \
-python src/app/testcase_executor/main.py --config config.json --testplan-id <id> --execute
-```
-
-### Step 5: Analyze Responses
-
-```bash
-docker compose run --rm --no-deps -w /app app-backend \
-python src/app/response_analyzer/analyze.py --config config.json --run-name <run_name>
-```
-
-### Step 6: Generate The Report
-
-```bash
-docker compose run --rm --no-deps -w /app app-backend \
-python src/app/response_analyzer/report.py --config config.json --run-name <run_name> --get-report
-```
-
-## Stop And Reset
-
-Stop everything, keeping data:
-
-```bash
-docker compose down
-```
-
-Stop and delete all data (database, models, logs):
-
-```bash
-docker compose down -v
-```
+For how to start the application with a profile, see [Start With Model Services](./docker_run_ui.md#start-with-model-services-profiles). For remote GPU servers and other options, see [GPU Setup](./gpu_setup.md).
 
 ## Pre-Run Checklist
 
@@ -247,7 +170,9 @@ docker compose down -v
 - `xpaths.json` and `credentials.json` match the targets you will test
 - test data files are present under `data/`
 
-## Development And Multi-Node Setups
+## Running And Next Steps
 
+- Start, stop and reset the application: [Docker Run UI](./docker_run_ui.md)
+- Command-line workflow (import, execute, analyze, report): [Docker Run CLI](./docker_run.md)
 - Hot-reload development with separate ports: [Docker Run UI, Development Stack](./docker_run_ui.md#development-stack)
 - Several machines, many users: [Multi-Node Stack](./multi_node_stack.md)
