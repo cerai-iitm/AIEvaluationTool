@@ -286,7 +286,7 @@ class OllamaConnect:
         ollama_client = Client(host=OllamaConnect.ollama_url, timeout=120)
         tries = OllamaConnect.dflt_vals.n_tries
         resp_in_format = []
-        models = OllamaConnect.dflt_vals.model_names if model_names is None else model_names
+        models = [os.getenv("LLM_AS_JUDGE_MODEL")] if model_names is None else model_names
         while(resp_in_format == [] and tries > 0):
             for model in models:
                 try:

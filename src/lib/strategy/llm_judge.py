@@ -18,7 +18,7 @@ class LLMJudgeStrategy(Strategy):
         super().__init__(name=name)
         
         self.metric_name = kwargs.get("metric_name", dflt_vals.metric_name)
-        self.model_names = dflt_vals.model_names #os.getenv("LLM_AS_JUDGE_MODEL")
+        self.model_names = [m for m in [os.getenv("LLM_AS_JUDGE_MODEL")] if m]
         self.base_url = os.getenv("OLLAMA_URL")
         self.models = [CustomOllamaModel(model_name=model_name, url=self.base_url) for model_name in self.model_names]
         self.eval_type = name.split("_")[-1] if len(name.split("_")) > 2 else dflt_vals.eval_type
