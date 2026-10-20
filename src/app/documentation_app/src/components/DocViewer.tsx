@@ -18,7 +18,7 @@ interface DocViewerProps {
   loading: boolean;
   error: string | null;
   onRetry: () => void;
-  onNavigate: (docId: DocId) => void;
+  onNavigate: (docId: DocId, headingId?: string) => void;
   previousDoc: { id: DocId; title: string } | null;
   nextDoc: { id: DocId; title: string } | null;
 }
@@ -508,7 +508,17 @@ export function DocViewer({
 
               if (href.startsWith('#')) {
                 return (
-                  <a href={href} {...props}>
+                  <a
+                    href={href}
+                    {...props}
+                    onClick={(e) => {
+                      // Scroll instead of following the link: changing the hash would replace the page URL.
+                      e.preventDefault();
+                      document
+                        .getElementById(decodeURIComponent(href.slice(1)))
+                        ?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                  >
                     {children}
                   </a>
                 );
@@ -529,7 +539,8 @@ export function DocViewer({
                 return (
                   <button
                     type="button"
-                    onClick={() => onNavigate(targetDocId)}
+                    // keep the heading of links like page.md#heading, so the target page scrolls to it
+                    onClick={() => onNavigate(targetDocId, decodeURIComponent(href.split('#')[1] ?? '') || undefined)}
                     className="cursor-pointer font-medium text-primary hover:underline"
                   >
                     {children}

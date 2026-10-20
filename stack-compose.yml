@@ -1,17 +1,17 @@
 # Swarm-compatible stack file for AIEvaluationTool.
 #
-# Deploy with (from the manager node, after Step 4/5 in docker_stack.md):
+# Deploy with (from the manager node, see docs/docker_setup/multi_node_stack.md):
 #   docker stack deploy -c stack-compose.yml aiet
 #
 # Not meant for `docker compose up` — use the root docker-compose.yml for
 # that. Differences from docker-compose.yml, and why, are explained in
-# docker_stack.md's Model 2 section.
+# docs/docker_setup/multi_node_stack.md.
 #
 # Requires a `.env` file in this directory (same keys as .env.example) —
 # the ${VAR} references below are resolved by the Docker CLI from it before
 # the stack is sent to the daemon, the same way docker compose does.
 #
-# Node labels this file assumes (see docker_stack.md Step 4):
+# Node labels this file assumes (see docs/docker_setup/multi_node_stack.md):
 #   docker node update --label-add primary=true <manager-hostname>
 # Everything with real state (the database, bind-mounted config files, the
 # GPU) is pinned to that one "primary" node with `node.labels.primary ==
@@ -24,7 +24,7 @@
 # plain YAML anchor/merge, resolved by the Docker CLI before the file is
 # interpreted as Compose config, so it works with `docker stack deploy`
 # the same as it would with `docker compose` — unlike `env_file:`, which
-# stack deploy doesn't support at all (see docker_stack.md Section 2).
+# stack deploy doesn't support at all (see docs/docker_setup/multi_node_stack.md).
 x-common-env: &common-env
   OLLAMA_URL: ${OLLAMA_URL}
   GPU_URL: ${GPU_URL}
@@ -126,10 +126,10 @@ services:
       OLLAMA_NUM_PARALLEL: "20"
       OLLAMA_CONTEXT_LENGTH: "4096"
       # Swarm rejects the modern `deploy.resources.reservations.devices`
-      # GPU syntax outright (see docker_stack.md Section 1.2), so GPU
+      # GPU syntax outright (see docs/docker_setup/multi_node_stack.md), so GPU
       # access here relies on the legacy nvidia-container-runtime path:
-      # `default-runtime: nvidia` in the primary node's daemon.json (Part
-      # 2, Task 6) makes every container use that runtime, but the
+      # `default-runtime: nvidia` in the primary node's daemon.json (step 6 in
+      # the multi-node guide) makes every container use that runtime, but the
       # runtime's hook only actually attaches a GPU if these two env vars
       # are present — without them it's a silent no-op, not an error.
       NVIDIA_VISIBLE_DEVICES: all
@@ -173,7 +173,9 @@ services:
   #       condition: none
 
   interface-manager:
-    image: ${REGISTRY:-localhost:5000}/aiet-interface-manager:${TAG:-latest}
+    image: cerai/aiet-backend:latest
+    working_dir: /app/src/app/interface_manager
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
@@ -203,7 +205,9 @@ services:
         constraints: [node.labels.primary == true]   # owns xpaths.json/credentials.json bind mounts
 
   auth-service:
-    image: ${REGISTRY:-localhost:5000}/aiet-auth-service:${TAG:-latest}
+    image: cerai/aiet-backend:latest
+    working_dir: /app/src/app/auth_service
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7500"]
     depends_on:
       - db
     expose:
@@ -229,7 +233,9 @@ services:
         constraints: [node.labels.primary == true]   # owns ./data bind mount
 
   app-backend:
-    image: ${REGISTRY:-localhost:5000}/aiet-app-backend:${TAG:-latest}
+    image: cerai/aiet-backend:latest
+    working_dir: /app/src/app/TestCaseExecutorDashboard
+    command: ["python", "back-end/main.py"]
     depends_on:
       - interface-manager
       - redis
@@ -257,7 +263,7 @@ services:
     deploy:
       # pinned to the same node as interface-manager/config.json (bind
       # mounts + the interface_manager_logs volume are node-local) — see
-      # docker_stack.md for what it'd take to free this up across nodes
+      # docs/docker_setup/multi_node_stack.md for what it'd take to free this up across nodes
       replicas: ${APP_BACKEND_REPLICAS:-2}
       restart_policy:
         condition: any
@@ -265,7 +271,9 @@ services:
         constraints: [node.labels.primary == true]
 
   sarvam-ai:
-    image: ${REGISTRY:-localhost:5000}/aiet-sarvam-ai:${TAG:-latest}
+    image: cerai/aiet-backend:latest
+    working_dir: /app/src/app/sarvam_ai
+    command: ["python", "main.py"]
     expose:
       - "16000"
     environment:
@@ -286,7 +294,9 @@ services:
       #     - spread: node.id
 
   tdms-backend:
-    image: ${REGISTRY:-localhost:5000}/aiet-tdms-backend:${TAG:-latest}
+    image: cerai/aiet-backend:latest
+    working_dir: /app/src/app/TDMS/back-end
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7250"]
     depends_on:
       - auth-service
     expose:
@@ -311,7 +321,7 @@ services:
         constraints: [node.labels.primary == true]   # owns ./data, xpaths.json, credentials.json bind mounts
 
   app-front-end:
-    image: ${REGISTRY:-localhost:5000}/aiet-app-frontend:${TAG:-latest}
+    image: cerai/aiet-app-frontend:latest
     depends_on:
       - app-backend
       - auth-service
@@ -321,7 +331,7 @@ services:
         condition: any
 
   tdms-frontend:
-    image: ${REGISTRY:-localhost:5000}/aiet-tdms-frontend:${TAG:-latest}
+    image: cerai/aiet-tdms-frontend:latest
     depends_on:
       - tdms-backend
       - auth-service

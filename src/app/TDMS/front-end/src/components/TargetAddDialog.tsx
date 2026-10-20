@@ -874,7 +874,8 @@ export default function TargetAddDialog({
                 />
 
                 <Button
-                  className="bg-accent hover:bg-accent/90 text-accent-foreground px-8"
+                  variant="submit"
+                  className="px-8"
                   onClick={handleSubmit}
                   disabled={!canSubmit || isSubmitting}
                 >

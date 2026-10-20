@@ -14,7 +14,7 @@ It is the operational companion to [Setup And Configuration](./setup_and_configu
 From the host machine:
 
 ```bash
-docker compose up -d --build db selenium-browser interface-manager auth-service tdms-backend app-backend
+docker compose up -d db redis selenium-hub chrome-node interface-manager auth-service tdms-backend app-backend
 ```
 
 Check status:
@@ -23,21 +23,17 @@ Check status:
 docker compose ps
 ```
 
-## Open Bash In `app-backend`
+## Open A Shell In `app-backend`
 
 From the host machine:
-
-```bash
-docker exec -it aiet-app-backend bash
-```
-
-If you prefer Compose service names, use:
 
 ```bash
 docker compose exec app-backend bash
 ```
 
-## Run CLI Commands Inside Container
+Use the service name (`app-backend`), not a container name: Compose names containers after the folder the repository is in (for example `aievaluationtool-app-backend-1`), so a fixed name will not match.
+
+## Run CLI Commands Inside The Container
 
 All commands below are run inside the container shell.
 
@@ -47,7 +43,7 @@ All commands below are run inside the container shell.
 python src/app/importer/main.py --config config.json
 ```
 
-## Inspect Plans / Metrics (Optional)
+## Inspect Plans And Metrics (Optional)
 
 ```bash
 python src/app/testcase_executor/main.py --config config.json --get-plans
@@ -57,7 +53,7 @@ python src/app/testcase_executor/main.py --config config.json --get-plans
 python src/app/testcase_executor/main.py --config config.json --get-metrics
 ```
 
-## Execute Testcases
+## Execute Test Cases
 
 ```bash
 python src/app/testcase_executor/main.py --config config.json --testplan-id <id> --execute
@@ -81,7 +77,7 @@ For UI-side run monitoring and result interpretation, refer to:
 - [Run Configuration Manual](../ui/run_configuration_manual.md)
 - [Analysis And Run Details Manual](../ui/analysis_and_run_details_manual.md)
 
-## Optional: Start Sarvam Service
+## Optional: Start The Sarvam AI Service
 
 From the host machine:
 
@@ -94,7 +90,7 @@ docker compose --profile sarvam up -d sarvam-ai
 If you want Compose to start both Ollama and Sarvam AI model services, use the `prod` profile:
 
 ```bash
-docker compose --profile prod up -d --build
+docker compose --profile prod up -d
 ```
 
 With this profile, model endpoints should use Compose service names:
@@ -104,7 +100,7 @@ OLLAMA_URL="http://ollama:11434/"
 GPU_URL="http://sarvam-ai:16000/"
 ```
 
-## Exit Container Shell
+## Exit The Container Shell
 
 ```bash
 exit
@@ -118,7 +114,7 @@ From the host machine:
 docker compose down
 ```
 
-## Full Reset
+## Reset The Stack (Delete Data)
 
 From the host machine:
 
@@ -136,12 +132,12 @@ docker system prune -a --volumes
 
 ## Troubleshooting
 
-- If `docker exec -it aiet-app-backend bash` fails, run `docker ps` and confirm the container name.
+- If `docker compose exec app-backend bash` fails with "service is not running", start it first (see "Start Required Services").
 - If DB connection fails, verify `db.host` is `db` in `config.json`.
-- If browser-backed execution fails, verify `selenium_mode: "remote"` and `selenium_remote_url: "http://selenium-browser:4444/wd/hub"` in `src/app/interface_manager/config.json`.
+- If browser-backed execution fails, verify `selenium_mode: "remote"` and `selenium_remote_url: "http://selenium-hub:4444/wd/hub"` in `src/app/interface_manager/config.json`.
 
 Recreate core services:
 
 ```bash
-docker compose up -d --force-recreate db selenium-browser interface-manager auth-service tdms-backend app-backend app-front-end tdms-frontend nginx
+docker compose up -d --force-recreate db redis selenium-hub chrome-node interface-manager auth-service tdms-backend app-backend app-front-end tdms-frontend nginx
 ```

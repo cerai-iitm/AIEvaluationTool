@@ -28,7 +28,7 @@ Use the `prod` profile when you want Docker Compose to start the production mode
 - `sarvam-ai`
 
 ```bash
-docker compose --profile prod up -d --build
+docker compose --profile prod up -d
 ```
 
 For this mode, use Compose service names in `.env`:

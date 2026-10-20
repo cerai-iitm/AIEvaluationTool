@@ -813,9 +813,332 @@ def handle_bodhan_ai(driver, prompt):
 
 
 APP_HANDLERS = {
-    "farmerchat": handle_farmerchat,
-    "bodhan-ai": handle_bodhan_ai
+    # "farmerchat": handle_farmerchat,
+    # "bodhan-ai": handle_bodhan_ai
 }
+
+# --------------------------------------------------------------------
+# Generic Web App Handler
+# --------------------------------------------------------------------
+# Any target added through the TDMS UI (with only xpaths.json /
+# credentials.json config, no Python code) is driven by this handler.
+# It picks a response-capture strategy purely from which optional
+# ChatPage keys the operator filled in — no per-app branching by name:
+#
+#   shadow_root_element                         -> shadow-DOM mode
+#   message_in_element + message_out_element    -> bubble/turn mode
+#   (otherwise, just agent_response_element)     -> stabilize-poll mode
+#
+# Submission always uses Enter unless the ChatPage config sets
+# 'submit_via_click': true, in which case send_button_element is
+# clicked instead. Enter is the default because every known-working
+# config already declares a send_button_element that is NOT meant for
+# submission (e.g. it can double as a mic/record toggle).
+#
+# APP_HANDLERS above still takes priority for apps that need bespoke
+# JS/DOM handling beyond what selectors can express; this is the
+# fallback for everything else.
+
+def _clear_prompt_input(element):
+    """Select-all + delete works for both <textarea>/<input> and
+    contenteditable inputs, so no per-app branching is needed."""
+    element.click()
+    element.send_keys(Keys.CONTROL, "a")
+    element.send_keys(Keys.DELETE)
+
+
+def _submit_prompt(driver, element, send_selector: str | None, submit_via_click: bool = False):
+    """Submit with Enter by default — this matches every known-working
+    app (both bodhan-ai and farmerchat configure a send_button_element
+    but never click it, since it can double as e.g. a mic/record toggle
+    that only shows a send icon once text is present). Only click the
+    configured send button when the target explicitly opts in via
+    'submit_via_click': true in its ChatPage config."""
+    if submit_via_click and send_selector and safe_click(driver, send_selector, retries=2, wait_time=5):
+        return
+    element.send_keys(Keys.RETURN)
+
+
+def _generic_stabilize_response(driver, prompt, cfg):
+    """
+    Default mode: capture the response region's text before sending,
+    wait for it to change, then wait until it stops changing.
+    Mirrors handle_bodhan_ai, parametrized from config.
+    """
+    prompt_selector = cfg["prompt_input_box_element"]
+    response_selector = cfg["agent_response_element"]
+    send_selector = cfg.get("send_button_element")
+    submit_via_click = cfg.get("submit_via_click", False)
+
+    prompt_by = get_selector_type(prompt_selector)
+    response_by = get_selector_type(response_selector)
+
+    timeout = cfg.get("response_timeout", 120)
+    stable_time = cfg.get("response_stable_time", 2)
+    poll_interval = cfg.get("response_poll_interval", 0.5)
+    stable_cycles_required = max(1, int(stable_time / poll_interval))
+
+    wait = WebDriverWait(driver, 30)
+
+    def get_input():
+        return wait.until(EC.element_to_be_clickable((prompt_by, prompt_selector)))
+
+    def get_response_text():
+        elements = driver.find_elements(response_by, response_selector)
+        return "\n".join(e.text.strip() for e in elements if e.text.strip())
+
+    previous_response = get_response_text()
+
+    for _ in range(3):
+        try:
+            element = get_input()
+            _clear_prompt_input(element)
+
+            element = get_input()
+            smart_send_text(driver, element, prompt)
+
+            element = get_input()
+            _submit_prompt(driver, element, send_selector, submit_via_click)
+            break
+        except StaleElementReferenceException:
+            time.sleep(0.5)
+    else:
+        raise RuntimeError("Prompt input became stale repeatedly.")
+
+    try:
+        wait.until(lambda d: get_response_text() != previous_response)
+    except TimeoutException:
+        raise RuntimeError("No response received.")
+
+    last_text = ""
+    stable_count = 0
+    deadline = time.time() + timeout
+
+    while time.time() < deadline:
+        try:
+            current_text = get_response_text()
+
+            if current_text == last_text and current_text:
+                stable_count += 1
+            else:
+                stable_count = 0
+                last_text = current_text
+
+            if stable_count >= stable_cycles_required:
+                break
+
+            time.sleep(poll_interval)
+        except StaleElementReferenceException:
+            continue
+
+    return {
+        "type": "text",
+        "content": last_text.strip()
+    }
+
+
+def _generic_shadow_response(driver, prompt, cfg):
+    """
+    Shadow-DOM mode: element lookups go through host.shadowRoot via JS
+    (CSS selectors only, same as farmerchat's config already uses).
+    Mirrors handle_farmerchat, parametrized from config.
+    """
+    iframe_selector = cfg["shadow_root_element"]
+    textarea_selector = cfg["prompt_input_box_element"]
+    response_selector = cfg["agent_response_element"]
+    send_selector = cfg.get("send_button_element")
+    submit_via_click = cfg.get("submit_via_click", False)
+
+    pre_send_wait = cfg.get("pre_send_wait", 30)
+    stable_time = cfg.get("response_stable_time", 10)
+    timeout = cfg.get("response_timeout", 60)
+    poll_interval = cfg.get("response_poll_interval", 0.5)
+
+    shadow_host = get_shadow_host(driver, iframe_selector)
+
+    textarea = driver.execute_script("""
+        const host = arguments[0];
+        return host.shadowRoot.querySelector(arguments[1]);
+    """, shadow_host, textarea_selector)
+
+    if not textarea:
+        raise RuntimeError("Prompt input box not found in shadow root")
+
+    textarea.send_keys(Keys.CONTROL, "a")
+    textarea.send_keys(Keys.DELETE)
+
+    initial_count = driver.execute_script("""
+        const host = arguments[0];
+        return host.shadowRoot.querySelectorAll(arguments[1]).length;
+    """, shadow_host, response_selector)
+
+    smart_send_text(driver, textarea, prompt)
+
+    sent = False
+    if submit_via_click and send_selector:
+        send_btn = driver.execute_script("""
+            const host = arguments[0];
+            return host.shadowRoot.querySelector(arguments[1]);
+        """, shadow_host, send_selector)
+        if send_btn:
+            send_btn.click()
+            sent = True
+    if not sent:
+        textarea.send_keys(Keys.RETURN)
+
+    if pre_send_wait:
+        time.sleep(pre_send_wait)
+
+    text = wait_for_new_shadow_text(
+        driver, shadow_host, response_selector, initial_count,
+        timeout=timeout, stable_time=stable_time, poll_interval=poll_interval
+    )
+
+    return {
+        "type": "text",
+        "content": text
+    }
+
+
+def _generic_bubble_response(driver, prompt, cfg):
+    """
+    Turn/bubble mode: for apps that render each message as its own
+    element (message_in_element / message_out_element), find the last
+    outgoing bubble and read everything that appears after it.
+    Mirrors send_message_whatsapp, parametrized from config.
+    """
+    prompt_selector = cfg["prompt_input_box_element"]
+    message_in = cfg["message_in_element"]
+    message_out = cfg["message_out_element"]
+    response_selector = cfg.get("agent_response_element")
+    send_selector = cfg.get("send_button_element")
+    submit_via_click = cfg.get("submit_via_click", False)
+
+    if get_selector_type(message_in) != By.XPATH or get_selector_type(message_out) != By.XPATH:
+        raise RuntimeError(
+            "Bubble/turn mode requires XPath selectors for "
+            "message_in_element and message_out_element."
+        )
+
+    prompt_by = get_selector_type(prompt_selector)
+
+    timeout = cfg.get("response_timeout", 60)
+    stable_time = cfg.get("response_stable_time", 8)
+    poll_interval = cfg.get("response_poll_interval", 2)
+    stable_cycles_required = max(1, int(stable_time / poll_interval))
+
+    message_box = WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((prompt_by, prompt_selector))
+    )
+    _clear_prompt_input(message_box)
+    smart_send_text(driver, message_box, prompt)
+    _submit_prompt(driver, message_box, send_selector, submit_via_click)
+
+    last_seen_response = ""
+    last_seen_count = -1
+    stable_count = 0
+    deadline = time.time() + timeout
+
+    while time.time() < deadline:
+        time.sleep(poll_interval)
+
+        try:
+            all_messages = WebDriverWait(driver, 30).until(
+                EC.presence_of_all_elements_located(
+                    (By.XPATH, f"{message_in} | {message_out}")
+                )
+            )
+        except TimeoutException:
+            continue
+
+        outgoing_msgs = driver.find_elements(By.XPATH, message_out)
+        if not outgoing_msgs:
+            continue
+
+        last_outgoing = outgoing_msgs[-1]
+        try:
+            last_index = max(
+                i for i, msg in enumerate(all_messages) if msg == last_outgoing
+            )
+        except ValueError:
+            continue
+
+        responses = all_messages[last_index + 1:]
+
+        response_texts = []
+        for msg in responses:
+            try:
+                text = ""
+                if response_selector:
+                    text_elems = msg.find_elements(By.XPATH, response_selector)
+                    text = "\n".join(e.text.strip() for e in text_elems if e.text.strip())
+                if not text:
+                    text = msg.text.strip()
+                if text:
+                    response_texts.append(text)
+            except Exception:
+                continue
+
+        full_text = "\n".join(response_texts)
+        current_count = len(response_texts)
+
+        if full_text == last_seen_response and current_count == last_seen_count:
+            stable_count += 1
+        else:
+            stable_count = 0
+            last_seen_response = full_text
+            last_seen_count = current_count
+
+        if full_text and stable_count >= stable_cycles_required:
+            return {"type": "text", "content": full_text}
+
+    if last_seen_response:
+        return {"type": "text", "content": last_seen_response}
+
+    return {"type": "text", "content": "No response received"}
+
+
+def handle_generic_webapp(driver, prompt, app_name):
+    """
+    Config-only handler for any WebApp target added through TDMS.
+    Selects a response-capture strategy from the ChatPage keys present
+    for `app_name` in xpaths.json — no code changes needed per target.
+    """
+    apps = load_xpaths().get("applications", {})
+    app_cfg = apps.get(app_name.lower())
+    if not app_cfg:
+        raise RuntimeError(
+            f"No xpaths.json entry for '{app_name}'. Add it as a target in TDMS."
+        )
+
+    cfg = app_cfg.get("ChatPage")
+    if not cfg:
+        raise RuntimeError(
+            f"'{app_name}' has no ChatPage configuration. Add it via the TDMS target editor."
+        )
+
+    if not cfg.get("prompt_input_box_element"):
+        raise RuntimeError(
+            f"'{app_name}' ChatPage config is missing 'prompt_input_box_element'."
+        )
+
+    if cfg.get("shadow_root_element"):
+        if not cfg.get("agent_response_element"):
+            raise RuntimeError(
+                f"'{app_name}' ChatPage config is missing 'agent_response_element'."
+            )
+        return _generic_shadow_response(driver, prompt, cfg)
+
+    if cfg.get("message_in_element") and cfg.get("message_out_element"):
+        return _generic_bubble_response(driver, prompt, cfg)
+
+    if not cfg.get("agent_response_element"):
+        raise RuntimeError(
+            f"'{app_name}' ChatPage config is missing 'agent_response_element'."
+        )
+
+    return _generic_stabilize_response(driver, prompt, cfg)
+
 
 # Sending Message to Web applications
 def send_message_webapp(
@@ -828,10 +1151,6 @@ def send_message_webapp(
     app = app_name.lower()
     handler = APP_HANDLERS.get(app)
 
-    if not handler:
-        raise ValueError(f"Unsupported application: {app}")
-
-
     for attempt in range(1, max_retries + 1):
 
         try:
@@ -840,8 +1159,10 @@ def send_message_webapp(
                     "type": "error",
                     "content": "No internet connection"
                 }
-            
-            return handler(driver, prompt)
+
+            if handler:
+                return handler(driver, prompt)
+            return handle_generic_webapp(driver, prompt, app)
 
         except Exception as e:
 

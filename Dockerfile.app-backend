@@ -45,30 +45,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY --from=builder /opt/venv /opt/venv
 COPY . /app
-
-FROM runtime-base AS app-backend
 COPY src/lib/strategy/.env.example /app/src/lib/strategy/.env
-WORKDIR /app/src/app/TestCaseExecutorDashboard
-EXPOSE 7000
-CMD [ "python", "back-end/main.py" ]
-# CMD ["uvicorn", "back-end.main:app", "--host", "0.0.0.0", "--port", "7000"]
 
-FROM runtime-base AS tdms-backend
-WORKDIR /app/src/app/TDMS/back-end
-EXPOSE 7250
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7250"]
-
-FROM runtime-base AS interface-manager
-WORKDIR /app/src/app/interface_manager
-EXPOSE 8000
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
-
-FROM runtime-base AS auth-service
-WORKDIR /app/src/app/auth_service
-EXPOSE 7500
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7500"]
-
-FROM runtime-base AS sarvam-ai
-WORKDIR /app/src/app/sarvam_ai
-EXPOSE 16000
-CMD ["python", "main.py"]
+# Single shared image for all 5 backend services (app-backend, tdms-backend,
+# interface-manager, auth-service, sarvam-ai) — they were always built from
+# this exact same runtime-base (same requirements.txt, same venv, same
+# `COPY . /app`), so 5 separate target images never bought anything besides
+# 5x the build/push/pull work. Which service runs is now selected entirely
+# in docker-compose.yml / stack-compose.yml via `working_dir:` + `command:`
+# per service, not by which Dockerfile target was built.
+EXPOSE 7000 7250 8000 7500 16000

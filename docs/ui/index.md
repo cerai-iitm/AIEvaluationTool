@@ -4,7 +4,6 @@ This section documents the full application UI: TDMS (Test Data Management Syste
 
 TDMS is used to curate and manage evaluation data. The dashboard is used to execute runs, monitor progress, and review analysis outputs.
 
-
 ## What This Section Covers
 
 - end-to-end local setup for TDMS, dashboard, auth service, and interface manager
@@ -12,6 +11,7 @@ TDMS is used to curate and manage evaluation data. The dashboard is used to exec
 - system architecture and component responsibilities
 - authentication flow and role-based access
 - TDMS module usage and dashboard run workflows
+- configuring WhatsApp and web app targets (selectors and login)
 - key API endpoints and troubleshooting guidance
 
 ## Chapters
@@ -20,6 +20,7 @@ TDMS is used to curate and manage evaluation data. The dashboard is used to exec
 - [Architecture And Components](./architecture_and_components.md)
 - [Authentication And Roles](./authentication_and_roles.md)
 - [TDMS Dashboard Manual](./tdms_dashboard_manual.md)
+- [Web App Target Configuration](./web_app_target_configuration.md)
 - [Test Runs Manual](./test_runs_manual.md)
 - [Run Configuration Manual](./run_configuration_manual.md)
 - [Analysis And Run Details Manual](./analysis_and_run_details_manual.md)

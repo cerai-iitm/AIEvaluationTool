@@ -387,7 +387,8 @@ export const ResponseUpdateDialog = ({
               />
 
               <Button
-                className="bg-accent hover:bg-accent/90 ml-4 text-accent-foreground px-8"
+                variant="submit"
+                className="ml-4 px-8"
                 onClick={handleSubmit}
                 disabled={!isChanged || !notes.trim() || !arePromptsNonEmpty || !language || isLoading}
               >

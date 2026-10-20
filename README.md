@@ -1,88 +1,53 @@
-# Conversational AI Evaluation Tool - v2.0.1
+# Conversational AI Evaluation Tool - v2.1.0
 
-## 1. Overview
+AI Evaluation Tool is an end-to-end platform for evaluating conversational AI agents, whether they are reached through an API, a website chat, or WhatsApp. It runs curated test cases against an agent, scores the responses with automatic metrics and an LLM judge, and produces reports.
 
-AIEvaluationTool is an end-to-end platform for evaluating conversational AI systems across API, web, and WhatsApp-style interfaces.
+It is developed at the [Centre for Responsible AI (CeRAI), IIT Madras](https://cerai.iitm.ac.in/).
 
-It combines:
+The tool has three parts:
 
-- **TDMS** for managing test data (test cases, plans, prompts, strategies)
-- **Test Case Execution Dashboard** for running evaluations, tracking runs, and reviewing results
-- **CLI workflow** for importer, execution, analysis, and report generation
+- **TDMS** (Test Data Management System) to manage test data: test cases, plans, prompts, strategies, and targets
+- **Test Case Execution Dashboard** to run evaluations, follow them live, and review results and reports
+- **CLI** to run import, execution, analysis, and reporting from the command line
 
-For full details, refer to the [official documentation](https://cerai-iitm.github.io/AIEvaluationTool/).
+## Architecture
 
-## 2. Architecture And Design
-
-TDMS and the Dashboard run as a unified application layer behind a single Docker gateway.
+TDMS and the Dashboard run as one application behind a single web entrypoint.
 
 ![System Architecture](screenshots/Arch.jpg)
 
-## 3. Configuration
+## Quick Start
 
-Docker reads runtime values from `.env` and application-level configuration from `config.json`.
-
-### 3.1 Create Environment File
+Requires Docker and Docker Compose.
 
 ```bash
-cp .env.example .env
+git clone https://github.com/cerai-iitm/AIEvaluationTool
+cd AIEvaluationTool
+cp .env.example .env    # then fill in the values you need
+docker compose up -d
 ```
 
-### 3.2 Required Files
+Open [http://localhost:8100/](http://localhost:8100/), log in, and import the default test data from TDMS.
 
-- Root `.env`
-- Root `config.json`
-- `src/app/interface_manager/config.json` (for browser automation settings)
+For the full first-start guide (which `.env` values to set, default login, ports, and importing data), see [Docker Setup: Quick Start](https://cerai-iitm.github.io/AIEvaluationTool/#/docker-setup/home) and [Docker Run UI](https://cerai-iitm.github.io/AIEvaluationTool/#/docker-setup/run-ui) on the documentation site.
 
-### 3.3 XPath Configuration For Web App Automation
+## Documentation
 
-For web/WhatsApp targets, configure element selectors in:
+Full documentation: [cerai-iitm.github.io/AIEvaluationTool](https://cerai-iitm.github.io/AIEvaluationTool/)
 
-- `src/app/interface_manager/xpaths.json`
-- `src/app/interface_manager/credentials.json`
+| Topic | Link |
+|---|---|
+| Docker setup | [Docker Setup](https://cerai-iitm.github.io/AIEvaluationTool/#/docker-setup/home) |
+| Settings and defaults | [Setup And Configuration](https://cerai-iitm.github.io/AIEvaluationTool/#/docker-setup/config) |
+| Using the UI, ports, importing data | [Docker Run UI](https://cerai-iitm.github.io/AIEvaluationTool/#/docker-setup/run-ui) |
+| Web app and WhatsApp targets | [Web App Target Configuration](https://cerai-iitm.github.io/AIEvaluationTool/#/ui/web-app-targets) |
+| Command-line workflow | [CLI](https://cerai-iitm.github.io/AIEvaluationTool/#/cli/home) |
+| Running on several machines | [Multi-Node Stack](https://cerai-iitm.github.io/AIEvaluationTool/#/docker-setup/stack) |
+| Troubleshooting | [Troubleshooting](https://cerai-iitm.github.io/AIEvaluationTool/#/ui/tdms-dashboard-troubleshooting) |
 
-Use stable relative XPath values for login fields, prompt input areas, response containers, and logout elements.
+Release history: [Release Notes](ReleaseNotes.md)
 
-Detailed configuration guide: [Docker Setup and Configuration](docs/docker_setup/setup_and_configuration.md)
-
-## 4. Getting Started With Docker
-
-### 4.1 Build And Start
-
-```bash
-docker compose up -d --build nginx
-```
-
-For the Docker development stack, use:
-
-```bash
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
-```
-
-### 4.2 Open The Application
-
-- TCE UI: `http://localhost:${NGINX_PORT:-80}/`
-- TDMS UI: `http://localhost:${NGINX_PORT:-80}/tdms/`
-- Selenium live view: `http://localhost:${NGINX_PORT:-80}/selenium/`
-- Health: `http://localhost:${NGINX_PORT:-80}/healthz`
-
-### 4.3 Stop Or Reset
-
-```bash
-docker compose down
-# full reset
-docker compose down -v
-```
-
-### 4.4 Other Run Modes
-
-- Docker CLI flow: [Docker Run CLI](docs/docker_setup/docker_run.md)
-- Docker UI flow: [Docker Run UI](docs/docker_setup/docker_run_ui.md)
-- GPU model setup: [Docker GPU Setup](docs/docker_setup/gpu_setup.md)
-- Non-Docker/local setup: [UI Setup](docs/ui/setup.md)
-- Full docs portal: [AIEvaluationTool Documentation](https://cerai-iitm.github.io/AIEvaluationTool/)
-
-## 5. How The Project Came To Life
+## How The Project Came To Life
 
 ![AI Eval Tool Evolution](screenshots/AIEvalTool.gif)
 

@@ -1,8 +1,6 @@
-# Setup 
+# Setup
 
-Use this guide to run TDMS and the Test Case Execution Tool (Dashboard) locally without Docker.
-
-
+Use this guide to run TDMS and the Test Case Execution Tool (Dashboard) locally without Docker. To run everything in Docker instead, see [Docker Setup](../docker_setup/index.md).
 
 ## UI And Services
 
@@ -24,39 +22,17 @@ Use this guide to run TDMS and the Test Case Execution Tool (Dashboard) locally 
 
 ## Prerequisites
 
-- Linux only.
-- Python `3.10+`
-- Node.js `20.19+` or `22.12+`
-- `MariaDB Server 10.5+` if using MariaDB
-- Latest Google Chrome
-- Matching ChromeDriver version
-- `Ollama` for local LLM serving
-- GPU drivers when running accelerated inference
+The system requirements and the MariaDB installation are the same as for the command-line setup. Follow these sections of [Initial Setup And Configuration](../cli/initial_setup_and_configuration.md), then come back here:
 
-## Install MariaDB For Python
-
-Skip this section if you are using SQLite.
-
-On Ubuntu, install MariaDB Server and the Python connector dependency:
-
-```bash
-sudo apt update
-sudo apt install mariadb-server libmariadb-dev
-```
-
-Then install the Python connector in the same Python environment used for the backends:
-
-```bash
-pip install mariadb
-```
-
-  > Note - Check the official MariaDB documentation for any changes to packages or installation instructions before proceeding.
+- [System Requirements](../cli/initial_setup_and_configuration.md#system-requirements)
+- [Install MariaDB](../cli/initial_setup_and_configuration.md#install-mariadb) (skip it if you use SQLite)
+- [Install ChromeDriver](../cli/initial_setup_and_configuration.md#install-chromedriver)
 
 ## Create Required `.env` Files
 
 Create and populate all required `.env` files before starting services.
 
-### Root `.env` (repository root)
+### Root `.env` (Repository Root)
 
 This is used by shared runtime components (for example `interface_manager` and API key based providers).
 
@@ -76,7 +52,7 @@ GEMINI_API_KEY=
 OPENAI_API_KEY=
 ```
 
-### TDMS frontend `.env`
+### TDMS Frontend `.env`
 
 Create `src/app/TDMS/front-end/.env`:
 
@@ -86,7 +62,7 @@ VITE_AUTH_SERVICE_URL="http://localhost:7500"
 VITE_TEST_RUNS_HOME_URL="http://localhost:3000"
 ```
 
-### Dashboard frontend `.env`
+### Dashboard Frontend `.env`
 
 Create `src/app/TestCaseExecutorDashboard/front-end/.env`:
 
@@ -98,7 +74,7 @@ REACT_APP_TEST_DATA_URL="http://localhost:8080/dashboard"
 REACT_APP_USER_LIST_URL="http://localhost:8080/users"
 ```
 
-### Auth service `.env`
+### Auth Service `.env`
 
 Create `src/app/auth_service/.env`:
 
@@ -223,7 +199,7 @@ python main.py
 
 For GPU setup instructions, refer to [GPU setup.](../cli/gpu_setup.md).
 
-## Run Frontend 
+## Run Frontend
 
 This is best for development and frequent UI changes.
 

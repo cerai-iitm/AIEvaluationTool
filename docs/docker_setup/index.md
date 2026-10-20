@@ -1,63 +1,78 @@
 # Docker Setup
 
-This section documents the current Docker workflow for the AI Evaluation Tool, with a UI-first production stack, a separate Docker development stack, and full CLI support from the backend runtime container.
+This section explains how to run the AI Evaluation Tool with Docker: first start, ports and URLs, configuration, the command-line workflow, GPU model services, and running across several machines.
 
-Use this section when you want to run the platform from scratch with reproducible service orchestration.
+## Quick Start
 
-## What This Section Covers
+On a fresh clone, with Docker and Docker Compose installed:
 
-- Docker prerequisites and architecture
-- from-scratch production setup with `docker-compose.yml`
-- development setup with `docker-compose.dev.yml`
-- UI workflow through the nginx entrypoint
-- CLI workflow through the `app-backend` runtime container
-- Compose profiles for production model services
-- GPU endpoint patterns for local and remote inference
+```bash
+cp .env.example .env            # then edit the values you need
+docker compose up -d
+```
+
+Then open [http://localhost:8100/](http://localhost:8100/) and log in with a default account (for example `admin` / `admin123`). The first start can take about 10 minutes while the images download.
+
+- **Port `8100` is the default and can be changed.** If it is taken, set `NGINX_PORT` in `.env`. See [Changing The Port](./docker_run_ui.md#changing-the-port).
+- Everything is served through that one port. The other services are internal.
 
 ## Chapters
 
-- [Setup And Configuration][setup-and-configuration]
-- [GPU Setup][gpu-setup]
-- [Docker Run CLI][docker-run]
-- [Docker Run UI][docker-run-ui]
+| Page | Use This Page To |
+|---|---|
+| [Setup And Configuration](./setup_and_configuration.md) | install, fill in `.env`, know every setting and default |
+| [Docker Run UI](./docker_run_ui.md) | know the addresses and ports, change the port, understand the login flow, run the development stack |
+| [Docker Run CLI](./docker_run.md) | run importer, execution, analysis and reports from a shell in the backend container |
+| [GPU Setup](./gpu_setup.md) | choose between the bundled model services and remote GPU endpoints |
+| [Multi-Node Stack](./multi_node_stack.md) | deploy across two or more machines with Docker Swarm |
+| [Scaling And Capacity](./scaling_and_capacity.md) | set the number of browsers and backend copies for many concurrent users |
 
-## Stack Overview
+## Choosing A Page By Goal
 
-The production Docker stack is built around the services defined in [docker-compose.yml][docker-compose]:
+| Goal | Page |
+|---|---|
+| try the tool on my machine | Quick Start above, then [Docker Run UI](./docker_run_ui.md) |
+| change a port or a password | [Setup And Configuration](./setup_and_configuration.md) |
+| change frontend or backend code | [Docker Run UI, Development Stack](./docker_run_ui.md#development-stack) |
+| run tests without the UI | [Docker Run CLI](./docker_run.md) |
+| use my own GPU server | [GPU Setup](./gpu_setup.md) |
+| support many people at once | [Multi-Node Stack](./multi_node_stack.md) and [Scaling And Capacity](./scaling_and_capacity.md) |
 
-- `db` for MariaDB
-- `selenium-browser` for Chrome automation and noVNC viewing
-- `interface-manager` for target communication
-- `auth-service` for authentication and route handling
-- `app-backend` for TCE backend and CLI execution commands
-- `tdms-backend` and `tdms-frontend` for TDMS
-- `app-front-end` for TCE frontend
+## Services Overview
+
+The application is a set of containers defined in [docker-compose.yml](../../docker-compose.yml):
+
+- `db` for MariaDB and `redis` for shared job state
+- `selenium-hub` and `chrome-node` for the Selenium grid that drives target applications (`chrome-node` is the browser; see `SELENIUM_NODE_COUNT`)
+- `interface-manager` for communication with the target applications
+- `auth-service` for authentication and role-based redirects
+- `app-backend` for the Test Case Execution (TCE) backend and CLI commands
+- `tdms-backend` and `tdms-frontend` for the Test Data Management System (TDMS)
+- `app-front-end` for the TCE UI
 - `nginx` as the single public entrypoint
-
-In standard usage, users access both TCE and TDMS through `nginx` on `http://localhost:${NGINX_PORT:-80}`.
 
 ## Compose Files And Profiles
 
-- `docker-compose.yml` is the production-oriented stack. It exposes only `nginx` to the host and keeps service ports internal.
-- `docker-compose.dev.yml` is the development override. It bind-mounts source code and exposes service ports such as `3000`, `7000`, `7250`, `7500`, `8000`, `8080`, and `7900`.
-- `prod` profile enables the Compose-managed Ollama services (`ollama`, `ollama-init`, `ollama-warmup`) and `sarvam-ai`.
-- `sarvam` profile enables only the Compose-managed Sarvam AI service.
+| File | Purpose |
+|---|---|
+| `docker-compose.yml` | the main stack. Publishes only `nginx` (and the live-view ports `7900` to `7924`). |
+| `docker-compose.dev.yml` | standalone development stack: hot-reload frontends, published backend ports, images built locally. Used on its own, without the main file. |
+| `stack-compose.yml` | the same application for a multi-node Docker Swarm. See [Multi-Node Stack](./multi_node_stack.md). |
 
-## How The Docker Workflow Fits Together
+Profiles for the main file (they add GPU model services):
 
-1. Configure `.env` and repository JSON config files.
-2. Choose production or development Compose mode.
-3. Build and start the stack.
-4. Open the UI through `nginx` in production, or direct frontend ports in development.
-5. Run importer, execution, analysis, and reporting via `app-backend` for CLI usage.
-6. Stop or reset the stack as needed.
+- `prod`: `ollama`, `ollama-init`, `ollama-warmup` and `sarvam-ai`
+- `sarvam`: only `sarvam-ai`
 
-## Related Sections
+## Workflow Overview
 
-- [Setup And Configuration](./setup_and_configuration.md)
-- [GPU Setup](./gpu_setup.md)
-- [Docker Run CLI](./docker_run.md)
-- [Docker Run UI](./docker_run_ui.md)
+1. Prepare `.env` and the config files.
+2. Build and start the stack.
+3. Open the UI through `nginx`, or run the CLI inside `app-backend`.
+4. Stop or reset the stack when finished.
+
+## Related Documentation
+
 - [UI Overview](../ui/index.md)
 - [Authentication And Roles](../ui/authentication_and_roles.md)
 - [TDMS Dashboard Manual](../ui/tdms_dashboard_manual.md)
@@ -65,9 +80,3 @@ In standard usage, users access both TCE and TDMS through `nginx` on `http://loc
 - [Run Configuration Manual](../ui/run_configuration_manual.md)
 - [Analysis And Run Details Manual](../ui/analysis_and_run_details_manual.md)
 - [Troubleshooting](../ui/troubleshooting.md)
-
-[docker-compose]: ../../docker-compose.yml
-[setup-and-configuration]: ./setup_and_configuration.md
-[gpu-setup]: ./gpu_setup.md
-[docker-run]: ./docker_run.md
-[docker-run-ui]: ./docker_run_ui.md
