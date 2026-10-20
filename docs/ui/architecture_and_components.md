@@ -10,54 +10,6 @@ NGINX reverse proxy serves all services behind a single port (80, or 443 for HTT
 
 ![Docker Container Architecture](../../screenshots/docker_arch.png)
 
-<!-- ```Architecture
-┌─────────────────────────────────────────────────────────────────────────┐
-│                          NGINX Reverse Proxy (Port 80/443)              │
-├─────────────┬──────────────────────┬────────────────┬───────────────────┤
-│             │                      │                │                   │
-▼             ▼                      ▼                ▼                   ▼
-/             /tdms/              /auth/          /tdms-api/            /api/
-│             │                     │                │                    │
-▼             ▼                     ▼                ▼                    ▼
-
-┌──────────┐  ┌──────────────────┐  ┌──────────────┐  ┌─────────────────────┐
-│ TCE      │  │   TDMS Frontend  │  │ Auth Service │  │  TDMS Backend       │
-│ Dashboard│  │ (Vite/React)     │  │  (FastAPI)   │  │  (FastAPI)          │
-│ Frontend │  │ TypeScript       │  │              │  │  Internal Port      │
-│ (CRA)    │  │ Radix UI         │  │ JWT Token    │  │                     │
-│          │  │ Tailwind CSS     │  │ Authority    │  │ v1 & v2 REST APIs   │
-└────┬─────┘  └────────┬─────────┘  └──────┬───────┘  └──────────┬──────────┘
-     │                 │ JWT Token         │                     │
-     │                 └───────────────────┼─────────────────────┘
-     │                                     │
-     │ JWT Token / role-based config       │
-     └─────────────────────────────────────┘
-
-┌────────────────────────────────────────────────────────────────────────────┐
-│ TCE Dashboard Backend (FastAPI)                                            │
-│ • Test run orchestration & execution                                       │
-│ • Filtering, analysis, and reporting APIs                                  │
-│ • WebSocket endpoint: /ws/test-run (real-time updates)                     │
-└─────────┬─────────────────────────────────────────────────────────┬────────┘
-          │                                                         │
-          │ Browser Automation                    Shared            │
-          │ Control via REST Client                Database         │
-          │                                        (MariaDB)        │
-          ▼                                                         ▼
-┌──────────────────────────────────┐                    ┌──────────────────┐
-│ Interface Manager (FastAPI)      │ ◄──────────────────│   Database       │
-│                                  │                    │ (Centralized)    │
-│ • Browser automation (Selenium)  │ ──────────────────►│                  │
-│ • WhatsApp Web interaction       │    Read/Write      │ Test Data:       │
-│ • LLM API integration            │                    │ • Test Cases     │
-│   (OpenAI, Gemini, Sarvam AI)    │                    │ • Test Plans     │
-│ • Conversation management        │                    │ • Strategies     │
-└──────────────────────────────────┘                    │ • Metrics        │
-                                                        │ • Prompts        │
-                                                        │ • Test Runs      │
-                                                        │ • Results        │
-                                                        └──────────────────┘
-``` -->
 
 **Deployment Details (Docker):**
 - Services run in Docker containers with internal networking
