@@ -1,15 +1,15 @@
 # Initial Setup And Configuration
 
-This page covers everything required before running the AI Evaluation Tool from the command line: system prerequisites, repository setup, database preparation, the shared CLI configuration, environment variables, XPath and credentials, and target registration.
+This page covers everything required before running the AI Evaluation Tool from the command line: system prerequisites, repository setup, database preparation, the shared CLI configuration, environment variables, WhatsApp and web app targets, and target registration.
 
 ## System Requirements
 
 ### Hardware Requirements
 
-- Minimum `8 GB` RAM
-- `24 GB+` RAM recommended for local LLM deployment
+- Minimum `16 GB` RAM
+- `50 GB+` RAM recommended for local LLM deployment
 - Multi-core CPU with at least `4` cores
-- `50 GB+` free disk space for models and databases
+- `100 GB+` free disk space for models and databases
 - NVIDIA-compatible GPU recommended for faster inference
 
 ### Software Requirements
@@ -196,66 +196,11 @@ OPENAI_API_KEY="your_openai_api_key"
 - `LLM_AS_JUDGE_MODEL` defines the default judge model.
 - `PERSPECTIVE_API_KEY`, `SARVAM_API_KEY`, `GEMINI_API_KEY`, and `OPENAI_API_KEY` enable API-backed strategies.
 
-## Configure XPath And Credentials
+## Configure WhatsApp And Web App Targets
 
-For web and WhatsApp targets, configure the Interface Manager support files:
+WhatsApp and WebApp targets need selectors (where to type, click and read on the target's pages) and, for sites with a login, a test account. Configure both in the TDMS UI, on the target's **XPath Config** and **Credentials** tabs. The CLI runs use the same configuration.
 
-- `src/app/interface_manager/xpaths.json`
-- `src/app/interface_manager/credentials.json`
-
-### XPath Guidance
-
-- inspect the target application in the browser
-- copy the XPath for login, logout, prompt entry, and response elements
-- prefer stable relative XPath expressions over brittle absolute ones
-
-Example `xpaths.json` structure:
-
-```json
-{
-  "applications": {
-    "app_name_here": {
-      "LoginPage": {
-        "email_input": "xpath_for_email_input",
-        "password_input": "xpath_for_password_input",
-        "login_button": "xpath_for_login_button"
-      },
-      "LogoutPage": {
-        "profile": "xpath_for_profile_icon",
-        "logout_button": "xpath_for_logout_button"
-      },
-      "ChatPage": {
-        "contact_search": "xpath_for_contact_search",
-        "prompt_input": "xpath_for_prompt_input",
-        "agent_response": "xpath_for_agent_response",
-        "message_in": "xpath_for_incoming_message",
-        "message_out": "xpath_for_outgoing_message"
-      },
-      "OtherPages": {
-        "custom_element_1": "xpath_for_custom_element",
-        "custom_element_2": "xpath_for_custom_element"
-      }
-    }
-  }
-}
-```
-
-Example `credentials.json` structure:
-
-```json
-{
-  "applications": {
-    "cpgrams": {
-      "username": "user_cpgrams",
-      "password": "pass_cpgrams"
-    },
-    "openweb-ui": {
-      "username": "user_openweb_ui",
-      "password": "pass_openweb_ui"
-    }
-  }
-}
-```
+See [Web App Target Configuration](../ui/web_app_target_configuration.md) for the full procedure and the field reference.
 
 ## Register The Target Application
 
@@ -301,6 +246,6 @@ Those files are not part of the core CLI flow that uses the shared repository-le
 - Shared `config.json` updated
 - `.env` created
 - Strategy `.env` created
-- XPath and credentials configured
+- WhatsApp and web app targets configured in TDMS (selectors and credentials)
 - Target details prepared
 - Data files present

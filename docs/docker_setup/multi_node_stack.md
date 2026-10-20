@@ -278,6 +278,8 @@ Also confirm these exist in the manager's checkout, because services bind-mount 
 - `src/app/interface_manager/credentials.json`
 - `data/`
 
+The two `interface_manager` files hold the target selectors and logins. Do not edit them by hand: TDMS writes them when targets are configured (see [Web App Target Configuration](../ui/web_app_target_configuration.md)). They only need to exist.
+
 Those files exist **only on the manager**. That is why every service that mounts them is pinned to the `primary` node. If you remove the pin, copy the files to the other node at the same paths, otherwise the service starts with an empty mount and fails quietly.
 
 ### 10. Deploy (Manager)

@@ -138,6 +138,100 @@ Checks:
 - avoid running multiple conflicting write-heavy operations in parallel
 - switch to MariaDB for multi-user or high-throughput usage
 
+## Web App And WhatsApp Targets
+
+These problems affect targets that are tested through a browser. In each case, start a run with one test case and open **View Test Execution** to see where it stops. Selector fields are explained in [Web App Target Configuration](./web_app_target_configuration.md).
+
+### Target Cannot Be Submitted In TDMS
+
+Symptoms:
+
+- **Submit** stays disabled, or a validation error mentions the XPath configuration
+
+Checks:
+
+- every field present in the **XPath Config** tab must have a value; delete fields you do not need
+- the editor lists the required fields still missing for each page
+- if you filled in one credential field, fill in both
+
+### Run Fails At Login
+
+Symptoms:
+
+- the browser stays on the login page
+- the run reports a login failure, or no responses are collected
+
+Checks:
+
+- target name has no spaces (selectors saved under a name with spaces are not found at run time)
+- username and password in the **Credentials** tab are correct for the test account
+- `email_input_element`, `password_input_element` and `login_button_element` are XPath selectors and each matches exactly one element on the login page
+- if a `LogoutPage` exists, it includes `profile_pic_element`
+- the site does not show a CAPTCHA or a second login step; these cannot be automated
+
+### Prompt Is Not Typed Or Sent
+
+Symptoms:
+
+- the browser reaches the chat page but nothing is typed
+- the prompt is typed but never sent
+
+Checks:
+
+- `send_button_element` is set; it is needed for every WebApp run
+- `prompt_input_box_element` matches the input box on the logged-in chat page
+- if the site does not send on Enter, set `submit_via_click` to `true`
+
+### Reply Is Not Captured Or The Run Times Out
+
+Symptoms:
+
+- responses are empty or `[Not available]`
+- only part of a reply is stored
+
+Checks:
+
+- `agent_response_element` matches the element that holds the reply text
+- for a chat widget inside a shadow DOM, set `shadow_root_element`
+- for bubble-style chats, set both `message_in_element` and `message_out_element`
+- for slow agents, raise `response_timeout` and `response_stable_time`
+
+### Runs Broke After The Target Site Changed
+
+Symptoms:
+
+- a target that worked before now fails at the same step every time
+
+Checks:
+
+- re-check the selectors for that step on the current site, and update them in the target's **XPath Configuration** editor
+- prefer `id`, `aria-label`, `placeholder` or `data-testid` over class names and absolute paths
+
+### WhatsApp QR Code Was Not Scanned In Time
+
+Symptoms:
+
+- the WhatsApp run does not send any messages
+
+Checks:
+
+- open **View Test Execution** as soon as the run starts; the run waits about 60 seconds for the scan
+- the phone has internet access, and the WhatsApp account has not reached its linked-device limit
+
+### View Test Execution Link Is Missing Or Blank
+
+Symptoms:
+
+- no **View Test Execution** link during a run
+- the link opens an empty page
+
+Checks:
+
+- the target type is `WhatsApp` or `WebApp`; API targets have no live view
+- the link appears only after the run's browser has started; wait a few seconds
+- the view is empty once the run has finished, because the browser is closed
+- if the browser restarted during the run, open the link again
+
 ## Recommended Operational Practices
 
 - keep `config.json` under version control for team-consistent ports

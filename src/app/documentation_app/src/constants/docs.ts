@@ -212,6 +212,14 @@ const docsConfig = {
     url: buildRawDocUrl('ui/tdms_dashboard_manual.md'),
     githubUrl: buildGithubDocUrl('ui/tdms_dashboard_manual.md'),
   },
+  'ui-web-app-targets': {
+    title: 'Web App Target Configuration',
+    navTitle: 'Web App Targets',
+    path: 'ui/web_app_target_configuration.md',
+    sectionId: 'ui',
+    url: buildRawDocUrl('ui/web_app_target_configuration.md'),
+    githubUrl: buildGithubDocUrl('ui/web_app_target_configuration.md'),
+  },
   'tdms-dashboard-manual-testruns': {
     title: 'Test Runs User Manual',
     navTitle: 'Test Runs',
@@ -307,6 +315,7 @@ export const DOC_SECTIONS: DocSection[] = [
       'tdms-dashboard-architecture',
       'tdms-dashboard-auth',
       'tdms-dashboard-manual-tdms',
+      'ui-web-app-targets',
       'tdms-dashboard-manual-testruns',
       'tdms-dashboard-manual-run-config',
       'tdms-dashboard-manual-analysis',

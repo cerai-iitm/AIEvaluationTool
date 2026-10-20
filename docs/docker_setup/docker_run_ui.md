@@ -58,6 +58,76 @@ The **live view of a running test** is not opened by typing an address. Use the 
 
 First login uses a default account, for example `admin` / `admin123`. Change these after the first login. See [Authentication And Roles](../ui/authentication_and_roles.md) for all default users and what each role can do.
 
+## Import Test Data
+
+A new stack starts with an empty database, apart from the default user accounts. Before you can create test runs, import test data in TDMS:
+
+1. Open TDMS at [http://localhost:8100/tdms/](http://localhost:8100/tdms/) and log in.
+2. Click **Import Data**, at the bottom right of the TDMS dashboard. The same button is on the **Test Cases** page.
+3. In the dialog, choose one of the two ways below, then click **Import**.
+4. When the import succeeds, the page refreshes by itself after a few seconds. If it fails, the dialog shows the reason.
+
+### Default Import
+
+Click **Import** without choosing a file. This loads the dataset that ships with the repository, from the `data/` folder:
+
+| Data | File |
+|---|---|
+| Test cases | `data/updated_datapoints.json` |
+| Test plans | `data/plans.json` |
+| Strategies | `data/strategy_id.json` |
+| Metric descriptions | `data/metrics_and_submetrics.json` |
+
+Use this on a fresh stack to get a complete working dataset.
+
+### Import Your Own Test Cases (Drag And Drop)
+
+Drag a `.json` file onto the dialog, or click the upload icon to choose one, then click **Import**.
+
+- Only the **test cases** come from your file. Test plans, strategies and metric descriptions still come from the `data/` files above, so every metric and strategy your file refers to must already exist there.
+- The dialog notes that test cases whose name already exists are skipped, so importing the same file twice does not create duplicates.
+- Only `.json` files in UTF-8 are accepted.
+
+The file must have **the same structure as `data/updated_datapoints.json`**. The easiest way to build one is to copy that file and replace the cases.
+
+```json
+{
+  "2": {
+    "cases": [
+      {
+        "PROMPT_ID": "P701",
+        "SYSTEM_PROMPT": "You are a multilingual assistant. Understand and answer prompts containing multiple Indian languages.",
+        "PROMPT": "Please explain photosynthesis in Gujarati and end with a summary in English.",
+        "EXPECTED_OUTPUT": "Gujarati: ... Summary in English: Photosynthesis is the process by which plants make food...",
+        "DOMAIN": "education",
+        "LLM_AS_JUDGE": "No",
+        "STRATEGY": ["6"]
+      }
+    ]
+  }
+}
+```
+
+**Top level:** each key is a **metric ID** from `data/plans.json` (for example `"2"` is `Inclusivity` in the `Responsible_AI` plan). Its `cases` list holds the test cases for that metric. Keys that are not a metric ID in `data/plans.json` are skipped.
+
+**Each case:**
+
+| Field | Required | Meaning |
+|---|---|---|
+| `PROMPT_ID` | yes | unique test case name |
+| `SYSTEM_PROMPT` | yes | system prompt sent with the prompt; use `""` if there is none |
+| `PROMPT` | yes | the prompt sent to the target |
+| `EXPECTED_OUTPUT` | no | the expected (ground-truth) response |
+| `DOMAIN` | no | domain name, for example `education`; `general` if omitted |
+| `LANGUAGE` | no | language name; detected automatically if omitted |
+| `STRATEGY` | no | list with a strategy ID from `data/strategy_id.json`, for example `["6"]`; only the first ID is used. A case with an unknown ID is skipped |
+| `LLM_AS_JUDGE` | no | `"No"`, or the instructions for the judge model |
+| `SUB_METRIC` | no | a sub-metric to also link the case to |
+
+In Docker, the `data/` folder is mounted from the repository into the TDMS backend. To change the default dataset, edit the files in `data/` on your machine; no rebuild or restart is needed.
+
+To import from the command line instead, see [Docker Run CLI](./docker_run.md).
+
 ## Ports
 
 ### Published Ports

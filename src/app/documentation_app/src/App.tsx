@@ -194,10 +194,12 @@ export default function App() {
     setActiveDoc(docId);
   };
 
-  const navigateToDoc = (docId: DocId, options?: { syncSidebarSection?: boolean }) => {
+  const navigateToDoc = (docId: DocId, options?: { syncSidebarSection?: boolean; headingId?: string }) => {
     if (options?.syncSidebarSection) {
       setAccordionSectionId(DOCS_CONFIG[docId].sectionId);
     }
+
+    pendingHeadingRef.current = options?.headingId ? { docId, headingId: options.headingId } : null;
 
     setActiveDoc(docId);
   };
@@ -403,7 +405,7 @@ export default function App() {
                   loading={loading}
                   error={error}
                   onRetry={fetchActiveDoc}
-                  onNavigate={(docId) => navigateToDoc(docId, { syncSidebarSection: true })}
+                  onNavigate={(docId, headingId) => navigateToDoc(docId, { syncSidebarSection: true, headingId })}
                   previousDoc={
                     previousDocId
                       ? {

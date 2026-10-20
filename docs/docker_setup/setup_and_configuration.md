@@ -133,11 +133,9 @@ Everything below has a default. Set a variable in `.env` only to change it.
 |---|---|---|
 | `config.json` (repository root) | the CLI flow and `app-backend` | `db.host` is `db`; `interface_manager.docker` is `true`; `interface_manager.base_url` is `http://interface-manager:8000` |
 | `src/app/interface_manager/config.json` | browser automation | `selenium_mode` is `"remote"` and `selenium_remote_url` is `"http://selenium-hub:4444/wd/hub"` |
-| `src/app/interface_manager/xpaths.json` | element selectors for web and WhatsApp targets | stable relative XPaths for login fields, prompt box, response area, logout |
-| `src/app/interface_manager/credentials.json` | logins for the target web applications | add or update the entry for each target you test |
 | `data/` | test data files for the importer | the files you want to import are present |
 
-`xpaths.json` and `credentials.json` are mounted into the containers, so edit them on your machine and restart `interface-manager` (`docker compose restart interface-manager`). They are not read from the image.
+Selectors and logins for WhatsApp and web app targets are not configured in files: set them in the TDMS UI, on the target's **XPath Config** and **Credentials** tabs. Changes apply to the next run without a restart. See [Web App Target Configuration](../ui/web_app_target_configuration.md).
 
 ## Compose Profiles
 
@@ -167,7 +165,7 @@ For how to start the application with a profile, see [Start With Model Services]
 - database passwords changed from the defaults (before the first start)
 - `config.json` uses the Docker service names (`db`, `interface-manager`)
 - remote Selenium enabled in `src/app/interface_manager/config.json`
-- `xpaths.json` and `credentials.json` match the targets you will test
+- WhatsApp and web app targets configured in TDMS (selectors and credentials)
 - test data files are present under `data/`
 
 ## Running And Next Steps

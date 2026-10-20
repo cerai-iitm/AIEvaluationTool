@@ -193,6 +193,12 @@ Strategies define how test cases should be evaluated.
 
 ---
 
+## Importing Test Data
+
+Use **Import Data** (bottom right of the dashboard, and on the **Test Cases** page) to load the default dataset or upload your own test cases as a JSON file, by drag and drop or the upload icon. The full procedure and the file format are in [Docker Run UI: Import Test Data](../docker_setup/docker_run_ui.md#import-test-data).
+
+---
+
 ## Managing Targets
 
 Targets represent the systems or applications being tested.
@@ -211,6 +217,8 @@ Targets represent the systems or applications being tested.
    - **Credentials** tab (optional): Enter a username/password for the target. Leave blank to skip — if any credential field is filled, all required credential fields must be completed before submitting.
    - **XPath Configuration** tab (shown only for target types that require it, e.g. WebApp): Configure per-field XPath selectors used by the interface manager to locate page elements, with per-field history.
 4. Click **Submit**
+
+For WhatsApp and WebApp targets, see [Web App Target Configuration](./web_app_target_configuration.md) for how to find each selector and which fields are required.
 
 ### Managing Targets
 
