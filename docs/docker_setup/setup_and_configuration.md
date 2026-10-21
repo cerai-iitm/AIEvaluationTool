@@ -88,7 +88,7 @@ TIME_ZONE="Asia/Kolkata"
 |---|---|
 | `OLLAMA_URL` | Ollama server used as the judge model. `host.docker.internal` means "the machine running Docker". |
 | `GPU_URL` | Sarvam AI service endpoint |
-| `LLM_AS_JUDGE_MODEL` | model name used for judging |
+| `LLM_AS_JUDGE_MODEL` | Ollama model used for judging. Default `qwen3:32b`. You can set any other model available in your Ollama; judging quality and speed vary by model. It must be pulled in that Ollama (`ollama pull <model>`) |
 | `HF_TOKEN` | Hugging Face token (for downloading models) |
 | `PERSPECTIVE_API_KEY`, `SARVAM_API_KEY`, `GEMINI_API_KEY`, `OPENAI_API_KEY` | keys for the integrations you use; leave empty for ones you do not |
 | `TIME_ZONE` | time zone for timestamps |
@@ -101,7 +101,7 @@ Everything below has a default. Set a variable in `.env` only to change it.
 |---|---|---|---|
 | `NGINX_PORT` | `8100` | public port | `docker compose up -d` |
 | `SELENIUM_NODE_COUNT` | `2` | number of browser nodes (max `25` on one machine) | `docker compose up -d` |
-| `OLLAMA_MODEL` | `qwen3:32b` | model pulled by the bundled Ollama (`--profile prod`) | `docker compose --profile prod up -d` |
+| `OLLAMA_MODEL` | `qwen3:32b` | model pulled by the bundled Ollama (`--profile prod`). Keep it equal to `LLM_AS_JUDGE_MODEL`, or the judge model will not be available | `docker compose --profile prod up -d` |
 | `MARIADB_ROOT_PASSWORD` | `root_password` | database | see note below |
 | `MARIADB_DATABASE` | `aievaluationtool` | database | see note below |
 | `MARIADB_USER` | `aiet_user` | database | see note below |
@@ -135,7 +135,7 @@ Everything below has a default. Set a variable in `.env` only to change it.
 | `src/app/interface_manager/config.json` | browser automation | `selenium_mode` is `"remote"` and `selenium_remote_url` is `"http://selenium-hub:4444/wd/hub"` |
 | `data/` | test data files for the importer | the files you want to import are present |
 
-Selectors and logins for WhatsApp and web app targets are not configured in files: set them in the TDMS UI, on the target's **XPath Config** and **Credentials** tabs. Changes apply to the next run without a restart. See [Web App Target Configuration](../ui/web_app_target_configuration.md).
+Selectors and logins for WhatsApp and web app targets are not configured in files: set them in the TDMS UI, on the target's **XPath Config** and **Credentials** tabs. Changes apply to the next run without a restart. See [Target Configuration](../ui/target_configuration.md).
 
 ## Compose Profiles
 

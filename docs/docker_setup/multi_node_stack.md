@@ -269,7 +269,7 @@ Optional overrides:
 | `NGINX_PORT` | `8100` | public port on every node |
 | `SELENIUM_NODE_COUNT` | `25` | number of browser nodes |
 | `APP_BACKEND_REPLICAS` | `2` | number of `app-backend` copies |
-| `OLLAMA_MODEL` | `qwen3:32b` | model pulled by `ollama-init` |
+| `OLLAMA_MODEL` | `qwen3:32b` | model pulled by `ollama-init`; set it to the same model as `LLM_AS_JUDGE_MODEL` (default `qwen3:32b`) |
 
 Also confirm these exist in the manager's checkout, because services bind-mount them:
 
@@ -278,7 +278,7 @@ Also confirm these exist in the manager's checkout, because services bind-mount 
 - `src/app/interface_manager/credentials.json`
 - `data/`
 
-The two `interface_manager` files hold the target selectors and logins. Do not edit them by hand: TDMS writes them when targets are configured (see [Web App Target Configuration](../ui/web_app_target_configuration.md)). They only need to exist.
+The two `interface_manager` files hold the target selectors and logins. Do not edit them by hand: TDMS writes them when targets are configured (see [Target Configuration](../ui/target_configuration.md)). They only need to exist.
 
 Those files exist **only on the manager**. That is why every service that mounts them is pinned to the `primary` node. If you remove the pin, copy the files to the other node at the same paths, otherwise the service starts with an empty mount and fails quietly.
 

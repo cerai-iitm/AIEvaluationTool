@@ -193,14 +193,14 @@ OPENAI_API_KEY="your_openai_api_key"
 
 - `OLLAMA_URL` points to the Ollama endpoint used by local LLM-based strategies.
 - `GPU_URL` points to the Sarvam AI REST API service or another inference endpoint.
-- `LLM_AS_JUDGE_MODEL` defines the default judge model.
+- `LLM_AS_JUDGE_MODEL` defines the judge model. The default is `qwen3:32b`. You can use another Ollama model (pull it first with `ollama pull <model>`); judging quality and speed vary by model.
 - `PERSPECTIVE_API_KEY`, `SARVAM_API_KEY`, `GEMINI_API_KEY`, and `OPENAI_API_KEY` enable API-backed strategies.
 
 ## Configure WhatsApp And Web App Targets
 
 WhatsApp and WebApp targets need selectors (where to type, click and read on the target's pages) and, for sites with a login, a test account. Configure both in the TDMS UI, on the target's **XPath Config** and **Credentials** tabs. The CLI runs use the same configuration.
 
-See [Web App Target Configuration](../ui/web_app_target_configuration.md) for the full procedure and the field reference.
+See [Target Configuration](../ui/target_configuration.md) for the full procedure and the field reference.
 
 ## Register The Target Application
 

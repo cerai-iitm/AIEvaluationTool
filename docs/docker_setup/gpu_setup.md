@@ -41,6 +41,8 @@ LLM_AS_JUDGE_MODEL="qwen3:32b"
 
 The `ollama-init` service pulls `${OLLAMA_MODEL:-qwen3:32b}` and `ollama-warmup` verifies that Ollama can generate a response.
 
+`qwen3:32b` is the default judge model. To use another Ollama model, set `LLM_AS_JUDGE_MODEL` and `OLLAMA_MODEL` to the same name; results and speed vary by model.
+
 ## Local Host GPU Setup
 
 Use this setup when the Docker machine and the GPU machine are the same host, but Ollama or Sarvam AI are served outside the main production profile.

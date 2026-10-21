@@ -45,7 +45,7 @@ Example values in root `.env`:
 ```env
 OLLAMA_URL=http://localhost:12434
 GPU_URL=http://localhost:16000
-LLM_AS_JUDGE_MODEL=
+LLM_AS_JUDGE_MODEL=qwen3:32b
 PERSPECTIVE_API_KEY=
 SARVAM_API_KEY=
 GEMINI_API_KEY=
