@@ -27,7 +27,7 @@ All services should be `running`, and the ones with health checks `healthy`.
 
 ## Start With Model Services (Profiles)
 
-By default the application expects the Ollama and Sarvam AI model servers to run elsewhere. To start them in Docker as well (needs an NVIDIA GPU), add a profile. What each profile contains, and the `.env` values to set, are in [Compose Profiles](./setup_and_configuration.md#compose-profiles).
+By default the application expects the Ollama and Sarvam AI model servers to run elsewhere. To start them in Docker as well (needs an NVIDIA GPU, with at least 30 GB of VRAM for Ollama and 60 GB if Sarvam AI runs on the same GPU; see [System Requirements](./setup_and_configuration.md#system-requirements)), add a profile. What each profile contains, and the `.env` values to set, are in [Compose Profiles](./setup_and_configuration.md#compose-profiles).
 
 The whole application plus the bundled Ollama and Sarvam AI:
 

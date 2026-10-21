@@ -20,7 +20,7 @@ TDMS is used to curate and manage evaluation data. The dashboard is used to exec
 - [Architecture And Components](./architecture_and_components.md)
 - [Authentication And Roles](./authentication_and_roles.md)
 - [TDMS Dashboard Manual](./tdms_dashboard_manual.md)
-- [Web App Target Configuration](./web_app_target_configuration.md)
+- [Target Configuration](./target_configuration.md)
 - [Test Runs Manual](./test_runs_manual.md)
 - [Run Configuration Manual](./run_configuration_manual.md)
 - [Analysis And Run Details Manual](./analysis_and_run_details_manual.md)

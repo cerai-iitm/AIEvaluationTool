@@ -12,7 +12,7 @@ For a local setup without Docker, see [UI Setup](../ui/setup.md) or the [CLI Ini
 
 ## Models And GPUs
 
-Docker runs the evaluation services. The model servers (Ollama and Sarvam AI) can run in Docker on a machine with an NVIDIA GPU, or on a separate GPU server that the containers reach over the network.
+Docker runs the evaluation services. The model servers (Ollama and Sarvam AI) can run in Docker on a machine with an NVIDIA GPU, or on a separate GPU server that the containers reach over the network. The machine needs 64 GB of CPU RAM, and 30 GB of GPU VRAM for the default judge model (60 GB if Sarvam AI also runs on the GPU). See [System Requirements](../docker_setup/setup_and_configuration.md#system-requirements).
 
 ## Where To Go Next
 

@@ -11,7 +11,7 @@ This page explains what limits how many people can use the tool at the same time
 | Backend requests | number of backend containers | scale `app-backend` (see [Scalable Services](#scalable-services)) |
 | WhatsApp Web targets | WhatsApp's own linked-device limit | cannot be raised here |
 
-Model capacity depends on your GPU memory, the model you run and the number of parallel requests you allow, so it must be sized for your own hardware. The backend services are light and rarely become the bottleneck.
+Model capacity depends on your GPU memory, the model you run and the number of parallel requests you allow, so it must be sized for your own hardware. The minimum is in [System Requirements](./setup_and_configuration.md#system-requirements). The backend services are light and rarely become the bottleneck.
 
 ## Selenium Browser Concurrency
 

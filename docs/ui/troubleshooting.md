@@ -140,7 +140,7 @@ Checks:
 
 ## Web App And WhatsApp Targets
 
-These problems affect targets that are tested through a browser. In each case, start a run with one test case and open **View Test Execution** to see where it stops. Selector fields are explained in [Web App Target Configuration](./web_app_target_configuration.md).
+These problems affect targets that are tested through a browser. In each case, start a run with one test case and open **View Test Execution** to see where it stops. Selector fields are explained in [Target Configuration](./target_configuration.md).
 
 ### Target Cannot Be Submitted In TDMS
 
