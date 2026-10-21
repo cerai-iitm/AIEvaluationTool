@@ -149,7 +149,7 @@ services:
       - ollama
     environment:
       OLLAMA_HOST: ollama:11434
-    command: ["pull", "${OLLAMA_MODEL:-qwen3:32b}"]
+    command: ["pull", "${LLM_AS_JUDGE_MODEL:-qwen3:32b}"]
     deploy:
       # one-shot: retry a few times if the pull fails, never restart
       # after it exits 0
@@ -165,7 +165,7 @@ services:
   #   command: >
   #     sh -c "
   #     curl http://ollama:11434/api/generate
-  #     -d '{\"model\":\"${OLLAMA_MODEL:-qwen3:32b}\",\"prompt\":\"hi\",\"stream\":false}'
+  #     -d '{\"model\":\"${LLM_AS_JUDGE_MODEL:-qwen3:32b}\",\"prompt\":\"hi\",\"stream\":false}'
   #     "
   #   deploy:
   #     replicas: 1
