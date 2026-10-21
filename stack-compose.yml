@@ -173,7 +173,7 @@ services:
   #       condition: none
 
   interface-manager:
-    image: cerai/aiet-backend:latest
+    image: cerai/aiet-backend
     working_dir: /app/src/app/interface_manager
     command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
     extra_hosts:
@@ -205,7 +205,7 @@ services:
         constraints: [node.labels.primary == true]   # owns xpaths.json/credentials.json bind mounts
 
   auth-service:
-    image: cerai/aiet-backend:latest
+    image: cerai/aiet-backend
     working_dir: /app/src/app/auth_service
     command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7500"]
     depends_on:
@@ -233,7 +233,7 @@ services:
         constraints: [node.labels.primary == true]   # owns ./data bind mount
 
   app-backend:
-    image: cerai/aiet-backend:latest
+    image: cerai/aiet-backend
     working_dir: /app/src/app/TestCaseExecutorDashboard
     command: ["python", "back-end/main.py"]
     depends_on:
@@ -271,7 +271,7 @@ services:
         constraints: [node.labels.primary == true]
 
   sarvam-ai:
-    image: cerai/aiet-backend:latest
+    image: cerai/aiet-backend
     working_dir: /app/src/app/sarvam_ai
     command: ["python", "main.py"]
     expose:
@@ -294,7 +294,7 @@ services:
       #     - spread: node.id
 
   tdms-backend:
-    image: cerai/aiet-backend:latest
+    image: cerai/aiet-backend
     working_dir: /app/src/app/TDMS/back-end
     command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7250"]
     depends_on:
@@ -321,7 +321,7 @@ services:
         constraints: [node.labels.primary == true]   # owns ./data, xpaths.json, credentials.json bind mounts
 
   app-front-end:
-    image: cerai/aiet-app-frontend:latest
+    image: cerai/aiet-app-frontend
     depends_on:
       - app-backend
       - auth-service
@@ -331,7 +331,7 @@ services:
         condition: any
 
   tdms-frontend:
-    image: cerai/aiet-tdms-frontend:latest
+    image: cerai/aiet-tdms-frontend
     depends_on:
       - tdms-backend
       - auth-service

@@ -6,11 +6,13 @@ This page covers everything required before running the AI Evaluation Tool from 
 
 ### Hardware Requirements
 
-- Minimum `16 GB` RAM
-- `50 GB+` RAM recommended for local LLM deployment
+- CPU RAM: `64 GB` minimum when you run the local models (Ollama and Sarvam AI) on this machine. Without local models, `16 GB` is enough for the application alone
+- GPU VRAM, for the default judge model `qwen3:32b` served by Ollama: `30 GB` minimum
+- GPU VRAM, when Sarvam AI also runs on the GPU: `60 GB` minimum
 - Multi-core CPU with at least `4` cores
 - `100 GB+` free disk space for models and databases
-- NVIDIA-compatible GPU recommended for faster inference
+- NVIDIA GPU with the driver installed. To run the models in Docker, see [Install NVIDIA Container Toolkit](../docker_setup/gpu_setup.md#install-nvidia-container-toolkit-and-set-the-docker-runtime)
+- VRAM needs change with the judge model set in `LLM_AS_JUDGE_MODEL`: a smaller model needs less, a larger one needs more
 
 ### Software Requirements
 

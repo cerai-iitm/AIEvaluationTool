@@ -30,7 +30,7 @@ If you only need to run the tool on one machine, you do not need this page. Use 
 | `app-backend` | 2 (`APP_BACKEND_REPLICAS`) | `primary` | bind-mounts config files |
 | `tdms-backend` | 1 | `primary` | bind-mounts `./data` and config files |
 | `ollama` | 2 | any | one per GPU node |
-| `ollama-init` | 2 (one-shot) | any | pulls the model (`OLLAMA_MODEL`) on each node |
+| `ollama-init` | 2 (one-shot) | any | pulls the model (`LLM_AS_JUDGE_MODEL`) on each node |
 | `sarvam-ai` | 2 | any | one per GPU node |
 | `app-front-end` | 1 | any | static build, stateless |
 | `tdms-frontend` | 1 | any | static build, stateless |
@@ -74,7 +74,8 @@ Swarm's routing mesh opens the nginx port on **every** node, so the application 
 ## Prerequisites
 
 - Two or more machines on the same private network (or VPC), each with Docker Engine 24+.
-- An NVIDIA driver and `nvidia-container-toolkit` on every machine whose GPU you want to use. See [GPU Setup](./gpu_setup.md).
+- Each machine meets the [System Requirements](./setup_and_configuration.md#system-requirements). The GPU memory figures apply to every machine that runs `ollama` or `sarvam-ai`: `30 GB` for `ollama` with `qwen3:32b`, and `60 GB` if one machine runs both.
+- An NVIDIA driver and `nvidia-container-toolkit` on every machine whose GPU you want to use. See [GPU Setup](./gpu_setup.md#install-nvidia-container-toolkit-and-set-the-docker-runtime).
 - Ports **2377/tcp**, **7946/tcp+udp** and **4789/udp** open between the machines (and only between them).
 - Docker Hub access (or your own registry) that all machines can pull from.
 
@@ -183,7 +184,7 @@ Swarm does not honour the Compose GPU reservation reliably, so GPU access relies
 sudo systemctl restart docker
 ```
 
-Do this on every machine that has a GPU you want `ollama` and `sarvam-ai` to use. Install the driver and toolkit first: [GPU Setup](./gpu_setup.md).
+Do this on every machine that has a GPU you want `ollama` and `sarvam-ai` to use. Install the driver and toolkit first: [GPU Setup](./gpu_setup.md#install-nvidia-container-toolkit-and-set-the-docker-runtime).
 
 ### 7. Make The Images Available To Every Node
 
@@ -255,7 +256,7 @@ Repeat this step, then step 10, whenever application code changes. The registry 
 cp .env.example .env
 ```
 
-Fill in the keys (`HF_TOKEN`, `SARVAM_API_KEY`, `GEMINI_API_KEY`, `OPENAI_API_KEY`, `PERSPECTIVE_API_KEY`, `LLM_AS_JUDGE_MODEL`, `TIME_ZONE`). Set `OLLAMA_URL` and `GPU_URL` to the Swarm service names:
+Fill in the keys (`HF_TOKEN`, `SARVAM_API_KEY`, `GEMINI_API_KEY`, `OPENAI_API_KEY`, `PERSPECTIVE_API_KEY`, `LLM_AS_JUDGE_MODEL`, `TIME_ZONE`). `HF_TOKEN` is required to run `sarvam-ai`, which uses it to download its models. `LLM_AS_JUDGE_MODEL` (default `qwen3:32b`) is also the model `ollama-init` pulls on each node; another Ollama model can be used, but results vary by model. Set `OLLAMA_URL` and `GPU_URL` to the Swarm service names:
 
 ```env
 OLLAMA_URL="http://ollama:11434/"
@@ -269,7 +270,6 @@ Optional overrides:
 | `NGINX_PORT` | `8100` | public port on every node |
 | `SELENIUM_NODE_COUNT` | `25` | number of browser nodes |
 | `APP_BACKEND_REPLICAS` | `2` | number of `app-backend` copies |
-| `OLLAMA_MODEL` | `qwen3:32b` | model pulled by `ollama-init`; set it to the same model as `LLM_AS_JUDGE_MODEL` (default `qwen3:32b`) |
 
 Also confirm these exist in the manager's checkout, because services bind-mount them:
 
