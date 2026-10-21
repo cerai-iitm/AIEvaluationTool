@@ -6,11 +6,13 @@ This page covers everything required before running the AI Evaluation Tool from 
 
 ### Hardware Requirements
 
-- Minimum `16 GB` RAM
-- `50 GB+` RAM recommended for local LLM deployment
+- CPU RAM: `64 GB` minimum when you run the local models (Ollama and Sarvam AI) on this machine. Without local models, `16 GB` is enough for the application alone
+- GPU VRAM, for the default judge model `qwen3:32b` served by Ollama: `30 GB` minimum
+- GPU VRAM, when Sarvam AI also runs on the GPU: `60 GB` minimum
 - Multi-core CPU with at least `4` cores
 - `100 GB+` free disk space for models and databases
-- NVIDIA-compatible GPU recommended for faster inference
+- NVIDIA GPU with the driver installed. To run the models in Docker, see [Install NVIDIA Container Toolkit](../docker_setup/gpu_setup.md#install-nvidia-container-toolkit-and-set-the-docker-runtime)
+- VRAM needs change with the judge model set in `LLM_AS_JUDGE_MODEL`: a smaller model needs less, a larger one needs more
 
 ### Software Requirements
 
@@ -193,14 +195,14 @@ OPENAI_API_KEY="your_openai_api_key"
 
 - `OLLAMA_URL` points to the Ollama endpoint used by local LLM-based strategies.
 - `GPU_URL` points to the Sarvam AI REST API service or another inference endpoint.
-- `LLM_AS_JUDGE_MODEL` defines the default judge model.
+- `LLM_AS_JUDGE_MODEL` defines the judge model. The default is `qwen3:32b`. You can use another Ollama model (pull it first with `ollama pull <model>`); judging quality and speed vary by model.
 - `PERSPECTIVE_API_KEY`, `SARVAM_API_KEY`, `GEMINI_API_KEY`, and `OPENAI_API_KEY` enable API-backed strategies.
 
 ## Configure WhatsApp And Web App Targets
 
 WhatsApp and WebApp targets need selectors (where to type, click and read on the target's pages) and, for sites with a login, a test account. Configure both in the TDMS UI, on the target's **XPath Config** and **Credentials** tabs. The CLI runs use the same configuration.
 
-See [Web App Target Configuration](../ui/web_app_target_configuration.md) for the full procedure and the field reference.
+See [Target Configuration](../ui/target_configuration.md) for the full procedure and the field reference.
 
 ## Register The Target Application
 

@@ -45,7 +45,7 @@ For `WhatsApp` and `WebApp` targets, the tool drives a real browser. While the r
 - After the run finishes, the browser is closed and the view no longer shows anything.
 - If the browser restarts during a run, an already open view keeps showing the old one. Open the link again.
 
-If a run fails at login, typing or reading the reply, this view shows where it stops. See [Web App Target Configuration](./web_app_target_configuration.md) to fix the selectors.
+If a run fails at login, typing or reading the reply, this view shows where it stops. See [Target Configuration](./target_configuration.md) to fix the selectors.
 
 ## B. Continue Existing Run
 

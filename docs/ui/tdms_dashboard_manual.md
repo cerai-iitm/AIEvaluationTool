@@ -218,7 +218,7 @@ Targets represent the systems or applications being tested.
    - **XPath Configuration** tab (shown only for target types that require it, e.g. WebApp): Configure per-field XPath selectors used by the interface manager to locate page elements, with per-field history.
 4. Click **Submit**
 
-For WhatsApp and WebApp targets, see [Web App Target Configuration](./web_app_target_configuration.md) for how to find each selector and which fields are required.
+For WhatsApp and WebApp targets, see [Target Configuration](./target_configuration.md) for how to find each selector and which fields are required.
 
 ### Managing Targets
 
