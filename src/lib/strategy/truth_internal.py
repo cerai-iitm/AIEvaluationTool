@@ -20,7 +20,7 @@ dflt_vals = FileLoader._to_dot_dict(__file__, os.getenv("DEFAULT_VALUES_PATH"), 
 class Truthfulness_Internal(Strategy):
     def __init__(self, name: str = "truthfulness_internal", **kwargs) -> None:
         super().__init__(name, kwargs=kwargs)
-        self.model_name = dflt_vals.model_name
+        self.model_name = os.getenv("LLM_AS_JUDGE_MODEL")
         self.metric_name = kwargs.get("metric_name", name)
         self.base_url = os.getenv("OLLAMA_URL")
         self.data_src = name.split("_")[-1] if len(name.split("_")) > 2 else dflt_vals.data_src

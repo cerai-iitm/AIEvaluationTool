@@ -1,14 +1,22 @@
-# Web App Target Configuration
+# Target Configuration
 
-WhatsApp and WebApp targets are tested through a real browser. The tool opens the target's site, logs in, types each prompt and reads the reply, like a person would. To do that, it needs to know **which element on the page** to type into, click and read. You tell it with **selectors** (XPath or CSS), configured per target in TDMS.
+A **target** is the AI system you want to test. TDMS supports three target types, and each one is reached in a different way:
+
+| Type | How the tool talks to it | What you configure |
+|---|---|---|
+| `WebApp` | opens the site in a real browser, logs in, types each prompt and reads the reply | URL, login, **selectors** |
+| `WhatsApp` | opens WhatsApp Web in a real browser and chats with a contact | URL, **selectors**, a QR-code scan per run |
+| `API` | calls a model directly over its API, with no browser | URL and a **model name** (the target name) |
+
+WebApp and WhatsApp targets are tested like a person would: the tool needs to know **which element on the page** to type into, click and read. You tell it with **selectors** (XPath or CSS), configured per target in TDMS. The first parts of this page cover those two types. [API Targets](#api-targets) covers the third, including how to test a model served by Ollama on your own machine.
 
 All of this is done in the TDMS UI. You do not need to edit any configuration file.
 
 ## Before You Start
 
 - A TDMS account that can manage targets. See [Authentication And Roles](./authentication_and_roles.md).
-- The target's address, and a **test account** for it if the site needs a login. Use a dedicated test account, not a personal one: the password is stored on the server in plain text.
-- Google Chrome on your own computer, to inspect the target's pages and find the selectors.
+- The target's address. For `WebApp` and `WhatsApp` targets, also a **test account** if the site needs a login. Use a dedicated test account, not a personal one: the password is stored on the server in plain text.
+- For `WebApp` and `WhatsApp` targets: Google Chrome on your own computer, to inspect the target's pages and find the selectors. `API` targets need no browser and no selectors.
 
 ## Step 1: Create The Target
 
@@ -18,12 +26,14 @@ All of this is done in the TDMS UI. You do not need to edit any configuration fi
    | Field | What to enter |
    |---|---|
    | Target | A short name **without spaces**, for example `support-bot` (see the note below) |
-   | Type | `WebApp` for a website chat, `WhatsApp` for a WhatsApp contact |
+   | Type | `WebApp` for a website chat, `WhatsApp` for a WhatsApp contact, `API` for a model reached over an API |
    | URL | The address of the chat page, for example `https://chat.example.com` |
    | Domain, Languages | As appropriate for the target |
    | Notes | Required. What the target is and who owns it |
 
 **Name the target without spaces.** TDMS stores the selectors under the name with spaces turned into underscores, while the test runner looks them up with the spaces kept. A name such as `Support Bot` therefore saves correctly but fails at run time. Use lowercase letters, digits and hyphens.
+
+For an `API` target the name has a second job: it is the **model name** sent to the provider. Continue in [API Targets](#api-targets); Steps 2 to 5 below are for `WebApp` and `WhatsApp` targets.
 
 ## Step 2: Add The Login Details (WebApp)
 
@@ -162,6 +172,119 @@ Sites change their pages, and selectors stop working. To update them:
 - The first time a run starts, WhatsApp Web shows a QR code. Open **View Test Execution** and scan it with the phone of the test WhatsApp account. The run waits about **60 seconds** for the scan.
 - All test cases of one run share the same browser, so the QR code is scanned once per run.
 - WhatsApp limits how many devices one account can link, which limits how many WhatsApp runs can execute at the same time.
+
+## API Targets
+
+An `API` target is a model that the tool calls directly, without a browser. There are no selectors and no login: the **Credentials** and **XPath Configuration** tabs are not needed.
+
+| Field | What to enter |
+|---|---|
+| Target | The **exact model name** the provider knows, for example `gemma3n:e2b` or `gemini-2.5-flash`. The tool sends this name as the model, and uses it to choose the provider. |
+| Type | `API` |
+| URL | Where the model is served. For a local model, this is the address of the local server, for example `http://host.docker.internal:11434` |
+
+The tool picks the provider from the URL and the model name:
+
+| Condition | Provider |
+|---|---|
+| URL starts with `http://localhost`, `http://127.0.0.1` or `http://host.docker.internal` | local model server (Ollama) |
+| otherwise, model name starts with `gemini` | Google Gemini |
+| otherwise, model name starts with `gpt` or `o` | OpenAI |
+
+For a hosted model such as Gemini, the URL is only a placeholder, and the provider's API key comes from the server's `.env` file. If the model name does not match any of these, the run fails with *Unable to determine provider*.
+
+An API target has no live browser view, so **View Test Execution** is not available for it.
+
+### Testing A Local Ollama Model
+
+Testing a model served by Ollama on the same computer is where most setup problems appear, because the tool runs **inside Docker containers** and Ollama runs **on the host**. Three separate things can block the connection. Work through them in order.
+
+#### 1. Use the host's address, not `localhost`
+
+Inside a container, `localhost` is the container itself, not your computer, so a target URL of `http://localhost:11434` fails even though Ollama is running.
+
+Set the target URL to:
+
+```text
+http://host.docker.internal:11434
+```
+
+The `app-backend` and `interface-manager` services already map this name to the host through `extra_hosts: host.docker.internal:host-gateway` in `docker-compose.yml`, so it resolves with no further setup. A URL that starts with `http://host.docker.internal` is also recognized as a local model.
+
+#### 2. Make Ollama listen on more than the loopback address
+
+By default Ollama listens on `127.0.0.1:11434` only. A request that arrives from the Docker network is then **refused**, even though Ollama works fine from the host.
+
+Check what it listens on:
+
+```bash
+ss -ltnp | grep 11434
+```
+
+`127.0.0.1:11434` is the problem; `*:11434` or `0.0.0.0:11434` is what you need. Ollama installed as a systemd service is changed with an override file:
+
+```bash
+sudo systemctl edit ollama.service
+```
+
+In the editor that opens, add these lines **above the comment markers**, then save and exit:
+
+```ini
+[Service]
+Environment="OLLAMA_HOST=0.0.0.0"
+```
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl restart ollama
+```
+
+Then repeat the `ss` check. Common mistakes:
+
+- **The override was never saved.** If the editor is closed without saving properly, a hidden temporary file such as `/etc/systemd/system/ollama.service.d/.#override.conf…` is left behind and nothing changes. Confirm that `/etc/systemd/system/ollama.service.d/override.conf` exists and contains the lines above. You can also create it by hand with `sudo` and run `daemon-reload` afterwards.
+- **`restart` was skipped.** `daemon-reload` only reads the file; Ollama keeps listening on the old address until it is restarted.
+- **Ollama was started with `ollama serve` in a terminal.** The systemd override does not apply. Start it with `OLLAMA_HOST=0.0.0.0 ollama serve` instead.
+
+#### 3. Allow the Docker network through the firewall
+
+If the host firewall (`ufw`) blocks incoming traffic by default, requests from containers are **dropped silently**. The symptom differs from step 2: the run **times out** instead of being refused immediately.
+
+Check the firewall and find the Docker subnets:
+
+```bash
+sudo ufw status
+docker network ls
+docker network inspect <network-name> --format '{{range .IPAM.Config}}{{.Subnet}}{{end}}'
+```
+
+Allow each subnet to reach the Ollama port. For example, for the default bridge and the Compose network:
+
+```bash
+sudo ufw allow from 172.17.0.0/16 to any port 11434
+sudo ufw allow from 172.19.0.0/16 to any port 11434
+```
+
+`172.17.0.0/16` is the default Docker bridge. The Compose network's subnet depends on your machine, so use the value from `docker network inspect`, not the one above. Allowing only the Docker subnets keeps Ollama closed to the rest of the network, which matters because `OLLAMA_HOST=0.0.0.0` otherwise makes it reachable from other computers.
+
+#### Check The Connection
+
+From a container, ask Ollama for its model list. Use a container on the Compose network, such as `interface-manager`, and the same address as the target URL (`curl` must be available in that container):
+
+```bash
+docker compose exec interface-manager curl http://host.docker.internal:11434/api/tags
+```
+
+If it returns your models as JSON, the target will work. Then check that the target name matches one of the listed models **exactly**, including the tag (`gemma3n:e2b`, not `gemma3n`), and run one test case as described in [Step 5](#step-5-save-and-test).
+
+#### What The Symptom Tells You
+
+| What you see | Likely cause | Fix |
+|---|---|---|
+| Connection refused, immediately | Ollama listens on `127.0.0.1` only, or the URL uses `localhost` | step 2, or step 1 |
+| Name `host.docker.internal` not resolved | the container has no `extra_hosts` entry for it | add `host.docker.internal:host-gateway` to the service in `docker-compose.yml` |
+| Timeout after a long wait | the firewall drops container traffic | step 3 |
+| Connection works but the run returns no response or an error from Ollama | the target name is not an installed model name | run `ollama list` and use the exact name |
+| *Unable to determine provider* | the URL does not start with `http://localhost`, `http://127.0.0.1` or `http://host.docker.internal`, and the model name is not a Gemini or OpenAI name | use one of those URL forms |
 
 ## Related Pages
 

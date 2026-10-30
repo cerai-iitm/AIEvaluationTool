@@ -9,6 +9,10 @@ The key goal is to make both of these endpoints reachable from Dockerized runtim
 
 Once both endpoints are reachable from inside Docker, the rest of the pipeline stays the same.
 
+## Hardware Needed
+
+The machine that runs the models needs **64 GB of CPU RAM** and at least **30 GB of GPU VRAM** for the default judge model `qwen3:32b`, or **60 GB** if Sarvam AI also runs on the GPU. The full list, with disk, CPU and software, is in [System Requirements](./setup_and_configuration.md#system-requirements).
+
 ## Required Models
 
 The README identifies these primary models for the LLM-as-judge and supporting evaluation flow:
@@ -17,6 +21,77 @@ The README identifies these primary models for the LLM-as-judge and supporting e
 2. `google/shieldgemma-2b`
 3. `sarvamai/sarvam-translate`
 4. `qwen3:32b`
+
+## Install NVIDIA Container Toolkit And Set The Docker Runtime
+
+Docker containers can use the GPU only if the NVIDIA driver and the NVIDIA Container Toolkit are installed on the host, and Docker is set up to use the `nvidia` runtime. This is needed for every setup on this page that runs `ollama` or `sarvam-ai` in Docker (`--profile prod` or `--profile sarvam`). Skip it if the model services run on another machine, and do it on that machine instead.
+
+The commands below are for Ubuntu and Debian. For other distributions, follow NVIDIA's [Container Toolkit installation guide](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html).
+
+> **Note:** these commands were correct when this page was written. NVIDIA can change the repository address, package names or steps. If a command fails or behaves differently, check NVIDIA's official [Container Toolkit installation guide](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) and follow it instead.
+
+### 1. Check What Is Already Done
+
+```bash
+nvidia-smi
+nvidia-ctk --version
+docker info | grep -i runtime
+```
+
+| Result | Meaning |
+|---|---|
+| `nvidia-smi` fails | the NVIDIA driver is not installed. Install it first and reboot; the toolkit does not include the driver |
+| `nvidia-ctk: command not found` | the toolkit is not installed. Do step 2 |
+| `Runtimes:` lists `nvidia` | the runtime is registered. Do step 3 only if `Default Runtime` is not `nvidia` and you need it (multi-node Swarm) |
+| `Runtimes:` has no `nvidia` | the runtime is not configured. Do step 3 |
+
+If the last check in [step 4](#4-verify-that-containers-see-the-gpu) already passes, there is nothing to do.
+
+### 2. Install The Toolkit
+
+```bash
+curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey \
+  | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+
+curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list \
+  | sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' \
+  | sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+
+sudo apt-get update
+sudo apt-get install -y nvidia-container-toolkit
+```
+
+### 3. Set Docker To Use The `nvidia` Runtime
+
+```bash
+sudo nvidia-ctk runtime configure --runtime=docker
+sudo systemctl restart docker
+```
+
+This registers the `nvidia` runtime in `/etc/docker/daemon.json`. Restarting Docker stops the running containers, so do it before you start the stack, or run `docker compose up -d` again afterwards.
+
+Plain `docker compose` uses the GPU reservation in the compose file and does not need `nvidia` as the default runtime. In a multi-node Docker Swarm, the reservation is not honoured reliably, so also make `nvidia` the default runtime on every GPU machine:
+
+```bash
+sudo nvidia-ctk runtime configure --runtime=docker --set-as-default
+sudo systemctl restart docker
+```
+
+See [Multi-Node Stack](./multi_node_stack.md#6-make-nvidia-the-default-runtime-gpu-machines).
+
+### 4. Verify That Containers See The GPU
+
+```bash
+docker run --rm --gpus all ubuntu nvidia-smi
+```
+
+It must print the same GPU table as `nvidia-smi` on the host. If it fails:
+
+| Error | Fix |
+|---|---|
+| `could not select device driver "" with capabilities: [[gpu]]` | the toolkit is not installed or Docker was not restarted. Repeat steps 2 and 3 |
+| `unknown or invalid runtime name: nvidia` | `/etc/docker/daemon.json` has no `nvidia` entry. Run the `nvidia-ctk runtime configure` command again and restart Docker |
+| `nvidia-smi` works on the host but not in the container | check that `daemon.json` is valid JSON, and restart Docker again |
 
 ## Compose-Managed Production Model Services
 
@@ -39,7 +114,9 @@ GPU_URL="http://sarvam-ai:16000/"
 LLM_AS_JUDGE_MODEL="qwen3:32b"
 ```
 
-The `ollama-init` service pulls `${OLLAMA_MODEL:-qwen3:32b}` and `ollama-warmup` verifies that Ollama can generate a response.
+The `ollama-init` service pulls `${LLM_AS_JUDGE_MODEL:-qwen3:32b}` and `ollama-warmup` verifies that Ollama can generate a response.
+
+`qwen3:32b` is the default judge model. To use another Ollama model, set `LLM_AS_JUDGE_MODEL`; the bundled Ollama pulls that same model. Results and speed vary by model.
 
 ## Local Host GPU Setup
 

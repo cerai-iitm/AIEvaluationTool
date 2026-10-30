@@ -6,13 +6,34 @@ This page takes you from a fresh clone to a running application in Docker, and l
 - Want to run importer, execution, analysis and reports from the command line? See [Docker Run CLI](./docker_run.md).
 - Running on more than one machine? See [Multi-Node Stack](./multi_node_stack.md).
 
+## System Requirements
+
+The requirements depend on whether the model services run on the same machine. The application itself (UI, backends, database, Redis and browsers) needs no GPU.
+
+| Resource | Minimum | Notes |
+|---|---|---|
+| CPU RAM | **64 GB** | covers the application services, the browser nodes and loading the models |
+| GPU VRAM | **30 GB** for the default judge model `qwen3:32b` | only needed when Ollama runs on this machine (`--profile prod`) |
+| GPU VRAM, with Sarvam AI | **60 GB** | when Sarvam AI also runs on the GPU (`--profile prod` starts both Ollama and Sarvam AI). Each needs its own GPU memory; see [Scaling And Capacity](./scaling_and_capacity.md) |
+| CPU | 4 cores minimum, 8 or more recommended | more browser nodes and parallel runs need more cores |
+| Disk | 100 GB free or more | container images, the database and the downloaded models (`qwen3:32b` alone is about 20 GB) |
+| Operating system | 64-bit Linux | with Docker Engine `24+` and Docker Compose `v2+` |
+| GPU software | NVIDIA driver and `nvidia-container-toolkit` | only for the model services; see [GPU Setup](./gpu_setup.md#install-nvidia-container-toolkit-and-set-the-docker-runtime) |
+| Network | Internet access on the first start | to download images and models; later runs need only access to the targets and any API providers you use |
+
+Things that change the numbers:
+
+- **A different judge model.** The VRAM figure is for `qwen3:32b`. A smaller Ollama model needs less, a larger one needs more. See `LLM_AS_JUDGE_MODEL` in [Required Settings](#required-settings).
+- **Models hosted elsewhere.** If Ollama and Sarvam AI run on another machine or are replaced by API providers, this machine needs no GPU, and the RAM requirement depends mainly on how many browser nodes you run.
+- **Browser nodes.** Each active browser session uses roughly 0.5 to 1 GB of memory, and the default is `SELENIUM_NODE_COUNT=2`. See [Scaling And Capacity](./scaling_and_capacity.md).
+
 ## Prerequisites
 
 - Docker Engine `24+`
 - Docker Compose `v2+`
 - The repository cloned locally
 - Port `8100` free on your machine (or a different port, see [Changing The Port](./docker_run_ui.md#changing-the-port))
-- An NVIDIA GPU and `nvidia-container-toolkit` **only** if you run the bundled model services (`--profile prod`). See [GPU Setup](./gpu_setup.md).
+- An NVIDIA GPU and `nvidia-container-toolkit` **only** if you run the bundled model services (`--profile prod`). See [GPU Setup](./gpu_setup.md#install-nvidia-container-toolkit-and-set-the-docker-runtime).
 
 ## Quick Start
 
@@ -88,8 +109,8 @@ TIME_ZONE="Asia/Kolkata"
 |---|---|
 | `OLLAMA_URL` | Ollama server used as the judge model. `host.docker.internal` means "the machine running Docker". |
 | `GPU_URL` | Sarvam AI service endpoint |
-| `LLM_AS_JUDGE_MODEL` | model name used for judging |
-| `HF_TOKEN` | Hugging Face token (for downloading models) |
+| `LLM_AS_JUDGE_MODEL` | Ollama model used for judging. Default `qwen3:32b`. You can set any other model available in your Ollama; judging quality and speed vary by model. With the bundled Ollama (`--profile prod`) this model is pulled automatically; with your own Ollama, pull it yourself (`ollama pull <model>`) |
+| `HF_TOKEN` | Hugging Face token. **Required to run Sarvam AI** (`--profile prod` or `--profile sarvam`): it is passed to the `sarvam-ai` container to download its models. Also used for other model downloads |
 | `PERSPECTIVE_API_KEY`, `SARVAM_API_KEY`, `GEMINI_API_KEY`, `OPENAI_API_KEY` | keys for the integrations you use; leave empty for ones you do not |
 | `TIME_ZONE` | time zone for timestamps |
 
@@ -101,7 +122,6 @@ Everything below has a default. Set a variable in `.env` only to change it.
 |---|---|---|---|
 | `NGINX_PORT` | `8100` | public port | `docker compose up -d` |
 | `SELENIUM_NODE_COUNT` | `2` | number of browser nodes (max `25` on one machine) | `docker compose up -d` |
-| `OLLAMA_MODEL` | `qwen3:32b` | model pulled by the bundled Ollama (`--profile prod`) | `docker compose --profile prod up -d` |
 | `MARIADB_ROOT_PASSWORD` | `root_password` | database | see note below |
 | `MARIADB_DATABASE` | `aievaluationtool` | database | see note below |
 | `MARIADB_USER` | `aiet_user` | database | see note below |
@@ -135,7 +155,7 @@ Everything below has a default. Set a variable in `.env` only to change it.
 | `src/app/interface_manager/config.json` | browser automation | `selenium_mode` is `"remote"` and `selenium_remote_url` is `"http://selenium-hub:4444/wd/hub"` |
 | `data/` | test data files for the importer | the files you want to import are present |
 
-Selectors and logins for WhatsApp and web app targets are not configured in files: set them in the TDMS UI, on the target's **XPath Config** and **Credentials** tabs. Changes apply to the next run without a restart. See [Web App Target Configuration](../ui/web_app_target_configuration.md).
+Selectors and logins for WhatsApp and web app targets are not configured in files: set them in the TDMS UI, on the target's **XPath Config** and **Credentials** tabs. Changes apply to the next run without a restart. See [Target Configuration](../ui/target_configuration.md).
 
 ## Compose Profiles
 

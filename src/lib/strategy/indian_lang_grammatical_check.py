@@ -101,7 +101,7 @@ class IndianLangGrammaticalCheck(Strategy):
         return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b) + 1e-12))
     
     def make_corrections(self, prompt:str):
-        corrections = OllamaConnect.prompt_model(prompt, dflt_vals.reqd_flds, model_names=dflt_vals.model_names, options=dflt_vals.options)
+        corrections = OllamaConnect.prompt_model(prompt, dflt_vals.reqd_flds, options=dflt_vals.options)
         if len(corrections) > 0: 
             return [corr["corrected"] for corr in corrections]
         else:

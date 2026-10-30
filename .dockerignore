@@ -31,3 +31,30 @@ chrome-data/
 docs/
 *.md
 *.db
+
+# secrets / env files
+**/.env
+**/.env.*
+!**/.env.example
+**/credentials.json
+*.pem
+*.key
+
+# bind-mounted / generated at runtime
+shieldgemma_offload_cache/
+chroma_langchain_db/
+nltk_data/
+whatsapp_profile/
+*.sqlite3
+*.pkl
+saved_evaluations/
+screenshots/
+
+# dev / CI / build files not needed inside the image
+.idea/
+Dockerfile*
+docker-compose*.yml
+stack-compose.yml
+src/notebooks/
+**/.DS_Store
+
